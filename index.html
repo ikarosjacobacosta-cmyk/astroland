@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Catálogo de Imágenes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+h2 { margin-top: 40px; }
+.gallery { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.gallery figure { margin: 0; text-align: center; }
+.gallery img { width: 45%; max-width: 150px; height: auto; object-fit: contain; cursor: pointer; border: 1px solid #ccc; transition: transform 0.2s; }
+.gallery img:hover { transform: scale(1.05); }
+.modal { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+.modal-content { background: white; padding: 20px; border-radius: 8px; max-width: 400px; text-align: center; }
+.close { position: absolute; top: 20px; right: 40px; font-size: 30px; font-weight: bold; text-decoration: none; color: black; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Catálogo de Imágenes</h1>
+<script>
+const categorias = [
+  {title:'a confirmar', start:0, end:4, price:'Gs. N.D'},
+  {title:'20 puntos', start:2000, end:2016, price:'Gs. 15.000'},
+  {title:'35 puntos', start:3500, end:3519, price:'Gs. 25.000'},
+  {title:'50 puntos', start:5000, end:5020, price:'Gs. 35.000'},
+  {title:'75 puntos', start:7500, end:7505, price:'Gs. 40.000'},
+  {title:'100 puntos', start:10000, end:10010, price:'Gs. 50.000'},
+  {title:'150 puntos', start:15000, end:15009, price:'Gs. variable'},
+  {title:'200 puntos', start:20000, end:20011, price:'Gs. variable'},
+  {title:'220 puntos', start:22000, end:22003, price:'Gs. variable'},
+  {title:'250 puntos', start:25000, end:25003, price:'Gs. variable'},
+  {title:'350 puntos', start:35000, end:35000, price:'Gs. 155.000'},
+  {title:'420 puntos', start:42000, end:42000, price:'Gs. 160.000'}
+];
+
+const precios = {
+'15000':'Gs. 72.000','15001':'Gs. 60.000','15002':'Gs. 72.000','15003':'Gs. 72.000','15004':'Gs. 72.000','15005':'Gs. 85.000','15006':'Gs. 55.000','15007':'Gs. 60.000','15008':'Gs. 60.000','15009':'Gs. 72.000',
+'20000':'Gs. 96.000','20001':'Gs. 96.000','20002':'Gs. 96.000','20003':'Gs. 96.000','20004':'Gs. 96.000','20005':'Gs. 96.000','20006':'Gs. 96.000','20007':'Gs. 100.000','20008':'Gs. 96.000','20009':'Gs. 96.000','20010':'Gs. 96.000','20011':'Gs. 96.000',
+'22000':'Gs. 120.000','22001':'Gs. 120.000','22002':'Gs. 120.000','22003':'Gs. 96.000',
+'25000':'Gs. 150.000','25001':'Gs. 144.000','25002':'Gs. 144.000','25003':'Gs. 150.000'
+};
+
+categorias.forEach(cat=>{
+  document.write(`<h2>${cat.title}</h2>`);
+  document.write('<div class="gallery">');
+  for(let i=cat.start;i<=cat.end;i++){
+    let num = i.toString().padStart(5,'0');
+    let precio = precios[num] || cat.price;
+    document.write(`<figure><img src='imagenes/${num}.jpg' alt='${num}' onclick="openModal('${num}','${precio}')"><figcaption>${num}</figcaption></figure>`);
+  }
+  document.write('</div>');
+});
+
+document.write('<div id="modal" class="modal"><div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><h2 id="modal-title"></h2><p id="modal-price"></p></div></div>');
+
+function openModal(title, price){
+  document.getElementById('modal-title').innerText = title;
+  document.getElementById('modal-price').innerText = 'Precio: ' + price;
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(){
+  document.getElementById('modal').style.display='none';
+}
+</script>
+</body>
+</html>
