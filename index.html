@@ -2,66 +2,312 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Catálogo de Imágenes</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo Completo de Imágenes</title>
 <style>
-body { font-family: Arial, sans-serif; margin: 20px; }
-h2 { margin-top: 40px; }
-.gallery { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.gallery figure { margin: 0; text-align: center; }
-.gallery img { width: 45%; max-width: 150px; height: auto; object-fit: contain; cursor: pointer; border: 1px solid #ccc; transition: transform 0.2s; }
-.gallery img:hover { transform: scale(1.05); }
-.modal { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-.modal-content { background: white; padding: 20px; border-radius: 8px; max-width: 400px; text-align: center; }
-.close { position: absolute; top: 20px; right: 40px; font-size: 30px; font-weight: bold; text-decoration: none; color: black; cursor: pointer; }
+body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+h1 { text-align: center; margin-bottom: 40px; }
+h2 { margin-top: 40px; color: #333; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+.gallery { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
+.item { display: flex; flex-direction: column; align-items: center; width: 5cm; }
+.item img { width: 5cm; height: 5cm; object-fit: contain; border: 1px solid #aaa; background: white; padding: 2px; cursor: pointer; transition: transform 0.2s; }
+.item img:hover { transform: scale(1.05); border-color: #444; }
+.item span { margin-top: 5px; text-align: center; font-size: 0.9em; color: #333; }
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); }
+.modal-content { display: block; margin: 5% auto; max-width: 80%; max-height: 80%; }
+.close { position: absolute; top: 20px; right: 35px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
-<h1>Catálogo de Imágenes</h1>
+<h1>Catálogo Completo de Imágenes</h1>
+
+<!-- ================== A CONFIRMAR ================== -->
+<h2>A confirmar</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/00000.jpg"><span>00000</span></div>
+<div class="item"><img src="imagenes/00001.jpg"><span>00001</span></div>
+<div class="item"><img src="imagenes/00002.jpg"><span>00002</span></div>
+<div class="item"><img src="imagenes/00003.jpg"><span>00003</span></div>
+<div class="item"><img src="imagenes/00004.jpg"><span>00004</span></div>
+<div class="item"><img src="imagenes/00005.jpg"><span>00005</span></div>
+<div class="item"><img src="imagenes/00006.jpg"><span>00006</span></div>
+<div class="item"><img src="imagenes/00007.jpg"><span>00007</span></div>
+<div class="item"><img src="imagenes/00008.jpg"><span>00008</span></div>
+<div class="item"><img src="imagenes/00009.jpg"><span>00009</span></div>
+<div class="item"><img src="imagenes/00010.jpg"><span>00010</span></div>
+<div class="item"><img src="imagenes/00011.jpg"><span>00011</span></div>
+<div class="item"><img src="imagenes/00012.jpg"><span>00012</span></div>
+<div class="item"><img src="imagenes/00013.jpg"><span>00013</span></div>
+<div class="item"><img src="imagenes/00014.jpg"><span>00014</span></div>
+<div class="item"><img src="imagenes/00015.jpg"><span>00015</span></div>
+<div class="item"><img src="imagenes/00016.jpg"><span>00016</span></div>
+<div class="item"><img src="imagenes/00017.jpg"><span>00017</span></div>
+<div class="item"><img src="imagenes/00018.jpg"><span>00018</span></div>
+<div class="item"><img src="imagenes/00019.jpg"><span>00019</span></div>
+<div class="item"><img src="imagenes/00020.jpg"><span>00020</span></div>
+<div class="item"><img src="imagenes/00021.jpg"><span>00021</span></div>
+<div class="item"><img src="imagenes/00022.jpg"><span>00022</span></div>
+<div class="item"><img src="imagenes/00023.jpg"><span>00023</span></div>
+<div class="item"><img src="imagenes/00024.jpg"><span>00024</span></div>
+<div class="item"><img src="imagenes/00025.jpg"><span>00025</span></div>
+<div class="item"><img src="imagenes/00026.jpg"><span>00026</span></div>
+<div class="item"><img src="imagenes/00027.jpg"><span>00027</span></div>
+<div class="item"><img src="imagenes/00028.jpg"><span>00028</span></div>
+<div class="item"><img src="imagenes/00029.jpg"><span>00029</span></div>
+<div class="item"><img src="imagenes/00030.jpg"><span>00030</span></div>
+<div class="item"><img src="imagenes/00031.jpg"><span>00031</span></div>
+<div class="item"><img src="imagenes/00032.jpg"><span>00032</span></div>
+<div class="item"><img src="imagenes/00033.jpg"><span>00033</span></div>
+<div class="item"><img src="imagenes/00034.jpg"><span>00034</span></div>
+<div class="item"><img src="imagenes/00035.jpg"><span>00035</span></div>
+<div class="item"><img src="imagenes/00036.jpg"><span>00036</span></div>
+<div class="item"><img src="imagenes/00037.jpg"><span>00037</span></div>
+<div class="item"><img src="imagenes/00038.jpg"><span>00038</span></div>
+</div>
+
+<!-- ================== 10 PUNTOS ================== -->
+<h2>10 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/01000.jpg"><span>01000</span></div>
+<div class="item"><img src="imagenes/01001.jpg"><span>01001</span></div>
+</div>
+
+<!-- ================== 20 PUNTOS ================== -->
+<h2>20 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/02000.jpg"><span>02000</span></div>
+<div class="item"><img src="imagenes/02001.jpg"><span>02001</span></div>
+<div class="item"><img src="imagenes/02002.jpg"><span>02002</span></div>
+<div class="item"><img src="imagenes/02003.jpg"><span>02003</span></div>
+<div class="item"><img src="imagenes/02004.jpg"><span>02004</span></div>
+<div class="item"><img src="imagenes/02005.jpg"><span>02005</span></div>
+<div class="item"><img src="imagenes/02006.jpg"><span>02006</span></div>
+<div class="item"><img src="imagenes/02007.jpg"><span>02007</span></div>
+<div class="item"><img src="imagenes/02008.jpg"><span>02008</span></div>
+<div class="item"><img src="imagenes/02009.jpg"><span>02009</span></div>
+<div class="item"><img src="imagenes/02010.jpg"><span>02010</span></div>
+<div class="item"><img src="imagenes/02011.jpg"><span>02011</span></div>
+<div class="item"><img src="imagenes/02012.jpg"><span>02012</span></div>
+<div class="item"><img src="imagenes/02013.jpg"><span>02013</span></div>
+<div class="item"><img src="imagenes/02014.jpg"><span>02014</span></div>
+<div class="item"><img src="imagenes/02015.jpg"><span>02015</span></div>
+<div class="item"><img src="imagenes/02016.jpg"><span>02016</span></div>
+<div class="item"><img src="imagenes/02017.jpg"><span>02017</span></div>
+<div class="item"><img src="imagenes/02018.jpg"><span>02018</span></div>
+</div>
+
+<!-- Modal -->
+<div id="myModal" class="modal">
+<span class="close">&times;</span>
+<img class="modal-content" id="imgGrande">
+</div>
+
 <script>
-const categorias = [
-  {title:'a confirmar', start:0, end:4, price:'Gs. N.D'},
-  {title:'20 puntos', start:2000, end:2016, price:'Gs. 15.000'},
-  {title:'35 puntos', start:3500, end:3519, price:'Gs. 25.000'},
-  {title:'50 puntos', start:5000, end:5020, price:'Gs. 35.000'},
-  {title:'75 puntos', start:7500, end:7505, price:'Gs. 40.000'},
-  {title:'100 puntos', start:10000, end:10010, price:'Gs. 50.000'},
-  {title:'150 puntos', start:15000, end:15009, price:'Gs. variable'},
-  {title:'200 puntos', start:20000, end:20011, price:'Gs. variable'},
-  {title:'220 puntos', start:22000, end:22003, price:'Gs. variable'},
-  {title:'250 puntos', start:25000, end:25003, price:'Gs. variable'},
-  {title:'350 puntos', start:35000, end:35000, price:'Gs. 155.000'},
-  {title:'420 puntos', start:42000, end:42000, price:'Gs. 160.000'}
-];
+const modal = document.getElementById("myModal");
+const modalImg = document.getElementById("imgGrande");
+const span = document.getElementsByClassName("close")[0];
+document.querySelectorAll(".gallery img").forEach(img => {
+    img.addEventListener("click", () => { modal.style.display = "block"; modalImg.src = img.src; });
+});
+span.onclick = () => { modal.style.display = "none"; }
+modal.onclick = (e) => { if(e.target===modal) modal.style.display="none"; }
+</script>
+</body>
+</html>
+<!-- ================== 35 PUNTOS ================== -->
+<h2>35 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/03500.jpg"><span>03500</span></div>
+<div class="item"><img src="imagenes/03501.jpg"><span>03501</span></div>
+<div class="item"><img src="imagenes/03502.jpg"><span>03502</span></div>
+<div class="item"><img src="imagenes/03503.jpg"><span>03503</span></div>
+<div class="item"><img src="imagenes/03504.jpg"><span>03504</span></div>
+<div class="item"><img src="imagenes/03505.jpg"><span>03505</span></div>
+<div class="item"><img src="imagenes/03506.jpg"><span>03506</span></div>
+<div class="item"><img src="imagenes/03507.jpg"><span>03507</span></div>
+<div class="item"><img src="imagenes/03508.jpg"><span>03508</span></div>
+<div class="item"><img src="imagenes/03509.jpg"><span>03509</span></div>
+<div class="item"><img src="imagenes/03510.jpg"><span>03510</span></div>
+<div class="item"><img src="imagenes/03511.jpg"><span>03511</span></div>
+<div class="item"><img src="imagenes/03512.jpg"><span>03512</span></div>
+<div class="item"><img src="imagenes/03513.jpg"><span>03513</span></div>
+<div class="item"><img src="imagenes/03514.jpg"><span>03514</span></div>
+<div class="item"><img src="imagenes/03515.jpg"><span>03515</span></div>
+<div class="item"><img src="imagenes/03516.jpg"><span>03516</span></div>
+<div class="item"><img src="imagenes/03517.jpg"><span>03517</span></div>
+<div class="item"><img src="imagenes/03518.jpg"><span>03518</span></div>
+<div class="item"><img src="imagenes/03519.jpg"><span>03519</span></div>
+<div class="item"><img src="imagenes/03520.jpg"><span>03520</span></div>
+<div class="item"><img src="imagenes/03521.jpg"><span>03521</span></div>
+<div class="item"><img src="imagenes/03522.jpg"><span>03522</span></div>
+<div class="item"><img src="imagenes/03523.jpg"><span>03523</span></div>
+<div class="item"><img src="imagenes/03524.jpg"><span>03524</span></div>
+<div class="item"><img src="imagenes/03525.jpg"><span>03525</span></div>
+<div class="item"><img src="imagenes/03526.jpg"><span>03526</span></div>
+<div class="item"><img src="imagenes/03527.jpg"><span>03527</span></div>
+<div class="item"><img src="imagenes/03528.jpg"><span>03528</span></div>
+<div class="item"><img src="imagenes/03529.jpg"><span>03529</span></div>
+<div class="item"><img src="imagenes/03530.jpg"><span>03530</span></div>
+</div>
+<!-- ================== 50 PUNTOS ================== -->
+<h2>50 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/05000.jpg"><span>05000</span></div>
+<div class="item"><img src="imagenes/05001.jpg"><span>05001</span></div>
+<div class="item"><img src="imagenes/05002.jpg"><span>05002</span></div>
+<div class="item"><img src="imagenes/05003.jpg"><span>05003</span></div>
+<div class="item"><img src="imagenes/05004.jpg"><span>05004</span></div>
+<div class="item"><img src="imagenes/05005.jpg"><span>05005</span></div>
+<div class="item"><img src="imagenes/05006.jpg"><span>05006</span></div>
+<div class="item"><img src="imagenes/05007.jpg"><span>05007</span></div>
+<div class="item"><img src="imagenes/05008.jpg"><span>05008</span></div>
+<div class="item"><img src="imagenes/05009.jpg"><span>05009</span></div>
+<div class="item"><img src="imagenes/05010.jpg"><span>05010</span></div>
+<div class="item"><img src="imagenes/05011.jpg"><span>05011</span></div>
+<div class="item"><img src="imagenes/05012.jpg"><span>05012</span></div>
+<div class="item"><img src="imagenes/05013.jpg"><span>05013</span></div>
+<div class="item"><img src="imagenes/05014.jpg"><span>05014</span></div>
+<div class="item"><img src="imagenes/05015.jpg"><span>05015</span></div>
+<div class="item"><img src="imagenes/05016.jpg"><span>05016</span></div>
+<div class="item"><img src="imagenes/05017.jpg"><span>05017</span></div>
+<div class="item"><img src="imagenes/05018.jpg"><span>05018</span></div>
+<div class="item"><img src="imagenes/05019.jpg"><span>05019</span></div>
+<div class="item"><img src="imagenes/05020.jpg"><span>05020</span></div>
+<div class="item"><img src="imagenes/05021.jpg"><span>05021</span></div>
+<div class="item"><img src="imagenes/05022.jpg"><span>05022</span></div>
+<div class="item"><img src="imagenes/05023.jpg"><span>05023</span></div>
+<div class="item"><img src="imagenes/05024.jpg"><span>05024</span></div>
+<div class="item"><img src="imagenes/05025.jpg"><span>05025</span></div>
+<div class="item"><img src="imagenes/05026.jpg"><span>05026</span></div>
+<div class="item"><img src="imagenes/05027.jpg"><span>05027</span></div>
+<div class="item"><img src="imagenes/05028.jpg"><span>05028</span></div>
+<div class="item"><img src="imagenes/05029.jpg"><span>05029</span></div>
+</div>
 
-const precios = {
-'15000':'Gs. 72.000','15001':'Gs. 60.000','15002':'Gs. 72.000','15003':'Gs. 72.000','15004':'Gs. 72.000','15005':'Gs. 85.000','15006':'Gs. 55.000','15007':'Gs. 60.000','15008':'Gs. 60.000','15009':'Gs. 72.000',
-'20000':'Gs. 96.000','20001':'Gs. 96.000','20002':'Gs. 96.000','20003':'Gs. 96.000','20004':'Gs. 96.000','20005':'Gs. 96.000','20006':'Gs. 96.000','20007':'Gs. 100.000','20008':'Gs. 96.000','20009':'Gs. 96.000','20010':'Gs. 96.000','20011':'Gs. 96.000',
-'22000':'Gs. 120.000','22001':'Gs. 120.000','22002':'Gs. 120.000','22003':'Gs. 96.000',
-'25000':'Gs. 150.000','25001':'Gs. 144.000','25002':'Gs. 144.000','25003':'Gs. 150.000'
-};
+<!-- ================== 75 PUNTOS ================== -->
+<h2>75 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/07500.jpg"><span>07500</span></div>
+<div class="item"><img src="imagenes/07501.jpg"><span>07501</span></div>
+<div class="item"><img src="imagenes/07502.jpg"><span>07502</span></div>
+<div class="item"><img src="imagenes/07503.jpg"><span>07503</span></div>
+<div class="item"><img src="imagenes/07504.jpg"><span>07504</span></div>
+<div class="item"><img src="imagenes/07505.jpg"><span>07505</span></div>
+<div class="item"><img src="imagenes/07506.jpg"><span>07506</span></div>
+</div>
 
-categorias.forEach(cat=>{
-  document.write(`<h2>${cat.title}</h2>`);
-  document.write('<div class="gallery">');
-  for(let i=cat.start;i<=cat.end;i++){
-    let num = i.toString().padStart(5,'0');
-    let precio = precios[num] || cat.price;
-    document.write(`<figure><img src='imagenes/${num}.jpg' alt='${num}' onclick="openModal('${num}','${precio}')"><figcaption>${num}</figcaption></figure>`);
-  }
-  document.write('</div>');
+<!-- ================== 100 PUNTOS ================== -->
+<h2>100 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/10000.jpg"><span>10000</span></div>
+<div class="item"><img src="imagenes/10001.jpg"><span>10001</span></div>
+<div class="item"><img src="imagenes/10002.jpg"><span>10002</span></div>
+<div class="item"><img src="imagenes/10003.jpg"><span>10003</span></div>
+<div class="item"><img src="imagenes/10004.jpg"><span>10004</span></div>
+<div class="item"><img src="imagenes/10005.jpg"><span>10005</span></div>
+<div class="item"><img src="imagenes/10006.jpg"><span>10006</span></div>
+<div class="item"><img src="imagenes/10007.jpg"><span>10007</span></div>
+<div class="item"><img src="imagenes/10008.jpg"><span>10008</span></div>
+<div class="item"><img src="imagenes/10009.jpg"><span>10009</span></div>
+<div class="item"><img src="imagenes/10010.jpg"><span>10010</span></div>
+<div class="item"><img src="imagenes/10011.jpg"><span>10011</span></div>
+<div class="item"><img src="imagenes/10012.jpg"><span>10012</span></div>
+</div>
+<!-- ================== 150 PUNTOS ================== -->
+<h2>150 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/15000.jpg"><span>15000</span></div>
+<div class="item"><img src="imagenes/15001.jpg"><span>15001</span></div>
+<div class="item"><img src="imagenes/15002.jpg"><span>15002</span></div>
+<div class="item"><img src="imagenes/15003.jpg"><span>15003</span></div>
+<div class="item"><img src="imagenes/15004.jpg"><span>15004</span></div>
+<div class="item"><img src="imagenes/15005.jpg"><span>15005</span></div>
+<div class="item"><img src="imagenes/15006.jpg"><span>15006</span></div>
+<div class="item"><img src="imagenes/15007.jpg"><span>15007</span></div>
+<div class="item"><img src="imagenes/15008.jpg"><span>15008</span></div>
+<div class="item"><img src="imagenes/15009.jpg"><span>15009</span></div>
+<div class="item"><img src="imagenes/15010.jpg"><span>15010</span></div>
+</div>
+
+<!-- ================== 200 PUNTOS ================== -->
+<h2>200 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/20000.jpg"><span>20000</span></div>
+<div class="item"><img src="imagenes/20001.jpg"><span>20001</span></div>
+<div class="item"><img src="imagenes/20002.jpg"><span>20002</span></div>
+<div class="item"><img src="imagenes/20003.jpg"><span>20003</span></div>
+<div class="item"><img src="imagenes/20004.jpg"><span>20004</span></div>
+<div class="item"><img src="imagenes/20005.jpg"><span>20005</span></div>
+<div class="item"><img src="imagenes/20006.jpg"><span>20006</span></div>
+<div class="item"><img src="imagenes/20007.jpg"><span>20007</span></div>
+<div class="item"><img src="imagenes/20008.jpg"><span>20008</span></div>
+<div class="item"><img src="imagenes/20009.jpg"><span>20009</span></div>
+<div class="item"><img src="imagenes/20010.jpg"><span>20010</span></div>
+<div class="item"><img src="imagenes/20011.jpg"><span>20011</span></div>
+<div class="item"><img src="imagenes/20012.jpg"><span>20012</span></div>
+<div class="item"><img src="imagenes/20013.jpg"><span>20013</span></div>
+<div class="item"><img src="imagenes/20014.jpg"><span>20014</span></div>
+<div class="item"><img src="imagenes/20015.jpg"><span>20015</span></div>
+<div class="item"><img src="imagenes/20016.jpg"><span>20016</span></div>
+<div class="item"><img src="imagenes/20017.jpg"><span>20017</span></div>
+</div>
+
+<!-- ================== 220 PUNTOS ================== -->
+<h2>220 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/22000.jpg"><span>22000</span></div>
+<div class="item"><img src="imagenes/22001.jpg"><span>22001</span></div>
+<div class="item"><img src="imagenes/22002.jpg"><span>22002</span></div>
+<div class="item"><img src="imagenes/22003.jpg"><span>22003</span></div>
+</div>
+
+<!-- ================== 250 PUNTOS ================== -->
+<h2>250 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/25000.jpg"><span>25000</span></div>
+<div class="item"><img src="imagenes/25001.jpg"><span>25001</span></div>
+<div class="item"><img src="imagenes/25002.jpg"><span>25002</span></div>
+<div class="item"><img src="imagenes/25003.jpg"><span>25003</span></div>
+</div>
+<!-- ================== 350 PUNTOS ================== -->
+<h2>350 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/35000.jpg"><span>35000</span></div>
+</div>
+
+<!-- ================== 420 PUNTOS ================== -->
+<h2>420 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/42000.jpg"><span>42000</span></div>
+</div>
+
+<!-- ================== 999 PUNTOS ================== -->
+<h2>999 puntos</h2>
+<div class="gallery">
+<div class="item"><img src="imagenes/99900.jpg"><span>99900</span></div>
+<div class="item"><img src="imagenes/99901.jpg"><span>99901</span></div>
+</div>
+
+<!-- ================== MODAL PARA AGRANDAR ================== -->
+<div id="myModal" class="modal">
+  <span class="close">&times;</span>
+  <img class="modal-content" id="imgGrande">
+</div>
+
+<script>
+const modal = document.getElementById("myModal");
+const modalImg = document.getElementById("imgGrande");
+const span = document.getElementsByClassName("close")[0];
+
+document.querySelectorAll(".gallery img").forEach(img => {
+  img.addEventListener("click", () => {
+    modal.style.display = "block";
+    modalImg.src = img.src;
+  });
 });
 
-document.write('<div id="modal" class="modal"><div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><h2 id="modal-title"></h2><p id="modal-price"></p></div></div>');
-
-function openModal(title, price){
-  document.getElementById('modal-title').innerText = title;
-  document.getElementById('modal-price').innerText = 'Precio: ' + price;
-  document.getElementById('modal').style.display='flex';
-}
-function closeModal(){
-  document.getElementById('modal').style.display='none';
-}
+span.onclick = () => { modal.style.display = "none"; }
+modal.onclick = (e) => { if(e.target === modal) modal.style.display = "none"; }
 </script>
+
 </body>
 </html>
