@@ -61,19 +61,26 @@ h1 {
 
 @media (max-width: 600px) {
   .gallery {
-    grid-template-columns: repeat(2, 1fr); /* Dos columnas en celulares */
+    grid-template-columns: repeat(3, 1fr); /* 🔥 Tres columnas en celulares */
+    gap: 10px;
   }
+
   .item {
     width: 100%;
+  }
+
+  .item p {
+    font-size: 12px;
   }
 }
 
 @media (max-width: 400px) {
   .gallery {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
+
   h1 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 }
