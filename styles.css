@@ -1,30 +1,39 @@
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
   margin: 0;
   padding: 20px;
-  background-color: #fafafa;
-  color: #333;
+  background-color: #0e0e0e;
+  color: #f5f5f5;
   text-align: center;
 }
 
 h1 {
+  font-size: 2rem;
   margin-bottom: 30px;
+  color: #fff;
+  text-shadow: 0 0 10px #6cf;
 }
 
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 16px;
+  gap: 18px;
   justify-items: center;
 }
 
 .item {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
   padding: 10px;
   width: 5cm;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(102, 204, 255, 0.5);
 }
 
 .item img {
@@ -33,11 +42,13 @@ h1 {
   max-width: 5cm;
   max-height: 5cm;
   object-fit: contain;
-  border-radius: 6px;
+  border-radius: 8px;
+  background-color: #111;
 }
 
 .item p {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 14px;
+  color: #ccc;
   font-weight: bold;
 }
