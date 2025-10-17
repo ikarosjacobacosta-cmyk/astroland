@@ -5,18 +5,18 @@
 html, body {
   margin: 0;
   padding: 0;
-  background-color: #ffffff !important; /* fondo blanco forzado */
-  -webkit-print-color-adjust: exact;
+  background-color: #ffffff !important;
   color: #222;
   font-family: Arial, sans-serif;
 }
 
-/* Contenedor y título */
+/* Contenedor */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
+
 h1 {
   text-align: center;
   margin: 24px 0 36px;
@@ -37,18 +37,15 @@ h1 {
   padding-bottom: 6px;
 }
 
-/* Galería: usamos columnas con ancho fijo de 5cm cuando hay espacio,
-   y grid flexible cuando no lo hay. */
+/* Galería */
 .galeria {
   display: grid;
   gap: 12px;
   justify-content: start;
-  /* Intentamos crear tantas columnas de 5cm como quepan */
   grid-template-columns: repeat(auto-fill, 5cm);
-  /* Si el viewport no alcanza para 3 de 5cm, las imágenes se encogen según reglas abajo */
 }
 
-/* Item y texto */
+/* Item */
 .item {
   text-align: center;
   background: #fff;
@@ -57,70 +54,33 @@ h1 {
   box-sizing: border-box;
 }
 
-/* Imagen: preferimos 5cm, pero permitimos que sea proporcional para que 3 columnas quepan en móviles */
+/* Imagen */
 .item img {
   display: block;
-  width: 5cm;               /* tamaño objetivo */
-  height: 5cm;              /* cuadrado */
-  max-width: 100%;          /* nunca sobresalga del contenedor del grid cell */
-  object-fit: contain;      /* muestra la imagen completa sin recortar */
+  width: 5cm;
+  height: 5cm;
+  max-width: 100%;
+  object-fit: contain;
   border: 1px solid #ddd;
   border-radius: 6px;
   background-color: #fff;
 }
 
-/* Texto del código y precio */
+/* Texto */
 .item p {
   margin: 8px 0 0;
   font-size: 0.9rem;
   color: #333;
 }
 
-/* MEDIA QUERIES */
-
-/* En pantallas pequeñas: forzamos 3 columnas.
-   Si 3 * 5cm excede el ancho disponible, cada columna usará 1fr (ancho relativo)
-   y las imágenes se escalarán abajo por max-width:100% para mantener aspecto cuadrado. */
+/* Responsive */
 @media (max-width: 600px) {
   .galeria {
     grid-template-columns: repeat(3, 1fr);
   }
   .item img {
-    /* Forzamos que la altura se mantenga cuadrada usando aspect-ratio cuando sea posible,
-       y usamos width:100% para que la imagen se escale dentro de su columna. */
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1;
-    max-height: none;
-  }
-}
-
-/* En pantallas medianas: permitimos hasta 4 columnas fluidas */
-@media (min-width: 601px) and (max-width: 900px) {
-  .galeria {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
-  .item img {
     width: 100%;
     height: auto;
     aspect-ratio: 1 / 1;
   }
-}
-
-/* En pantallas grandes: centramos y permitimos que cada columna sea exactamente 5cm */
-@media (min-width: 901px) {
-  .container { padding: 24px; }
-  .galeria {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(auto-fill, 5cm);
-  }
-  .item img {
-    width: 5cm;
-    height: 5cm;
-  }
-}
-
-/* Asegura contraste en impresión y modos forzados */
-@media print {
-  body { background: #fff !important; color: #000 !important; }
 }
