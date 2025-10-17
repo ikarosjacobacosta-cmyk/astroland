@@ -932,18 +932,26 @@
   </footer>
 
 <script>
-// Buscador que filtra por código, precio o categoría
+// Buscador que filtra por código (primeros 3 dígitos), precio o categoría
 document.getElementById('busqueda').addEventListener('input', function() {
   const q = this.value.trim().toLowerCase();
   const categorias = document.querySelectorAll('.categoria');
+
   categorias.forEach(cat => {
-    const title = cat.getAttribute('data-categoria').toLowerCase();
+    const title = (cat.getAttribute('data-categoria') || '').toLowerCase();
     let anyVisible = false;
+
     const items = cat.querySelectorAll('.imagen-item');
     items.forEach(item => {
-      const code = item.getAttribute('data-code').toLowerCase();
+      const code = (item.getAttribute('data-code') || '').toLowerCase();
       const price = (item.getAttribute('data-price') || '').toLowerCase();
-      const combined = (code + ' ' + price + ' ' + title);
+
+      // Solo los primeros 3 dígitos del código
+      const codePrefix = code.substring(0, 3);
+
+      // Combinar para buscar: prefijo del código + precio + categoría
+      const combined = codePrefix + ' ' + price + ' ' + title;
+
       if (q === '' || combined.includes(q)) {
         item.style.display = 'flex';
         anyVisible = true;
@@ -951,6 +959,7 @@ document.getElementById('busqueda').addEventListener('input', function() {
         item.style.display = 'none';
       }
     });
+
     cat.style.display = anyVisible ? 'block' : 'none';
   });
 });
