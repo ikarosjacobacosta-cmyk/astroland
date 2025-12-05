@@ -4,17 +4,113 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Catálogo Completo</title>
-<link rel="stylesheet" href="styles.css" />
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#fff !important; font-family: Inter, Arial, sans-serif; color:#222; }
+.container { max-width:1200px; margin:0 auto; padding:20px; }
+header { text-align:center; margin-bottom:10px; }
+h1 { margin:10px 0 20px; font-size:1.8rem; }
+
+/* Barra de búsqueda flotante */
+.floating-search-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  z-index: 1000;
+  padding: 15px 0;
+  transition: all 0.3s ease;
+}
+
+.floating-search-container .busqueda-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.floating-search-container #busqueda {
+  width: 90%;
+  max-width: 480px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.categoria { margin-bottom:30px; padding:0 6px; }
+.categoria h2 { margin:0 0 12px; text-align:left; font-size:1.2rem; border-left:6px solid #333; padding-left:10px; color:#000; }
+
+.galeria { display:grid; gap:12px; justify-items:center; }
+
+.imagen-item { display:flex; flex-direction:column; align-items:center; padding:8px; background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+
+.imagen-item img { width:5cm; height:5cm; object-fit:contain; background:#fff; border:1px solid #e0e0e0; border-radius:6px; }
+
+.imagen-item p { margin-top:8px; font-size:0.95rem; color:#333; }
+
+footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
+
+/* Ajuste del padding superior para la barra flotante */
+body {
+  padding-top: 80px;
+}
+
+/* Responsive grid: 5 cols desktop, 4 tablet, 3 mobile */
+/* Desktop: try to fit 5 columns of 5cm each if space allows */
+@media (min-width: 1200px) {
+  .galeria { grid-template-columns: repeat(5, 1fr); }
+  .imagen-item img { width:5cm; height:5cm; }
+}
+
+/* Large laptops */
+@media (min-width: 901px) and (max-width:1199px) {
+  .galeria { grid-template-columns: repeat(4, 1fr); }
+  .imagen-item img { width:calc(100% - 24px); height:auto; aspect-ratio:1/1; }
+}
+
+/* Tablet */
+@media (min-width: 601px) and (max-width:900px) {
+  .galeria { grid-template-columns: repeat(4, 1fr); }
+  .imagen-item img { width:100%; height:auto; aspect-ratio:1/1; }
+}
+
+/* Mobile: 3 columns */
+@media (max-width:600px) {
+  .galeria { grid-template-columns: repeat(3, 1fr); }
+  .imagen-item img { width:100%; height:auto; aspect-ratio:1/1; }
+  
+  /* Ajuste de padding para móviles */
+  body {
+    padding-top: 70px;
+  }
+  
+  .floating-search-container {
+    padding: 10px 0;
+  }
+}
+
+/* Make images responsive inside grid cells */
+@media (min-width:1200px) {
+  .galeria { grid-auto-rows: auto; }
+}
+</style>
 </head>
 <body>
+  <!-- Barra de búsqueda flotante -->
+  <div class="floating-search-container">
+    <div class="busqueda-container">
+      <input type="text" id="busqueda" placeholder="Buscar código completo, precio o categoría..." aria-label="Buscar">
+    </div>
+  </div>
+
   <div class="container">
     <header>
       <h1>Catálogo Completo</h1>
     </header>
-
-    <div class="busqueda-container">
-      <input type="text" id="busqueda" placeholder="Buscar código, precio o categoría..." aria-label="Buscar">
-    </div>
 
     <!-- 10 puntos -->
     <section class="categoria" data-categoria="10 puntos">
@@ -1121,7 +1217,7 @@
   </footer>
 
 <script>
-// Buscador que filtra por código (primeros 3 dígitos), precio o categoría
+// Buscador que filtra por código completo, precio o categoría
 document.getElementById('busqueda').addEventListener('input', function() {
   const q = this.value.trim().toLowerCase();
   const categorias = document.querySelectorAll('.categoria');
@@ -1135,11 +1231,8 @@ document.getElementById('busqueda').addEventListener('input', function() {
       const code = (item.getAttribute('data-code') || '').toLowerCase();
       const price = (item.getAttribute('data-price') || '').toLowerCase();
 
-      // Solo los primeros 3 dígitos del código
-      const codePrefix = code.substring(0, 3);
-
-      // Combinar para buscar: prefijo del código + precio + categoría
-      const combined = codePrefix + ' ' + price + ' ' + title;
+      // Buscar en el código completo, precio y categoría
+      const combined = code + ' ' + price + ' ' + title;
 
       if (q === '' || combined.includes(q)) {
         item.style.display = 'flex';
