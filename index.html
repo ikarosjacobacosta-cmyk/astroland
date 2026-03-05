@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Catálogo Completo - Carrito Compartido</title>
+<title>ASTROLAND - Villa Morra</title>
 <!-- Librería para generar Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -510,14 +510,14 @@ body { padding-top: 80px; }
 
   <div class="container">
     <header>
-      <h1>Catálogo Completo - Carrito Compartido</h1>
-      <p style="color: #4CAF50; font-size: 0.9rem;">✓ Sincronizado en tiempo real entre dispositivos</p>
+      <h1>ASTROLAND - Villa Morra</h1>
+      <p style="color: #4CAF50; font-size: 0.9rem;">✓ Sucursal Villa Morra</p>
     </header>
     <!-- Los productos se generarán automáticamente aquí -->
   </div> <!-- container -->
   
   <footer>
-    <p>© 2026 Catálogo</p>
+    <p>© 2026 ASTROLAND - Villa Morra</p>
   </footer>
 
   <!-- Botón del carrito -->
@@ -592,7 +592,7 @@ body { padding-top: 80px; }
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
       <span class="close" onclick="closeCartModal()">&times;</span>
-      <h3>Carrito de Compras</h3>
+      <h3>Carrito de Compras - Villa Morra</h3>
       
       <div id="cartItems" class="cart-items">
         <div class="cart-item cart-header">
@@ -623,19 +623,18 @@ body { padding-top: 80px; }
   </div>
 
 <script type="module">
-  // Import Firebase
+  // Import Firebase - Configuración de VILLA MORRA
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, set, push, onValue, remove, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // Firebase configuration - TU CONFIGURACIÓN
+  // Your web app's Firebase configuration - VILLA MORRA
   const firebaseConfig = {
-    apiKey: "AIzaSyA5uFyupKPtXFGLnqyFoBSjjXF1xCit1Ow",
-    authDomain: "villa-elisa-ef2fc.firebaseapp.com",
-    projectId: "villa-elisa-ef2fc",
-    storageBucket: "villa-elisa-ef2fc.firebasestorage.app",
-    messagingSenderId: "510459736370",
-    appId: "1:510459736370:web:153c2e4db7b65359c5e72b",
-    databaseURL: "https://villa-elisa-ef2fc-default-rtdb.firebaseio.com"
+    apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
+    authDomain: "villa-morra.firebaseapp.com",
+    projectId: "villa-morra",
+    storageBucket: "villa-morra.firebasestorage.app",
+    messagingSenderId: "184849063287",
+    appId: "1:184849063287:web:15f360231ade1b85ab5572"
   };
 
   // Initialize Firebase
@@ -650,8 +649,8 @@ body { padding-top: 80px; }
   let currentProduct = null;
   let cart = [];
   let stock = {};
-  const PASSWORD = "admin123";
-  const STOCK_INICIAL = 100; // 100 unidades de prueba para cada producto
+  const PASSWORD = "admin123"; // ← CAMBIA ESTA CONTRASEÑA SI QUIERES
+  const STOCK_INICIAL = 100;
 
   // ============================================
   // GENERADOR AUTOMÁTICO DE PRODUCTOS
@@ -660,12 +659,10 @@ body { padding-top: 80px; }
     const container = document.querySelector('.container');
     if (!container) return;
 
-    // Limpiar el container (mantener el header)
     const header = container.querySelector('header');
     container.innerHTML = '';
     if (header) container.appendChild(header);
 
-    // Configuración de productos por categoría
     const categorias = [
       {
         nombre: "000 puntos",
@@ -783,13 +780,11 @@ body { padding-top: 80px; }
       }
     ];
 
-    // Generar HTML para cada categoría
     categorias.forEach(cat => {
       const section = document.createElement('section');
       section.className = 'categoria';
       section.setAttribute('data-categoria', cat.nombre);
       
-      // Calcular cantidad de productos
       let cantidadProductos = 0;
       if (cat.rango) {
         cantidadProductos = cat.rango.hasta - cat.rango.desde + 1;
@@ -809,7 +804,6 @@ body { padding-top: 80px; }
       const galeria = document.createElement('div');
       galeria.className = 'galeria';
 
-      // Función para crear un item
       const crearItem = (codigo, precio) => {
         const item = document.createElement('div');
         item.className = 'imagen-item';
@@ -821,14 +815,13 @@ body { padding-top: 80px; }
         const precioFormateado = precio.toLocaleString('es-PY');
         
         item.innerHTML = `
-          <img src="imagenes/${codigo}.jpg" alt="${codigo}" onerror="this.src='https://via.placeholder.com/150?text=${codigo}'">
+          <img src="../imagenes/${codigo}.jpg" alt="${codigo}" onerror="this.src='https://via.placeholder.com/150?text=${codigo}'">
           <p>${codigo} - G.${precioFormateado}</p>
           <div class="stock-indicator">${STOCK_INICIAL}</div>
         `;
         return item;
       };
 
-      // Generar productos según el tipo
       if (cat.rango) {
         for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
           const sufijo = i.toString().padStart(2, '0');
@@ -851,10 +844,9 @@ body { padding-top: 80px; }
     });
   }
 
-  // Ejecutar generador al cargar
   generarTodosLosProductos();
 
-  // Escuchar cambios en el carrito
+  // Firebase listeners
   onValue(cartRef, (snapshot) => {
     const data = snapshot.val();
     cart = data ? Object.values(data) : [];
@@ -864,49 +856,35 @@ body { padding-top: 80px; }
     }
   });
 
-  // Escuchar cambios en el stock
   onValue(stockRef, (snapshot) => {
     stock = snapshot.val() || {};
     updateAllStockIndicators();
   });
 
-  // Inicializar stock - AHORA TODOS CON 100 UNIDADES
   function initializeStock() {
     const initialStock = {};
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
-      // Si no existe en Firebase o está vacío, asignar STOCK_INICIAL
       if (!stock[code]) {
         initialStock[code] = STOCK_INICIAL;
       }
     });
     
-    // Guardar stock inicial en Firebase si no existe
     get(stockRef).then((snapshot) => {
       const existingStock = snapshot.val();
       if (!existingStock) {
-        // No hay stock en Firebase, crear todo con STOCK_INICIAL
         set(stockRef, initialStock);
       } else {
-        // Hay stock en Firebase, pero verificar si faltan productos nuevos
-        const updates = {};
         document.querySelectorAll('.imagen-item').forEach(item => {
           const code = item.getAttribute('data-code');
           if (!existingStock[code]) {
-            updates[code] = STOCK_INICIAL;
+            set(ref(database, `stock/${code}`), STOCK_INICIAL);
           }
         });
-        if (Object.keys(updates).length > 0) {
-          // Actualizar solo los productos nuevos
-          Object.keys(updates).forEach(key => {
-            set(ref(database, `stock/${key}`), STOCK_INICIAL);
-          });
-        }
       }
     });
   }
 
-  // Actualizar indicadores
   function updateAllStockIndicators() {
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
@@ -952,7 +930,6 @@ body { padding-top: 80px; }
     }
   }
 
-  // Búsqueda
   window.handleSearchInput = function(input) {
     let value = input.value.replace(/\D/g, '');
     if (value.length > 3) value = value.substring(0, 3);
@@ -1001,7 +978,6 @@ body { padding-top: 80px; }
     this.setAttribute('pattern', '\\d*');
   });
 
-  // Click en productos
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function() {
       const code = this.getAttribute('data-code');
@@ -1043,7 +1019,6 @@ body { padding-top: 80px; }
     });
   });
 
-  // Funciones del modal
   window.closeModal = function() {
     document.getElementById('purchaseModal').style.display = 'none';
   };
@@ -1100,7 +1075,6 @@ body { padding-top: 80px; }
       return;
     }
     
-    // Reducir stock
     const newStock = currentStock - 1;
     set(ref(database, `stock/${code}`), newStock);
     
@@ -1119,7 +1093,6 @@ body { padding-top: 80px; }
     alert('Producto agregado al carrito');
   };
 
-  // Gestión de stock
   window.showStockManagement = function() {
     document.getElementById('stockModal').style.display = 'block';
     document.getElementById('stockPasswordPrompt').style.display = 'block';
@@ -1241,7 +1214,6 @@ body { padding-top: 80px; }
     alert('Stock actualizado correctamente');
   };
 
-  // Funciones del carrito
   function updateCartCount() {
     document.getElementById('cartCount').textContent = cart.length;
   }
@@ -1375,7 +1347,6 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `carrito_${new Date().toISOString().slice(0,10)}.xlsx`);
   }
 
-  // Cerrar modales
   window.onclick = function(event) {
     const purchaseModal = document.getElementById('purchaseModal');
     const cartModal = document.getElementById('cartModal');
@@ -1386,7 +1357,6 @@ body { padding-top: 80px; }
     if (event.target === stockModal) closeStockModal();
   };
 
-  // Inicializar
   initializeStock();
   updateCartCount();
 </script>
