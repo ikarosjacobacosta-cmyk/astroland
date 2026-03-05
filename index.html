@@ -13,7 +13,7 @@
         }
         
         body {
-            background: #ffffff; /* Fondo blanco */
+            background: #ffffff;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -26,41 +26,74 @@
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            max-width: 900px;
+            max-width: 1000px;
             width: 100%;
             border: 1px solid #eaeaea;
         }
         
-        /* ASTROLAND con letras de colores sobrios */
+        /* ASTROLAND en una sola línea */
         h1 {
             text-align: center;
             margin-bottom: 5px;
-            font-size: 3.5em;
-            letter-spacing: 3px;
+            font-size: clamp(2.5rem, 8vw, 4rem); /* Tamaño responsive */
             font-weight: 700;
             font-family: 'Times New Roman', serif;
+            white-space: nowrap; /* Fuerza una sola línea */
+            overflow-x: auto; /* Permite scroll horizontal si es necesario */
+            overflow-y: hidden;
+            padding-bottom: 5px;
+            letter-spacing: 2px;
         }
         
-        .letter-a1 { color: #b22222; } /* Rojo sobrio */
-        .letter-s { color: #2e5c4b; } /* Verde oscuro */
-        .letter-t { color: #5d3a1a; } /* Marrón */
-        .letter-r { color: #4a6c8f; } /* Azul grisáceo */
-        .letter-o { color: #8b5a2b; } /* Ocre */
-        .letter-l { color: #6b4e3a; } /* Café */
-        .letter-a2 { color: #8b3a3a; } /* Terracota */
-        .letter-n { color: #3a5f5f; } /* Verde azulado */
-        .letter-d { color: #7a4d4d; } /* Marrón rosado */
+        /* Para pantallas muy pequeñas, permitir scroll */
+        @media (max-width: 500px) {
+            h1 {
+                font-size: 2.2rem;
+                letter-spacing: 1px;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+        }
+        
+        @media (max-width: 380px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+        
+        .letter-a1 { color: #b22222; }
+        .letter-s { color: #2e5c4b; }
+        .letter-t { color: #5d3a1a; }
+        .letter-r { color: #4a6c8f; }
+        .letter-o { color: #8b5a2b; }
+        .letter-l { color: #6b4e3a; }
+        .letter-a2 { color: #8b3a3a; }
+        .letter-n { color: #3a5f5f; }
+        .letter-d { color: #7a4d4d; }
         
         .subtitle {
             text-align: center;
-            color: #000000; /* Negro */
+            color: #000000;
             margin-bottom: 30px;
-            font-size: 1.5em;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
             font-weight: bold;
             letter-spacing: 2px;
             font-family: 'Times New Roman', serif;
             border-bottom: 2px solid #e0e0e0;
             padding-bottom: 15px;
+            white-space: nowrap;
+        }
+        
+        /* Para móviles muy pequeños, el subtítulo también en una línea */
+        @media (max-width: 400px) {
+            .subtitle {
+                font-size: 1rem;
+                letter-spacing: 1px;
+            }
         }
         
         .info-badge {
@@ -70,7 +103,7 @@
             border-radius: 8px;
             text-align: center;
             margin-bottom: 30px;
-            font-size: 1em;
+            font-size: clamp(0.9rem, 3vw, 1rem);
             border-left: 4px solid #b22222;
             border-right: 4px solid #b22222;
         }
@@ -82,10 +115,17 @@
             margin-top: 20px;
         }
         
+        /* Ajuste para móviles */
+        @media (max-width: 600px) {
+            .sucursales-grid {
+                gap: 15px;
+            }
+        }
+        
         .sucursal-card {
             background: #ffffff;
             border-radius: 12px;
-            padding: 25px 15px;
+            padding: 20px 10px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -107,30 +147,36 @@
             box-shadow: 0 0 0 3px rgba(178, 34, 34, 0.2);
         }
         
-        /* Flor de lis para todas las sucursales (más pequeña, arriba) */
         .sucursal-icon {
-            font-size: 2.2em;
-            margin-bottom: 15px;
+            font-size: clamp(1.8rem, 5vw, 2.2rem);
+            margin-bottom: 10px;
             color: #b22222;
             opacity: 0.8;
         }
         
         .sucursal-card h3 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 1.3em;
+            margin-bottom: 8px;
+            font-size: clamp(1rem, 4vw, 1.3rem);
             font-weight: 600;
             position: relative;
             z-index: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 5px;
         }
         
         .direccion {
             color: #666;
-            font-size: 0.85em;
-            margin-top: 10px;
-            padding-top: 10px;
+            font-size: clamp(0.75rem, 3vw, 0.85rem);
+            margin-top: 8px;
+            padding-top: 8px;
             border-top: 1px dashed #ddd;
             font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .password-section {
@@ -162,7 +208,8 @@
             color: #333;
             margin-bottom: 20px;
             text-align: center;
-            font-size: 1.5em;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            white-space: nowrap;
         }
         
         .selected-sucursal {
@@ -179,6 +226,7 @@
             margin-bottom: 8px;
             color: #555;
             font-weight: 500;
+            font-size: clamp(0.9rem, 3vw, 1rem);
         }
         
         .input-group input {
@@ -186,7 +234,7 @@
             padding: 12px 15px;
             border: 2px solid #ddd;
             border-radius: 8px;
-            font-size: 1em;
+            font-size: clamp(0.9rem, 3vw, 1rem);
             transition: all 0.3s;
         }
         
@@ -213,18 +261,20 @@
             gap: 15px;
             justify-content: center;
             margin-top: 30px;
+            flex-wrap: wrap;
         }
         
         .btn {
-            padding: 12px 30px;
+            padding: 12px 25px;
             border: none;
             border-radius: 6px;
-            font-size: 1em;
+            font-size: clamp(0.9rem, 3vw, 1rem);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             text-decoration: none;
             display: inline-block;
+            white-space: nowrap;
         }
         
         .btn-primary {
@@ -255,6 +305,7 @@
             margin-top: 15px;
             font-weight: 500;
             display: none;
+            font-size: clamp(0.85rem, 3vw, 0.95rem);
         }
         
         .error-message.show {
@@ -271,7 +322,7 @@
             text-align: center;
             margin-top: 40px;
             color: #888;
-            font-size: 0.9em;
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
             border-top: 1px solid #eaeaea;
             padding-top: 20px;
         }
@@ -280,16 +331,10 @@
             text-align: center;
             margin-top: 10px;
             color: #888;
-            font-size: 0.85em;
+            font-size: clamp(0.75rem, 2.5vw, 0.85rem);
         }
         
-        /* Para mantener el símbolo consistente */
-        .sucursal-icon {
-            font-size: 2.2em;
-        }
-        
-        /* Todos usan el mismo símbolo: flor de lis */
-        .sucursal-card .sucursal-icon::before {
+        .sucursal-icon::before {
             content: "⚜️";
         }
     </style>
@@ -371,7 +416,7 @@
         
         <div class="footer">
             <p>© 2026 ASTROLAND - Todos los derechos reservados</p>
-            <p style="margin-top: 10px; font-size: 0.85em;">Sistema protegido - 4 sucursales habilitadas</p>
+            <p style="margin-top: 10px;">Sistema protegido - 4 sucursales habilitadas</p>
         </div>
     </div>
 
@@ -495,13 +540,6 @@
         // Cerrar sesión al salir
         window.addEventListener('load', function() {
             sessionStorage.clear();
-        });
-
-        // Proteger contra clic derecho (opcional)
-        document.addEventListener('contextmenu', function(e) {
-            if (!window.location.href.includes('sucursales')) {
-                e.preventDefault();
-            }
         });
     </script>
 </body>
