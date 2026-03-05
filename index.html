@@ -651,6 +651,7 @@ body { padding-top: 80px; }
   let cart = [];
   let stock = {};
   const PASSWORD = "admin123";
+  const STOCK_INICIAL = 100; // 100 unidades de prueba para cada producto
 
   // ============================================
   // GENERADOR AUTOMÁTICO DE PRODUCTOS
@@ -801,7 +802,7 @@ body { padding-top: 80px; }
       const titulo = document.createElement('h2');
       titulo.innerHTML = `
         ${cat.nombre}
-        <span class="stock-badge" id="stock-${cat.categoria}">Stock: <span>${cantidadProductos * 100}</span></span>
+        <span class="stock-badge" id="stock-${cat.categoria}">Stock: <span>${cantidadProductos * STOCK_INICIAL}</span></span>
       `;
       section.appendChild(titulo);
 
@@ -822,7 +823,7 @@ body { padding-top: 80px; }
         item.innerHTML = `
           <img src="imagenes/${codigo}.jpg" alt="${codigo}" onerror="this.src='https://via.placeholder.com/150?text=${codigo}'">
           <p>${codigo} - G.${precioFormateado}</p>
-          <div class="stock-indicator">100</div>
+          <div class="stock-indicator">${STOCK_INICIAL}</div>
         `;
         return item;
       };
@@ -869,19 +870,38 @@ body { padding-top: 80px; }
     updateAllStockIndicators();
   });
 
-  // Inicializar stock
+  // Inicializar stock - AHORA TODOS CON 100 UNIDADES
   function initializeStock() {
     const initialStock = {};
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
+      // Si no existe en Firebase o está vacío, asignar STOCK_INICIAL
       if (!stock[code]) {
-        initialStock[code] = 100;
+        initialStock[code] = STOCK_INICIAL;
       }
     });
     
+    // Guardar stock inicial en Firebase si no existe
     get(stockRef).then((snapshot) => {
-      if (!snapshot.val()) {
+      const existingStock = snapshot.val();
+      if (!existingStock) {
+        // No hay stock en Firebase, crear todo con STOCK_INICIAL
         set(stockRef, initialStock);
+      } else {
+        // Hay stock en Firebase, pero verificar si faltan productos nuevos
+        const updates = {};
+        document.querySelectorAll('.imagen-item').forEach(item => {
+          const code = item.getAttribute('data-code');
+          if (!existingStock[code]) {
+            updates[code] = STOCK_INICIAL;
+          }
+        });
+        if (Object.keys(updates).length > 0) {
+          // Actualizar solo los productos nuevos
+          Object.keys(updates).forEach(key => {
+            set(ref(database, `stock/${key}`), STOCK_INICIAL);
+          });
+        }
       }
     });
   }
@@ -890,7 +910,7 @@ body { padding-top: 80px; }
   function updateAllStockIndicators() {
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
-      const stockValue = stock[code] || 0;
+      const stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
       
       const indicator = item.querySelector('.stock-indicator');
       if (indicator) {
@@ -917,7 +937,7 @@ body { padding-top: 80px; }
         if (!categories[category]) {
           categories[category] = 0;
         }
-        categories[category] += stock[code] || 0;
+        categories[category] += (stock[code] !== undefined ? stock[code] : STOCK_INICIAL);
       }
     });
     
@@ -985,7 +1005,7 @@ body { padding-top: 80px; }
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function() {
       const code = this.getAttribute('data-code');
-      const stockValue = stock[code] || 0;
+      const stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
       
       if (stockValue <= 0) {
         alert('Este producto no tiene stock disponible');
@@ -1046,7 +1066,9 @@ body { padding-top: 80px; }
   window.addToCart = function() {
     if (!currentProduct) return;
     const code = currentProduct.code;
-    if (stock[code] <= 0) {
+    const currentStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
+    
+    if (currentStock <= 0) {
       alert('No hay stock disponible');
       closeModal();
       return;
@@ -1079,7 +1101,7 @@ body { padding-top: 80px; }
     }
     
     // Reducir stock
-    const newStock = (stock[code] || 0) - 1;
+    const newStock = currentStock - 1;
     set(ref(database, `stock/${code}`), newStock);
     
     const cartItem = {
@@ -1134,7 +1156,7 @@ body { padding-top: 80px; }
         name: item.querySelector('p').textContent,
         img: item.querySelector('img').src,
         alt: item.querySelector('img').alt,
-        currentStock: stock[item.getAttribute('data-code')] || 0
+        currentStock: stock[item.getAttribute('data-code')] !== undefined ? stock[item.getAttribute('data-code')] : STOCK_INICIAL
       });
     });
     
@@ -1265,7 +1287,7 @@ body { padding-top: 80px; }
     if (password === PASSWORD) {
       const item = cart.find(i => i.id === itemId);
       if (item && item.code) {
-        const currentStock = stock[item.code] || 0;
+        const currentStock = stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL;
         set(ref(database, `stock/${item.code}`), currentStock + 1);
       }
       
