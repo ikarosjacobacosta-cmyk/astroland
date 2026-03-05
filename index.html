@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ASTROLAND - Catálogo</title>
+<title>ASTROLAND - Villa Morra</title>
 <!-- Librería para generar Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -510,14 +510,14 @@ body { padding-top: 80px; }
 
   <div class="container">
     <header>
-      <h1>ASTROLAND</h1>
-      <p style="color: #4CAF50; font-size: 0.9rem;">✓ Sincronizado en tiempo real</p>
+      <h1>ASTROLAND - Villa Morra</h1>
+      <p style="color: #4CAF50; font-size: 0.9rem;">✓ Sucursal Villa Morra</p>
     </header>
     <!-- Los productos se generarán automáticamente aquí -->
   </div> <!-- container -->
   
   <footer>
-    <p>© 2026 ASTROLAND</p>
+    <p>© 2026 ASTROLAND - Villa Morra</p>
   </footer>
 
   <!-- Botón del carrito -->
@@ -592,7 +592,7 @@ body { padding-top: 80px; }
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
       <span class="close" onclick="closeCartModal()">&times;</span>
-      <h3>Carrito de Compras</h3>
+      <h3>Carrito de Compras - Villa Morra</h3>
       
       <div id="cartItems" class="cart-items">
         <div class="cart-item cart-header">
@@ -623,18 +623,18 @@ body { padding-top: 80px; }
   </div>
 
 <script type="module">
-  // Import Firebase - NUEVA CONFIGURACIÓN
+  // Import Firebase - Configuración de VILLA MORRA
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, set, push, onValue, remove, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // Your web app's Firebase configuration - NUEVA
+  // Your web app's Firebase configuration - VILLA MORRA
   const firebaseConfig = {
-    apiKey: "AIzaSyA8_UWz8_FyEssktYGDC55150QGdtWck94",
-    authDomain: "astroland-63b6b.firebaseapp.com",
-    projectId: "astroland-63b6b",
-    storageBucket: "astroland-63b6b.firebasestorage.app",
-    messagingSenderId: "652888707057",
-    appId: "1:652888707057:web:aa6cc53fe9256169083e50"
+    apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
+    authDomain: "villa-morra.firebaseapp.com",
+    projectId: "villa-morra",
+    storageBucket: "villa-morra.firebasestorage.app",
+    messagingSenderId: "184849063287",
+    appId: "1:184849063287:web:15f360231ade1b85ab5572"
   };
 
   // Initialize Firebase
@@ -649,7 +649,7 @@ body { padding-top: 80px; }
   let currentProduct = null;
   let cart = [];
   let stock = {};
-  const PASSWORD = "admin123";
+  const PASSWORD = "admin123"; // ← CAMBIA ESTA CONTRASEÑA SI QUIERES
   const STOCK_INICIAL = 100;
 
   // ============================================
