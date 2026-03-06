@@ -7,6 +7,7 @@
 <!-- Librería para generar Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
+/* MISMOS ESTILOS QUE EN VILLA MORRA */
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; background:#fff !important; font-family: Inter, Arial, sans-serif; color:#222; }
@@ -52,6 +53,8 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
     -webkit-appearance: none;
     appearance: none;
   }
+  body { padding-top: 70px; }
+  .floating-search-container { padding: 10px 0; }
 }
 
 .categoria { margin-bottom:30px; padding:0 6px; }
@@ -76,7 +79,11 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   font-weight: normal;
 }
 
-.galeria { display:grid; gap:12px; justify-items:center; }
+.galeria { 
+  display:grid; 
+  gap:12px; 
+  justify-items:center; 
+}
 
 .imagen-item { 
   display:flex; 
@@ -89,6 +96,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   cursor:pointer; 
   transition:transform 0.2s;
   position: relative;
+  width: 100%;
 }
 .imagen-item:hover { transform:scale(1.02); box-shadow:0 4px 8px rgba(0,0,0,0.1); }
 .imagen-item.out-of-stock {
@@ -110,40 +118,39 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-radius: 12px;
   font-size: 0.7rem;
   font-weight: bold;
+  z-index: 2;
 }
 
-.imagen-item img { width:5cm; height:5cm; object-fit:contain; background:#fff; border:1px solid #e0e0e0; border-radius:6px; }
+.imagen-item img { 
+  width: 5cm; 
+  height: 5cm; 
+  object-fit:contain; 
+  background:#f9f9f9; 
+  border:1px solid #e0e0e0; 
+  border-radius:6px;
+  loading: lazy;
+  decoding: async;
+}
 
-.imagen-item p { margin-top:8px; font-size:0.95rem; color:#333; }
+.imagen-item p { 
+  margin-top:8px; 
+  font-size:0.95rem; 
+  color:#333;
+  font-weight: 500;
+}
 
-.stock-control {
+.imagen-item .img-placeholder {
+  width: 5cm;
+  height: 5cm;
   display: flex;
-  gap: 5px;
-  margin-top: 8px;
-  justify-content: center;
   align-items: center;
-}
-
-.stock-control input {
-  width: 70px;
-  padding: 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.stock-control button {
-  padding: 4px 8px;
-  background: #4CAF50;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.stock-control button:hover {
-  background: #45a049;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
 }
 
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
@@ -154,22 +161,17 @@ body { padding-top: 80px; }
   .galeria { grid-template-columns: repeat(5, 1fr); }
   .imagen-item img { width:5cm; height:5cm; }
 }
-
 @media (min-width: 901px) and (max-width:1199px) {
   .galeria { grid-template-columns: repeat(4, 1fr); }
   .imagen-item img { width:calc(100% - 24px); height:auto; aspect-ratio:1/1; }
 }
-
 @media (min-width: 601px) and (max-width:900px) {
   .galeria { grid-template-columns: repeat(4, 1fr); }
   .imagen-item img { width:100%; height:auto; aspect-ratio:1/1; }
 }
-
 @media (max-width:600px) {
   .galeria { grid-template-columns: repeat(3, 1fr); }
   .imagen-item img { width:100%; height:auto; aspect-ratio:1/1; }
-  body { padding-top: 70px; }
-  .floating-search-container { padding: 10px 0; }
 }
 
 /* Modal styles */
@@ -183,7 +185,6 @@ body { padding-top: 80px; }
   height: 100%;
   background-color: rgba(0,0,0,0.5);
 }
-
 .modal-content {
   background-color: #fff;
   margin: 5% auto;
@@ -195,7 +196,6 @@ body { padding-top: 80px; }
   overflow-y: auto;
   position: relative;
 }
-
 .close {
   color: #aaa;
   float: right;
@@ -206,13 +206,11 @@ body { padding-top: 80px; }
   right: 20px;
   top: 10px;
 }
-
 .close:hover { color: #000; }
 
 .modal h3 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 
 .product-info { background: #f8f8f8; padding: 10px; border-radius: 6px; margin: 15px 0; }
-
 .stock-info {
   background: #e3f2fd;
   padding: 10px;
@@ -222,13 +220,9 @@ body { padding-top: 80px; }
   font-weight: bold;
   color: #1976D2;
 }
-
 .payment-options { margin: 20px 0; }
-
 .payment-option { margin: 15px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-
 .payment-option label { font-weight: bold; display: block; margin-bottom: 8px; color: #444; }
-
 .payment-option input[type="number"] {
   width: 100%;
   padding: 8px;
@@ -236,7 +230,6 @@ body { padding-top: 80px; }
   border-radius: 4px;
   font-size: 1rem;
 }
-
 .auto-calc { font-size: 0.9rem; color: #666; margin-top: 5px; }
 
 .modal-buttons {
@@ -244,7 +237,6 @@ body { padding-top: 80px; }
   gap: 10px;
   margin-top: 20px;
 }
-
 .modal-buttons button {
   flex: 1;
   padding: 12px;
@@ -255,14 +247,9 @@ body { padding-top: 80px; }
   font-weight: 600;
   transition: background 0.2s;
 }
-
 #addToCart { background: #4CAF50; color: white; }
 #addToCart:hover { background: #45a049; }
-#addToCart:disabled {
-  background: #cccccc;
-  cursor: not-allowed;
-}
-
+#addToCart:disabled { background: #cccccc; cursor: not-allowed; }
 #cancelModal { background: #f44336; color: white; }
 #cancelModal:hover { background: #da190b; }
 
@@ -286,10 +273,8 @@ body { padding-top: 80px; }
   align-items: center;
   gap: 8px;
 }
-
 .cart-button:hover { background: #1976D2; }
 
-/* Botón de stock */
 .stock-button {
   position: fixed;
   bottom: 20px;
@@ -309,9 +294,9 @@ body { padding-top: 80px; }
   align-items: center;
   gap: 8px;
 }
-
 .stock-button:hover { background: #F57C00; }
 
+/* Estilos del carrito con hora */
 .cart-modal {
   display: none;
   position: fixed;
@@ -322,47 +307,41 @@ body { padding-top: 80px; }
   height: 100%;
   background-color: rgba(0,0,0,0.5);
 }
-
 .cart-content {
   background-color: #fff;
   margin: 5% auto;
   padding: 25px;
   border-radius: 12px;
   width: 90%;
-  max-width: 800px;
+  max-width: 900px;
   max-height: 80vh;
   overflow-y: auto;
 }
-
 .cart-items {
   margin: 20px 0;
   border: 1px solid #eee;
   border-radius: 6px;
 }
-
 .cart-item {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr 0.8fr;
   padding: 10px;
   border-bottom: 1px solid #eee;
   align-items: center;
+  gap: 5px;
 }
-
 .cart-header {
   background: #f5f5f5;
   font-weight: bold;
   border-radius: 6px 6px 0 0;
 }
-
 .cart-total { display: none; }
-
 .cart-actions {
   display: flex;
   gap: 10px;
   margin-top: 20px;
   flex-wrap: wrap;
 }
-
 .cart-actions button {
   padding: 10px 20px;
   border: none;
@@ -372,25 +351,34 @@ body { padding-top: 80px; }
   font-weight: 600;
   transition: background 0.2s;
 }
-
 #exportExcel { background: #4CAF50; color: white; }
 #exportExcel:hover { background: #45a049; }
-
 #clearCart { background: #ff9800; color: white; }
 #clearCart:hover { background: #f57c00; }
+
+/* Responsive para móviles */
+@media (max-width: 700px) {
+  .cart-item {
+    grid-template-columns: 1fr 0.8fr 0.8fr 1.2fr 0.8fr;
+    font-size: 0.8rem;
+  }
+  .cart-item span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 
 .password-input {
   display: none;
   margin-top: 10px;
 }
-
 .password-input input {
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-right: 5px;
 }
-
 .password-input button {
   padding: 8px 15px;
   background: #2196F3;
@@ -400,12 +388,10 @@ body { padding-top: 80px; }
   cursor: pointer;
 }
 
-/* Stock management search */
 .stock-search-container {
   margin: 20px 0;
   text-align: center;
 }
-
 .stock-search-container input {
   width: 90%;
   max-width: 480px;
@@ -416,40 +402,23 @@ body { padding-top: 80px; }
   inputmode: numeric;
   pattern: \d*;
 }
-
-.stock-category {
-  margin-top: 20px;
-}
-
+.stock-category { margin-top: 20px; }
 .stock-category h4 {
   margin: 15px 0 10px;
   padding-left: 10px;
   border-left: 4px solid #FF9800;
   color: #333;
 }
-
 .stock-gallery {
   display: grid;
   gap: 12px;
   justify-items: center;
   margin-bottom: 20px;
 }
-
-@media (min-width: 1200px) {
-  .stock-gallery { grid-template-columns: repeat(5, 1fr); }
-}
-
-@media (min-width: 901px) and (max-width:1199px) {
-  .stock-gallery { grid-template-columns: repeat(4, 1fr); }
-}
-
-@media (min-width: 601px) and (max-width:900px) {
-  .stock-gallery { grid-template-columns: repeat(4, 1fr); }
-}
-
-@media (max-width:600px) {
-  .stock-gallery { grid-template-columns: repeat(3, 1fr); }
-}
+@media (min-width: 1200px) { .stock-gallery { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 901px) and (max-width:1199px) { .stock-gallery { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 601px) and (max-width:900px) { .stock-gallery { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width:600px) { .stock-gallery { grid-template-columns: repeat(3, 1fr); } }
 
 .stock-item {
   display: flex;
@@ -460,7 +429,6 @@ body { padding-top: 80px; }
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-
 .stock-item img {
   width: 3cm;
   height: 3cm;
@@ -468,19 +436,16 @@ body { padding-top: 80px; }
   border: 1px solid #e0e0e0;
   border-radius: 6px;
 }
-
 .stock-item p {
   margin: 5px 0;
   font-size: 0.85rem;
   text-align: center;
 }
-
 .stock-item .stock-control {
   display: flex;
   gap: 5px;
   margin-top: 5px;
 }
-
 .stock-item .stock-control input {
   width: 60px;
   padding: 4px;
@@ -488,7 +453,6 @@ body { padding-top: 80px; }
   border-radius: 4px;
   text-align: center;
 }
-
 .stock-item .stock-control button {
   padding: 4px 8px;
   background: #4CAF50;
@@ -520,15 +484,9 @@ body { padding-top: 80px; }
     <p>© 2026 ASTROLAND - Lambare</p>
   </footer>
 
-  <!-- Botón del carrito -->
-  <button class="cart-button" onclick="openCartModal()">
-    🛒 Carrito (<span id="cartCount">0</span>)
-  </button>
-
-  <!-- Botón de gestión de stock -->
-  <button class="stock-button" onclick="showStockManagement()">
-    📦 Gestionar Stock
-  </button>
+  <!-- Botones -->
+  <button class="cart-button" onclick="openCartModal()">🛒 Carrito (<span id="cartCount">0</span>)</button>
+  <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
 
   <!-- Modal de compra -->
   <div id="purchaseModal" class="modal">
@@ -588,7 +546,7 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal del carrito -->
+  <!-- Modal del carrito (CON HORA) -->
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
       <span class="close" onclick="closeCartModal()">&times;</span>
@@ -599,6 +557,7 @@ body { padding-top: 80px; }
           <span>Producto</span>
           <span>Puntos</span>
           <span>Dinero (G.)</span>
+          <span>Fecha/Hora</span>
           <span>Acciones</span>
         </div>
       </div>
@@ -623,11 +582,13 @@ body { padding-top: 80px; }
   </div>
 
 <script type="module">
-  // Import Firebase - Configuración de LAMBARE
+  // Import Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue, remove, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+  import { getDatabase, ref, set, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // Your web app's Firebase configuration - LAMBARE
+  // ============================================
+  // CONFIGURACIÓN DE FIREBASE - LAMBARE
+  // ============================================
   const firebaseConfig = {
     apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
     authDomain: "lambare-85124.firebaseapp.com",
@@ -649,11 +610,11 @@ body { padding-top: 80px; }
   let currentProduct = null;
   let cart = [];
   let stock = {};
-  const PASSWORD = "admin123"; // ← CAMBIA ESTA CONTRASEÑA SI QUIERES
+  const PASSWORD = "admin123";
   const STOCK_INICIAL = 100;
 
   // ============================================
-  // GENERADOR AUTOMÁTICO DE PRODUCTOS
+  // GENERADOR AUTOMÁTICO DE PRODUCTOS (MISMA FUNCIÓN)
   // ============================================
   function generarTodosLosProductos() {
     const container = document.querySelector('.container');
@@ -814,11 +775,33 @@ body { padding-top: 80px; }
         
         const precioFormateado = precio.toLocaleString('es-PY');
         
+        const colores = [
+          'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+          'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+          'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+        ];
+        const index = codigo.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
+        
         item.innerHTML = `
-          <img src="../imagenes/${codigo}.jpg" alt="${codigo}" onerror="this.src='https://via.placeholder.com/150?text=${codigo}'">
+          <div class="img-placeholder" style="background: ${colores[index]};">
+            ${codigo.replace('-', ' ')}
+          </div>
           <p>${codigo} - G.${precioFormateado}</p>
           <div class="stock-indicator">${STOCK_INICIAL}</div>
         `;
+        
+        // Cargar imagen real en segundo plano
+        const img = new Image();
+        img.onload = function() {
+          const placeholder = item.querySelector('.img-placeholder');
+          if (placeholder) {
+            placeholder.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy" decoding="async">`;
+          }
+        };
+        img.src = `../imagenes/${codigo}.jpg`;
+        
         return item;
       };
 
@@ -846,21 +829,34 @@ body { padding-top: 80px; }
 
   generarTodosLosProductos();
 
-  // Firebase listeners
+  // ============================================
+  // FUNCIONES DE FIREBASE Y CARRITO (MISMAS)
+  // ============================================
+
+  // Escuchar cambios en el carrito
   onValue(cartRef, (snapshot) => {
     const data = snapshot.val();
-    cart = data ? Object.values(data) : [];
+    if (data) {
+      cart = Object.entries(data).map(([key, value]) => ({
+        ...value,
+        firebaseKey: key
+      }));
+    } else {
+      cart = [];
+    }
     updateCartCount();
     if (document.getElementById('cartModal').style.display === 'block') {
       renderCart();
     }
   });
 
+  // Escuchar cambios en el stock
   onValue(stockRef, (snapshot) => {
     stock = snapshot.val() || {};
     updateAllStockIndicators();
   });
 
+  // Inicializar stock
   function initializeStock() {
     const initialStock = {};
     document.querySelectorAll('.imagen-item').forEach(item => {
@@ -885,6 +881,7 @@ body { padding-top: 80px; }
     });
   }
 
+  // Actualizar indicadores
   function updateAllStockIndicators() {
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
@@ -901,20 +898,16 @@ body { padding-top: 80px; }
         item.classList.remove('out-of-stock');
       }
     });
-    
     updateCategoryStockCounters();
   }
 
   function updateCategoryStockCounters() {
     const categories = {};
-    
     document.querySelectorAll('.imagen-item').forEach(item => {
       const category = item.getAttribute('data-category');
       const code = item.getAttribute('data-code');
       if (category) {
-        if (!categories[category]) {
-          categories[category] = 0;
-        }
+        if (!categories[category]) categories[category] = 0;
         categories[category] += (stock[code] !== undefined ? stock[code] : STOCK_INICIAL);
       }
     });
@@ -923,13 +916,12 @@ body { padding-top: 80px; }
       const badge = document.getElementById(`stock-${category}`);
       if (badge) {
         const span = badge.querySelector('span');
-        if (span) {
-          span.textContent = categories[category];
-        }
+        if (span) span.textContent = categories[category];
       }
     }
   }
 
+  // Búsqueda
   window.handleSearchInput = function(input) {
     let value = input.value.replace(/\D/g, '');
     if (value.length > 3) value = value.substring(0, 3);
@@ -978,6 +970,7 @@ body { padding-top: 80px; }
     this.setAttribute('pattern', '\\d*');
   });
 
+  // Click en productos
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function() {
       const code = this.getAttribute('data-code');
@@ -1038,8 +1031,12 @@ body { padding-top: 80px; }
     }
   };
 
+  // ============================================
+  // AGREGAR AL CARRITO (CON HORA)
+  // ============================================
   window.addToCart = function() {
     if (!currentProduct) return;
+    
     const code = currentProduct.code;
     const currentStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
     
@@ -1075,24 +1072,110 @@ body { padding-top: 80px; }
       return;
     }
     
+    // Reducir stock
     const newStock = currentStock - 1;
     set(ref(database, `stock/${code}`), newStock);
     
+    // Obtener fecha y hora actual
+    const ahora = new Date();
+    const fecha = ahora.toLocaleDateString('es-PY');
+    const hora = ahora.toLocaleTimeString('es-PY', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit',
+      hour12: false 
+    });
+    const fechaHora = fecha + ' ' + hora;
+    
+    // Crear item del carrito con hora
     const cartItem = {
-      id: Date.now() + Math.random(),
       code: code,
       name: currentProduct.name,
       points: points,
       money: money,
       totalPrice: currentProduct.price,
-      timestamp: new Date().toLocaleString()
+      fecha: fecha,
+      hora: hora,
+      timestamp: fechaHora,
+      timestampCompleto: ahora.getTime()
     };
     
+    // Guardar en Firebase
     push(cartRef, cartItem);
+    
     closeModal();
-    alert('Producto agregado al carrito');
+    alert('✅ Producto agregado al carrito');
   };
 
+  // ============================================
+  // ELIMINAR ITEM
+  // ============================================
+  window.showDeletePrompt = function(firebaseKey) {
+    const password = prompt('🔐 Ingresa la contraseña para eliminar este item:');
+    if (password === PASSWORD) {
+      const item = cart.find(i => i.firebaseKey === firebaseKey);
+      
+      if (!item) {
+        alert('❌ No se encontró el item');
+        return;
+      }
+      
+      // Devolver stock
+      if (item.code) {
+        const currentStock = stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL;
+        set(ref(database, `stock/${item.code}`), currentStock + 1);
+      }
+      
+      // Eliminar usando firebaseKey
+      remove(ref(database, `carrito/${firebaseKey}`))
+        .then(() => {
+          alert('✅ Item eliminado correctamente');
+        })
+        .catch((error) => {
+          alert('❌ Error al eliminar: ' + error.message);
+        });
+        
+    } else {
+      alert('❌ Contraseña incorrecta');
+    }
+  };
+
+  // ============================================
+  // RENDERIZAR CARRITO (CON HORA)
+  // ============================================
+  function renderCart() {
+    const cartItemsDiv = document.getElementById('cartItems');
+    cartItemsDiv.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>Puntos</span><span>Dinero (G.)</span><span>Fecha/Hora</span><span>Acciones</span></div>';
+    
+    cart.forEach((item) => {
+      if (!item) return;
+      
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'cart-item';
+      itemDiv.innerHTML = `
+        <span>${item.name}</span>
+        <span>${item.points.toLocaleString()}</span>
+        <span>G.${item.money.toLocaleString()}</span>
+        <span style="font-size:0.8rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
+        <span>
+          <button onclick="showDeletePrompt('${item.firebaseKey}')" 
+                  style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">
+            🗑️ Eliminar
+          </button>
+        </span>
+      `;
+      cartItemsDiv.appendChild(itemDiv);
+    });
+    
+    if (cart.length === 0) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'cart-item';
+      emptyDiv.innerHTML = '<span colspan="5" style="text-align:center; padding:20px;">Carrito vacío</span>';
+      cartItemsDiv.appendChild(emptyDiv);
+    }
+  }
+
+  // Funciones de gestión de stock
   window.showStockManagement = function() {
     document.getElementById('stockModal').style.display = 'block';
     document.getElementById('stockPasswordPrompt').style.display = 'block';
@@ -1121,14 +1204,12 @@ body { padding-top: 80px; }
     
     document.querySelectorAll('.imagen-item').forEach(item => {
       const category = item.getAttribute('data-category');
-      if (!categories[category]) {
-        categories[category] = [];
-      }
+      if (!categories[category]) categories[category] = [];
       categories[category].push({
         code: item.getAttribute('data-code'),
         name: item.querySelector('p').textContent,
-        img: item.querySelector('img').src,
-        alt: item.querySelector('img').alt,
+        img: item.querySelector('img')?.src || item.querySelector('.img-placeholder')?.style.background,
+        alt: item.querySelector('img')?.alt || '',
         currentStock: stock[item.getAttribute('data-code')] !== undefined ? stock[item.getAttribute('data-code')] : STOCK_INICIAL
       });
     });
@@ -1143,7 +1224,9 @@ body { padding-top: 80px; }
       categories[category].forEach(item => {
         html += `
           <div class="stock-item" data-code="${item.code}">
-            <img src="${item.img}" alt="${item.alt}">
+            <div class="img-placeholder" style="width:3cm; height:3cm; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center; color:white; border-radius:6px;">
+              ${item.code.replace('-', ' ')}
+            </div>
             <p>${item.name}</p>
             <div class="stock-control">
               <input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1">
@@ -1155,7 +1238,6 @@ body { padding-top: 80px; }
       
       html += `</div></div>`;
     }
-    
     container.innerHTML = html;
   }
 
@@ -1229,51 +1311,6 @@ body { padding-top: 80px; }
     hideClearPrompt();
   };
 
-  function renderCart() {
-    const cartItemsDiv = document.getElementById('cartItems');
-    cartItemsDiv.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>Puntos</span><span>Dinero (G.)</span><span>Acciones</span></div>';
-    
-    cart.forEach((item) => {
-      if (!item || !item.id) return;
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'cart-item';
-      itemDiv.innerHTML = `
-        <span>${item.name}</span>
-        <span>${item.points.toLocaleString()}</span>
-        <span>G.${item.money.toLocaleString()}</span>
-        <span><button onclick="showDeletePrompt('${item.id}')" style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">Eliminar</button></span>
-      `;
-      cartItemsDiv.appendChild(itemDiv);
-    });
-    
-    if (cart.length === 0) {
-      const emptyDiv = document.createElement('div');
-      emptyDiv.className = 'cart-item';
-      emptyDiv.innerHTML = '<span colspan="4" style="text-align:center; padding:20px;">Carrito vacío</span>';
-      cartItemsDiv.appendChild(emptyDiv);
-    }
-  }
-
-  window.showDeletePrompt = function(itemId) {
-    const password = prompt('Ingresa la contraseña para eliminar este item:');
-    if (password === PASSWORD) {
-      const item = cart.find(i => i.id === itemId);
-      if (item && item.code) {
-        const currentStock = stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL;
-        set(ref(database, `stock/${item.code}`), currentStock + 1);
-      }
-      
-      const cartItemQuery = query(ref(database, 'carrito'), orderByChild('id'), equalTo(itemId));
-      get(cartItemQuery).then((snapshot) => {
-        snapshot.forEach((childSnapshot) => {
-          remove(childSnapshot.ref);
-        });
-      });
-    } else {
-      alert('Contraseña incorrecta');
-    }
-  };
-
   window.showExportPasswordPrompt = function() {
     document.getElementById('exportPasswordPrompt').style.display = 'block';
   };
@@ -1313,6 +1350,9 @@ body { padding-top: 80px; }
     }
   };
 
+  // ============================================
+  // EXPORTAR A EXCEL (SIN PRECIO TOTAL Y CON TÍTULO)
+  // ============================================
   function exportToExcel() {
     if (cart.length === 0) {
       alert('El carrito está vacío');
@@ -1321,44 +1361,68 @@ body { padding-top: 80px; }
     
     const totalPoints = cart.reduce((sum, item) => sum + item.points, 0);
     const totalMoney = cart.reduce((sum, item) => sum + item.money, 0);
-    const totalPrice = cart.reduce((sum, item) => sum + item.totalPrice, 0);
     
+    // Obtener nombre de la sucursal del título
+    const tituloSucursal = document.querySelector('h1').textContent;
+    const nombreSucursal = tituloSucursal.replace('ASTROLAND - ', '');
+    
+    // Crear datos para Excel con título
     const data = [
-      ['Producto', 'Puntos Pagados', 'Dinero Pagado (G.)', 'Precio Total (G.)', 'Fecha'],
+      ['ASTROLAND - ' + nombreSucursal],
+      ['IN GOD WE TRUST'],
+      [], // Fila vacía
+      ['Producto', 'Puntos Pagados', 'Dinero Pagado (G.)', 'Fecha', 'Hora'],
       ...cart.map(item => [
         item.name,
         item.points,
         item.money,
-        item.totalPrice,
-        item.timestamp
+        item.fecha || (item.timestamp ? item.timestamp.split(' ')[0] : ''),
+        item.hora || (item.timestamp ? item.timestamp.split(' ')[1] : '')
       ]),
-      ['TOTALES', '', totalPoints, totalMoney, totalPrice]
+      [], // Fila vacía
+      ['TOTALES', totalPoints, totalMoney, '', '']
     ];
     
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
     
+    // Estilos para el título (combinar celdas)
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Fusionar celdas para el título
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }  // Fusionar celdas para el subtítulo
+    ];
+    
+    // Anchos de columna
     const colWidths = [
-      { wch: 40 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 25 }
+      { wch: 40 }, // Producto
+      { wch: 15 }, // Puntos
+      { wch: 20 }, // Dinero
+      { wch: 15 }, // Fecha
+      { wch: 15 }  // Hora
     ];
     ws['!cols'] = colWidths;
     
     XLSX.utils.book_append_sheet(wb, ws, 'Carrito');
-    XLSX.writeFile(wb, `carrito_${new Date().toISOString().slice(0,10)}.xlsx`);
+    
+    // Nombre del archivo con sucursal y fecha
+    const fechaActual = new Date().toLocaleDateString('es-PY').replace(/\//g, '-');
+    XLSX.writeFile(wb, `ASTROLAND_${nombreSucursal}_${fechaActual}.xlsx`);
   }
 
   window.onclick = function(event) {
     const purchaseModal = document.getElementById('purchaseModal');
     const cartModal = document.getElementById('cartModal');
     const stockModal = document.getElementById('stockModal');
-    
     if (event.target === purchaseModal) closeModal();
     if (event.target === cartModal) closeCartModal();
     if (event.target === stockModal) closeStockModal();
   };
 
-  initializeStock();
-  updateCartCount();
+  // Inicializar
+  setTimeout(() => {
+    initializeStock();
+    updateCartCount();
+  }, 100);
 </script>
 </body>
 </html>
