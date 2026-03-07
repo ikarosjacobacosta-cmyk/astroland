@@ -1408,14 +1408,26 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `ASTROLAND_${nombreSucursal}_${fechaActual}.xlsx`);
   }
 
-  window.onclick = function(event) {
-    const purchaseModal = document.getElementById('purchaseModal');
-    const cartModal = document.getElementById('cartModal');
-    const stockModal = document.getElementById('stockModal');
-    if (event.target === purchaseModal) closeModal();
-    if (event.target === cartModal) closeCartModal();
-    if (event.target === stockModal) closeStockModal();
-  };
+  // ANTES (se cerraba todo con clic fuera)
+window.onclick = function(event) {
+  const purchaseModal = document.getElementById('purchaseModal');
+  const cartModal = document.getElementById('cartModal');
+  const stockModal = document.getElementById('stockModal');
+  
+  if (event.target === purchaseModal) closeModal();      // ← SE CERRABA
+  if (event.target === cartModal) closeCartModal();
+  if (event.target === stockModal) closeStockModal();
+};
+
+// DESPUÉS (solo carrito y stock se cierran con clic fuera)
+window.onclick = function(event) {
+  const cartModal = document.getElementById('cartModal');
+  const stockModal = document.getElementById('stockModal');
+  
+  // El purchaseModal YA NO se cierra con clic fuera
+  if (event.target === cartModal) closeCartModal();
+  if (event.target === stockModal) closeStockModal();
+};
 
   // Inicializar
   setTimeout(() => {
