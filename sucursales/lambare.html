@@ -7,7 +7,6 @@
 <!-- Librería para generar Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-/* MISMOS ESTILOS QUE EN VILLA MORRA */
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; background:#fff !important; font-family: Inter, Arial, sans-serif; color:#222; }
@@ -546,7 +545,7 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal del carrito (CON HORA) -->
+  <!-- Modal del carrito -->
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
       <span class="close" onclick="closeCartModal()">&times;</span>
@@ -598,15 +597,11 @@ body { padding-top: 80px; }
     appId: "1:683666735879:web:c654add46d1dad6160bba2"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const database = getDatabase(app);
-  
-  // Referencias a Firebase
   const cartRef = ref(database, 'carrito');
   const stockRef = ref(database, 'stock');
 
-  // Variables globales
   let currentProduct = null;
   let cart = [];
   let stock = {};
@@ -614,157 +609,68 @@ body { padding-top: 80px; }
   const STOCK_INICIAL = 100;
 
   // ============================================
-  // GENERADOR AUTOMÁTICO DE PRODUCTOS (MISMA FUNCIÓN)
+  // GENERADOR AUTOMÁTICO DE PRODUCTOS
   // ============================================
   function generarTodosLosProductos() {
     const container = document.querySelector('.container');
     if (!container) return;
-
     const header = container.querySelector('header');
     container.innerHTML = '';
     if (header) container.appendChild(header);
-
     const categorias = [
-      {
-        nombre: "000 puntos",
-        categoria: "000",
-        puntos: 0,
-        productos: [
-          { codigo: "000-00", precio: 10000 },
-          { codigo: "000-01", precio: 30000 },
-          { codigo: "000-02", precio: 50000 },
-          { codigo: "000-03", precio: 100000 },
-          { codigo: "000-04", precio: 150000 },
-          { codigo: "000-05", precio: 15000 }
-        ]
-      },
-      {
-        nombre: "10 puntos",
-        categoria: "010",
-        puntos: 10,
-        precioBase: 10000,
-        rango: { desde: 0, hasta: 12 }
-      },
-      {
-        nombre: "20 puntos",
-        categoria: "020",
-        puntos: 20,
-        precioBase: 15000,
-        rango: { desde: 0, hasta: 60 }
-      },
-      {
-        nombre: "35 puntos",
-        categoria: "035",
-        puntos: 35,
-        precioBase: 25000,
-        rango: { desde: 0, hasta: 62 }
-      },
-      {
-        nombre: "50 puntos",
-        categoria: "050",
-        puntos: 50,
-        precioBase: 35000,
-        rango: { desde: 0, hasta: 51 }
-      },
-      {
-        nombre: "75 puntos",
-        categoria: "075",
-        puntos: 75,
-        precioBase: 40000,
-        rango: { desde: 0, hasta: 39 }
-      },
-      {
-        nombre: "100 puntos",
-        categoria: "100",
-        puntos: 100,
-        precioBase: 50000,
-        rango: { desde: 0, hasta: 29 }
-      },
-      {
-        nombre: "150 puntos",
-        categoria: "150",
-        puntos: 150,
-        precioBase: 60000,
-        rango: { desde: 0, hasta: 30 }
-      },
-      {
-        nombre: "200 puntos",
-        categoria: "200",
-        puntos: 200,
-        productosEspeciales: [
-          { sufijo: "00", precio: 96000 }, { sufijo: "01", precio: 85000 }, { sufijo: "02", precio: 96000 },
-          { sufijo: "03", precio: 100000 }, { sufijo: "04", precio: 96000 }, { sufijo: "05", precio: 100000 },
-          { sufijo: "06", precio: 96000 }, { sufijo: "07", precio: 96000 }, { sufijo: "08", precio: 96000 },
-          { sufijo: "09", precio: 96000 }, { sufijo: "10", precio: 96000 }, { sufijo: "11", precio: 96000 },
-          { sufijo: "12", precio: 96000 }, { sufijo: "13", precio: 96000 }, { sufijo: "14", precio: 96000 },
-          { sufijo: "15", precio: 96000 }, { sufijo: "16", precio: 96000 }, { sufijo: "17", precio: 85000 },
-          { sufijo: "18", precio: 96000 }, { sufijo: "19", precio: 96000 }, { sufijo: "20", precio: 96000 },
-          { sufijo: "21", precio: 96000 }, { sufijo: "22", precio: 96000 }, { sufijo: "23", precio: 96000 },
-          { sufijo: "24", precio: 96000 }, { sufijo: "25", precio: 96000 }, { sufijo: "26", precio: 96000 },
-          { sufijo: "27", precio: 72000 }, { sufijo: "28", precio: 72000 }, { sufijo: "29", precio: 72000 },
-          { sufijo: "30", precio: 72000 }, { sufijo: "31", precio: 96000 }, { sufijo: "32", precio: 72000 },
-          { sufijo: "33", precio: 72000 }, { sufijo: "34", precio: 96000 }
-        ]
-      },
-      {
-        nombre: "220 puntos",
-        categoria: "220",
-        puntos: 220,
-        productosEspeciales: [
-          { sufijo: "00", precio: 120000 }, { sufijo: "01", precio: 120000 }, { sufijo: "02", precio: 120000 },
-          { sufijo: "03", precio: 96000 }, { sufijo: "04", precio: 96000 }, { sufijo: "05", precio: 96000 }
-        ]
-      },
-      {
-        nombre: "250 puntos",
-        categoria: "250",
-        puntos: 250,
-        productosEspeciales: [
-          { sufijo: "00", precio: 150000 }, { sufijo: "01", precio: 144000 }, { sufijo: "02", precio: 144000 }
-        ]
-      },
-      {
-        nombre: "350 puntos",
-        categoria: "350",
-        puntos: 350,
-        productosEspeciales: [
-          { sufijo: "00", precio: 145000 }
-        ]
-      },
-      {
-        nombre: "420 puntos",
-        categoria: "420",
-        puntos: 420,
-        productosEspeciales: [
-          { sufijo: "00", precio: 160000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
-        ]
-      }
+      { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
+        { codigo: "000-00", precio: 10000 }, { codigo: "000-01", precio: 30000 },
+        { codigo: "000-02", precio: 50000 }, { codigo: "000-03", precio: 100000 },
+        { codigo: "000-04", precio: 15000 }, { codigo: "000-05", precio: 15000 }
+      ]},
+      { nombre: "10 puntos", categoria: "010", puntos: 10, precioBase: 10000, rango: { desde: 0, hasta: 12 } },
+      { nombre: "20 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 60 } },
+      { nombre: "35 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 62 } },
+      { nombre: "50 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 51 } },
+      { nombre: "75 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 39 } },
+      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 29 } },
+      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 30 } },
+      { nombre: "200 puntos", categoria: "200", puntos: 200, productosEspeciales: [
+        { sufijo: "00", precio: 96000 }, { sufijo: "01", precio: 85000 }, { sufijo: "02", precio: 96000 },
+        { sufijo: "03", precio: 100000 }, { sufijo: "04", precio: 96000 }, { sufijo: "05", precio: 100000 },
+        { sufijo: "06", precio: 96000 }, { sufijo: "07", precio: 96000 }, { sufijo: "08", precio: 96000 },
+        { sufijo: "09", precio: 96000 }, { sufijo: "10", precio: 96000 }, { sufijo: "11", precio: 96000 },
+        { sufijo: "12", precio: 96000 }, { sufijo: "13", precio: 96000 }, { sufijo: "14", precio: 96000 },
+        { sufijo: "15", precio: 96000 }, { sufijo: "16", precio: 96000 }, { sufijo: "17", precio: 85000 },
+        { sufijo: "18", precio: 96000 }, { sufijo: "19", precio: 96000 }, { sufijo: "20", precio: 96000 },
+        { sufijo: "21", precio: 96000 }, { sufijo: "22", precio: 96000 }, { sufijo: "23", precio: 96000 },
+        { sufijo: "24", precio: 96000 }, { sufijo: "25", precio: 96000 }, { sufijo: "26", precio: 96000 },
+        { sufijo: "27", precio: 72000 }, { sufijo: "28", precio: 72000 }, { sufijo: "29", precio: 72000 },
+        { sufijo: "30", precio: 72000 }, { sufijo: "31", precio: 96000 }, { sufijo: "32", precio: 72000 },
+        { sufijo: "33", precio: 72000 }, { sufijo: "34", precio: 96000 }
+      ]},
+      { nombre: "220 puntos", categoria: "220", puntos: 220, productosEspeciales: [
+        { sufijo: "00", precio: 120000 }, { sufijo: "01", precio: 120000 }, { sufijo: "02", precio: 120000 },
+        { sufijo: "03", precio: 96000 }, { sufijo: "04", precio: 96000 }, { sufijo: "05", precio: 96000 }
+      ]},
+      { nombre: "250 puntos", categoria: "250", puntos: 250, productosEspeciales: [
+        { sufijo: "00", precio: 150000 }, { sufijo: "01", precio: 144000 }, { sufijo: "02", precio: 144000 }
+      ]},
+      { nombre: "350 puntos", categoria: "350", puntos: 350, productosEspeciales: [
+        { sufijo: "00", precio: 145000 }
+      ]},
+      { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
+        { sufijo: "00", precio: 160000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
+      ]}
     ];
-
     categorias.forEach(cat => {
       const section = document.createElement('section');
       section.className = 'categoria';
       section.setAttribute('data-categoria', cat.nombre);
-      
       let cantidadProductos = 0;
-      if (cat.rango) {
-        cantidadProductos = cat.rango.hasta - cat.rango.desde + 1;
-      } else if (cat.productosEspeciales) {
-        cantidadProductos = cat.productosEspeciales.length;
-      } else if (cat.productos) {
-        cantidadProductos = cat.productos.length;
-      }
-
+      if (cat.rango) cantidadProductos = cat.rango.hasta - cat.rango.desde + 1;
+      else if (cat.productosEspeciales) cantidadProductos = cat.productosEspeciales.length;
+      else if (cat.productos) cantidadProductos = cat.productos.length;
       const titulo = document.createElement('h2');
-      titulo.innerHTML = `
-        ${cat.nombre}
-        <span class="stock-badge" id="stock-${cat.categoria}">Stock: <span>${cantidadProductos * STOCK_INICIAL}</span></span>
-      `;
+      titulo.innerHTML = `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">Stock: <span>${cantidadProductos * STOCK_INICIAL}</span></span>`;
       section.appendChild(titulo);
-
       const galeria = document.createElement('div');
       galeria.className = 'galeria';
-
       const crearItem = (codigo, precio) => {
         const item = document.createElement('div');
         item.className = 'imagen-item';
@@ -772,56 +678,17 @@ body { padding-top: 80px; }
         item.setAttribute('data-price', precio);
         item.setAttribute('data-points', cat.puntos);
         item.setAttribute('data-category', cat.categoria);
-        
-        const precioFormateado = precio.toLocaleString('es-PY');
-        
-        const colores = [
-          'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-          'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-          'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-          'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
-        ];
+        const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
         const index = codigo.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
-        
-        item.innerHTML = `
-          <div class="img-placeholder" style="background: ${colores[index]};">
-            ${codigo.replace('-', ' ')}
-          </div>
-          <p>${codigo} - G.${precioFormateado}</p>
-          <div class="stock-indicator">${STOCK_INICIAL}</div>
-        `;
-        
-        // Cargar imagen real en segundo plano
+        item.innerHTML = `<div class="img-placeholder" style="background: ${colores[index]};">${codigo.replace('-', ' ')}</div><p>${codigo} - G.${precio.toLocaleString('es-PY')}</p><div class="stock-indicator">${STOCK_INICIAL}</div>`;
         const img = new Image();
-        img.onload = function() {
-          const placeholder = item.querySelector('.img-placeholder');
-          if (placeholder) {
-            placeholder.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy" decoding="async">`;
-          }
-        };
+        img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy" decoding="async">`; };
         img.src = `../imagenes/${codigo}.jpg`;
-        
         return item;
       };
-
-      if (cat.rango) {
-        for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
-          const sufijo = i.toString().padStart(2, '0');
-          const codigo = `${cat.categoria}-${sufijo}`;
-          galeria.appendChild(crearItem(codigo, cat.precioBase));
-        }
-      } else if (cat.productosEspeciales) {
-        cat.productosEspeciales.forEach(prod => {
-          const codigo = `${cat.categoria}-${prod.sufijo}`;
-          galeria.appendChild(crearItem(codigo, prod.precio));
-        });
-      } else if (cat.productos) {
-        cat.productos.forEach(prod => {
-          galeria.appendChild(crearItem(prod.codigo, prod.precio));
-        });
-      }
-
+      if (cat.rango) for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) galeria.appendChild(crearItem(`${cat.categoria}-${i.toString().padStart(2,'0')}`, cat.precioBase));
+      else if (cat.productosEspeciales) cat.productosEspeciales.forEach(p => galeria.appendChild(crearItem(`${cat.categoria}-${p.sufijo}`, p.precio)));
+      else if (cat.productos) cat.productos.forEach(p => galeria.appendChild(crearItem(p.codigo, p.precio)));
       section.appendChild(galeria);
       container.appendChild(section);
     });
@@ -830,73 +697,37 @@ body { padding-top: 80px; }
   generarTodosLosProductos();
 
   // ============================================
-  // FUNCIONES DE FIREBASE Y CARRITO (MISMAS)
+  // FUNCIONES DE FIREBASE
   // ============================================
-
-  // Escuchar cambios en el carrito
   onValue(cartRef, (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-      cart = Object.entries(data).map(([key, value]) => ({
-        ...value,
-        firebaseKey: key
-      }));
-    } else {
-      cart = [];
-    }
+    cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
     updateCartCount();
-    if (document.getElementById('cartModal').style.display === 'block') {
-      renderCart();
-    }
+    if (document.getElementById('cartModal').style.display === 'block') renderCart();
   });
 
-  // Escuchar cambios en el stock
   onValue(stockRef, (snapshot) => {
     stock = snapshot.val() || {};
     updateAllStockIndicators();
   });
 
-  // Inicializar stock
   function initializeStock() {
     const initialStock = {};
-    document.querySelectorAll('.imagen-item').forEach(item => {
-      const code = item.getAttribute('data-code');
-      if (!stock[code]) {
-        initialStock[code] = STOCK_INICIAL;
-      }
-    });
-    
+    document.querySelectorAll('.imagen-item').forEach(item => { const code = item.getAttribute('data-code'); if (!stock[code]) initialStock[code] = STOCK_INICIAL; });
     get(stockRef).then((snapshot) => {
       const existingStock = snapshot.val();
-      if (!existingStock) {
-        set(stockRef, initialStock);
-      } else {
-        document.querySelectorAll('.imagen-item').forEach(item => {
-          const code = item.getAttribute('data-code');
-          if (!existingStock[code]) {
-            set(ref(database, `stock/${code}`), STOCK_INICIAL);
-          }
-        });
-      }
+      if (!existingStock) set(stockRef, initialStock);
+      else document.querySelectorAll('.imagen-item').forEach(item => { const code = item.getAttribute('data-code'); if (!existingStock[code]) set(ref(database, `stock/${code}`), STOCK_INICIAL); });
     });
   }
 
-  // Actualizar indicadores
   function updateAllStockIndicators() {
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
       const stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
-      
       const indicator = item.querySelector('.stock-indicator');
-      if (indicator) {
-        indicator.textContent = stockValue;
-      }
-      
-      if (stockValue <= 0) {
-        item.classList.add('out-of-stock');
-      } else {
-        item.classList.remove('out-of-stock');
-      }
+      if (indicator) indicator.textContent = stockValue;
+      if (stockValue <= 0) item.classList.add('out-of-stock'); else item.classList.remove('out-of-stock');
     });
     updateCategoryStockCounters();
   }
@@ -911,43 +742,25 @@ body { padding-top: 80px; }
         categories[category] += (stock[code] !== undefined ? stock[code] : STOCK_INICIAL);
       }
     });
-    
     for (let category in categories) {
       const badge = document.getElementById(`stock-${category}`);
-      if (badge) {
-        const span = badge.querySelector('span');
-        if (span) span.textContent = categories[category];
-      }
+      if (badge) badge.querySelector('span').textContent = categories[category];
     }
   }
 
-  // Búsqueda
   window.handleSearchInput = function(input) {
     let value = input.value.replace(/\D/g, '');
     if (value.length > 3) value = value.substring(0, 3);
     input.value = value;
-    if (value.length === 3) {
-      input.blur();
-      filterProducts(value);
-    } else {
-      filterProducts('');
-    }
+    if (value.length === 3) { input.blur(); filterProducts(value); } else filterProducts('');
   };
 
   function filterProducts(query) {
-    const categorias = document.querySelectorAll('.categoria');
-    categorias.forEach(cat => {
+    document.querySelectorAll('.categoria').forEach(cat => {
       let anyVisible = false;
-      const items = cat.querySelectorAll('.imagen-item');
-      items.forEach(item => {
+      cat.querySelectorAll('.imagen-item').forEach(item => {
         const code = item.getAttribute('data-code') || '';
-        const codeStartsWith = query === '' || code.startsWith(query);
-        if (query === '' || codeStartsWith) {
-          item.style.display = 'flex';
-          anyVisible = true;
-        } else {
-          item.style.display = 'none';
-        }
+        if (query === '' || code.startsWith(query)) { item.style.display = 'flex'; anyVisible = true; } else item.style.display = 'none';
       });
       cat.style.display = anyVisible ? 'block' : 'none';
     });
@@ -961,312 +774,132 @@ body { padding-top: 80px; }
     filterStockItems(value);
   };
 
-  document.getElementById('busqueda').addEventListener('input', function() {
-    window.handleSearchInput(this);
-  });
+  document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
+  document.getElementById('busqueda').addEventListener('focus', function() { this.setAttribute('inputmode', 'numeric'); this.setAttribute('pattern', '\\d*'); });
 
-  document.getElementById('busqueda').addEventListener('focus', function() {
-    this.setAttribute('inputmode', 'numeric');
-    this.setAttribute('pattern', '\\d*');
-  });
-
-  // Click en productos
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function() {
       const code = this.getAttribute('data-code');
       const stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
-      
-      if (stockValue <= 0) {
-        alert('Este producto no tiene stock disponible');
-        return;
-      }
-      
+      if (stockValue <= 0) { alert('Este producto no tiene stock disponible'); return; }
       const price = parseFloat(this.getAttribute('data-price'));
       const points = parseInt(this.getAttribute('data-points'));
-      
-      currentProduct = {
-        code: code,
-        price: price,
-        points: points,
-        name: this.querySelector('p').textContent,
-        stock: stockValue
-      };
-      
-      document.getElementById('modalProductInfo').innerHTML = `
-        <strong>${currentProduct.name}</strong><br>
-        Puntos base: ${currentProduct.points}<br>
-        Precio total: G.${currentProduct.price.toLocaleString()}
-      `;
-      
-      document.getElementById('modalStockInfo').innerHTML = `
-        Stock disponible: <strong style="color:${stockValue > 0 ? '#4CAF50' : '#f44336'}">${stockValue} unidades</strong>
-      `;
-      
+      currentProduct = { code, price, points, name: this.querySelector('p').textContent, stock: stockValue };
+      document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>Puntos base: ${currentProduct.points}<br>Precio total: G.${currentProduct.price.toLocaleString()}`;
+      document.getElementById('modalStockInfo').innerHTML = `Stock disponible: <strong style="color:${stockValue > 0 ? '#4CAF50' : '#f44336'}">${stockValue} unidades</strong>`;
       document.getElementById('pointsInput').value = '';
       document.getElementById('pointsInput').max = currentProduct.points || 999999;
       document.getElementById('moneyInput').value = currentProduct.price;
       document.getElementById('totalPrice').textContent = currentProduct.price.toLocaleString();
-      
       document.getElementById('addToCart').disabled = (stockValue <= 0);
       document.getElementById('purchaseModal').style.display = 'block';
     });
   });
 
-  window.closeModal = function() {
-    document.getElementById('purchaseModal').style.display = 'none';
-  };
-
+  window.closeModal = () => document.getElementById('purchaseModal').style.display = 'none';
   window.calculateRemainingMoney = function() {
     if (!currentProduct) return;
     const pointsPaid = parseFloat(document.getElementById('pointsInput').value) || 0;
     if (currentProduct.points > 0) {
-      if (pointsPaid > currentProduct.points) {
-        document.getElementById('pointsInput').value = currentProduct.points;
-        calculateRemainingMoney();
-        return;
-      }
-      const percentagePaid = pointsPaid / currentProduct.points;
-      const remainingMoney = currentProduct.price * (1 - percentagePaid);
-      document.getElementById('moneyInput').value = Math.round(remainingMoney);
+      if (pointsPaid > currentProduct.points) { document.getElementById('pointsInput').value = currentProduct.points; calculateRemainingMoney(); return; }
+      document.getElementById('moneyInput').value = Math.round(currentProduct.price * (1 - pointsPaid / currentProduct.points));
     }
   };
 
-  // ============================================
-  // AGREGAR AL CARRITO (CON HORA)
-  // ============================================
   window.addToCart = function() {
     if (!currentProduct) return;
-    
     const code = currentProduct.code;
     const currentStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
-    
-    if (currentStock <= 0) {
-      alert('No hay stock disponible');
-      closeModal();
-      return;
-    }
-    
+    if (currentStock <= 0) { alert('No hay stock disponible'); closeModal(); return; }
     const points = parseInt(document.getElementById('pointsInput').value) || 0;
     const money = parseFloat(document.getElementById('moneyInput').value) || 0;
-    
-    if (currentProduct.points > 0 && points > currentProduct.points) {
-      alert(`No puedes pagar más de ${currentProduct.points} puntos`);
-      return;
-    }
-    
+    if (currentProduct.points > 0 && points > currentProduct.points) { alert(`No puedes pagar más de ${currentProduct.points} puntos`); return; }
     if (currentProduct.points > 0) {
       const expectedMoney = Math.round(currentProduct.price * (1 - points / currentProduct.points));
-      if (Math.abs(money - expectedMoney) > 1) {
-        alert('Error en el cálculo del dinero');
-        return;
-      }
+      if (Math.abs(money - expectedMoney) > 1) { alert('Error en el cálculo del dinero'); return; }
     }
-    
-    if (points === 0 && money === 0) {
-      alert('Debes pagar con puntos o dinero');
-      return;
-    }
-    
-    if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) {
-      alert('Si pagas todos los puntos, el dinero debe ser 0');
-      return;
-    }
-    
-    // Reducir stock
-    const newStock = currentStock - 1;
-    set(ref(database, `stock/${code}`), newStock);
-    
-    // Obtener fecha y hora actual
+    if (points === 0 && money === 0) { alert('Debes pagar con puntos o dinero'); return; }
+    if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) { alert('Si pagas todos los puntos, el dinero debe ser 0'); return; }
+    set(ref(database, `stock/${code}`), currentStock - 1);
     const ahora = new Date();
     const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit',
-      hour12: false 
+    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    push(cartRef, {
+      code, name: currentProduct.name, points, money, totalPrice: currentProduct.price,
+      fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime()
     });
-    const fechaHora = fecha + ' ' + hora;
-    
-    // Crear item del carrito con hora
-    const cartItem = {
-      code: code,
-      name: currentProduct.name,
-      points: points,
-      money: money,
-      totalPrice: currentProduct.price,
-      fecha: fecha,
-      hora: hora,
-      timestamp: fechaHora,
-      timestampCompleto: ahora.getTime()
-    };
-    
-    // Guardar en Firebase
-    push(cartRef, cartItem);
-    
     closeModal();
     alert('✅ Producto agregado al carrito');
   };
 
-  // ============================================
-  // ELIMINAR ITEM
-  // ============================================
   window.showDeletePrompt = function(firebaseKey) {
     const password = prompt('🔐 Ingresa la contraseña para eliminar este item:');
     if (password === PASSWORD) {
       const item = cart.find(i => i.firebaseKey === firebaseKey);
-      
-      if (!item) {
-        alert('❌ No se encontró el item');
-        return;
-      }
-      
-      // Devolver stock
-      if (item.code) {
-        const currentStock = stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL;
-        set(ref(database, `stock/${item.code}`), currentStock + 1);
-      }
-      
-      // Eliminar usando firebaseKey
-      remove(ref(database, `carrito/${firebaseKey}`))
-        .then(() => {
-          alert('✅ Item eliminado correctamente');
-        })
-        .catch((error) => {
-          alert('❌ Error al eliminar: ' + error.message);
-        });
-        
-    } else {
-      alert('❌ Contraseña incorrecta');
-    }
+      if (!item) { alert('❌ No se encontró el item'); return; }
+      if (item.code) set(ref(database, `stock/${item.code}`), (stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL) + 1);
+      remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Item eliminado')).catch(error => alert('❌ Error: ' + error.message));
+    } else alert('❌ Contraseña incorrecta');
   };
 
-  // ============================================
-  // RENDERIZAR CARRITO (CON HORA)
-  // ============================================
   function renderCart() {
     const cartItemsDiv = document.getElementById('cartItems');
     cartItemsDiv.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>Puntos</span><span>Dinero (G.)</span><span>Fecha/Hora</span><span>Acciones</span></div>';
-    
-    cart.forEach((item) => {
+    cart.forEach(item => {
       if (!item) return;
-      
       const itemDiv = document.createElement('div');
       itemDiv.className = 'cart-item';
-      itemDiv.innerHTML = `
-        <span>${item.name}</span>
-        <span>${item.points.toLocaleString()}</span>
-        <span>G.${item.money.toLocaleString()}</span>
-        <span style="font-size:0.8rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
-        <span>
-          <button onclick="showDeletePrompt('${item.firebaseKey}')" 
-                  style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">
-            🗑️ Eliminar
-          </button>
-        </span>
-      `;
+      itemDiv.innerHTML = `<span>${item.name}</span><span>${item.points.toLocaleString()}</span><span>G.${item.money.toLocaleString()}</span><span style="font-size:0.8rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span><span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">🗑️ Eliminar</button></span>`;
       cartItemsDiv.appendChild(itemDiv);
     });
-    
-    if (cart.length === 0) {
-      const emptyDiv = document.createElement('div');
-      emptyDiv.className = 'cart-item';
-      emptyDiv.innerHTML = '<span colspan="5" style="text-align:center; padding:20px;">Carrito vacío</span>';
-      cartItemsDiv.appendChild(emptyDiv);
-    }
+    if (cart.length === 0) cartItemsDiv.innerHTML += '<div class="cart-item"><span colspan="5" style="text-align:center; padding:20px;">Carrito vacío</span></div>';
   }
 
-  // Funciones de gestión de stock
-  window.showStockManagement = function() {
-    document.getElementById('stockModal').style.display = 'block';
-    document.getElementById('stockPasswordPrompt').style.display = 'block';
-    document.getElementById('stockManagementContent').style.display = 'none';
-    document.getElementById('stockPassword').value = '';
-  };
-
-  window.closeStockModal = function() {
-    document.getElementById('stockModal').style.display = 'none';
-  };
-
+  window.showStockManagement = function() { document.getElementById('stockModal').style.display = 'block'; document.getElementById('stockPasswordPrompt').style.display = 'block'; document.getElementById('stockManagementContent').style.display = 'none'; document.getElementById('stockPassword').value = ''; };
+  window.closeStockModal = () => document.getElementById('stockModal').style.display = 'none';
   window.verifyStockPassword = function() {
-    const password = document.getElementById('stockPassword').value;
-    if (password === PASSWORD) {
+    if (document.getElementById('stockPassword').value === PASSWORD) {
       document.getElementById('stockPasswordPrompt').style.display = 'none';
       document.getElementById('stockManagementContent').style.display = 'block';
       loadAllStockItems();
-    } else {
-      alert('Contraseña incorrecta');
-    }
+    } else alert('Contraseña incorrecta');
   };
 
   function loadAllStockItems() {
     const container = document.getElementById('stockItemsContainer');
     const categories = {};
-    
     document.querySelectorAll('.imagen-item').forEach(item => {
       const category = item.getAttribute('data-category');
       if (!categories[category]) categories[category] = [];
       categories[category].push({
         code: item.getAttribute('data-code'),
         name: item.querySelector('p').textContent,
-        img: item.querySelector('img')?.src || item.querySelector('.img-placeholder')?.style.background,
-        alt: item.querySelector('img')?.alt || '',
         currentStock: stock[item.getAttribute('data-code')] !== undefined ? stock[item.getAttribute('data-code')] : STOCK_INICIAL
       });
     });
-    
     let html = '';
     for (let category in categories) {
-      const categoryName = getCategoryName(category);
-      html += `<div class="stock-category" data-category="${category}">`;
-      html += `<h4>${categoryName}</h4>`;
-      html += `<div class="stock-gallery">`;
-      
+      html += `<div class="stock-category" data-category="${category}"><h4>${getCategoryName(category)}</h4><div class="stock-gallery">`;
       categories[category].forEach(item => {
-        html += `
-          <div class="stock-item" data-code="${item.code}">
-            <div class="img-placeholder" style="width:3cm; height:3cm; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center; color:white; border-radius:6px;">
-              ${item.code.replace('-', ' ')}
-            </div>
-            <p>${item.name}</p>
-            <div class="stock-control">
-              <input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1">
-              <button onclick="updateSingleStock('${item.code}')">Actualizar</button>
-            </div>
-          </div>
-        `;
+        html += `<div class="stock-item" data-code="${item.code}"><div class="img-placeholder" style="width:3cm; height:3cm; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center; color:white; border-radius:6px;">${item.code.replace('-', ' ')}</div><p>${item.name}</p><div class="stock-control"><input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1"><button onclick="updateSingleStock('${item.code}')">Actualizar</button></div></div>`;
       });
-      
       html += `</div></div>`;
     }
     container.innerHTML = html;
   }
 
   function getCategoryName(categoryCode) {
-    const names = {
-      '000': '000 puntos', '010': '10 puntos', '020': '20 puntos', '035': '35 puntos',
-      '050': '50 puntos', '075': '75 puntos', '100': '100 puntos', '150': '150 puntos',
-      '200': '200 puntos', '220': '220 puntos', '250': '250 puntos', '350': '350 puntos',
-      '420': '420 puntos'
-    };
+    const names = { '000':'000 puntos', '010':'10 puntos', '020':'20 puntos', '035':'35 puntos', '050':'50 puntos', '075':'75 puntos', '100':'100 puntos', '150':'150 puntos', '200':'200 puntos', '220':'220 puntos', '250':'250 puntos', '350':'350 puntos', '420':'420 puntos' };
     return names[categoryCode] || categoryCode + ' puntos';
   }
 
   window.filterStockItems = function(searchTerm) {
-    const categories = document.querySelectorAll('.stock-category');
-    categories.forEach(category => {
-      const items = category.querySelectorAll('.stock-item');
+    document.querySelectorAll('.stock-category').forEach(category => {
       let anyVisible = false;
-      items.forEach(item => {
+      category.querySelectorAll('.stock-item').forEach(item => {
         const code = item.getAttribute('data-code').toLowerCase();
         const name = item.querySelector('p').textContent.toLowerCase();
-        const matchesCode = searchTerm === '' || code.startsWith(searchTerm);
-        const matchesName = name.includes(searchTerm);
-        if (searchTerm === '' || matchesCode || matchesName) {
-          item.style.display = 'flex';
-          anyVisible = true;
-        } else {
-          item.style.display = 'none';
-        }
+        if (searchTerm === '' || code.startsWith(searchTerm) || name.includes(searchTerm)) { item.style.display = 'flex'; anyVisible = true; } else item.style.display = 'none';
       });
       category.style.display = anyVisible ? 'block' : 'none';
     });
@@ -1275,12 +908,9 @@ body { padding-top: 80px; }
   window.updateSingleStock = function(code) {
     const input = document.getElementById(`stock-${code}`);
     if (input) {
-      const newStock = parseInt(input.value) || 0;
-      set(ref(database, `stock/${code}`), newStock);
+      set(ref(database, `stock/${code}`), parseInt(input.value) || 0);
       input.style.backgroundColor = '#d4edda';
-      setTimeout(() => {
-        input.style.backgroundColor = '';
-      }, 500);
+      setTimeout(() => input.style.backgroundColor = '', 500);
     }
   };
 
@@ -1288,141 +918,75 @@ body { padding-top: 80px; }
     document.querySelectorAll('.stock-item').forEach(item => {
       const code = item.getAttribute('data-code');
       const input = document.getElementById(`stock-${code}`);
-      if (input) {
-        const newStock = parseInt(input.value) || 0;
-        set(ref(database, `stock/${code}`), newStock);
-      }
+      if (input) set(ref(database, `stock/${code}`), parseInt(input.value) || 0);
     });
     alert('Stock actualizado correctamente');
   };
 
-  function updateCartCount() {
-    document.getElementById('cartCount').textContent = cart.length;
-  }
+  function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
+  window.openCartModal = function() { renderCart(); document.getElementById('cartModal').style.display = 'block'; };
+  window.closeCartModal = function() { document.getElementById('cartModal').style.display = 'none'; hideExportPrompt(); hideClearPrompt(); };
+  window.showExportPasswordPrompt = () => document.getElementById('exportPasswordPrompt').style.display = 'block';
+  window.hideExportPrompt = () => { document.getElementById('exportPasswordPrompt').style.display = 'none'; document.getElementById('exportPassword').value = ''; };
+  window.showClearPasswordPrompt = () => document.getElementById('clearPasswordPrompt').style.display = 'block';
+  window.hideClearPrompt = () => { document.getElementById('clearPasswordPrompt').style.display = 'none'; document.getElementById('clearPassword').value = ''; };
+  window.verifyAndExport = function() { if (document.getElementById('exportPassword').value === PASSWORD) { exportToExcel(); hideExportPrompt(); } else alert('Contraseña incorrecta'); };
+  window.verifyAndClearCart = function() { if (document.getElementById('clearPassword').value === PASSWORD) { remove(cartRef); hideClearPrompt(); alert('Carrito vaciado'); } else alert('Contraseña incorrecta'); };
 
-  window.openCartModal = function() {
-    renderCart();
-    document.getElementById('cartModal').style.display = 'block';
-  };
-
-  window.closeCartModal = function() {
-    document.getElementById('cartModal').style.display = 'none';
-    hideExportPrompt();
-    hideClearPrompt();
-  };
-
-  window.showExportPasswordPrompt = function() {
-    document.getElementById('exportPasswordPrompt').style.display = 'block';
-  };
-
-  window.hideExportPrompt = function() {
-    document.getElementById('exportPasswordPrompt').style.display = 'none';
-    document.getElementById('exportPassword').value = '';
-  };
-
-  window.showClearPasswordPrompt = function() {
-    document.getElementById('clearPasswordPrompt').style.display = 'block';
-  };
-
-  window.hideClearPrompt = function() {
-    document.getElementById('clearPasswordPrompt').style.display = 'none';
-    document.getElementById('clearPassword').value = '';
-  };
-
-  window.verifyAndExport = function() {
-    const password = document.getElementById('exportPassword').value;
-    if (password === PASSWORD) {
-      exportToExcel();
-      hideExportPrompt();
-    } else {
-      alert('Contraseña incorrecta');
-    }
-  };
-
-  window.verifyAndClearCart = function() {
-    const password = document.getElementById('clearPassword').value;
-    if (password === PASSWORD) {
-      remove(cartRef);
-      hideClearPrompt();
-      alert('Carrito vaciado');
-    } else {
-      alert('Contraseña incorrecta');
-    }
-  };
-
-  // ============================================
-  // EXPORTAR A EXCEL (SIN PRECIO TOTAL Y CON TÍTULO)
-  // ============================================
   function exportToExcel() {
-    if (cart.length === 0) {
-      alert('El carrito está vacío');
-      return;
-    }
-    
+    if (cart.length === 0) { alert('El carrito está vacío'); return; }
     const totalPoints = cart.reduce((sum, item) => sum + item.points, 0);
     const totalMoney = cart.reduce((sum, item) => sum + item.money, 0);
-    
-    // Obtener nombre de la sucursal del título
-    const tituloSucursal = document.querySelector('h1').textContent;
-    const nombreSucursal = tituloSucursal.replace('ASTROLAND - ', '');
-    
-    // Crear datos para Excel con título
+    const nombreSucursal = document.querySelector('h1').textContent.replace('ASTROLAND - ', '');
     const data = [
-      ['ASTROLAND - ' + nombreSucursal],
-      ['IN GOD WE TRUST'],
-      [], // Fila vacía
+      ['ASTROLAND - ' + nombreSucursal], ['IN GOD WE TRUST'], [],
       ['Producto', 'Puntos Pagados', 'Dinero Pagado (G.)', 'Fecha', 'Hora'],
-      ...cart.map(item => [
-        item.name,
-        item.points,
-        item.money,
-        item.fecha || (item.timestamp ? item.timestamp.split(' ')[0] : ''),
-        item.hora || (item.timestamp ? item.timestamp.split(' ')[1] : '')
-      ]),
-      [], // Fila vacía
-      ['TOTALES', totalPoints, totalMoney, '', '']
+      ...cart.map(item => [item.name, item.points, item.money, item.fecha || (item.timestamp ? item.timestamp.split(' ')[0] : ''), item.hora || (item.timestamp ? item.timestamp.split(' ')[1] : '')]),
+      [], ['TOTALES', totalPoints, totalMoney, '', '']
     ];
-    
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
-    
-    // Estilos para el título (combinar celdas)
-    ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Fusionar celdas para el título
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }  // Fusionar celdas para el subtítulo
-    ];
-    
-    // Anchos de columna
-    const colWidths = [
-      { wch: 40 }, // Producto
-      { wch: 15 }, // Puntos
-      { wch: 20 }, // Dinero
-      { wch: 15 }, // Fecha
-      { wch: 15 }  // Hora
-    ];
-    ws['!cols'] = colWidths;
-    
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }];
+    ws['!cols'] = [{ wch: 40 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Carrito');
-    
-    // Nombre del archivo con sucursal y fecha
-    const fechaActual = new Date().toLocaleDateString('es-PY').replace(/\//g, '-');
-    XLSX.writeFile(wb, `ASTROLAND_${nombreSucursal}_${fechaActual}.xlsx`);
+    XLSX.writeFile(wb, `ASTROLAND_${nombreSucursal}_${new Date().toLocaleDateString('es-PY').replace(/\//g, '-')}.xlsx`);
   }
 
+  // ============================================
+  // MANEJO DE MODALES - CORREGIDO
+  // ============================================
   window.onclick = function(event) {
-    const purchaseModal = document.getElementById('purchaseModal');
     const cartModal = document.getElementById('cartModal');
     const stockModal = document.getElementById('stockModal');
-    if (event.target === purchaseModal) closeModal();
     if (event.target === cartModal) closeCartModal();
     if (event.target === stockModal) closeStockModal();
   };
 
-  // Inicializar
-  setTimeout(() => {
-    initializeStock();
-    updateCartCount();
-  }, 100);
+  document.addEventListener('touchstart', function(event) {
+    const purchaseModal = document.getElementById('purchaseModal');
+    if (purchaseModal.style.display === 'block') {
+      const modalContent = purchaseModal.querySelector('.modal-content');
+      if (modalContent && !modalContent.contains(event.target)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', function(event) {
+    const purchaseModal = document.getElementById('purchaseModal');
+    if (purchaseModal.style.display === 'block') {
+      const modalContent = purchaseModal.querySelector('.modal-content');
+      if (modalContent && !modalContent.contains(event.target)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+      }
+    }
+  }, { passive: false });
+
+  setTimeout(() => { initializeStock(); updateCartCount(); }, 100);
 </script>
 </body>
 </html>
