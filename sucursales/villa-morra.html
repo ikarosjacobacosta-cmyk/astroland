@@ -785,6 +785,15 @@ body { padding-top: 80px; }
     });
   }
 
+  // Función para resetear la búsqueda (mostrar todos los productos y limpiar el campo)
+  function resetSearch() {
+    const searchInput = document.getElementById('busqueda');
+    if (searchInput) {
+      searchInput.value = '';
+      filterProducts('');
+    }
+  }
+
   window.handleStockSearchInput = function(input) {
     let value = input.value.replace(/\D/g, '');
     if (value.length > 3) value = value.substring(0, 3);
@@ -816,6 +825,7 @@ body { padding-top: 80px; }
   });
 
   window.closeModal = () => document.getElementById('purchaseModal').style.display = 'none';
+  
   window.calculateRemainingMoney = function() {
     if (!currentProduct) return;
     const pointsPaid = parseFloat(document.getElementById('pointsInput').value) || 0;
@@ -823,10 +833,26 @@ body { padding-top: 80px; }
       if (pointsPaid > currentProduct.points) { document.getElementById('pointsInput').value = currentProduct.points; calculateRemainingMoney(); return; }
       document.getElementById('moneyInput').value = Math.round(currentProduct.price * (1 - pointsPaid / currentProduct.points));
     }
+    
+    // Auto cerrar teclado según la cantidad de puntos del producto
+    const pointsInput = document.getElementById('pointsInput');
+    const pointsValue = pointsInput.value;
+    
+    if (currentProduct.points >= 10 && currentProduct.points <= 75) {
+      // Para productos de 10 a 75 puntos: cerrar teclado al ingresar 2 dígitos
+      if (pointsValue.length >= 2) {
+        pointsInput.blur();
+      }
+    } else if (currentProduct.points >= 100 && currentProduct.points <= 420) {
+      // Para productos de 100 a 420 puntos: cerrar teclado al ingresar 3 dígitos
+      if (pointsValue.length >= 3) {
+        pointsInput.blur();
+      }
+    }
   };
 
   // ============================================
-  // AGREGAR AL CARRITO
+  // AGREGAR AL CARRITO (SIN ALERT DE CONFIRMACIÓN)
   // ============================================
   window.addToCart = function() {
     if (!currentProduct) return;
@@ -856,8 +882,11 @@ body { padding-top: 80px; }
       fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime()
     });
     
+    // Resetear la búsqueda después de agregar al carrito
+    resetSearch();
+    
     closeModal();
-    alert('✅ Producto agregado al carrito');
+    // El alert de confirmación ha sido eliminado
   };
 
   // ============================================
@@ -972,19 +1001,28 @@ body { padding-top: 80px; }
   window.verifyAndClearCart = function() { if (document.getElementById('clearPassword').value === PASSWORD) { remove(cartRef); hideClearPrompt(); alert('Carrito vaciado'); } else alert('Contraseña incorrecta'); };
 
   // ============================================
-  // EXPORTAR A EXCEL
+  // EXPORTAR A EXCEL (con nombre de producto truncado a 7 caracteres)
   // ============================================
   function exportToExcel() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     const totalPoints = cart.reduce((sum, item) => sum + item.points, 0);
     const totalMoney = cart.reduce((sum, item) => sum + item.money, 0);
     const nombreSucursal = document.querySelector('h1').textContent.replace('ASTROLAND - ', '');
+    
+    // Truncar el nombre del producto a los primeros 7 caracteres
     const data = [
       ['ASTROLAND - ' + nombreSucursal], ['IN GOD WE TRUST'], [],
       ['Producto', 'Puntos Pagados', 'Dinero Pagado (G.)', 'Fecha', 'Hora'],
-      ...cart.map(item => [item.name, item.points, item.money, item.fecha || (item.timestamp ? item.timestamp.split(' ')[0] : ''), item.hora || (item.timestamp ? item.timestamp.split(' ')[1] : '')]),
+      ...cart.map(item => [
+        item.name.substring(0, 7), // Solo primeros 7 caracteres
+        item.points, 
+        item.money, 
+        item.fecha || (item.timestamp ? item.timestamp.split(' ')[0] : ''), 
+        item.hora || (item.timestamp ? item.timestamp.split(' ')[1] : '')
+      ]),
       [], ['TOTALES', totalPoints, totalMoney, '', '']
     ];
+    
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
     ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }];
