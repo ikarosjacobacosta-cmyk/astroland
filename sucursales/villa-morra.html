@@ -791,6 +791,11 @@ body { padding-top: 80px; }
     if (searchInput) {
       searchInput.value = '';
       filterProducts('');
+      // Desplazar la página al inicio del contenedor de productos
+      const container = document.querySelector('.container');
+      if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   }
 
