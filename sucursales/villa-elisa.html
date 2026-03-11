@@ -908,10 +908,17 @@ body { padding-top: 80px; }
   }
 
   // ============================================
-  // GESTIÓN DE STOCK
+  // GESTIÓN DE STOCK - VERSIÓN MODERNIZADA CON IMÁGENES
   // ============================================
-  window.showStockManagement = function() { document.getElementById('stockModal').style.display = 'block'; document.getElementById('stockPasswordPrompt').style.display = 'block'; document.getElementById('stockManagementContent').style.display = 'none'; document.getElementById('stockPassword').value = ''; };
+  window.showStockManagement = function() { 
+    document.getElementById('stockModal').style.display = 'block'; 
+    document.getElementById('stockPasswordPrompt').style.display = 'block'; 
+    document.getElementById('stockManagementContent').style.display = 'none'; 
+    document.getElementById('stockPassword').value = ''; 
+  };
+
   window.closeStockModal = () => document.getElementById('stockModal').style.display = 'none';
+
   window.verifyStockPassword = function() {
     if (document.getElementById('stockPassword').value === PASSWORD) {
       document.getElementById('stockPasswordPrompt').style.display = 'none';
@@ -920,47 +927,104 @@ body { padding-top: 80px; }
     } else alert('Contraseña incorrecta');
   };
 
-  function loadAllStockItems() {
-    const container = document.getElementById('stockItemsContainer');
-    const categories = {};
-    document.querySelectorAll('.imagen-item').forEach(item => {
-      const category = item.getAttribute('data-category');
-      if (!categories[category]) categories[category] = [];
-      categories[category].push({
-        code: item.getAttribute('data-code'),
-        name: item.querySelector('p').textContent,
-        currentStock: stock[item.getAttribute('data-code')] !== undefined ? stock[item.getAttribute('data-code')] : STOCK_INICIAL
-      });
-    });
-    
-    let html = '';
-    for (let category in categories) {
-      html += `<div class="stock-category" data-category="${category}"><h4>${getCategoryName(category)}</h4><div class="stock-gallery">`;
-      categories[category].forEach(item => {
-        html += `<div class="stock-item" data-code="${item.code}"><div class="img-placeholder" style="width:3cm; height:3cm; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display:flex; align-items:center; justify-content:center; color:white; border-radius:6px;">${item.code.replace('-', ' ')}</div><p>${item.name}</p><div class="stock-control"><input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1"><button onclick="updateSingleStock('${item.code}')">Actualizar</button></div></div>`;
-      });
-      html += `</div></div>`;
-    }
-    container.innerHTML = html;
-  }
-
+  // Función para obtener nombre de categoría
   function getCategoryName(categoryCode) {
-    const names = { '000':'000 puntos', '010':'10 puntos', '020':'20 puntos', '035':'35 puntos', '050':'50 puntos', '075':'75 puntos', '100':'100 puntos', '150':'150 puntos', '200':'200 puntos', '220':'220 puntos', '250':'250 puntos', '350':'350 puntos', '420':'420 puntos' };
+    const names = { 
+      '000':'000 puntos', '010':'10 puntos', '020':'20 puntos', '035':'35 puntos', 
+      '050':'50 puntos', '075':'75 puntos', '100':'100 puntos', '150':'150 puntos', 
+      '200':'200 puntos', '220':'220 puntos', '250':'250 puntos', '350':'350 puntos', 
+      '420':'420 puntos' 
+    };
     return names[categoryCode] || categoryCode + ' puntos';
   }
 
+  // Función para cargar todos los items del stock (CON IMÁGENES IGUAL AL CATÁLOGO)
+  function loadAllStockItems() {
+    const container = document.getElementById('stockItemsContainer');
+    const categories = {};
+    
+    // Obtener todas las categorías y sus productos (CLONANDO los elementos del catálogo)
+    document.querySelectorAll('.imagen-item').forEach(item => {
+      const category = item.getAttribute('data-category');
+      if (!categories[category]) categories[category] = [];
+      
+      const code = item.getAttribute('data-code');
+      const price = item.getAttribute('data-price');
+      const points = item.getAttribute('data-points');
+      const nameElement = item.querySelector('p');
+      const name = nameElement ? nameElement.textContent : code;
+      const imgElement = item.querySelector('img');
+      const placeholderElement = item.querySelector('.img-placeholder');
+      
+      // Guardar el HTML de la imagen o placeholder
+      let imageHtml = '';
+      if (imgElement) {
+        // Si ya cargó la imagen, clonarla
+        imageHtml = imgElement.outerHTML;
+      } else if (placeholderElement) {
+        // Si todavía está el placeholder, usarlo
+        imageHtml = placeholderElement.outerHTML;
+      } else {
+        // Fallback: crear un placeholder nuevo
+        const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
+        const index = code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
+        imageHtml = `<div class="img-placeholder" style="background: ${colores[index]};">${code.replace('-', ' ')}</div>`;
+      }
+      
+      categories[category].push({
+        code: code,
+        name: name,
+        price: price,
+        points: points,
+        imageHtml: imageHtml,
+        currentStock: stock[code] !== undefined ? stock[code] : STOCK_INICIAL
+      });
+    });
+    
+    // Generar el HTML para cada categoría (CON EL MISMO ESTILO DEL CATÁLOGO)
+    let html = '';
+    
+    for (let category in categories) {
+      const categoryName = getCategoryName(category);
+      html += `<div class="stock-category" data-category="${category}">`;
+      html += `<h4>${categoryName}</h4>`;
+      html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
+      
+      categories[category].forEach(item => {
+        html += `<div class="stock-item" data-code="${item.code}" style="display:flex; flex-direction:column; align-items:center; padding:8px; background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">`;
+        html += item.imageHtml; // Aquí va la imagen exactamente como en el catálogo
+        html += `<p style="margin-top:8px; font-size:0.85rem; color:#333; text-align:center;">${item.name}</p>`;
+        html += `<div class="stock-control" style="display:flex; gap:5px; margin-top:5px; width:100%; justify-content:center;">`;
+        html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;">`;
+        html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
+        html += `</div></div>`;
+      });
+      
+      html += `</div></div>`;
+    }
+    
+    container.innerHTML = html;
+  }
+
+  // Función para filtrar items en el gestor de stock
   window.filterStockItems = function(searchTerm) {
     document.querySelectorAll('.stock-category').forEach(category => {
       let anyVisible = false;
       category.querySelectorAll('.stock-item').forEach(item => {
         const code = item.getAttribute('data-code').toLowerCase();
         const name = item.querySelector('p').textContent.toLowerCase();
-        if (searchTerm === '' || code.startsWith(searchTerm) || name.includes(searchTerm)) { item.style.display = 'flex'; anyVisible = true; } else item.style.display = 'none';
+        if (searchTerm === '' || code.startsWith(searchTerm) || name.includes(searchTerm)) { 
+          item.style.display = 'flex'; 
+          anyVisible = true; 
+        } else { 
+          item.style.display = 'none'; 
+        }
       });
       category.style.display = anyVisible ? 'block' : 'none';
     });
   };
 
+  // Función para actualizar stock de un solo producto
   window.updateSingleStock = function(code) {
     const input = document.getElementById(`stock-${code}`);
     if (input) {
@@ -970,6 +1034,7 @@ body { padding-top: 80px; }
     }
   };
 
+  // Función para guardar todos los cambios de stock
   window.saveAllStock = function() {
     document.querySelectorAll('.stock-item').forEach(item => {
       const code = item.getAttribute('data-code');
