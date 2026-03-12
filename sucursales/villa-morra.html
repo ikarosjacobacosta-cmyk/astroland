@@ -924,7 +924,7 @@ body { padding-top: 80px; }
   }
 
   // ============================================
-  // GESTIÓN DE STOCK - VERSIÓN MODERNIZADA CON IMÁGENES
+  // GESTIÓN DE STOCK - VERSIÓN MEJORADA
   // ============================================
   window.showStockManagement = function() { 
     document.getElementById('stockModal').style.display = 'block'; 
@@ -954,12 +954,12 @@ body { padding-top: 80px; }
     return names[categoryCode] || categoryCode + ' puntos';
   }
 
-  // Función para cargar todos los items del stock (CON IMÁGENES IGUAL AL CATÁLOGO)
+  // Función para cargar todos los items del stock (CON IMÁGENES Y ORDENADO DESDE 000)
   function loadAllStockItems() {
     const container = document.getElementById('stockItemsContainer');
     const categories = {};
     
-    // Obtener todas las categorías y sus productos (CLONANDO los elementos del catálogo)
+    // Obtener todas las categorías y sus productos
     document.querySelectorAll('.imagen-item').forEach(item => {
       const category = item.getAttribute('data-category');
       if (!categories[category]) categories[category] = [];
@@ -975,13 +975,10 @@ body { padding-top: 80px; }
       // Guardar el HTML de la imagen o placeholder
       let imageHtml = '';
       if (imgElement) {
-        // Si ya cargó la imagen, clonarla
         imageHtml = imgElement.outerHTML;
       } else if (placeholderElement) {
-        // Si todavía está el placeholder, usarlo
         imageHtml = placeholderElement.outerHTML;
       } else {
-        // Fallback: crear un placeholder nuevo
         const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
         const index = code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
         imageHtml = `<div class="img-placeholder" style="background: ${colores[index]};">${code.replace('-', ' ')}</div>`;
@@ -997,21 +994,31 @@ body { padding-top: 80px; }
       });
     });
     
-    // Generar el HTML para cada categoría (CON EL MISMO ESTILO DEL CATÁLOGO)
+    // Ordenar las categorías numéricamente (000, 010, 020, 035, 050, 075, 100, 150, 200, 220, 250, 350, 420)
+    const sortedCategories = Object.keys(categories).sort((a, b) => {
+      return parseInt(a) - parseInt(b);
+    });
+    
+    // Generar el HTML para cada categoría en orden
     let html = '';
     
-    for (let category in categories) {
+    for (let category of sortedCategories) {
       const categoryName = getCategoryName(category);
       html += `<div class="stock-category" data-category="${category}">`;
       html += `<h4>${categoryName}</h4>`;
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       
-      categories[category].forEach(item => {
+      // Ordenar los productos dentro de cada categoría por código
+      const sortedProducts = categories[category].sort((a, b) => {
+        return a.code.localeCompare(b.code);
+      });
+      
+      sortedProducts.forEach(item => {
         html += `<div class="stock-item" data-code="${item.code}" style="display:flex; flex-direction:column; align-items:center; padding:8px; background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">`;
-        html += item.imageHtml; // Aquí va la imagen exactamente como en el catálogo
+        html += item.imageHtml;
         html += `<p style="margin-top:8px; font-size:0.85rem; color:#333; text-align:center;">${item.name}</p>`;
         html += `<div class="stock-control" style="display:flex; gap:5px; margin-top:5px; width:100%; justify-content:center;">`;
-        html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;">`;
+        html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onclick="this.select()">`;
         html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
         html += `</div></div>`;
       });
@@ -1040,24 +1047,95 @@ body { padding-top: 80px; }
     });
   };
 
-  // Función para actualizar stock de un solo producto
+  // Función para actualizar stock de un solo producto (GUARDA INMEDIATAMENTE)
   window.updateSingleStock = function(code) {
     const input = document.getElementById(`stock-${code}`);
     if (input) {
-      set(ref(database, `stock/${code}`), parseInt(input.value) || 0);
-      input.style.backgroundColor = '#d4edda';
-      setTimeout(() => input.style.backgroundColor = '', 500);
+      const newStock = parseInt(input.value) || 0; // Permite stock 0
+      set(ref(database, `stock/${code}`), newStock).then(() => {
+        // Feedback visual de éxito
+        input.style.backgroundColor = '#d4edda';
+        setTimeout(() => input.style.backgroundColor = '', 500);
+        
+        // Mostrar mensaje breve de confirmación
+        const originalButton = input.nextElementSibling;
+        const originalText = originalButton.textContent;
+        originalButton.textContent = '✓ Guardado';
+        originalButton.style.background = '#45a049';
+        setTimeout(() => {
+          originalButton.textContent = originalText;
+          originalButton.style.background = '#4CAF50';
+        }, 1000);
+      }).catch(error => {
+        alert('Error al actualizar stock: ' + error.message);
+      });
     }
   };
 
   // Función para guardar todos los cambios de stock
   window.saveAllStock = function() {
+    let updatedCount = 0;
+    const promises = [];
+    
     document.querySelectorAll('.stock-item').forEach(item => {
       const code = item.getAttribute('data-code');
       const input = document.getElementById(`stock-${code}`);
-      if (input) set(ref(database, `stock/${code}`), parseInt(input.value) || 0);
+      if (input) {
+        const newStock = parseInt(input.value) || 0; // Permite stock 0
+        promises.push(set(ref(database, `stock/${code}`), newStock));
+        updatedCount++;
+      }
     });
-    alert('Stock actualizado correctamente');
+    
+    Promise.all(promises).then(() => {
+      alert(`✅ ${updatedCount} productos actualizados correctamente`);
+    }).catch(error => {
+      alert('Error al actualizar stock: ' + error.message);
+    });
+  };
+
+  // PERSISTENCIA DEL MODAL - Guardar estado al cambiar de aplicación
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      // La página se está ocultando, guardar estado del modal
+      const stockModal = document.getElementById('stockModal');
+      const isStockModalOpen = stockModal.style.display === 'block';
+      const isPasswordPromptVisible = document.getElementById('stockPasswordPrompt').style.display === 'block';
+      const isManagementContentVisible = document.getElementById('stockManagementContent').style.display === 'block';
+      
+      sessionStorage.setItem('stockModalState', JSON.stringify({
+        isOpen: isStockModalOpen,
+        passwordPromptVisible: isPasswordPromptVisible,
+        managementContentVisible: isManagementContentVisible
+      }));
+    } else {
+      // La página se está mostrando de nuevo, restaurar estado si existe
+      const savedState = sessionStorage.getItem('stockModalState');
+      if (savedState) {
+        const state = JSON.parse(savedState);
+        if (state.isOpen) {
+          document.getElementById('stockModal').style.display = 'block';
+          document.getElementById('stockPasswordPrompt').style.display = state.passwordPromptVisible ? 'block' : 'none';
+          document.getElementById('stockManagementContent').style.display = state.managementContentVisible ? 'block' : 'none';
+          
+          // Si el contenido de gestión estaba visible, recargar los items
+          if (state.managementContentVisible) {
+            loadAllStockItems();
+          }
+        }
+        // Limpiar el estado guardado después de restaurarlo
+        sessionStorage.removeItem('stockModalState');
+      }
+    }
+  });
+
+  // También guardar estado cuando se cierra el modal
+  const originalCloseStockModal = window.closeStockModal;
+  window.closeStockModal = function() {
+    document.getElementById('stockModal').style.display = 'none';
+    // Limpiar cualquier estado guardado
+    sessionStorage.removeItem('stockModalState');
+    if (originalCloseStockModal) originalCloseStockModal();
   };
 
   function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
