@@ -924,22 +924,36 @@ body { padding-top: 80px; }
   }
 
   // ============================================
-  // GESTIÓN DE STOCK - VERSIÓN MEJORADA
+  // GESTIÓN DE STOCK - VERSIÓN FINAL CORREGIDA
   // ============================================
   window.showStockManagement = function() { 
     document.getElementById('stockModal').style.display = 'block'; 
     document.getElementById('stockPasswordPrompt').style.display = 'block'; 
     document.getElementById('stockManagementContent').style.display = 'none'; 
     document.getElementById('stockPassword').value = ''; 
+    
+    // Agregar un estado al historial para manejar la flecha atrás
+    history.pushState({modal: 'stock'}, null, location.href);
   };
 
-  window.closeStockModal = () => document.getElementById('stockModal').style.display = 'none';
+  window.closeStockModal = function() {
+    document.getElementById('stockModal').style.display = 'none';
+    document.getElementById('stockPasswordPrompt').style.display = 'block';
+    document.getElementById('stockManagementContent').style.display = 'none';
+    // Limpiar cualquier estado guardado
+    sessionStorage.removeItem('stockModalState');
+    
+    // Actualizar todos los indicadores de stock después de cerrar el modal
+    updateAllStockIndicators();
+  };
 
   window.verifyStockPassword = function() {
     if (document.getElementById('stockPassword').value === PASSWORD) {
       document.getElementById('stockPasswordPrompt').style.display = 'none';
       document.getElementById('stockManagementContent').style.display = 'block';
       loadAllStockItems();
+      // Agregar otro estado al historial cuando se accede al contenido
+      history.pushState({modal: 'stock', content: true}, null, location.href);
     } else alert('Contraseña incorrecta');
   };
 
@@ -994,7 +1008,7 @@ body { padding-top: 80px; }
       });
     });
     
-    // Ordenar las categorías numéricamente (000, 010, 020, 035, 050, 075, 100, 150, 200, 220, 250, 350, 420)
+    // Ordenar las categorías numéricamente
     const sortedCategories = Object.keys(categories).sort((a, b) => {
       return parseInt(a) - parseInt(b);
     });
@@ -1047,32 +1061,89 @@ body { padding-top: 80px; }
     });
   };
 
-  // Función para actualizar stock de un solo producto (GUARDA INMEDIATAMENTE)
+  // Función para actualizar stock de un solo producto (VERSIÓN DEFINITIVA - CORREGIDA PARA 0)
   window.updateSingleStock = function(code) {
     const input = document.getElementById(`stock-${code}`);
     if (input) {
-      const newStock = parseInt(input.value) || 0; // Permite stock 0
-      set(ref(database, `stock/${code}`), newStock).then(() => {
-        // Feedback visual de éxito
-        input.style.backgroundColor = '#d4edda';
-        setTimeout(() => input.style.backgroundColor = '', 500);
-        
-        // Mostrar mensaje breve de confirmación
-        const originalButton = input.nextElementSibling;
-        const originalText = originalButton.textContent;
-        originalButton.textContent = '✓ Guardado';
-        originalButton.style.background = '#45a049';
-        setTimeout(() => {
-          originalButton.textContent = originalText;
-          originalButton.style.background = '#4CAF50';
-        }, 1000);
-      }).catch(error => {
-        alert('Error al actualizar stock: ' + error.message);
-      });
+      // Obtener el valor del input
+      const inputValue = input.value;
+      
+      // IMPORTANTE: Manejar el 0 explícitamente
+      let newStock;
+      
+      if (inputValue === '' || inputValue === null) {
+        newStock = 0;
+      } else {
+        newStock = parseInt(inputValue, 10);
+        if (isNaN(newStock)) {
+          newStock = 0;
+        }
+      }
+      
+      // Asegurar que no sea negativo
+      if (newStock < 0) {
+        newStock = 0;
+        input.value = 0;
+      }
+      
+      console.log(`Guardando stock para ${code}: ${newStock}`); // Para debugging
+      
+      // Guardar en Firebase
+      set(ref(database, `stock/${code}`), newStock)
+        .then(() => {
+          // 1. Feedback visual en el input
+          input.style.backgroundColor = '#d4edda';
+          setTimeout(() => input.style.backgroundColor = '', 500);
+          
+          // 2. Feedback en el botón
+          const originalButton = input.nextElementSibling;
+          const originalText = originalButton.textContent;
+          const originalColor = originalButton.style.background;
+          
+          originalButton.textContent = '✓ Guardado';
+          originalButton.style.background = '#45a049';
+          
+          setTimeout(() => {
+            originalButton.textContent = originalText;
+            originalButton.style.background = originalColor;
+          }, 1000);
+          
+          // 3. ACTUALIZAR INMEDIATAMENTE la variable global stock
+          stock[code] = newStock;
+          
+          // 4. ACTUALIZAR INMEDIATAMENTE el indicador en el catálogo
+          const catalogItem = document.querySelector(`.imagen-item[data-code="${code}"]`);
+          if (catalogItem) {
+            const indicator = catalogItem.querySelector('.stock-indicator');
+            if (indicator) {
+              indicator.textContent = newStock;
+            }
+            
+            // Actualizar clase out-of-stock
+            if (newStock <= 0) {
+              catalogItem.classList.add('out-of-stock');
+            } else {
+              catalogItem.classList.remove('out-of-stock');
+            }
+          }
+          
+          // 5. ACTUALIZAR los contadores de categoría
+          updateCategoryStockCounters();
+          
+          // 6. Forzar un re-render del stock en el gestor
+          const stockInput = document.getElementById(`stock-${code}`);
+          if (stockInput) {
+            stockInput.value = newStock;
+          }
+        })
+        .catch(error => {
+          console.error('Error al actualizar stock:', error);
+          alert('Error al actualizar stock: ' + error.message);
+        });
     }
   };
 
-  // Función para guardar todos los cambios de stock
+  // Función para guardar todos los cambios de stock (VERSIÓN DEFINITIVA)
   window.saveAllStock = function() {
     let updatedCount = 0;
     const promises = [];
@@ -1080,12 +1151,54 @@ body { padding-top: 80px; }
     document.querySelectorAll('.stock-item').forEach(item => {
       const code = item.getAttribute('data-code');
       const input = document.getElementById(`stock-${code}`);
+      
       if (input) {
-        const newStock = parseInt(input.value) || 0; // Permite stock 0
+        // Obtener el valor del input
+        const inputValue = input.value;
+        
+        // Manejar el 0 explícitamente
+        let newStock;
+        
+        if (inputValue === '' || inputValue === null) {
+          newStock = 0;
+        } else {
+          newStock = parseInt(inputValue, 10);
+          if (isNaN(newStock)) {
+            newStock = 0;
+          }
+        }
+        
+        // Asegurar que no sea negativo
+        if (newStock < 0) {
+          newStock = 0;
+          input.value = 0;
+        }
+        
+        // Actualizar la variable global
+        stock[code] = newStock;
+        
+        // Actualizar el indicador en el catálogo
+        const catalogItem = document.querySelector(`.imagen-item[data-code="${code}"]`);
+        if (catalogItem) {
+          const indicator = catalogItem.querySelector('.stock-indicator');
+          if (indicator) {
+            indicator.textContent = newStock;
+          }
+          
+          if (newStock <= 0) {
+            catalogItem.classList.add('out-of-stock');
+          } else {
+            catalogItem.classList.remove('out-of-stock');
+          }
+        }
+        
         promises.push(set(ref(database, `stock/${code}`), newStock));
         updatedCount++;
       }
     });
+    
+    // Actualizar contadores de categoría
+    updateCategoryStockCounters();
     
     Promise.all(promises).then(() => {
       alert(`✅ ${updatedCount} productos actualizados correctamente`);
@@ -1129,14 +1242,44 @@ body { padding-top: 80px; }
     }
   });
 
-  // También guardar estado cuando se cierra el modal
-  const originalCloseStockModal = window.closeStockModal;
-  window.closeStockModal = function() {
-    document.getElementById('stockModal').style.display = 'none';
-    // Limpiar cualquier estado guardado
-    sessionStorage.removeItem('stockModalState');
-    if (originalCloseStockModal) originalCloseStockModal();
-  };
+  // ============================================
+  // MANEJO DE FLECHA ATRÁS - CORREGIDO
+  // ============================================
+  window.addEventListener('popstate', function(event) {
+    const stockModal = document.getElementById('stockModal');
+    const purchaseModal = document.getElementById('purchaseModal');
+    const cartModal = document.getElementById('cartModal');
+    
+    // Si el modal de stock está abierto
+    if (stockModal.style.display === 'block') {
+      event.preventDefault();
+      
+      // Cerrar el modal pero SIN recargar la página
+      stockModal.style.display = 'none';
+      document.getElementById('stockPasswordPrompt').style.display = 'block';
+      document.getElementById('stockManagementContent').style.display = 'none';
+      
+      // Restaurar el estado del historial sin recargar
+      history.pushState(null, null, location.href);
+    } 
+    // Si el modal de compra está abierto
+    else if (purchaseModal.style.display === 'block') {
+      event.preventDefault();
+      purchaseModal.style.display = 'none';
+      history.pushState(null, null, location.href);
+    }
+    // Si el modal del carrito está abierto
+    else if (cartModal.style.display === 'block') {
+      event.preventDefault();
+      cartModal.style.display = 'none';
+      hideExportPrompt();
+      hideClearPrompt();
+      history.pushState(null, null, location.href);
+    }
+  });
+
+  // Inicializar el historial
+  history.pushState(null, null, location.href);
 
   function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
   window.openCartModal = function() { renderCart(); document.getElementById('cartModal').style.display = 'block'; };
