@@ -101,6 +101,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .imagen-item.out-of-stock {
   opacity: 0.5;
   cursor: not-allowed;
+  display: none; /* Ocultar completamente los productos sin stock */
 }
 .imagen-item.out-of-stock:hover {
   transform: none;
@@ -612,6 +613,14 @@ body { padding-top: 80px; }
   const PASSWORD = "admin123";
   const STOCK_INICIAL = 100;
 
+  // Mapa de consumo de fichas para productos 000
+  const FICHA_CONSUMPTION = {
+    '000-00': 1,   // 1 ficha
+    '000-01': 7,   // 7 fichas
+    '000-02': 12,  // 12 fichas
+    '000-03': 26   // 26 fichas
+  };
+
   // ============================================
   // GENERADOR AUTOMÁTICO DE PRODUCTOS
   // ============================================
@@ -729,21 +738,65 @@ body { padding-top: 80px; }
 
   function initializeStock() {
     const initialStock = {};
-    document.querySelectorAll('.imagen-item').forEach(item => { const code = item.getAttribute('data-code'); if (!stock[code]) initialStock[code] = STOCK_INICIAL; });
+    document.querySelectorAll('.imagen-item').forEach(item => { 
+      const code = item.getAttribute('data-code'); 
+      if (!stock[code]) initialStock[code] = STOCK_INICIAL; 
+    });
     get(stockRef).then((snapshot) => {
       const existingStock = snapshot.val();
       if (!existingStock) set(stockRef, initialStock);
-      else document.querySelectorAll('.imagen-item').forEach(item => { const code = item.getAttribute('data-code'); if (!existingStock[code]) set(ref(database, `stock/${code}`), STOCK_INICIAL); });
+      else {
+        document.querySelectorAll('.imagen-item').forEach(item => { 
+          const code = item.getAttribute('data-code'); 
+          if (!existingStock[code]) set(ref(database, `stock/${code}`), STOCK_INICIAL); 
+        });
+      }
     });
+  }
+
+  // Función para verificar si un producto de fichas tiene stock disponible
+  function hasFichaStock(code) {
+    if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
+      const consumption = FICHA_CONSUMPTION[code] || 0;
+      const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+      return fichaStock >= consumption;
+    }
+    return true;
+  }
+
+  // Función para obtener el stock visible de un producto
+  function getVisibleStock(code) {
+    if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
+      const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+      const consumption = FICHA_CONSUMPTION[code] || 0;
+      return Math.floor(fichaStock / consumption);
+    }
+    return stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
   }
 
   function updateAllStockIndicators() {
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
-      const stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
+      
+      // Para productos de fichas, mostrar stock basado en 000-00
+      let stockValue;
+      if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
+        const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+        const consumption = FICHA_CONSUMPTION[code] || 0;
+        stockValue = Math.floor(fichaStock / consumption);
+      } else {
+        stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
+      }
+      
       const indicator = item.querySelector('.stock-indicator');
       if (indicator) indicator.textContent = stockValue;
-      if (stockValue <= 0) item.classList.add('out-of-stock'); else item.classList.remove('out-of-stock');
+      
+      // Ocultar producto si stock es 0
+      if (stockValue <= 0) {
+        item.classList.add('out-of-stock');
+      } else {
+        item.classList.remove('out-of-stock');
+      }
     });
     updateCategoryStockCounters();
   }
@@ -755,7 +808,16 @@ body { padding-top: 80px; }
       const code = item.getAttribute('data-code');
       if (category) {
         if (!categories[category]) categories[category] = 0;
-        categories[category] += (stock[code] !== undefined ? stock[code] : STOCK_INICIAL);
+        // Usar stock visible para el contador
+        let stockValue;
+        if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
+          const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+          const consumption = FICHA_CONSUMPTION[code] || 0;
+          stockValue = Math.floor(fichaStock / consumption);
+        } else {
+          stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
+        }
+        categories[category] += stockValue;
       }
     });
     for (let category in categories) {
@@ -779,7 +841,17 @@ body { padding-top: 80px; }
       let anyVisible = false;
       cat.querySelectorAll('.imagen-item').forEach(item => {
         const code = item.getAttribute('data-code') || '';
-        if (query === '' || code.startsWith(query)) { item.style.display = 'flex'; anyVisible = true; } else item.style.display = 'none';
+        // Solo considerar productos visibles (con stock)
+        if (!item.classList.contains('out-of-stock')) {
+          if (query === '' || code.startsWith(query)) { 
+            item.style.display = 'flex'; 
+            anyVisible = true; 
+          } else { 
+            item.style.display = 'none'; 
+          }
+        } else {
+          item.style.display = 'none';
+        }
       });
       cat.style.display = anyVisible ? 'block' : 'none';
     });
@@ -813,11 +885,37 @@ body { padding-top: 80px; }
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function() {
       const code = this.getAttribute('data-code');
-      const stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
-      if (stockValue <= 0) { alert('Este producto no tiene stock disponible'); return; }
+      
+      // Verificar stock según el tipo de producto
+      let stockValue;
+      if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
+        const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+        const consumption = FICHA_CONSUMPTION[code] || 0;
+        stockValue = Math.floor(fichaStock / consumption);
+      } else {
+        stockValue = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
+      }
+      
+      if (stockValue <= 0) { 
+        alert('Este producto no tiene stock disponible'); 
+        return; 
+      }
+      
       const price = parseFloat(this.getAttribute('data-price'));
       const points = parseInt(this.getAttribute('data-points'));
-      currentProduct = { code, price, points, name: this.querySelector('p').textContent, stock: stockValue };
+      
+      // Guardar también el consumo de fichas si aplica
+      const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
+      
+      currentProduct = { 
+        code, 
+        price, 
+        points, 
+        name: this.querySelector('p').textContent, 
+        stock: stockValue,
+        fichaConsumption: fichaConsumption
+      };
+      
       document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>Puntos base: ${currentProduct.points}<br>Precio total: G.${currentProduct.price.toLocaleString()}`;
       document.getElementById('modalStockInfo').innerHTML = `Stock disponible: <strong style="color:${stockValue > 0 ? '#4CAF50' : '#f44336'}">${stockValue} unidades</strong>`;
       document.getElementById('pointsInput').value = '';
@@ -857,13 +955,33 @@ body { padding-top: 80px; }
   };
 
   // ============================================
-  // AGREGAR AL CARRITO (SIN ALERT DE CONFIRMACIÓN)
+  // AGREGAR AL CARRITO (CON GESTIÓN DE FICHAS)
   // ============================================
   window.addToCart = function() {
     if (!currentProduct) return;
+    
     const code = currentProduct.code;
-    const currentStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
-    if (currentStock <= 0) { alert('No hay stock disponible'); closeModal(); return; }
+    const fichaConsumption = currentProduct.fichaConsumption || 0;
+    
+    // Verificar stock según el tipo de producto
+    let currentStock;
+    if (fichaConsumption > 0) {
+      // Es un producto que consume fichas
+      currentStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+      if (currentStock < fichaConsumption) { 
+        alert('No hay suficientes fichas disponibles'); 
+        closeModal(); 
+        return; 
+      }
+    } else {
+      // Producto normal
+      currentStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
+      if (currentStock <= 0) { 
+        alert('No hay stock disponible'); 
+        closeModal(); 
+        return; 
+      }
+    }
     
     const points = parseInt(document.getElementById('pointsInput').value) || 0;
     const money = parseFloat(document.getElementById('moneyInput').value) || 0;
@@ -876,15 +994,31 @@ body { padding-top: 80px; }
     if (points === 0 && money === 0) { alert('Debes pagar con puntos o dinero'); return; }
     if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) { alert('Si pagas todos los puntos, el dinero debe ser 0'); return; }
     
-    set(ref(database, `stock/${code}`), currentStock - 1);
+    // Actualizar stock
+    if (fichaConsumption > 0) {
+      // Restar del stock de fichas (000-00)
+      const newFichaStock = (stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL) - fichaConsumption;
+      set(ref(database, `stock/000-00`), newFichaStock);
+    } else {
+      // Producto normal
+      set(ref(database, `stock/${code}`), currentStock - 1);
+    }
     
     const ahora = new Date();
     const fecha = ahora.toLocaleDateString('es-PY');
     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     
     push(cartRef, {
-      code, name: currentProduct.name, points, money, totalPrice: currentProduct.price,
-      fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime()
+      code, 
+      name: currentProduct.name, 
+      points, 
+      money, 
+      totalPrice: currentProduct.price,
+      fecha, 
+      hora, 
+      timestamp: fecha + ' ' + hora, 
+      timestampCompleto: ahora.getTime(),
+      fichaConsumption: fichaConsumption // Guardar cuántas fichas consumió
     });
     
     // Resetear la búsqueda después de agregar al carrito
@@ -895,14 +1029,24 @@ body { padding-top: 80px; }
   };
 
   // ============================================
-  // ELIMINAR ITEM
+  // ELIMINAR ITEM (CON DEVOLUCIÓN DE FICHAS)
   // ============================================
   window.showDeletePrompt = function(firebaseKey) {
     const password = prompt('🔐 Ingresa la contraseña para eliminar este item:');
     if (password === PASSWORD) {
       const item = cart.find(i => i.firebaseKey === firebaseKey);
       if (!item) { alert('❌ No se encontró el item'); return; }
-      if (item.code) set(ref(database, `stock/${item.code}`), (stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL) + 1);
+      
+      // Devolver stock según el tipo de producto
+      if (item.fichaConsumption && item.fichaConsumption > 0) {
+        // Devolver fichas al stock de 000-00
+        const currentFichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+        set(ref(database, `stock/000-00`), currentFichaStock + item.fichaConsumption);
+      } else if (item.code) {
+        // Producto normal
+        set(ref(database, `stock/${item.code}`), (stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL) + 1);
+      }
+      
       remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Item eliminado')).catch(error => alert('❌ Error: ' + error.message));
     } else alert('❌ Contraseña incorrecta');
   };
@@ -917,7 +1061,14 @@ body { padding-top: 80px; }
       if (!item) return;
       const itemDiv = document.createElement('div');
       itemDiv.className = 'cart-item';
-      itemDiv.innerHTML = `<span>${item.name}</span><span>${item.points.toLocaleString()}</span><span>G.${item.money.toLocaleString()}</span><span style="font-size:0.8rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span><span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">🗑️ Eliminar</button></span>`;
+      
+      // Mostrar consumo de fichas si aplica
+      let fichaInfo = '';
+      if (item.fichaConsumption && item.fichaConsumption > 0) {
+        fichaInfo = ` (${item.fichaConsumption} fichas)`;
+      }
+      
+      itemDiv.innerHTML = `<span>${item.name}${fichaInfo}</span><span>${item.points.toLocaleString()}</span><span>G.${item.money.toLocaleString()}</span><span style="font-size:0.8rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span><span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">🗑️ Eliminar</button></span>`;
       cartItemsDiv.appendChild(itemDiv);
     });
     if (cart.length === 0) cartItemsDiv.innerHTML += '<div class="cart-item"><span colspan="5" style="text-align:center; padding:20px;">Carrito vacío</span></div>';
@@ -998,13 +1149,26 @@ body { padding-top: 80px; }
         imageHtml = `<div class="img-placeholder" style="background: ${colores[index]};">${code.replace('-', ' ')}</div>`;
       }
       
+      // En el gestor de stock, mostrar el stock real de cada producto
+      // Para productos de fichas, mostrar el stock basado en 000-00
+      let displayStock;
+      if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
+        const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+        const consumption = FICHA_CONSUMPTION[code] || 0;
+        displayStock = Math.floor(fichaStock / consumption);
+      } else {
+        displayStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
+      }
+      
       categories[category].push({
         code: code,
         name: name,
         price: price,
         points: points,
         imageHtml: imageHtml,
-        currentStock: stock[code] !== undefined ? stock[code] : STOCK_INICIAL
+        currentStock: displayStock,
+        realStock: code === '000-00' ? (stock[code] !== undefined ? stock[code] : STOCK_INICIAL) : null,
+        isFichaBase: code === '000-00'
       });
     });
     
@@ -1020,6 +1184,16 @@ body { padding-top: 80px; }
       const categoryName = getCategoryName(category);
       html += `<div class="stock-category" data-category="${category}">`;
       html += `<h4>${categoryName}</h4>`;
+      
+      // Si es la categoría 000, mostrar información sobre fichas
+      if (category === '000') {
+        const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px; font-size:0.9rem;">
+          <strong>Stock de fichas:</strong> ${fichaStock} fichas disponibles<br>
+          <small>000-01 (7 fichas), 000-02 (12 fichas), 000-03 (26 fichas)</small>
+        </p>`;
+      }
+      
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       
       // Ordenar los productos dentro de cada categoría por código
@@ -1032,8 +1206,21 @@ body { padding-top: 80px; }
         html += item.imageHtml;
         html += `<p style="margin-top:8px; font-size:0.85rem; color:#333; text-align:center;">${item.name}</p>`;
         html += `<div class="stock-control" style="display:flex; gap:5px; margin-top:5px; width:100%; justify-content:center;">`;
-        html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onclick="this.select()">`;
-        html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
+        
+        if (item.isFichaBase) {
+          // Para 000-00, mostrar campo editable
+          html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onclick="this.select()">`;
+          html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
+        } else if (item.code.startsWith('000-') && item.code !== '000-04' && item.code !== '000-05') {
+          // Para productos que consumen fichas, mostrar solo lectura
+          html += `<input type="number" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center; background-color:#f5f5f5;" readonly disabled>`;
+          html += `<span style="padding:5px 10px; background:#999; color:white; border:none; border-radius:4px; font-size:0.75rem;">Stock de fichas</span>`;
+        } else {
+          // Productos normales
+          html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onclick="this.select()">`;
+          html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
+        }
+        
         html += `</div></div>`;
       });
       
@@ -1061,14 +1248,14 @@ body { padding-top: 80px; }
     });
   };
 
-  // Función para actualizar stock de un solo producto (VERSIÓN DEFINITIVA - CORREGIDA PARA 0)
+  // Función para actualizar stock de un solo producto (VERSIÓN DEFINITIVA)
   window.updateSingleStock = function(code) {
     const input = document.getElementById(`stock-${code}`);
     if (input) {
       // Obtener el valor del input
       const inputValue = input.value;
       
-      // IMPORTANTE: Manejar el 0 explícitamente
+      // Manejar el 0 explícitamente
       let newStock;
       
       if (inputValue === '' || inputValue === null) {
@@ -1086,55 +1273,18 @@ body { padding-top: 80px; }
         input.value = 0;
       }
       
-      console.log(`Guardando stock para ${code}: ${newStock}`); // Para debugging
-      
       // Guardar en Firebase
       set(ref(database, `stock/${code}`), newStock)
         .then(() => {
-          // 1. Feedback visual en el input
+          // Feedback visual
           input.style.backgroundColor = '#d4edda';
           setTimeout(() => input.style.backgroundColor = '', 500);
           
-          // 2. Feedback en el botón
-          const originalButton = input.nextElementSibling;
-          const originalText = originalButton.textContent;
-          const originalColor = originalButton.style.background;
+          // Actualizar todos los indicadores (esto actualizará los productos de fichas automáticamente)
+          updateAllStockIndicators();
           
-          originalButton.textContent = '✓ Guardado';
-          originalButton.style.background = '#45a049';
-          
-          setTimeout(() => {
-            originalButton.textContent = originalText;
-            originalButton.style.background = originalColor;
-          }, 1000);
-          
-          // 3. ACTUALIZAR INMEDIATAMENTE la variable global stock
-          stock[code] = newStock;
-          
-          // 4. ACTUALIZAR INMEDIATAMENTE el indicador en el catálogo
-          const catalogItem = document.querySelector(`.imagen-item[data-code="${code}"]`);
-          if (catalogItem) {
-            const indicator = catalogItem.querySelector('.stock-indicator');
-            if (indicator) {
-              indicator.textContent = newStock;
-            }
-            
-            // Actualizar clase out-of-stock
-            if (newStock <= 0) {
-              catalogItem.classList.add('out-of-stock');
-            } else {
-              catalogItem.classList.remove('out-of-stock');
-            }
-          }
-          
-          // 5. ACTUALIZAR los contadores de categoría
-          updateCategoryStockCounters();
-          
-          // 6. Forzar un re-render del stock en el gestor
-          const stockInput = document.getElementById(`stock-${code}`);
-          if (stockInput) {
-            stockInput.value = newStock;
-          }
+          // Recargar el gestor de stock para mostrar los nuevos valores
+          loadAllStockItems();
         })
         .catch(error => {
           console.error('Error al actualizar stock:', error);
@@ -1143,7 +1293,7 @@ body { padding-top: 80px; }
     }
   };
 
-  // Función para guardar todos los cambios de stock (VERSIÓN DEFINITIVA)
+  // Función para guardar todos los cambios de stock
   window.saveAllStock = function() {
     let updatedCount = 0;
     const promises = [];
@@ -1152,13 +1302,11 @@ body { padding-top: 80px; }
       const code = item.getAttribute('data-code');
       const input = document.getElementById(`stock-${code}`);
       
-      if (input) {
-        // Obtener el valor del input
+      // Solo actualizar inputs editables (no los readonly)
+      if (input && !input.disabled) {
         const inputValue = input.value;
         
-        // Manejar el 0 explícitamente
         let newStock;
-        
         if (inputValue === '' || inputValue === null) {
           newStock = 0;
         } else {
@@ -1168,28 +1316,9 @@ body { padding-top: 80px; }
           }
         }
         
-        // Asegurar que no sea negativo
         if (newStock < 0) {
           newStock = 0;
           input.value = 0;
-        }
-        
-        // Actualizar la variable global
-        stock[code] = newStock;
-        
-        // Actualizar el indicador en el catálogo
-        const catalogItem = document.querySelector(`.imagen-item[data-code="${code}"]`);
-        if (catalogItem) {
-          const indicator = catalogItem.querySelector('.stock-indicator');
-          if (indicator) {
-            indicator.textContent = newStock;
-          }
-          
-          if (newStock <= 0) {
-            catalogItem.classList.add('out-of-stock');
-          } else {
-            catalogItem.classList.remove('out-of-stock');
-          }
         }
         
         promises.push(set(ref(database, `stock/${code}`), newStock));
@@ -1197,20 +1326,18 @@ body { padding-top: 80px; }
       }
     });
     
-    // Actualizar contadores de categoría
-    updateCategoryStockCounters();
-    
     Promise.all(promises).then(() => {
       alert(`✅ ${updatedCount} productos actualizados correctamente`);
+      updateAllStockIndicators();
+      loadAllStockItems();
     }).catch(error => {
       alert('Error al actualizar stock: ' + error.message);
     });
   };
 
-  // PERSISTENCIA DEL MODAL - Guardar estado al cambiar de aplicación
+  // PERSISTENCIA DEL MODAL
   document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
-      // La página se está ocultando, guardar estado del modal
       const stockModal = document.getElementById('stockModal');
       const isStockModalOpen = stockModal.style.display === 'block';
       const isPasswordPromptVisible = document.getElementById('stockPasswordPrompt').style.display === 'block';
@@ -1222,7 +1349,6 @@ body { padding-top: 80px; }
         managementContentVisible: isManagementContentVisible
       }));
     } else {
-      // La página se está mostrando de nuevo, restaurar estado si existe
       const savedState = sessionStorage.getItem('stockModalState');
       if (savedState) {
         const state = JSON.parse(savedState);
@@ -1231,44 +1357,35 @@ body { padding-top: 80px; }
           document.getElementById('stockPasswordPrompt').style.display = state.passwordPromptVisible ? 'block' : 'none';
           document.getElementById('stockManagementContent').style.display = state.managementContentVisible ? 'block' : 'none';
           
-          // Si el contenido de gestión estaba visible, recargar los items
           if (state.managementContentVisible) {
             loadAllStockItems();
           }
         }
-        // Limpiar el estado guardado después de restaurarlo
         sessionStorage.removeItem('stockModalState');
       }
     }
   });
 
   // ============================================
-  // MANEJO DE FLECHA ATRÁS - CORREGIDO
+  // MANEJO DE FLECHA ATRÁS
   // ============================================
   window.addEventListener('popstate', function(event) {
     const stockModal = document.getElementById('stockModal');
     const purchaseModal = document.getElementById('purchaseModal');
     const cartModal = document.getElementById('cartModal');
     
-    // Si el modal de stock está abierto
     if (stockModal.style.display === 'block') {
       event.preventDefault();
-      
-      // Cerrar el modal pero SIN recargar la página
       stockModal.style.display = 'none';
       document.getElementById('stockPasswordPrompt').style.display = 'block';
       document.getElementById('stockManagementContent').style.display = 'none';
-      
-      // Restaurar el estado del historial sin recargar
       history.pushState(null, null, location.href);
     } 
-    // Si el modal de compra está abierto
     else if (purchaseModal.style.display === 'block') {
       event.preventDefault();
       purchaseModal.style.display = 'none';
       history.pushState(null, null, location.href);
     }
-    // Si el modal del carrito está abierto
     else if (cartModal.style.display === 'block') {
       event.preventDefault();
       cartModal.style.display = 'none';
@@ -1292,38 +1409,39 @@ body { padding-top: 80px; }
   window.verifyAndClearCart = function() { if (document.getElementById('clearPassword').value === PASSWORD) { remove(cartRef); hideClearPrompt(); alert('Carrito vaciado'); } else alert('Contraseña incorrecta'); };
 
   // ============================================
-  // EXPORTAR A EXCEL (con nombre de producto truncado a 7 caracteres)
+  // EXPORTAR A EXCEL
   // ============================================
   function exportToExcel() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     const totalPoints = cart.reduce((sum, item) => sum + item.points, 0);
     const totalMoney = cart.reduce((sum, item) => sum + item.money, 0);
+    const totalFichas = cart.reduce((sum, item) => sum + (item.fichaConsumption || 0), 0);
     const nombreSucursal = document.querySelector('h1').textContent.replace('ASTROLAND - ', '');
     
-    // Truncar el nombre del producto a los primeros 7 caracteres
     const data = [
       ['ASTROLAND - ' + nombreSucursal], ['IN GOD WE TRUST'], [],
-      ['Producto', 'Puntos Pagados', 'Dinero Pagado (G.)', 'Fecha', 'Hora'],
+      ['Producto', 'Puntos Pagados', 'Dinero Pagado (G.)', 'Fichas Consumidas', 'Fecha', 'Hora'],
       ...cart.map(item => [
-        item.name.substring(0, 7), // Solo primeros 7 caracteres
+        item.name.substring(0, 7),
         item.points, 
-        item.money, 
+        item.money,
+        item.fichaConsumption || 0,
         item.fecha || (item.timestamp ? item.timestamp.split(' ')[0] : ''), 
         item.hora || (item.timestamp ? item.timestamp.split(' ')[1] : '')
       ]),
-      [], ['TOTALES', totalPoints, totalMoney, '', '']
+      [], ['TOTALES', totalPoints, totalMoney, totalFichas, '', '']
     ];
     
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }];
-    ws['!cols'] = [{ wch: 40 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }];
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }];
+    ws['!cols'] = [{ wch: 40 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Carrito');
     XLSX.writeFile(wb, `ASTROLAND_${nombreSucursal}_${new Date().toLocaleDateString('es-PY').replace(/\//g, '-')}.xlsx`);
   }
 
   // ============================================
-  // MANEJO DE MODALES - CORREGIDO (NO CIERRA EL DE COMPRA)
+  // MANEJO DE MODALES
   // ============================================
   window.onclick = function(event) {
     const cartModal = document.getElementById('cartModal');
