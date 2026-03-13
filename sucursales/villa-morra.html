@@ -728,7 +728,6 @@ body { padding-top: 80px; }
     const cartCountElement = document.getElementById('cartCount');
     if (cartCountElement) {
       cartCountElement.textContent = cart.length;
-      console.log('Contador actualizado:', cart.length); // Debug
     }
   }
 
@@ -738,8 +737,7 @@ body { padding-top: 80px; }
       const snapshot = await get(cartRef);
       const data = snapshot.val();
       cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
-      updateCartCount(); // Actualizar contador inmediatamente
-      console.log('Carrito cargado inicialmente:', cart.length, 'items');
+      updateCartCount();
     } catch (error) {
       console.error('Error al cargar carrito:', error);
       cart = [];
@@ -753,21 +751,17 @@ body { padding-top: 80px; }
       const snapshot = await get(stockRef);
       stock = snapshot.val() || {};
       
-      // Inicializar stock faltante con STOCK_INICIAL
       document.querySelectorAll('.imagen-item').forEach(item => { 
         const code = item.getAttribute('data-code'); 
         if (stock[code] === undefined) {
           stock[code] = STOCK_INICIAL;
-          // Opcional: guardar en Firebase los valores por defecto
           set(ref(database, `stock/${code}`), STOCK_INICIAL).catch(e => console.log('Error al inicializar stock:', e));
         }
       });
       
       updateAllStockIndicators();
-      console.log('Stock cargado inicialmente');
     } catch (error) {
       console.error('Error al cargar stock:', error);
-      // Inicializar con valores por defecto
       document.querySelectorAll('.imagen-item').forEach(item => { 
         const code = item.getAttribute('data-code'); 
         stock[code] = STOCK_INICIAL;
@@ -776,17 +770,6 @@ body { padding-top: 80px; }
     }
   }
 
-  // Función para verificar si un producto de fichas tiene stock disponible
-  function hasFichaStock(code) {
-    if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
-      const consumption = FICHA_CONSUMPTION[code] || 0;
-      const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
-      return fichaStock >= consumption;
-    }
-    return true;
-  }
-
-  // Función para obtener el stock visible de un producto
   function getVisibleStock(code) {
     if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
       const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -800,7 +783,6 @@ body { padding-top: 80px; }
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
       
-      // Para productos de fichas, mostrar stock basado en 000-00
       let stockValue;
       if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
         const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -813,7 +795,6 @@ body { padding-top: 80px; }
       const indicator = item.querySelector('.stock-indicator');
       if (indicator) indicator.textContent = stockValue;
       
-      // Ocultar producto si stock es 0
       if (stockValue <= 0) {
         item.classList.add('out-of-stock');
       } else {
@@ -830,7 +811,6 @@ body { padding-top: 80px; }
       const code = item.getAttribute('data-code');
       if (category) {
         if (!categories[category]) categories[category] = 0;
-        // Usar stock visible para el contador
         let stockValue;
         if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
           const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -863,7 +843,6 @@ body { padding-top: 80px; }
       let anyVisible = false;
       cat.querySelectorAll('.imagen-item').forEach(item => {
         const code = item.getAttribute('data-code') || '';
-        // Solo considerar productos visibles (con stock)
         if (!item.classList.contains('out-of-stock')) {
           if (query === '' || code.startsWith(query)) { 
             item.style.display = 'flex'; 
@@ -879,13 +858,11 @@ body { padding-top: 80px; }
     });
   }
 
-  // Función para resetear la búsqueda (mostrar todos los productos y limpiar el campo)
   function resetSearch() {
     const searchInput = document.getElementById('busqueda');
     if (searchInput) {
       searchInput.value = '';
       filterProducts('');
-      // Desplazar la página al inicio del contenedor de productos
       const container = document.querySelector('.container');
       if (container) {
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -908,7 +885,6 @@ body { padding-top: 80px; }
     item.addEventListener('click', function() {
       const code = this.getAttribute('data-code');
       
-      // Verificar stock según el tipo de producto
       let stockValue;
       if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
         const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -925,8 +901,6 @@ body { padding-top: 80px; }
       
       const price = parseFloat(this.getAttribute('data-price'));
       const points = parseInt(this.getAttribute('data-points'));
-      
-      // Guardar también el consumo de fichas si aplica
       const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
       
       currentProduct = { 
@@ -959,17 +933,14 @@ body { padding-top: 80px; }
       document.getElementById('moneyInput').value = Math.round(currentProduct.price * (1 - pointsPaid / currentProduct.points));
     }
     
-    // Auto cerrar teclado según la cantidad de puntos del producto
     const pointsInput = document.getElementById('pointsInput');
     const pointsValue = pointsInput.value;
     
     if (currentProduct.points >= 10 && currentProduct.points <= 75) {
-      // Para productos de 10 a 75 puntos: cerrar teclado al ingresar 2 dígitos
       if (pointsValue.length >= 2) {
         pointsInput.blur();
       }
     } else if (currentProduct.points >= 100 && currentProduct.points <= 420) {
-      // Para productos de 100 a 420 puntos: cerrar teclado al ingresar 3 dígitos
       if (pointsValue.length >= 3) {
         pointsInput.blur();
       }
@@ -985,10 +956,8 @@ body { padding-top: 80px; }
     const code = currentProduct.code;
     const fichaConsumption = currentProduct.fichaConsumption || 0;
     
-    // Verificar stock según el tipo de producto
     let currentStock;
     if (fichaConsumption > 0) {
-      // Es un producto que consume fichas
       currentStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
       if (currentStock < fichaConsumption) { 
         alert('No hay suficientes fichas disponibles'); 
@@ -996,7 +965,6 @@ body { padding-top: 80px; }
         return; 
       }
     } else {
-      // Producto normal
       currentStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
       if (currentStock <= 0) { 
         alert('No hay stock disponible'); 
@@ -1016,13 +984,10 @@ body { padding-top: 80px; }
     if (points === 0 && money === 0) { alert('Debes pagar con puntos o dinero'); return; }
     if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) { alert('Si pagas todos los puntos, el dinero debe ser 0'); return; }
     
-    // Actualizar stock
     if (fichaConsumption > 0) {
-      // Restar del stock de fichas (000-00)
       const newFichaStock = (stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL) - fichaConsumption;
       set(ref(database, `stock/000-00`), newFichaStock);
     } else {
-      // Producto normal
       set(ref(database, `stock/${code}`), currentStock - 1);
     }
     
@@ -1040,14 +1005,11 @@ body { padding-top: 80px; }
       hora, 
       timestamp: fecha + ' ' + hora, 
       timestampCompleto: ahora.getTime(),
-      fichaConsumption: fichaConsumption // Guardar cuántas fichas consumió
+      fichaConsumption: fichaConsumption
     });
     
-    // Resetear la búsqueda después de agregar al carrito
     resetSearch();
-    
     closeModal();
-    // El alert de confirmación ha sido eliminado
   };
 
   // ============================================
@@ -1059,13 +1021,10 @@ body { padding-top: 80px; }
       const item = cart.find(i => i.firebaseKey === firebaseKey);
       if (!item) { alert('❌ No se encontró el item'); return; }
       
-      // Devolver stock según el tipo de producto
       if (item.fichaConsumption && item.fichaConsumption > 0) {
-        // Devolver fichas al stock de 000-00
         const currentFichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
         set(ref(database, `stock/000-00`), currentFichaStock + item.fichaConsumption);
       } else if (item.code) {
-        // Producto normal
         set(ref(database, `stock/${item.code}`), (stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL) + 1);
       }
       
@@ -1084,7 +1043,6 @@ body { padding-top: 80px; }
       const itemDiv = document.createElement('div');
       itemDiv.className = 'cart-item';
       
-      // Mostrar consumo de fichas si aplica
       let fichaInfo = '';
       if (item.fichaConsumption && item.fichaConsumption > 0) {
         fichaInfo = ` (${item.fichaConsumption} fichas)`;
@@ -1097,15 +1055,14 @@ body { padding-top: 80px; }
   }
 
   // ============================================
-  // GESTIÓN DE STOCK - VERSIÓN FINAL CORREGIDA
+  // GESTIÓN DE STOCK - VERSIÓN CON GUARDADO AUTOMÁTICO
   // ============================================
   window.showStockManagement = function() { 
     document.getElementById('stockModal').style.display = 'block'; 
     document.getElementById('stockPasswordPrompt').style.display = 'block'; 
     document.getElementById('stockManagementContent').style.display = 'none'; 
     document.getElementById('stockPassword').value = ''; 
-    
-    // Agregar un estado al historial para manejar la flecha atrás
+    document.getElementById('stockPassword').focus();
     history.pushState({modal: 'stock'}, null, location.href);
   };
 
@@ -1113,10 +1070,7 @@ body { padding-top: 80px; }
     document.getElementById('stockModal').style.display = 'none';
     document.getElementById('stockPasswordPrompt').style.display = 'block';
     document.getElementById('stockManagementContent').style.display = 'none';
-    // Limpiar cualquier estado guardado
     sessionStorage.removeItem('stockModalState');
-    
-    // Actualizar todos los indicadores de stock después de cerrar el modal
     updateAllStockIndicators();
   };
 
@@ -1125,7 +1079,6 @@ body { padding-top: 80px; }
       document.getElementById('stockPasswordPrompt').style.display = 'none';
       document.getElementById('stockManagementContent').style.display = 'block';
       loadAllStockItems();
-      // Agregar otro estado al historial cuando se accede al contenido
       history.pushState({modal: 'stock', content: true}, null, location.href);
     } else alert('Contraseña incorrecta');
   };
@@ -1141,7 +1094,7 @@ body { padding-top: 80px; }
     return names[categoryCode] || categoryCode + ' puntos';
   }
 
-  // Función para cargar todos los items del stock (CON IMÁGENES Y ORDENADO DESDE 000)
+  // Función para cargar todos los items del stock (CON GUARDADO AUTOMÁTICO)
   function loadAllStockItems() {
     const container = document.getElementById('stockItemsContainer');
     const categories = {};
@@ -1172,7 +1125,6 @@ body { padding-top: 80px; }
       }
       
       // En el gestor de stock, mostrar el stock real de cada producto
-      // Para productos de fichas, mostrar el stock basado en 000-00
       let displayStock;
       if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
         const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -1230,17 +1182,17 @@ body { padding-top: 80px; }
         html += `<div class="stock-control" style="display:flex; gap:5px; margin-top:5px; width:100%; justify-content:center;">`;
         
         if (item.isFichaBase) {
-          // Para 000-00, mostrar campo editable
-          html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onclick="this.select()">`;
-          html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
+          // Para 000-00, input editable con guardado automático
+          html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onchange="guardarStockIndividual('${item.code}', this.value)" onclick="this.select()">`;
+          html += `<span style="padding:5px 10px; background:#999; color:white; border:none; border-radius:4px; font-size:0.75rem;">Auto</span>`;
         } else if (item.code.startsWith('000-') && item.code !== '000-04' && item.code !== '000-05') {
           // Para productos que consumen fichas, mostrar solo lectura
           html += `<input type="number" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center; background-color:#f5f5f5;" readonly disabled>`;
           html += `<span style="padding:5px 10px; background:#999; color:white; border:none; border-radius:4px; font-size:0.75rem;">Stock de fichas</span>`;
         } else {
-          // Productos normales
-          html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onclick="this.select()">`;
-          html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
+          // Productos normales con guardado automático
+          html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onchange="guardarStockIndividual('${item.code}', this.value)" onclick="this.select()">`;
+          html += `<span style="padding:5px 10px; background:#999; color:white; border:none; border-radius:4px; font-size:0.75rem;">Auto</span>`;
         }
         
         html += `</div></div>`;
@@ -1270,144 +1222,84 @@ body { padding-top: 80px; }
     });
   };
 
-  // Función para actualizar stock de un solo producto (VERSIÓN DEFINITIVA - CORREGIDA)
-  window.updateSingleStock = function(code) {
+  // ============================================
+  // NUEVA FUNCIÓN: Guardado automático sin botón
+  // ============================================
+  window.guardarStockIndividual = function(code, valor) {
     const input = document.getElementById(`stock-${code}`);
-    if (input) {
-      // Obtener el valor del input - PERMITIR 0 EXPLÍCITAMENTE
-      const inputValue = input.value;
-      
-      // IMPORTANTE: Manejar el 0 como un valor válido
-      let newStock;
-      
-      // Si está vacío, poner 0
-      if (inputValue === '' || inputValue === null) {
-        newStock = 0;
-      } else {
-        // Convertir a número entero
-        newStock = parseInt(inputValue, 10);
-        // Si no es un número válido, poner 0
-        if (isNaN(newStock)) {
-          newStock = 0;
-        }
-      }
-      
-      // Asegurar que no sea negativo (pero PERMITIR 0)
-      if (newStock < 0) {
-        newStock = 0;
-        input.value = 0;
-      }
-      
-      console.log(`Guardando stock para ${code}: ${newStock}`); // Debug
-      
-      // Guardar en Firebase
-      set(ref(database, `stock/${code}`), newStock)
-        .then(() => {
-          // 1. Feedback visual en el input (VERDE)
-          input.style.backgroundColor = '#d4edda';
-          input.style.transition = 'background-color 0.3s';
-          setTimeout(() => {
-            input.style.backgroundColor = '';
-          }, 500);
-          
-          // 2. Feedback en el botón (TILDE ✓)
-          const originalButton = input.nextElementSibling;
-          if (originalButton) {
-            const originalText = originalButton.textContent;
-            const originalColor = originalButton.style.background;
-            
-            originalButton.textContent = '✓ Guardado';
-            originalButton.style.background = '#45a049';
-            originalButton.style.transition = 'all 0.3s';
-            
-            setTimeout(() => {
-              originalButton.textContent = originalText;
-              originalButton.style.background = originalColor;
-            }, 1500);
-          }
-          
-          // 3. ACTUALIZAR INMEDIATAMENTE la variable global stock
-          stock[code] = newStock;
-          
-          // 4. ACTUALIZAR INMEDIATAMENTE todos los indicadores del catálogo
-          updateAllStockIndicators();
-          
-          // 5. ACTUALIZAR el contador de la categoría
-          updateCategoryStockCounters();
-          
-          // 6. Si es el stock de fichas (000-00), actualizar todos los productos relacionados
-          if (code === '000-00') {
-            // Forzar actualización de 000-01, 000-02, 000-03
-            ['000-01', '000-02', '000-03'].forEach(relatedCode => {
-              const relatedItem = document.querySelector(`.imagen-item[data-code="${relatedCode}"]`);
-              if (relatedItem) {
-                const consumption = FICHA_CONSUMPTION[relatedCode] || 0;
-                const availableStock = Math.floor(newStock / consumption);
-                const indicator = relatedItem.querySelector('.stock-indicator');
-                if (indicator) {
-                  indicator.textContent = availableStock;
-                }
-              }
-            });
-          }
-          
-          // 7. Recargar el gestor de stock para mostrar los nuevos valores
-          if (document.getElementById('stockManagementContent').style.display === 'block') {
-            loadAllStockItems();
-          }
-        })
-        .catch(error => {
-          console.error('Error al actualizar stock:', error);
-          alert('Error al actualizar stock: ' + error.message);
-        });
-    }
-  };
-
-  // Función para guardar todos los cambios de stock
-  window.saveAllStock = function() {
-    let updatedCount = 0;
-    const promises = [];
+    if (!input) return;
     
-    document.querySelectorAll('.stock-item').forEach(item => {
-      const code = item.getAttribute('data-code');
-      const input = document.getElementById(`stock-${code}`);
-      
-      // Solo actualizar inputs editables (no los readonly)
-      if (input && !input.disabled) {
-        const inputValue = input.value;
+    // PASO 1: Obtener el valor PERMITIENDO 0
+    let newStock;
+    
+    if (valor === '' || valor === null) {
+      newStock = 0;
+    } else {
+      newStock = parseInt(valor, 10);
+      if (isNaN(newStock)) {
+        newStock = 0;
+      }
+    }
+    
+    // Asegurar que no sea negativo
+    if (newStock < 0) {
+      newStock = 0;
+      input.value = 0;
+    }
+    
+    console.log(`🔄 Guardando ${code} = ${newStock}`);
+    
+    // Guardar en Firebase
+    set(ref(database, `stock/${code}`), newStock)
+      .then(() => {
+        // Feedback visual simple
+        input.style.backgroundColor = '#d4edda';
+        input.style.transition = 'background-color 0.3s';
         
-        let newStock;
-        if (inputValue === '' || inputValue === null) {
-          newStock = 0;
-        } else {
-          newStock = parseInt(inputValue, 10);
-          if (isNaN(newStock)) {
-            newStock = 0;
-          }
-        }
+        // Mostrar borde verde
+        const originalBorder = input.style.border;
+        input.style.border = '2px solid #4CAF50';
         
-        if (newStock < 0) {
-          newStock = 0;
-          input.value = 0;
-        }
+        setTimeout(() => {
+          input.style.backgroundColor = '';
+          input.style.border = originalBorder;
+        }, 1000);
         
         // Actualizar variable global
         stock[code] = newStock;
         
-        promises.push(set(ref(database, `stock/${code}`), newStock));
-        updatedCount++;
-      }
-    });
-    
-    // Actualizar indicadores
-    updateAllStockIndicators();
-    
-    Promise.all(promises).then(() => {
-      alert(`✅ ${updatedCount} productos actualizados correctamente`);
-      loadAllStockItems();
-    }).catch(error => {
-      alert('Error al actualizar stock: ' + error.message);
-    });
+        // Actualizar todos los indicadores
+        updateAllStockIndicators();
+        
+        // Si es stock de fichas, actualizar productos relacionados
+        if (code === '000-00') {
+          ['000-01', '000-02', '000-03'].forEach(relatedCode => {
+            const relatedItem = document.querySelector(`.imagen-item[data-code="${relatedCode}"]`);
+            if (relatedItem) {
+              const consumption = FICHA_CONSUMPTION[relatedCode] || 0;
+              const availableStock = Math.floor(newStock / consumption);
+              const indicator = relatedItem.querySelector('.stock-indicator');
+              if (indicator) {
+                indicator.textContent = availableStock;
+              }
+            }
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error al actualizar stock:', error);
+        input.style.backgroundColor = '#f8d7da';
+        input.style.border = '2px solid #dc3545';
+        setTimeout(() => {
+          input.style.backgroundColor = '';
+          input.style.border = '';
+        }, 1000);
+      });
+  };
+
+  // Función para guardar todos los cambios (simplificada)
+  window.saveAllStock = function() {
+    alert('✅ Los cambios se guardan automáticamente al cambiar cada valor');
   };
 
   // PERSISTENCIA DEL MODAL
@@ -1473,7 +1365,7 @@ body { padding-top: 80px; }
   // Inicializar el historial
   history.pushState(null, null, location.href);
 
-  // Funciones de exportación y otros
+  // Funciones de exportación
   window.openCartModal = function() { renderCart(); document.getElementById('cartModal').style.display = 'block'; };
   window.closeCartModal = function() { document.getElementById('cartModal').style.display = 'none'; hideExportPrompt(); hideClearPrompt(); };
   window.showExportPasswordPrompt = () => document.getElementById('exportPasswordPrompt').style.display = 'block';
@@ -1553,32 +1445,27 @@ body { padding-top: 80px; }
   // INICIALIZACIÓN CORREGIDA - CARGA INMEDIATA
   // ============================================
   
-  // Mostrar carga mientras tanto
   const cartCountElement = document.getElementById('cartCount');
   if (cartCountElement) {
     cartCountElement.textContent = '...';
   }
   
-  // Ejecutar inicialización
   Promise.all([
     loadInitialCart(),
     loadInitialStock()
   ]).then(() => {
     console.log('Inicialización completa');
     
-    // Configurar listeners en tiempo real para futuros cambios
     onValue(cartRef, (snapshot) => {
       const data = snapshot.val();
       cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
       updateCartCount();
       if (document.getElementById('cartModal').style.display === 'block') renderCart();
-      console.log('Carrito actualizado en tiempo real:', cart.length);
     });
     
     onValue(stockRef, (snapshot) => {
       stock = snapshot.val() || {};
       updateAllStockIndicators();
-      console.log('Stock actualizado en tiempo real');
     });
   });
 </script>
