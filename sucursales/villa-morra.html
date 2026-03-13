@@ -724,34 +724,56 @@ body { padding-top: 80px; }
   // ============================================
   // FUNCIONES DE FIREBASE
   // ============================================
-  onValue(cartRef, (snapshot) => {
-    const data = snapshot.val();
-    cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
-    updateCartCount();
-    if (document.getElementById('cartModal').style.display === 'block') renderCart();
-  });
+  function updateCartCount() {
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+      cartCountElement.textContent = cart.length;
+      console.log('Contador actualizado:', cart.length); // Debug
+    }
+  }
 
-  onValue(stockRef, (snapshot) => {
-    stock = snapshot.val() || {};
-    updateAllStockIndicators();
-  });
+  // Función para cargar el carrito desde Firebase UNA SOLA VEZ al inicio
+  async function loadInitialCart() {
+    try {
+      const snapshot = await get(cartRef);
+      const data = snapshot.val();
+      cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
+      updateCartCount(); // Actualizar contador inmediatamente
+      console.log('Carrito cargado inicialmente:', cart.length, 'items');
+    } catch (error) {
+      console.error('Error al cargar carrito:', error);
+      cart = [];
+      updateCartCount();
+    }
+  }
 
-  function initializeStock() {
-    const initialStock = {};
-    document.querySelectorAll('.imagen-item').forEach(item => { 
-      const code = item.getAttribute('data-code'); 
-      if (!stock[code]) initialStock[code] = STOCK_INICIAL; 
-    });
-    get(stockRef).then((snapshot) => {
-      const existingStock = snapshot.val();
-      if (!existingStock) set(stockRef, initialStock);
-      else {
-        document.querySelectorAll('.imagen-item').forEach(item => { 
-          const code = item.getAttribute('data-code'); 
-          if (!existingStock[code]) set(ref(database, `stock/${code}`), STOCK_INICIAL); 
-        });
-      }
-    });
+  // Función para cargar el stock inicial
+  async function loadInitialStock() {
+    try {
+      const snapshot = await get(stockRef);
+      stock = snapshot.val() || {};
+      
+      // Inicializar stock faltante con STOCK_INICIAL
+      document.querySelectorAll('.imagen-item').forEach(item => { 
+        const code = item.getAttribute('data-code'); 
+        if (stock[code] === undefined) {
+          stock[code] = STOCK_INICIAL;
+          // Opcional: guardar en Firebase los valores por defecto
+          set(ref(database, `stock/${code}`), STOCK_INICIAL).catch(e => console.log('Error al inicializar stock:', e));
+        }
+      });
+      
+      updateAllStockIndicators();
+      console.log('Stock cargado inicialmente');
+    } catch (error) {
+      console.error('Error al cargar stock:', error);
+      // Inicializar con valores por defecto
+      document.querySelectorAll('.imagen-item').forEach(item => { 
+        const code = item.getAttribute('data-code'); 
+        stock[code] = STOCK_INICIAL;
+      });
+      updateAllStockIndicators();
+    }
   }
 
   // Función para verificar si un producto de fichas tiene stock disponible
@@ -1248,43 +1270,91 @@ body { padding-top: 80px; }
     });
   };
 
-  // Función para actualizar stock de un solo producto (VERSIÓN DEFINITIVA)
+  // Función para actualizar stock de un solo producto (VERSIÓN DEFINITIVA - CORREGIDA)
   window.updateSingleStock = function(code) {
     const input = document.getElementById(`stock-${code}`);
     if (input) {
-      // Obtener el valor del input
+      // Obtener el valor del input - PERMITIR 0 EXPLÍCITAMENTE
       const inputValue = input.value;
       
-      // Manejar el 0 explícitamente
+      // IMPORTANTE: Manejar el 0 como un valor válido
       let newStock;
       
+      // Si está vacío, poner 0
       if (inputValue === '' || inputValue === null) {
         newStock = 0;
       } else {
+        // Convertir a número entero
         newStock = parseInt(inputValue, 10);
+        // Si no es un número válido, poner 0
         if (isNaN(newStock)) {
           newStock = 0;
         }
       }
       
-      // Asegurar que no sea negativo
+      // Asegurar que no sea negativo (pero PERMITIR 0)
       if (newStock < 0) {
         newStock = 0;
         input.value = 0;
       }
       
+      console.log(`Guardando stock para ${code}: ${newStock}`); // Debug
+      
       // Guardar en Firebase
       set(ref(database, `stock/${code}`), newStock)
         .then(() => {
-          // Feedback visual
+          // 1. Feedback visual en el input (VERDE)
           input.style.backgroundColor = '#d4edda';
-          setTimeout(() => input.style.backgroundColor = '', 500);
+          input.style.transition = 'background-color 0.3s';
+          setTimeout(() => {
+            input.style.backgroundColor = '';
+          }, 500);
           
-          // Actualizar todos los indicadores (esto actualizará los productos de fichas automáticamente)
+          // 2. Feedback en el botón (TILDE ✓)
+          const originalButton = input.nextElementSibling;
+          if (originalButton) {
+            const originalText = originalButton.textContent;
+            const originalColor = originalButton.style.background;
+            
+            originalButton.textContent = '✓ Guardado';
+            originalButton.style.background = '#45a049';
+            originalButton.style.transition = 'all 0.3s';
+            
+            setTimeout(() => {
+              originalButton.textContent = originalText;
+              originalButton.style.background = originalColor;
+            }, 1500);
+          }
+          
+          // 3. ACTUALIZAR INMEDIATAMENTE la variable global stock
+          stock[code] = newStock;
+          
+          // 4. ACTUALIZAR INMEDIATAMENTE todos los indicadores del catálogo
           updateAllStockIndicators();
           
-          // Recargar el gestor de stock para mostrar los nuevos valores
-          loadAllStockItems();
+          // 5. ACTUALIZAR el contador de la categoría
+          updateCategoryStockCounters();
+          
+          // 6. Si es el stock de fichas (000-00), actualizar todos los productos relacionados
+          if (code === '000-00') {
+            // Forzar actualización de 000-01, 000-02, 000-03
+            ['000-01', '000-02', '000-03'].forEach(relatedCode => {
+              const relatedItem = document.querySelector(`.imagen-item[data-code="${relatedCode}"]`);
+              if (relatedItem) {
+                const consumption = FICHA_CONSUMPTION[relatedCode] || 0;
+                const availableStock = Math.floor(newStock / consumption);
+                const indicator = relatedItem.querySelector('.stock-indicator');
+                if (indicator) {
+                  indicator.textContent = availableStock;
+                }
+              }
+            });
+          }
+          
+          // 7. Recargar el gestor de stock para mostrar los nuevos valores
+          if (document.getElementById('stockManagementContent').style.display === 'block') {
+            loadAllStockItems();
+          }
         })
         .catch(error => {
           console.error('Error al actualizar stock:', error);
@@ -1321,14 +1391,19 @@ body { padding-top: 80px; }
           input.value = 0;
         }
         
+        // Actualizar variable global
+        stock[code] = newStock;
+        
         promises.push(set(ref(database, `stock/${code}`), newStock));
         updatedCount++;
       }
     });
     
+    // Actualizar indicadores
+    updateAllStockIndicators();
+    
     Promise.all(promises).then(() => {
       alert(`✅ ${updatedCount} productos actualizados correctamente`);
-      updateAllStockIndicators();
       loadAllStockItems();
     }).catch(error => {
       alert('Error al actualizar stock: ' + error.message);
@@ -1398,7 +1473,7 @@ body { padding-top: 80px; }
   // Inicializar el historial
   history.pushState(null, null, location.href);
 
-  function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
+  // Funciones de exportación y otros
   window.openCartModal = function() { renderCart(); document.getElementById('cartModal').style.display = 'block'; };
   window.closeCartModal = function() { document.getElementById('cartModal').style.display = 'none'; hideExportPrompt(); hideClearPrompt(); };
   window.showExportPasswordPrompt = () => document.getElementById('exportPasswordPrompt').style.display = 'block';
@@ -1474,8 +1549,38 @@ body { padding-top: 80px; }
     }
   }, { passive: false });
 
-  // Inicializar
-  setTimeout(() => { initializeStock(); updateCartCount(); }, 100);
+  // ============================================
+  // INICIALIZACIÓN CORREGIDA - CARGA INMEDIATA
+  // ============================================
+  
+  // Mostrar carga mientras tanto
+  const cartCountElement = document.getElementById('cartCount');
+  if (cartCountElement) {
+    cartCountElement.textContent = '...';
+  }
+  
+  // Ejecutar inicialización
+  Promise.all([
+    loadInitialCart(),
+    loadInitialStock()
+  ]).then(() => {
+    console.log('Inicialización completa');
+    
+    // Configurar listeners en tiempo real para futuros cambios
+    onValue(cartRef, (snapshot) => {
+      const data = snapshot.val();
+      cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
+      updateCartCount();
+      if (document.getElementById('cartModal').style.display === 'block') renderCart();
+      console.log('Carrito actualizado en tiempo real:', cart.length);
+    });
+    
+    onValue(stockRef, (snapshot) => {
+      stock = snapshot.val() || {};
+      updateAllStockIndicators();
+      console.log('Stock actualizado en tiempo real');
+    });
+  });
 </script>
 </body>
 </html>
