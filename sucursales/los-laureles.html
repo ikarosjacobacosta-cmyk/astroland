@@ -708,37 +708,53 @@ body { padding-top: 80px; }
   // ============================================
   // FUNCIONES DE FIREBASE
   // ============================================
-  onValue(cartRef, (snapshot) => {
-    const data = snapshot.val();
-    cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
-    updateCartCount();
-    if (document.getElementById('cartModal').style.display === 'block') renderCart();
-  });
-
-  onValue(stockRef, (snapshot) => {
-    stock = snapshot.val() || {};
-    updateAllStockIndicators();
-  });
-
-  function initializeStock() {
-    const initialStock = {};
-    document.querySelectorAll('.imagen-item').forEach(item => { 
-      const code = item.getAttribute('data-code'); 
-      if (!stock[code]) initialStock[code] = STOCK_INICIAL; 
-    });
-    get(stockRef).then((snapshot) => {
-      const existingStock = snapshot.val();
-      if (!existingStock) set(stockRef, initialStock);
-      else {
-        document.querySelectorAll('.imagen-item').forEach(item => { 
-          const code = item.getAttribute('data-code'); 
-          if (!existingStock[code]) set(ref(database, `stock/${code}`), STOCK_INICIAL); 
-        });
-      }
-    });
+  function updateCartCount() {
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+      cartCountElement.textContent = cart.length;
+      console.log('Contador actualizado:', cart.length);
+    }
   }
 
-  // Función para verificar si un producto de fichas tiene stock disponible
+  async function loadInitialCart() {
+    try {
+      const snapshot = await get(cartRef);
+      const data = snapshot.val();
+      cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
+      updateCartCount();
+      console.log('Carrito cargado inicialmente:', cart.length, 'items');
+    } catch (error) {
+      console.error('Error al cargar carrito:', error);
+      cart = [];
+      updateCartCount();
+    }
+  }
+
+  async function loadInitialStock() {
+    try {
+      const snapshot = await get(stockRef);
+      stock = snapshot.val() || {};
+      
+      document.querySelectorAll('.imagen-item').forEach(item => { 
+        const code = item.getAttribute('data-code'); 
+        if (stock[code] === undefined) {
+          stock[code] = STOCK_INICIAL;
+          set(ref(database, `stock/${code}`), STOCK_INICIAL).catch(e => console.log('Error al inicializar stock:', e));
+        }
+      });
+      
+      updateAllStockIndicators();
+      console.log('Stock cargado inicialmente');
+    } catch (error) {
+      console.error('Error al cargar stock:', error);
+      document.querySelectorAll('.imagen-item').forEach(item => { 
+        const code = item.getAttribute('data-code'); 
+        stock[code] = STOCK_INICIAL;
+      });
+      updateAllStockIndicators();
+    }
+  }
+
   function hasFichaStock(code) {
     if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
       const consumption = FICHA_CONSUMPTION[code] || 0;
@@ -748,7 +764,6 @@ body { padding-top: 80px; }
     return true;
   }
 
-  // Función para obtener el stock visible de un producto
   function getVisibleStock(code) {
     if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
       const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -762,7 +777,6 @@ body { padding-top: 80px; }
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
       
-      // Para productos de fichas, mostrar stock basado en 000-00
       let stockValue;
       if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
         const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -775,7 +789,6 @@ body { padding-top: 80px; }
       const indicator = item.querySelector('.stock-indicator');
       if (indicator) indicator.textContent = stockValue;
       
-      // Ocultar producto si stock es 0
       if (stockValue <= 0) {
         item.classList.add('out-of-stock');
       } else {
@@ -792,7 +805,6 @@ body { padding-top: 80px; }
       const code = item.getAttribute('data-code');
       if (category) {
         if (!categories[category]) categories[category] = 0;
-        // Usar stock visible para el contador
         let stockValue;
         if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
           const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -825,7 +837,6 @@ body { padding-top: 80px; }
       let anyVisible = false;
       cat.querySelectorAll('.imagen-item').forEach(item => {
         const code = item.getAttribute('data-code') || '';
-        // Solo considerar productos visibles (con stock)
         if (!item.classList.contains('out-of-stock')) {
           if (query === '' || code.startsWith(query)) { 
             item.style.display = 'flex'; 
@@ -841,13 +852,11 @@ body { padding-top: 80px; }
     });
   }
 
-  // Función para resetear la búsqueda (mostrar todos los productos y limpiar el campo)
   function resetSearch() {
     const searchInput = document.getElementById('busqueda');
     if (searchInput) {
       searchInput.value = '';
       filterProducts('');
-      // Desplazar la página al inicio del contenedor de productos
       const container = document.querySelector('.container');
       if (container) {
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -870,7 +879,6 @@ body { padding-top: 80px; }
     item.addEventListener('click', function() {
       const code = this.getAttribute('data-code');
       
-      // Verificar stock según el tipo de producto
       let stockValue;
       if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
         const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -887,8 +895,6 @@ body { padding-top: 80px; }
       
       const price = parseFloat(this.getAttribute('data-price'));
       const points = parseInt(this.getAttribute('data-points'));
-      
-      // Guardar también el consumo de fichas si aplica
       const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
       
       currentProduct = { 
@@ -921,36 +927,28 @@ body { padding-top: 80px; }
       document.getElementById('moneyInput').value = Math.round(currentProduct.price * (1 - pointsPaid / currentProduct.points));
     }
     
-    // Auto cerrar teclado según la cantidad de puntos del producto
     const pointsInput = document.getElementById('pointsInput');
     const pointsValue = pointsInput.value;
     
     if (currentProduct.points >= 10 && currentProduct.points <= 75) {
-      // Para productos de 10 a 75 puntos: cerrar teclado al ingresar 2 dígitos
       if (pointsValue.length >= 2) {
         pointsInput.blur();
       }
     } else if (currentProduct.points >= 100 && currentProduct.points <= 420) {
-      // Para productos de 100 a 420 puntos: cerrar teclado al ingresar 3 dígitos
       if (pointsValue.length >= 3) {
         pointsInput.blur();
       }
     }
   };
 
-  // ============================================
-  // AGREGAR AL CARRITO (CON GESTIÓN DE FICHAS)
-  // ============================================
   window.addToCart = function() {
     if (!currentProduct) return;
     
     const code = currentProduct.code;
     const fichaConsumption = currentProduct.fichaConsumption || 0;
     
-    // Verificar stock según el tipo de producto
     let currentStock;
     if (fichaConsumption > 0) {
-      // Es un producto que consume fichas
       currentStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
       if (currentStock < fichaConsumption) { 
         alert('No hay suficientes fichas disponibles'); 
@@ -958,7 +956,6 @@ body { padding-top: 80px; }
         return; 
       }
     } else {
-      // Producto normal
       currentStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
       if (currentStock <= 0) { 
         alert('No hay stock disponible'); 
@@ -978,13 +975,10 @@ body { padding-top: 80px; }
     if (points === 0 && money === 0) { alert('Debes pagar con puntos o dinero'); return; }
     if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) { alert('Si pagas todos los puntos, el dinero debe ser 0'); return; }
     
-    // Actualizar stock
     if (fichaConsumption > 0) {
-      // Restar del stock de fichas (000-00)
       const newFichaStock = (stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL) - fichaConsumption;
       set(ref(database, `stock/000-00`), newFichaStock);
     } else {
-      // Producto normal
       set(ref(database, `stock/${code}`), currentStock - 1);
     }
     
@@ -1002,32 +996,23 @@ body { padding-top: 80px; }
       hora, 
       timestamp: fecha + ' ' + hora, 
       timestampCompleto: ahora.getTime(),
-      fichaConsumption: fichaConsumption // Guardar cuántas fichas consumió
+      fichaConsumption: fichaConsumption
     });
     
-    // Resetear la búsqueda después de agregar al carrito
     resetSearch();
-    
     closeModal();
-    // El alert de confirmación ha sido eliminado
   };
 
-  // ============================================
-  // ELIMINAR ITEM (CON DEVOLUCIÓN DE FICHAS)
-  // ============================================
   window.showDeletePrompt = function(firebaseKey) {
     const password = prompt('🔐 Ingresa la contraseña para eliminar este item:');
     if (password === PASSWORD) {
       const item = cart.find(i => i.firebaseKey === firebaseKey);
       if (!item) { alert('❌ No se encontró el item'); return; }
       
-      // Devolver stock según el tipo de producto
       if (item.fichaConsumption && item.fichaConsumption > 0) {
-        // Devolver fichas al stock de 000-00
         const currentFichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
         set(ref(database, `stock/000-00`), currentFichaStock + item.fichaConsumption);
       } else if (item.code) {
-        // Producto normal
         set(ref(database, `stock/${item.code}`), (stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL) + 1);
       }
       
@@ -1035,9 +1020,6 @@ body { padding-top: 80px; }
     } else alert('❌ Contraseña incorrecta');
   };
 
-  // ============================================
-  // RENDERIZAR CARRITO
-  // ============================================
   function renderCart() {
     const cartItemsDiv = document.getElementById('cartItems');
     cartItemsDiv.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>Puntos</span><span>Dinero (G.)</span><span>Fecha/Hora</span><span>Acciones</span></div>';
@@ -1046,7 +1028,6 @@ body { padding-top: 80px; }
       const itemDiv = document.createElement('div');
       itemDiv.className = 'cart-item';
       
-      // Mostrar consumo de fichas si aplica
       let fichaInfo = '';
       if (item.fichaConsumption && item.fichaConsumption > 0) {
         fichaInfo = ` (${item.fichaConsumption} fichas)`;
@@ -1059,15 +1040,13 @@ body { padding-top: 80px; }
   }
 
   // ============================================
-  // GESTIÓN DE STOCK - VERSIÓN FINAL CORREGIDA
+  // GESTIÓN DE STOCK
   // ============================================
   window.showStockManagement = function() { 
     document.getElementById('stockModal').style.display = 'block'; 
     document.getElementById('stockPasswordPrompt').style.display = 'block'; 
     document.getElementById('stockManagementContent').style.display = 'none'; 
     document.getElementById('stockPassword').value = ''; 
-    
-    // Agregar un estado al historial para manejar la flecha atrás
     history.pushState({modal: 'stock'}, null, location.href);
   };
 
@@ -1075,10 +1054,7 @@ body { padding-top: 80px; }
     document.getElementById('stockModal').style.display = 'none';
     document.getElementById('stockPasswordPrompt').style.display = 'block';
     document.getElementById('stockManagementContent').style.display = 'none';
-    // Limpiar cualquier estado guardado
     sessionStorage.removeItem('stockModalState');
-    
-    // Actualizar todos los indicadores de stock después de cerrar el modal
     updateAllStockIndicators();
   };
 
@@ -1087,12 +1063,10 @@ body { padding-top: 80px; }
       document.getElementById('stockPasswordPrompt').style.display = 'none';
       document.getElementById('stockManagementContent').style.display = 'block';
       loadAllStockItems();
-      // Agregar otro estado al historial cuando se accede al contenido
       history.pushState({modal: 'stock', content: true}, null, location.href);
     } else alert('Contraseña incorrecta');
   };
 
-  // Función para obtener nombre de categoría
   function getCategoryName(categoryCode) {
     const names = { 
       '000':'000 puntos', '010':'10 puntos', '020':'20 puntos', '035':'35 puntos', 
@@ -1103,12 +1077,10 @@ body { padding-top: 80px; }
     return names[categoryCode] || categoryCode + ' puntos';
   }
 
-  // Función para cargar todos los items del stock (CON IMÁGENES Y ORDENADO DESDE 000)
   function loadAllStockItems() {
     const container = document.getElementById('stockItemsContainer');
     const categories = {};
     
-    // Obtener todas las categorías y sus productos
     document.querySelectorAll('.imagen-item').forEach(item => {
       const category = item.getAttribute('data-category');
       if (!categories[category]) categories[category] = [];
@@ -1121,7 +1093,6 @@ body { padding-top: 80px; }
       const imgElement = item.querySelector('img');
       const placeholderElement = item.querySelector('.img-placeholder');
       
-      // Guardar el HTML de la imagen o placeholder
       let imageHtml = '';
       if (imgElement) {
         imageHtml = imgElement.outerHTML;
@@ -1133,8 +1104,6 @@ body { padding-top: 80px; }
         imageHtml = `<div class="img-placeholder" style="background: ${colores[index]};">${code.replace('-', ' ')}</div>`;
       }
       
-      // En el gestor de stock, mostrar el stock real de cada producto
-      // Para productos de fichas, mostrar el stock basado en 000-00
       let displayStock;
       if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
         const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
@@ -1156,12 +1125,10 @@ body { padding-top: 80px; }
       });
     });
     
-    // Ordenar las categorías numéricamente
     const sortedCategories = Object.keys(categories).sort((a, b) => {
       return parseInt(a) - parseInt(b);
     });
     
-    // Generar el HTML para cada categoría en orden
     let html = '';
     
     for (let category of sortedCategories) {
@@ -1169,7 +1136,6 @@ body { padding-top: 80px; }
       html += `<div class="stock-category" data-category="${category}">`;
       html += `<h4>${categoryName}</h4>`;
       
-      // Si es la categoría 000, mostrar información sobre fichas
       if (category === '000') {
         const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
         html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px; font-size:0.9rem;">
@@ -1180,7 +1146,6 @@ body { padding-top: 80px; }
       
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       
-      // Ordenar los productos dentro de cada categoría por código
       const sortedProducts = categories[category].sort((a, b) => {
         return a.code.localeCompare(b.code);
       });
@@ -1192,15 +1157,12 @@ body { padding-top: 80px; }
         html += `<div class="stock-control" style="display:flex; gap:5px; margin-top:5px; width:100%; justify-content:center;">`;
         
         if (item.isFichaBase) {
-          // Para 000-00, mostrar campo editable
           html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onclick="this.select()">`;
           html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
         } else if (item.code.startsWith('000-') && item.code !== '000-04' && item.code !== '000-05') {
-          // Para productos que consumen fichas, mostrar solo lectura
           html += `<input type="number" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center; background-color:#f5f5f5;" readonly disabled>`;
           html += `<span style="padding:5px 10px; background:#999; color:white; border:none; border-radius:4px; font-size:0.75rem;">Stock de fichas</span>`;
         } else {
-          // Productos normales
           html += `<input type="number" id="stock-${item.code}" value="${item.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onclick="this.select()">`;
           html += `<button onclick="updateSingleStock('${item.code}')" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.75rem;">Actualizar</button>`;
         }
@@ -1214,7 +1176,6 @@ body { padding-top: 80px; }
     container.innerHTML = html;
   }
 
-  // Función para filtrar items en el gestor de stock
   window.filterStockItems = function(searchTerm) {
     document.querySelectorAll('.stock-category').forEach(category => {
       let anyVisible = false;
@@ -1232,16 +1193,12 @@ body { padding-top: 80px; }
     });
   };
 
-  // Función para actualizar stock de un solo producto (VERSIÓN DEFINITIVA)
   window.updateSingleStock = function(code) {
     const input = document.getElementById(`stock-${code}`);
     if (input) {
-      // Obtener el valor del input
       const inputValue = input.value;
       
-      // Manejar el 0 explícitamente
       let newStock;
-      
       if (inputValue === '' || inputValue === null) {
         newStock = 0;
       } else {
@@ -1251,24 +1208,57 @@ body { padding-top: 80px; }
         }
       }
       
-      // Asegurar que no sea negativo
       if (newStock < 0) {
         newStock = 0;
         input.value = 0;
       }
       
-      // Guardar en Firebase
+      console.log(`Guardando stock para ${code}: ${newStock}`);
+      
       set(ref(database, `stock/${code}`), newStock)
         .then(() => {
-          // Feedback visual
           input.style.backgroundColor = '#d4edda';
-          setTimeout(() => input.style.backgroundColor = '', 500);
+          input.style.transition = 'background-color 0.3s';
+          setTimeout(() => {
+            input.style.backgroundColor = '';
+          }, 500);
           
-          // Actualizar todos los indicadores (esto actualizará los productos de fichas automáticamente)
+          const originalButton = input.nextElementSibling;
+          if (originalButton) {
+            const originalText = originalButton.textContent;
+            const originalColor = originalButton.style.background;
+            
+            originalButton.textContent = '✓ Guardado';
+            originalButton.style.background = '#45a049';
+            originalButton.style.transition = 'all 0.3s';
+            
+            setTimeout(() => {
+              originalButton.textContent = originalText;
+              originalButton.style.background = originalColor;
+            }, 1500);
+          }
+          
+          stock[code] = newStock;
           updateAllStockIndicators();
+          updateCategoryStockCounters();
           
-          // Recargar el gestor de stock para mostrar los nuevos valores
-          loadAllStockItems();
+          if (code === '000-00') {
+            ['000-01', '000-02', '000-03'].forEach(relatedCode => {
+              const relatedItem = document.querySelector(`.imagen-item[data-code="${relatedCode}"]`);
+              if (relatedItem) {
+                const consumption = FICHA_CONSUMPTION[relatedCode] || 0;
+                const availableStock = Math.floor(newStock / consumption);
+                const indicator = relatedItem.querySelector('.stock-indicator');
+                if (indicator) {
+                  indicator.textContent = availableStock;
+                }
+              }
+            });
+          }
+          
+          if (document.getElementById('stockManagementContent').style.display === 'block') {
+            loadAllStockItems();
+          }
         })
         .catch(error => {
           console.error('Error al actualizar stock:', error);
@@ -1277,7 +1267,6 @@ body { padding-top: 80px; }
     }
   };
 
-  // Función para guardar todos los cambios de stock
   window.saveAllStock = function() {
     let updatedCount = 0;
     const promises = [];
@@ -1286,7 +1275,6 @@ body { padding-top: 80px; }
       const code = item.getAttribute('data-code');
       const input = document.getElementById(`stock-${code}`);
       
-      // Solo actualizar inputs editables (no los readonly)
       if (input && !input.disabled) {
         const inputValue = input.value;
         
@@ -1305,21 +1293,22 @@ body { padding-top: 80px; }
           input.value = 0;
         }
         
+        stock[code] = newStock;
         promises.push(set(ref(database, `stock/${code}`), newStock));
         updatedCount++;
       }
     });
     
+    updateAllStockIndicators();
+    
     Promise.all(promises).then(() => {
       alert(`✅ ${updatedCount} productos actualizados correctamente`);
-      updateAllStockIndicators();
       loadAllStockItems();
     }).catch(error => {
       alert('Error al actualizar stock: ' + error.message);
     });
   };
 
-  // PERSISTENCIA DEL MODAL
   document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
       const stockModal = document.getElementById('stockModal');
@@ -1350,9 +1339,6 @@ body { padding-top: 80px; }
     }
   });
 
-  // ============================================
-  // MANEJO DE FLECHA ATRÁS
-  // ============================================
   window.addEventListener('popstate', function(event) {
     const stockModal = document.getElementById('stockModal');
     const purchaseModal = document.getElementById('purchaseModal');
@@ -1379,10 +1365,8 @@ body { padding-top: 80px; }
     }
   });
 
-  // Inicializar el historial
   history.pushState(null, null, location.href);
 
-  function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
   window.openCartModal = function() { renderCart(); document.getElementById('cartModal').style.display = 'block'; };
   window.closeCartModal = function() { document.getElementById('cartModal').style.display = 'none'; hideExportPrompt(); hideClearPrompt(); };
   window.showExportPasswordPrompt = () => document.getElementById('exportPasswordPrompt').style.display = 'block';
@@ -1392,9 +1376,6 @@ body { padding-top: 80px; }
   window.verifyAndExport = function() { if (document.getElementById('exportPassword').value === PASSWORD) { exportToExcel(); hideExportPrompt(); } else alert('Contraseña incorrecta'); };
   window.verifyAndClearCart = function() { if (document.getElementById('clearPassword').value === PASSWORD) { remove(cartRef); hideClearPrompt(); alert('Carrito vaciado'); } else alert('Contraseña incorrecta'); };
 
-  // ============================================
-  // EXPORTAR A EXCEL
-  // ============================================
   function exportToExcel() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     const totalPoints = cart.reduce((sum, item) => sum + item.points, 0);
@@ -1424,9 +1405,6 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `ASTROLAND_${nombreSucursal}_${new Date().toLocaleDateString('es-PY').replace(/\//g, '-')}.xlsx`);
   }
 
-  // ============================================
-  // MANEJO DE MODALES
-  // ============================================
   window.onclick = function(event) {
     const cartModal = document.getElementById('cartModal');
     const stockModal = document.getElementById('stockModal');
@@ -1458,8 +1436,35 @@ body { padding-top: 80px; }
     }
   }, { passive: false });
 
-  // Inicializar
-  setTimeout(() => { initializeStock(); updateCartCount(); }, 100);
+  // ============================================
+  // INICIALIZACIÓN CORREGIDA - CARGA INMEDIATA
+  // ============================================
+  
+  const cartCountElement = document.getElementById('cartCount');
+  if (cartCountElement) {
+    cartCountElement.textContent = '...';
+  }
+  
+  Promise.all([
+    loadInitialCart(),
+    loadInitialStock()
+  ]).then(() => {
+    console.log('Inicialización completa');
+    
+    onValue(cartRef, (snapshot) => {
+      const data = snapshot.val();
+      cart = data ? Object.entries(data).map(([key, value]) => ({ ...value, firebaseKey: key })) : [];
+      updateCartCount();
+      if (document.getElementById('cartModal').style.display === 'block') renderCart();
+      console.log('Carrito actualizado en tiempo real:', cart.length);
+    });
+    
+    onValue(stockRef, (snapshot) => {
+      stock = snapshot.val() || {};
+      updateAllStockIndicators();
+      console.log('Stock actualizado en tiempo real');
+    });
+  });
 </script>
 </body>
 </html>
