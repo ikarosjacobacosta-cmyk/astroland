@@ -619,47 +619,29 @@ body { padding-top: 80px; }
     const header = container.querySelector('header');
     container.innerHTML = '';
     if (header) container.appendChild(header);
+    
     const categorias = [
       { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
         { codigo: "000-00", precio: 5000 }, { codigo: "000-01", precio: 30000 },
         { codigo: "000-02", precio: 50000 }, { codigo: "000-03", precio: 100000 },
         { codigo: "000-04", precio: 15000 }, { codigo: "000-05", precio: 15000 }
       ]},
-      { nombre: "10 puntos", categoria: "010", puntos: 10, precioBase: 10000, rango: { desde: 0, hasta: 12 } },
-      { nombre: "20 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 61 } },
+      { nombre: "10 puntos", categoria: "010", puntos: 10, precioBase: 10000, rango: { desde: 0, hasta: 14 } },
+      { nombre: "20 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 67 } },
       { nombre: "35 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 71 } },
       { nombre: "50 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 53 } },
-      { nombre: "75 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 47 } },
+      { nombre: "75 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 51 } },
       { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 29 } },
-      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 36 } },
-      { nombre: "200 puntos", categoria: "200", puntos: 200, productosEspeciales: [
-        { sufijo: "00", precio: 96000 }, { sufijo: "01", precio: 85000 }, { sufijo: "02", precio: 96000 },
-        { sufijo: "03", precio: 100000 }, { sufijo: "04", precio: 96000 }, { sufijo: "05", precio: 100000 },
-        { sufijo: "06", precio: 96000 }, { sufijo: "07", precio: 96000 }, { sufijo: "08", precio: 96000 },
-        { sufijo: "09", precio: 96000 }, { sufijo: "10", precio: 96000 }, { sufijo: "11", precio: 96000 },
-        { sufijo: "12", precio: 96000 }, { sufijo: "13", precio: 96000 }, { sufijo: "14", precio: 96000 },
-        { sufijo: "15", precio: 96000 }, { sufijo: "16", precio: 96000 }, { sufijo: "17", precio: 85000 },
-        { sufijo: "18", precio: 96000 }, { sufijo: "19", precio: 96000 }, { sufijo: "20", precio: 96000 },
-        { sufijo: "21", precio: 96000 }, { sufijo: "22", precio: 96000 }, { sufijo: "23", precio: 96000 },
-        { sufijo: "24", precio: 96000 }, { sufijo: "25", precio: 96000 }, { sufijo: "26", precio: 96000 },
-        { sufijo: "27", precio: 72000 }, { sufijo: "28", precio: 72000 }, { sufijo: "29", precio: 72000 },
-        { sufijo: "30", precio: 72000 }, { sufijo: "31", precio: 96000 }, { sufijo: "32", precio: 72000 },
-        { sufijo: "33", precio: 72000 }, { sufijo: "34", precio: 96000 }, { sufijo: "35", precio: 96000 }
-      ]},
-      { nombre: "220 puntos", categoria: "220", puntos: 220, productosEspeciales: [
-        { sufijo: "00", precio: 120000 }, { sufijo: "01", precio: 120000 }, { sufijo: "02", precio: 120000 },
-        { sufijo: "03", precio: 96000 }, { sufijo: "04", precio: 96000 }, { sufijo: "05", precio: 96000 }, { sufijo: "06", precio: 96000 }
-      ]},
-      { nombre: "250 puntos", categoria: "250", puntos: 250, productosEspeciales: [
-        { sufijo: "00", precio: 150000 }, { sufijo: "01", precio: 144000 }, { sufijo: "02", precio: 144000 }, { sufijo: "03", precio: 144000 }
-      ]},
-      { nombre: "350 puntos", categoria: "350", puntos: 350, productosEspeciales: [
-        { sufijo: "00", precio: 145000 }, { sufijo: "01", precio: 144000 }
-      ]},
+      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 39 } },
+      { nombre: "200 puntos", categoria: "200", puntos: 200, rango: { desde: 0, hasta: 37 }, precioUnificado: 96000 },
+      { nombre: "220 puntos", categoria: "220", puntos: 220, rango: { desde: 0, hasta: 7 }, precioUnificado: 120000 },
+      { nombre: "250 puntos", categoria: "250", puntos: 250, rango: { desde: 0, hasta: 3 }, precioUnificado: 150000 },
+      { nombre: "350 puntos", categoria: "350", puntos: 350, rango: { desde: 0, hasta: 1 }, precioUnificado: 170000 },
       { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
-        { sufijo: "00", precio: 160000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
+        { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
       ]}
     ];
+    
     categorias.forEach(cat => {
       const section = document.createElement('section');
       section.className = 'categoria';
@@ -688,9 +670,16 @@ body { padding-top: 80px; }
         img.src = `../imagenes/${codigo}.jpg`;
         return item;
       };
-      if (cat.rango) for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) galeria.appendChild(crearItem(`${cat.categoria}-${i.toString().padStart(2,'0')}`, cat.precioBase));
-      else if (cat.productosEspeciales) cat.productosEspeciales.forEach(p => galeria.appendChild(crearItem(`${cat.categoria}-${p.sufijo}`, p.precio)));
-      else if (cat.productos) cat.productos.forEach(p => galeria.appendChild(crearItem(p.codigo, p.precio)));
+      if (cat.rango) {
+        for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
+          const precio = cat.precioUnificado ? cat.precioUnificado : cat.precioBase;
+          galeria.appendChild(crearItem(`${cat.categoria}-${i.toString().padStart(2,'0')}`, precio));
+        }
+      } else if (cat.productosEspeciales) {
+        cat.productosEspeciales.forEach(p => galeria.appendChild(crearItem(`${cat.categoria}-${p.sufijo}`, p.precio)));
+      } else if (cat.productos) {
+        cat.productos.forEach(p => galeria.appendChild(crearItem(p.codigo, p.precio)));
+      }
       section.appendChild(galeria);
       container.appendChild(section);
     });
