@@ -609,9 +609,12 @@ body { padding-top: 80px; }
   const PASSWORD = "maira";
   const STOCK_INICIAL = 100;
 
+  // Solo los códigos que consumen fichas (000-00 al 000-04)
   const FICHA_CONSUMPTION = {
     '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30
   };
+  // Lista de códigos que NO consumen fichas (se gestionan con stock individual)
+  const NON_FICHA_CODES = ['000-05', '000-06'];
 
   function generarTodosLosProductos() {
     const container = document.querySelector('.container');
@@ -725,21 +728,30 @@ body { padding-top: 80px; }
     }
   }
 
+  // Función para obtener el stock disponible de un producto
+  function getProductStock(code) {
+    // Si es un código que consume fichas (000-00 al 000-04)
+    if (FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code)) {
+      const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
+      const consumo = FICHA_CONSUMPTION[code];
+      return Math.floor(fichaStock / consumo);
+    } 
+    // Para 000-05, 000-06 y el resto de productos, usan stock individual
+    else {
+      return stock[code] ?? STOCK_INICIAL;
+    }
+  }
+
   function updateAllStockIndicators() {
     document.querySelectorAll('.imagen-item').forEach(item => {
       const code = item.getAttribute('data-code');
-      let val;
-      if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
-        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        val = Math.floor(fichaStock / (FICHA_CONSUMPTION[code] || 0));
-      } else {
-        val = stock[code] ?? STOCK_INICIAL;
-      }
+      let val = getProductStock(code);
       const ind = item.querySelector('.stock-indicator');
       if (ind) ind.textContent = val;
       if (val <= 0) item.classList.add('out-of-stock');
       else item.classList.remove('out-of-stock');
     });
+    updateCategoryStockCounters();
   }
 
   function updateCategoryStockCounters() {
@@ -749,14 +761,7 @@ body { padding-top: 80px; }
       const code = item.getAttribute('data-code');
       if (!cat) return;
       if (!cats[cat]) cats[cat] = 0;
-      let val;
-      if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
-        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        val = Math.floor(fichaStock / (FICHA_CONSUMPTION[code] || 0));
-      } else {
-        val = stock[code] ?? STOCK_INICIAL;
-      }
-      cats[cat] += val;
+      cats[cat] += getProductStock(code);
     });
     for (let c in cats) {
       const badge = document.getElementById(`stock-${c}`);
@@ -815,13 +820,8 @@ body { padding-top: 80px; }
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function() {
       const code = this.getAttribute('data-code');
-      let stockVal;
-      if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
-        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        stockVal = Math.floor(fichaStock / (FICHA_CONSUMPTION[code] || 0));
-      } else {
-        stockVal = stock[code] ?? STOCK_INICIAL;
-      }
+      let stockVal = getProductStock(code);
+      
       if (stockVal <= 0) { alert('Sin stock'); return; }
       const price = parseFloat(this.getAttribute('data-price'));
       const points = parseInt(this.getAttribute('data-points'));
@@ -861,13 +861,16 @@ body { padding-top: 80px; }
     const code = currentProduct.code;
     const consumo = currentProduct.fichaConsumption || 0;
     let currentStock;
-    if (consumo > 0) {
+    
+    // Verificar stock según el tipo de producto
+    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
       currentStock = stock['000-00'] ?? STOCK_INICIAL;
       if (currentStock < consumo) { alert('No hay suficientes fichas'); closeModal(); return; }
     } else {
       currentStock = stock[code] ?? STOCK_INICIAL;
       if (currentStock <= 0) { alert('No hay stock'); closeModal(); return; }
     }
+    
     const points = parseInt(document.getElementById('pointsInput').value) || 0;
     const money = parseFloat(document.getElementById('moneyInput').value) || 0;
     if (currentProduct.points > 0 && points > currentProduct.points) { alert(`Máximo ${currentProduct.points} puntos`); return; }
@@ -877,12 +880,15 @@ body { padding-top: 80px; }
     }
     if (points === 0 && money === 0) { alert('Debes pagar con puntos o dinero'); return; }
     if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) { alert('Si pagas todos los puntos, dinero debe ser 0'); return; }
-    if (consumo > 0) {
+    
+    // Actualizar stock según el tipo de producto
+    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
       const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - consumo;
       set(ref(database, `stock/000-00`), nuevo);
     } else {
       set(ref(database, `stock/${code}`), currentStock - 1);
     }
+    
     const ahora = new Date();
     const fecha = ahora.toLocaleDateString('es-PY');
     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -896,7 +902,8 @@ body { padding-top: 80px; }
     if (pwd !== PASSWORD) { alert('Contraseña incorrecta'); return; }
     const item = cart.find(i => i.firebaseKey === firebaseKey);
     if (!item) { alert('Item no encontrado'); return; }
-    if (item.fichaConsumption && item.fichaConsumption > 0) {
+    // Revertir stock según el tipo de producto
+    if (item.fichaConsumption && item.fichaConsumption > 0 && !NON_FICHA_CODES.includes(item.code)) {
       const actual = stock['000-00'] ?? STOCK_INICIAL;
       set(ref(database, `stock/000-00`), actual + item.fichaConsumption);
     } else if (item.code) {
@@ -914,7 +921,7 @@ body { padding-top: 80px; }
       const d = document.createElement('div');
       d.className = 'cart-item';
       let info = '';
-      if (item.fichaConsumption && item.fichaConsumption > 0) info = ` (${item.fichaConsumption} fichas)`;
+      if (item.fichaConsumption && item.fichaConsumption > 0 && !NON_FICHA_CODES.includes(item.code)) info = ` (${item.fichaConsumption} fichas)`;
       d.innerHTML = `<span>${item.name}${info}</span><span>${item.points.toLocaleString()}</span><span>G.${item.money.toLocaleString()}</span><span style="font-size:0.8rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span><span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">🗑️ Eliminar</button></span>`;
       div.appendChild(d);
     });
@@ -962,12 +969,10 @@ body { padding-top: 80px; }
       const code = item.getAttribute('data-code');
       const name = item.querySelector('p')?.textContent || code;
       const img = item.querySelector('img')?.outerHTML || item.querySelector('.img-placeholder')?.outerHTML || '';
-      let display = stock[code] ?? STOCK_INICIAL;
-      if (code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05') {
-        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        display = Math.floor(fichaStock / (FICHA_CONSUMPTION[code] || 0));
-      }
-      categories[cat].push({ code, name, img, currentStock: display, isFichaBase: code === '000-00', isFichaProduct: code.startsWith('000-') && code !== '000-00' && code !== '000-04' && code !== '000-05' });
+      let display = getProductStock(code);
+      const isFichaBase = code === '000-00';
+      const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
+      categories[cat].push({ code, name, img, currentStock: display, isFichaBase, isFichaProduct });
     });
     const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a)-parseInt(b));
     let html = '';
@@ -975,7 +980,7 @@ body { padding-top: 80px; }
       html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px; font-size:0.9rem;"><strong>Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01 (7), 000-02 (12), 000-03 (26)</small></p>`;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px; font-size:0.9rem;"><strong>Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01 (3), 000-02 (9), 000-03 (20), 000-04 (30)</small></p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
@@ -984,7 +989,7 @@ body { padding-top: 80px; }
         html += p.img;
         html += `<p style="margin-top:8px; font-size:0.85rem; color:#333; text-align:center;">${p.name}</p>`;
         html += `<div class="stock-control" style="display:flex; gap:5px; margin-top:5px; width:100%; justify-content:center;">`;
-        if (p.isFichaBase || !p.isFichaProduct) {
+        if (p.isFichaBase || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
           html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:center;" onchange="guardarStockIndividual('${p.code}', this.value)" onclick="this.select()">`;
           html += `<span style="padding:5px 10px; background:#999; color:white; border:none; border-radius:4px; font-size:0.75rem;">Auto</span>`;
         } else {
@@ -1036,17 +1041,6 @@ body { padding-top: 80px; }
       }, 1000);
       stock[code] = newStock;
       updateAllStockIndicators();
-      if (code === '000-00') {
-        ['000-01','000-02','000-03'].forEach(r => {
-          const ri = document.querySelector(`.imagen-item[data-code="${r}"]`);
-          if (ri) {
-            const consumo = FICHA_CONSUMPTION[r] || 0;
-            const disp = Math.floor(newStock / consumo);
-            const ind = ri.querySelector('.stock-indicator');
-            if (ind) ind.textContent = disp;
-          }
-        });
-      }
     }).catch(e => {
       inp.style.backgroundColor = '#f8d7da';
       inp.style.border = '2px solid #dc3545';
@@ -1162,7 +1156,7 @@ body { padding-top: 80px; }
   Promise.all([loadInitialCart(), loadInitialStock()]).then(() => {
     onValue(cartRef, snap => {
       const d = snap.val();
-      cart = d ? Object.entries(d).map(([k,v])=>({...v,firebaseKey:k})) : [];
+      cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : [];
       updateCartCount();
       if (document.getElementById('cartModal').style.display === 'block') renderCart();
     });
