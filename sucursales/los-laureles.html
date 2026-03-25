@@ -610,7 +610,7 @@ body { padding-top: 80px; }
   const STOCK_INICIAL = 100;
 
   const FICHA_CONSUMPTION = {
-    '000-00': 1, '000-01': 7, '000-02': 12, '000-03': 26
+    '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30
   };
 
   function generarTodosLosProductos() {
@@ -622,9 +622,9 @@ body { padding-top: 80px; }
     
     const categorias = [
       { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
-        { codigo: "000-00", precio: 5000 }, { codigo: "000-01", precio: 30000 },
+        { codigo: "000-00", precio: 10000 }, { codigo: "000-01", precio: 30000 },
         { codigo: "000-02", precio: 50000 }, { codigo: "000-03", precio: 100000 },
-        { codigo: "000-04", precio: 15000 }, { codigo: "000-05", precio: 15000 }
+        { codigo: "000-04", precio: 150000 }, { codigo: "000-05", precio: 15000 }, { codigo: "000-06", precio: 15000 }
       ]},
       { nombre: "10 puntos", categoria: "010", puntos: 10, precioBase: 10000, rango: { desde: 0, hasta: 14 } },
       { nombre: "20 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 67 } },
