@@ -609,12 +609,12 @@ body { padding-top: 80px; }
   const PASSWORD = "mili";
   const STOCK_INICIAL = 100;
 
-  // Solo los códigos que consumen fichas (000-00, 000-01, 000-02, 000-03)
+  // Solo los códigos que consumen fichas (000-00 al 000-04)
   const FICHA_CONSUMPTION = {
-    '000-00': 1, '000-01': 7, '000-02': 12, '000-03': 26
+    '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30
   };
   // Lista de códigos que NO consumen fichas (se gestionan con stock individual)
-  const NON_FICHA_CODES = ['000-04', '000-05'];
+  const NON_FICHA_CODES = ['000-05', '000-06'];
 
   function generarTodosLosProductos() {
     const container = document.querySelector('.container');
@@ -625,9 +625,9 @@ body { padding-top: 80px; }
     
     const categorias = [
       { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
-        { codigo: "000-00", precio: 5000 }, { codigo: "000-01", precio: 30000 },
+        { codigo: "000-00", precio: 10000 }, { codigo: "000-01", precio: 30000 },
         { codigo: "000-02", precio: 50000 }, { codigo: "000-03", precio: 100000 },
-        { codigo: "000-04", precio: 15000 }, { codigo: "000-05", precio: 15000 }
+        { codigo: "000-04", precio: 150000 }, { codigo: "000-05", precio: 15000 }, { codigo: "000-06", precio: 15000 }
       ]},
       { nombre: "10 puntos", categoria: "010", puntos: 10, precioBase: 10000, rango: { desde: 0, hasta: 14 } },
       { nombre: "20 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 67 } },
@@ -730,13 +730,13 @@ body { padding-top: 80px; }
 
   // Función para obtener el stock disponible de un producto
   function getProductStock(code) {
-    // Si es un código que consume fichas (000-00, 000-01, 000-02, 000-03)
+    // Si es un código que consume fichas (000-00 al 000-04)
     if (FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code)) {
       const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
       const consumo = FICHA_CONSUMPTION[code];
       return Math.floor(fichaStock / consumo);
     } 
-    // Para 000-04, 000-05 y el resto de productos, usan stock individual
+    // Para 000-05, 000-06 y el resto de productos, usan stock individual
     else {
       return stock[code] ?? STOCK_INICIAL;
     }
@@ -980,7 +980,7 @@ body { padding-top: 80px; }
       html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px; font-size:0.9rem;"><strong>Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01 (7), 000-02 (12), 000-03 (26)</small></p>`;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px; font-size:0.9rem;"><strong>Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01 (3), 000-02 (9), 000-03 (20), 000-04 (30)</small></p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
