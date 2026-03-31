@@ -122,7 +122,7 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .producto-card .stock-medio { background:#fff3e0; color:#ff9800; }
 .producto-card .stock-normal { background:#e8f5e9; color:#2e7d32; }
 
-/* Tabla de stock por sucursal (mejor que etiquetas sueltas) */
+/* Tabla de stock por sucursal */
 .sucursales-tabla {
   margin-top: 12px;
   width: 100%;
@@ -142,14 +142,7 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
   font-weight: bold;
   text-align: right !important;
 }
-.laureles-bg { background:#e3f2fd; }
-.elisa-bg { background:#f3e5f5; }
-.lambare-bg { background:#fff3e0; }
-.morra-bg { background:#e8f5e9; }
-.laureles-text { color:#1976D2; }
-.elisa-text { color:#9c27b0; }
-.lambare-text { color:#ff9800; }
-.morra-text { color:#4caf50; }
+.cantidad-cero { opacity: 0.5; }
 
 /* Loading y actualización */
 .loading { text-align:center; padding:50px; color:#666; }
@@ -270,7 +263,8 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     try { const snap = await get(ref(db, 'carrito')); const data = snap.val(); return data ? Object.values(data) : []; } catch { return []; }
   }
 
-  let datosStock = [];
+  let todosLosProductos = []; // Almacena todos los productos (incluyendo los que tienen stock 0)
+  let productosVisibles = [];  // Almacena solo los productos con al menos 1 unidad en alguna sucursal
   let todasLasVentas = [];
   let tabActual = 'stock';
 
@@ -305,7 +299,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         Object.keys(stocksPorSucursal[suc.clave] || {}).forEach(c => todosLosCodigos.add(c));
       }
       
-      datosStock = [];
+      // Agregar también códigos comunes que puedan no estar en stock aún
+      const codigosBase = ['000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06'];
+      codigosBase.forEach(c => todosLosCodigos.add(c));
+      
+      todosLosProductos = [];
       for (const code of Array.from(todosLosCodigos).sort()) {
         let total = 0;
         const stocks = {};
@@ -314,12 +312,14 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
           stocks[suc.clave] = cantidad;
           total += cantidad;
         }
-        if (total > 0 || code.startsWith('000-') || code.includes('-')) {
-          datosStock.push({ code, stocks, total });
-        }
+        todosLosProductos.push({ code, stocks, total });
       }
       
-      datosStock.sort((a,b) => a.code.localeCompare(b.code));
+      // FILTRO CLAVE: Solo mostrar productos con al menos 1 unidad en alguna sucursal
+      productosVisibles = todosLosProductos.filter(p => p.total > 0);
+      
+      // Ordenar por código
+      productosVisibles.sort((a,b) => a.code.localeCompare(b.code));
       
       if (tabActual === 'stock') renderizarGridStock();
     } catch (error) {
@@ -329,7 +329,13 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 
   function renderizarGridStock() {
     const termino = document.getElementById('busqueda')?.value.toLowerCase() || '';
-    const filtrados = datosStock.filter(p => p.code.toLowerCase().includes(termino));
+    // Filtrar solo sobre productos visibles (los que tienen stock > 0)
+    let filtrados = productosVisibles.filter(p => p.code.toLowerCase().includes(termino));
+    
+    // Si hay término de búsqueda y no encuentra, mostrar mensaje
+    if (termino !== '' && filtrados.length === 0) {
+      filtrados = productosVisibles.filter(p => p.code.toLowerCase().includes(termino));
+    }
     
     const html = filtrados.map(p => {
       let stockClass = 'stock-normal';
@@ -339,10 +345,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       // Generar tabla de sucursales con nombres visibles
       const sucursalesHtml = sucursales.map(suc => {
         const cantidad = p.stocks[suc.clave] || 0;
+        const cantidadClass = cantidad === 0 ? 'cantidad-cero' : '';
         return `
           <tr>
             <td class="sucursal-nombre" style="color: ${suc.color};">🏢 ${suc.nombre}</td>
-            <td class="sucursal-cantidad" style="color: ${cantidad === 0 ? '#f44336' : suc.color};">${cantidad}</td>
+            <td class="sucursal-cantidad ${cantidadClass}" style="color: ${cantidad === 0 ? '#999' : suc.color};">${cantidad}</td>
           </tr>
         `;
       }).join('');
@@ -361,7 +368,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       `;
     }).join('');
     
-    document.getElementById('productosGrid').innerHTML = filtrados.length > 0 ? html : '<div class="loading" style="grid-column:1/-1;">🔍 No se encontraron productos</div>';
+    const mensajeVacio = termino !== '' && filtrados.length === 0 
+      ? '<div class="loading" style="grid-column:1/-1;">🔍 No se encontraron productos con ese código</div>'
+      : '<div class="loading" style="grid-column:1/-1;">✨ Todos los productos tienen stock 0. ¡Vuelven a aparecer cuando alguna sucursal tenga stock!</div>';
+    
+    document.getElementById('productosGrid').innerHTML = filtrados.length > 0 ? html : mensajeVacio;
   }
 
   async function cargarVentasUnificadas() {
@@ -442,7 +453,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
               <td style="font-size:0.75rem;">${v.timestamp || (v.fecha + ' ' + v.hora)}</td>
             </tr>`;
           }).join('')}
-          ${todasLasVentas.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">📭 No hay ventas registradas</td></tr>' : ''}
+          ${todasLasVentas.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">📭 No hay ventas registradas</td>' : ''}
         </tbody>
       </table>
     `;
