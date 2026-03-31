@@ -67,7 +67,7 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 /* Grid de productos (con imágenes) */
 .productos-grid { 
   display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
   gap: 16px; 
   margin-top: 10px;
 }
@@ -100,7 +100,7 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: bold;
   border-radius: 8px;
 }
@@ -112,7 +112,7 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 }
 .producto-card .stock-total {
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
@@ -121,27 +121,35 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .producto-card .stock-bajo { background:#ffebee; color:#f44336; }
 .producto-card .stock-medio { background:#fff3e0; color:#ff9800; }
 .producto-card .stock-normal { background:#e8f5e9; color:#2e7d32; }
-.producto-card .sucursales-stock {
+
+/* Tabla de stock por sucursal (mejor que etiquetas sueltas) */
+.sucursales-tabla {
+  margin-top: 12px;
+  width: 100%;
+  border-collapse: collapse;
   font-size: 0.7rem;
-  color: #666;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #eee;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
 }
-.producto-card .sucursal-stock {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 12px;
-  background: #f5f5f5;
+.sucursales-tabla td {
+  padding: 5px 4px;
+  text-align: center;
+  border-radius: 6px;
 }
-.sucursal-stock.laureles { background:#e3f2fd; }
-.sucursal-stock.elisa { background:#f3e5f5; }
-.sucursal-stock.lambare { background:#fff3e0; }
-.sucursal-stock.morra { background:#e8f5e9; }
+.sucursal-nombre {
+  font-weight: 600;
+  text-align: left !important;
+}
+.sucursal-cantidad {
+  font-weight: bold;
+  text-align: right !important;
+}
+.laureles-bg { background:#e3f2fd; }
+.elisa-bg { background:#f3e5f5; }
+.lambare-bg { background:#fff3e0; }
+.morra-bg { background:#e8f5e9; }
+.laureles-text { color:#1976D2; }
+.elisa-text { color:#9c27b0; }
+.lambare-text { color:#ff9800; }
+.morra-text { color:#4caf50; }
 
 /* Loading y actualización */
 .loading { text-align:center; padding:50px; color:#666; }
@@ -159,11 +167,10 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size:0.8rem; border-top:1px solid #ddd; }
 
 /* Responsive */
-@media (max-width:700px) {
-  .productos-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+@media (max-width:600px) {
+  .productos-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
   .producto-card img, .producto-card .img-placeholder { width: 90px; height: 90px; }
-  .producto-card .codigo { font-size: 0.75rem; }
-  .producto-card .stock-total { font-size: 1rem; }
+  .sucursales-tabla { font-size: 0.6rem; }
 }
 </style>
 </head>
@@ -173,10 +180,10 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     <h1>📊 ASTROLAND - Panel Unificado</h1>
     <p class="subtitle">Stock + Ventas en tiempo real | 4 sucursales</p>
     <div class="badges">
-      <div class="badge">🏢 Los Laureles</div>
-      <div class="badge">🏢 Villa Elisa</div>
-      <div class="badge">🏢 Lambare</div>
-      <div class="badge">🏢 Villa Morra</div>
+      <div class="badge" style="background:#e3f2fd; color:#1976D2;">🏢 Los Laureles</div>
+      <div class="badge" style="background:#f3e5f5; color:#9c27b0;">🏢 Villa Elisa</div>
+      <div class="badge" style="background:#fff3e0; color:#ff9800;">🏢 Lambare</div>
+      <div class="badge" style="background:#e8f5e9; color:#4caf50;">🏢 Villa Morra</div>
     </div>
   </div>
 
@@ -231,10 +238,10 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 
   // CONFIGURACIONES DE FIREBASE - 4 SUCURSALES
   const sucursales = [
-    { nombre: "Los Laureles", clave: "laureles", color: "#2196F3", config: { apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w", authDomain: "los-laureles-49117.firebaseapp.com", projectId: "los-laureles-49117", storageBucket: "los-laureles-49117.firebasestorage.app", messagingSenderId: "523096933391", appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a" } },
-    { nombre: "Villa Elisa", clave: "elisa", color: "#9c27b0", config: { apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ", authDomain: "villa-elisa-3adbe.firebaseapp.com", projectId: "villa-elisa-3adbe", storageBucket: "villa-elisa-3adbe.firebasestorage.app", messagingSenderId: "147294403718", appId: "1:147294403718:web:96d8289e6d3d3c7ce72507" } },
-    { nombre: "Lambare", clave: "lambare", color: "#ff9800", config: { apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY", authDomain: "lambare-85124.firebaseapp.com", projectId: "lambare-85124", storageBucket: "lambare-85124.firebasestorage.app", messagingSenderId: "683666735879", appId: "1:683666735879:web:c654add46d1dad6160bba2" } },
-    { nombre: "Villa Morra", clave: "morra", color: "#4caf50", config: { apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", authDomain: "villa-morra.firebaseapp.com", projectId: "villa-morra", storageBucket: "villa-morra.firebasestorage.app", messagingSenderId: "184849063287", appId: "1:184849063287:web:15f360231ade1b85ab5572" } }
+    { nombre: "Los Laureles", clave: "laureles", color: "#2196F3", bg: "#e3f2fd", config: { apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w", authDomain: "los-laureles-49117.firebaseapp.com", projectId: "los-laureles-49117", storageBucket: "los-laureles-49117.firebasestorage.app", messagingSenderId: "523096933391", appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a" } },
+    { nombre: "Villa Elisa", clave: "elisa", color: "#9c27b0", bg: "#f3e5f5", config: { apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ", authDomain: "villa-elisa-3adbe.firebaseapp.com", projectId: "villa-elisa-3adbe", storageBucket: "villa-elisa-3adbe.firebasestorage.app", messagingSenderId: "147294403718", appId: "1:147294403718:web:96d8289e6d3d3c7ce72507" } },
+    { nombre: "Lambare", clave: "lambare", color: "#ff9800", bg: "#fff3e0", config: { apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY", authDomain: "lambare-85124.firebaseapp.com", projectId: "lambare-85124", storageBucket: "lambare-85124.firebasestorage.app", messagingSenderId: "683666735879", appId: "1:683666735879:web:c654add46d1dad6160bba2" } },
+    { nombre: "Villa Morra", clave: "morra", color: "#4caf50", bg: "#e8f5e9", config: { apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", authDomain: "villa-morra.firebaseapp.com", projectId: "villa-morra", storageBucket: "villa-morra.firebasestorage.app", messagingSenderId: "184849063287", appId: "1:184849063287:web:15f360231ade1b85ab5572" } }
   ];
 
   const dbs = {};
@@ -275,7 +282,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   }
 
   function getImagenHtml(code) {
-    // Intentar cargar imagen real, si no existe mostrar placeholder
     const colorIndex = getColorIndex(code);
     return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" loading="lazy">
             <div class="img-placeholder" style="background: ${colores[colorIndex]}; display: none;">${code.replace('-', ' ')}</div>`;
@@ -330,19 +336,27 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       if (p.total < 5) stockClass = 'stock-bajo';
       else if (p.total < 20) stockClass = 'stock-medio';
       
+      // Generar tabla de sucursales con nombres visibles
+      const sucursalesHtml = sucursales.map(suc => {
+        const cantidad = p.stocks[suc.clave] || 0;
+        return `
+          <tr>
+            <td class="sucursal-nombre" style="color: ${suc.color};">🏢 ${suc.nombre}</td>
+            <td class="sucursal-cantidad" style="color: ${cantidad === 0 ? '#f44336' : suc.color};">${cantidad}</td>
+          </tr>
+        `;
+      }).join('');
+      
       return `
         <div class="producto-card">
           <div style="position: relative;">
             ${getImagenHtml(p.code)}
           </div>
           <div class="codigo">${p.code}</div>
-          <div class="stock-total ${stockClass}">📦 ${p.total}</div>
-          <div class="sucursales-stock">
-            <span class="sucursal-stock laureles">🏢 ${p.stocks.laureles || 0}</span>
-            <span class="sucursal-stock elisa">🏢 ${p.stocks.elisa || 0}</span>
-            <span class="sucursal-stock lambare">🏢 ${p.stocks.lambare || 0}</span>
-            <span class="sucursal-stock morra">🏢 ${p.stocks.morra || 0}</span>
-          </div>
+          <div class="stock-total ${stockClass}">📦 TOTAL: ${p.total}</div>
+          <table class="sucursales-tabla">
+            ${sucursalesHtml}
+          </table>
         </div>
       `;
     }).join('');
@@ -384,7 +398,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       for (const suc of sucursales) {
         const ventasSuc = ventasPorSucursal[suc.clave] || [];
         sucursalStats[suc.clave] = {
-          nombre: suc.nombre, color: suc.color,
+          nombre: suc.nombre, color: suc.color, bg: suc.bg,
           totalVentas: ventasSuc.length,
           totalDinero: ventasSuc.reduce((s, v) => s + (v.money || 0), 0),
           totalPuntos: ventasSuc.reduce((s, v) => s + (v.points || 0), 0),
@@ -395,7 +409,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       const sucHtml = sucursales.map(suc => {
         const stats = sucursalStats[suc.clave];
         return `
-          <div class="suc-card ${suc.clave}" style="border-top-color: ${suc.color};">
+          <div class="suc-card ${suc.clave}" style="border-top-color: ${suc.color}; background: ${suc.bg}20;">
             <h4><span style="color:${suc.color}">🏢</span> ${stats.nombre}</h4>
             <div class="venta-item"><span class="label">🛒 Ventas:</span><span class="amount">${stats.totalVentas}</span></div>
             <div class="venta-item"><span class="label">💰 Dinero:</span><span class="amount">Gs. ${stats.totalDinero.toLocaleString()}</span></div>
@@ -418,9 +432,9 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         <thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead>
         <tbody>
           ${todasLasVentas.slice(0, 200).map(v => {
-            const sucColor = sucursales.find(s=>s.nombre===v.sucursal)?.color || '#333';
+            const suc = sucursales.find(s=>s.nombre===v.sucursal);
             return `<tr>
-              <td style="font-weight:600; color:${sucColor}">${v.sucursal}</td>
+              <td style="font-weight:600; color:${suc?.color || '#333'}">${v.sucursal}</td>
               <td>${v.name || v.code}</td>
               <td>${(v.points || 0).toLocaleString()}</td>
               <td>Gs. ${(v.money || 0).toLocaleString()}</td>
