@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ASTROLAND - Panel Unificado (Stock + Ventas)</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', Inter, Arial, sans-serif; color:#1a1a2e; }
+.container { max-width:1400px; margin:0 auto; padding:20px; }
+
+/* Header */
+.header { text-align:center; margin-bottom:30px; }
+.header h1 { margin:0 0 5px; font-size:1.8rem; color:#1a1a2e; }
+.header .subtitle { color:#666; font-size:0.9rem; margin-bottom:15px; }
+.badges { display:flex; justify-content:center; gap:15px; flex-wrap:wrap; margin-top:15px; }
+.badge { background:#e8f4fd; padding:8px 16px; border-radius:25px; font-size:0.85rem; font-weight:600; color:#1976D2; }
+
+/* Tarjetas de estadísticas */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:30px; }
+.stat-card { background:white; border-radius:16px; padding:18px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:transform 0.2s; }
+.stat-card:hover { transform:translateY(-2px); }
+.stat-card .label { font-size:0.8rem; color:#666; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; }
+.stat-card .value { font-size:1.8rem; font-weight:bold; }
+.stat-card .unit { font-size:0.8rem; color:#999; margin-left:3px; }
+.stat-card.dinero .value { color:#2e7d32; }
+.stat-card.puntos .value { color:#1565c0; }
+.stat-card.fichas .value { color:#e65100; }
+.stat-card.ventas .value { color:#6a1b9a; }
+
+/* Ventas por sucursal */
+.sucursales-ventas { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; margin-bottom:30px; }
+@media (max-width:900px) { .sucursales-ventas { grid-template-columns:repeat(2, 1fr); } }
+@media (max-width:500px) { .sucursales-ventas { grid-template-columns:1fr; } }
+.suc-card { background:white; border-radius:14px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid; }
+.suc-card.laureles { border-top-color:#2196F3; }
+.suc-card.elisa { border-top-color:#9c27b0; }
+.suc-card.lambare { border-top-color:#ff9800; }
+.suc-card.morra { border-top-color:#4caf50; }
+.suc-card h4 { margin:0 0 12px 0; font-size:1rem; display:flex; align-items:center; gap:8px; }
+.suc-card .venta-item { display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem; padding:5px 0; border-bottom:1px dashed #eee; }
+.suc-card .venta-item .label { color:#666; }
+.suc-card .venta-item .amount { font-weight:bold; }
+
+/* Barra de búsqueda */
+.search-container { margin-bottom:25px; text-align:center; }
+.search-container input {
+  width: 90%;
+  max-width: 400px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border-radius: 50px;
+  border: 1px solid #ddd;
+  background: white;
+  outline: none;
+  transition: all 0.3s;
+}
+.search-container input:focus { border-color:#2196F3; box-shadow:0 0 0 2px rgba(33,150,243,0.2); }
+
+/* Tabs */
+.tabs { display:flex; justify-content:center; gap:10px; margin-bottom:20px; }
+.tab-btn { padding:10px 25px; border:none; background:#e0e0e0; border-radius:30px; cursor:pointer; font-size:0.9rem; font-weight:600; transition:all 0.2s; }
+.tab-btn.active { background:#2196F3; color:white; }
+.tab-btn:hover:not(.active) { background:#ccc; }
+
+/* Tabla de productos */
+.products-table { background:white; border-radius:16px; overflow-x:auto; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+th { background:#1a1a2e; color:white; padding:14px 12px; text-align:center; font-weight:600; position:sticky; top:0; }
+td { padding:10px 8px; text-align:center; border-bottom:1px solid #eee; }
+tr:hover { background:#f8f9ff; }
+.product-code { font-weight:700; color:#1976D2; text-align:left !important; }
+.stock-total { font-weight:800; font-size:1rem; color:#2e7d32; background:#e8f5e9; border-radius:20px; display:inline-block; padding:4px 12px; }
+.stock-low { color:#f44336; font-weight:600; background:#ffebee; }
+.stock-medium { color:#ff9800; font-weight:600; background:#fff3e0; }
+.sucursal-col { min-width:80px; }
+
+/* Tabla de ventas */
+.ventas-table { background:white; border-radius:16px; overflow-x:auto; margin-top:10px; }
+.ventas-table table { font-size:0.8rem; }
+.ventas-table th, .ventas-table td { padding:8px 6px; }
+.venta-item-row { cursor:pointer; }
+.venta-detalle { background:#f9f9f9; display:none; }
+.venta-detalle.show { display:table-row; }
+.venta-detalle td { padding:10px; background:#f5f5f5; }
+
+/* Loading y actualización */
+.loading { text-align:center; padding:50px; color:#666; }
+.update-info { text-align:center; margin-top:20px; font-size:0.75rem; color:#999; }
+.update-info .time { font-weight:600; color:#2196F3; }
+.refresh-btn { background:#2196F3; color:white; border:none; border-radius:20px; padding:5px 15px; margin-left:10px; cursor:pointer; font-size:0.7rem; }
+
+/* Footer */
+footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size:0.8rem; border-top:1px solid #ddd; }
+
+/* Responsive */
+@media (max-width:900px) {
+  th, td { font-size:0.7rem; padding:6px 4px; }
+  .stock-total { font-size:0.85rem; padding:2px 8px; }
+  .stat-card .value { font-size:1.3rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📊 ASTROLAND - Panel Unificado</h1>
+    <p class="subtitle">Stock + Ventas en tiempo real | 4 sucursales</p>
+    <div class="badges">
+      <div class="badge">🏢 Los Laureles</div>
+      <div class="badge">🏢 Villa Elisa</div>
+      <div class="badge">🏢 Lambare</div>
+      <div class="badge">🏢 Villa Morra</div>
+    </div>
+  </div>
+
+  <!-- Estadísticas generales de ventas -->
+  <div class="stats-grid" id="statsVentas">
+    <div class="stat-card dinero"><div class="label">💰 Dinero Total</div><div class="value" id="totalDinero">-</div><div class="unit">Gs.</div></div>
+    <div class="stat-card puntos"><div class="label">🎯 Puntos Canjeados</div><div class="value" id="totalPuntos">-</div></div>
+    <div class="stat-card fichas"><div class="label">🎴 Fichas Consumidas</div><div class="value" id="totalFichas">-</div></div>
+    <div class="stat-card ventas"><div class="label">🛒 Ventas Totales</div><div class="value" id="totalVentas">-</div></div>
+  </div>
+
+  <!-- Ventas por sucursal -->
+  <div class="sucursales-ventas" id="ventasPorSucursal">
+    <!-- Se llena dinámicamente -->
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="mostrarTab('stock')">📦 Stock Unificado</button>
+    <button class="tab-btn" onclick="mostrarTab('ventas')">🛒 Historial de Ventas</button>
+  </div>
+
+  <!-- Búsqueda (solo para stock) -->
+  <div class="search-container" id="searchContainer">
+    <input type="text" id="busqueda" placeholder="🔍 Buscar por código (ej: 010, 000-01)..." autocomplete="off">
+  </div>
+
+  <!-- Contenedor de tablas -->
+  <div id="tabStock" class="tab-content">
+    <div class="products-table">
+      <div class="loading">🔄 Cargando stock de las 4 sucursales...</div>
+    </div>
+  </div>
+
+  <div id="tabVentas" class="tab-content" style="display:none;">
+    <div class="ventas-table">
+      <div class="loading">🔄 Cargando historial de ventas...</div>
+    </div>
+  </div>
+
+  <div class="update-info">
+    <span>🔄 Actualización automática cada 15 segundos</span>
+    <span class="time" id="lastUpdate">-</span>
+    <button class="refresh-btn" onclick="recargarTodo()">⟳ Actualizar ahora</button>
+  </div>
+</div>
+<footer>
+  <p>© 2026 ASTROLAND - Panel Unificado | Datos en tiempo real desde las 4 sucursales</p>
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+  // ============================================
+  // CONFIGURACIONES DE FIREBASE - 4 SUCURSALES
+  // ============================================
+  const sucursales = [
+    {
+      nombre: "Los Laureles",
+      clave: "laureles",
+      color: "#2196F3",
+      config: {
+        apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
+        authDomain: "los-laureles-49117.firebaseapp.com",
+        projectId: "los-laureles-49117",
+        storageBucket: "los-laureles-49117.firebasestorage.app",
+        messagingSenderId: "523096933391",
+        appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a"
+      }
+    },
+    {
+      nombre: "Villa Elisa",
+      clave: "elisa",
+      color: "#9c27b0",
+      config: {
+        apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ",
+        authDomain: "villa-elisa-3adbe.firebaseapp.com",
+        projectId: "villa-elisa-3adbe",
+        storageBucket: "villa-elisa-3adbe.firebasestorage.app",
+        messagingSenderId: "147294403718",
+        appId: "1:147294403718:web:96d8289e6d3d3c7ce72507"
+      }
+    },
+    {
+      nombre: "Lambare",
+      clave: "lambare",
+      color: "#ff9800",
+      config: {
+        apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
+        authDomain: "lambare-85124.firebaseapp.com",
+        projectId: "lambare-85124",
+        storageBucket: "lambare-85124.firebasestorage.app",
+        messagingSenderId: "683666735879",
+        appId: "1:683666735879:web:c654add46d1dad6160bba2"
+      }
+    },
+    {
+      nombre: "Villa Morra",
+      clave: "morra",
+      color: "#4caf50",
+      config: {
+        apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
+        authDomain: "villa-morra.firebaseapp.com",
+        projectId: "villa-morra",
+        storageBucket: "villa-morra.firebasestorage.app",
+        messagingSenderId: "184849063287",
+        appId: "1:184849063287:web:15f360231ade1b85ab5572"
+      }
+    }
+  ];
+
+  // Inicializar apps de Firebase para cada sucursal
+  const dbs = {};
+  sucursales.forEach(suc => {
+    try {
+      const app = initializeApp(suc.config, suc.clave);
+      dbs[suc.clave] = getDatabase(app);
+    } catch(e) {
+      console.warn(`Error inicializando ${suc.nombre}:`, e);
+    }
+  });
+
+  // Mapeo de códigos de producto
+  const nombresProductos = {};
+  function generarNombresProductos() {
+    const codigos000 = ['000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06'];
+    codigos000.forEach(c => { nombresProductos[c] = c; });
+    
+    const categorias = [
+      { pref: '010', desde: 0, hasta: 14 }, { pref: '020', desde: 0, hasta: 67 },
+      { pref: '035', desde: 0, hasta: 71 }, { pref: '050', desde: 0, hasta: 53 },
+      { pref: '075', desde: 0, hasta: 51 }, { pref: '100', desde: 0, hasta: 29 },
+      { pref: '150', desde: 0, hasta: 39 }, { pref: '200', desde: 0, hasta: 37 },
+      { pref: '220', desde: 0, hasta: 7 }, { pref: '250', desde: 0, hasta: 3 },
+      { pref: '350', desde: 0, hasta: 1 }
+    ];
+    
+    categorias.forEach(cat => {
+      for (let i = cat.desde; i <= cat.hasta; i++) {
+        nombresProductos[`${cat.pref}-${i.toString().padStart(2,'0')}`] = `${cat.pref}-${i.toString().padStart(2,'0')}`;
+      }
+    });
+    ['420-00', '420-01', '420-02'].forEach(c => { nombresProductos[c] = c; });
+  }
+  generarNombresProductos();
+
+  // Consumo de fichas
+  const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
+
+  function getStockProducto(stockData, code) {
+    if (fichasConsumo[code]) {
+      const fichaStock = stockData['000-00'] ?? 0;
+      return Math.floor(fichaStock / fichasConsumo[code]);
+    }
+    return stockData[code] ?? 0;
+  }
+
+  // Obtener stock de una sucursal
+  async function obtenerStockSucursal(db) {
+    try {
+      const snapshot = await get(ref(db, 'stock'));
+      return snapshot.val() || {};
+    } catch { return {}; }
+  }
+
+  // Obtener carrito de una sucursal
+  async function obtenerCarritoSucursal(db) {
+    try {
+      const snapshot = await get(ref(db, 'carrito'));
+      const data = snapshot.val();
+      if (!data) return [];
+      return Object.values(data);
+    } catch { return []; }
+  }
+
+  // Variables globales
+  let datosStock = [];
+  let todasLasVentas = [];
+  let tabActual = 'stock';
+
+  // Función para cargar todo
+  async function cargarTodo() {
+    await Promise.all([cargarStockUnificado(), cargarVentasUnificadas()]);
+    document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
+  }
+
+  // Cargar stock unificado
+  async function cargarStockUnificado() {
+    try {
+      const stocksPorSucursal = {};
+      for (const suc of sucursales) {
+        const db = dbs[suc.clave];
+        if (db) stocksPorSucursal[suc.clave] = await obtenerStockSucursal(db);
+        else stocksPorSucursal[suc.clave] = {};
+      }
+      
+      const todosLosCodigos = new Set();
+      for (const suc of sucursales) {
+        Object.keys(stocksPorSucursal[suc.clave] || {}).forEach(c => todosLosCodigos.add(c));
+      }
+      Object.keys(nombresProductos).forEach(c => todosLosCodigos.add(c));
+      
+      datosStock = [];
+      let stockTotalGeneral = 0;
+      let productosBajos = 0;
+      
+      for (const code of Array.from(todosLosCodigos).sort()) {
+        let total = 0;
+        const stocks = {};
+        for (const suc of sucursales) {
+          const cantidad = getStockProducto(stocksPorSucursal[suc.clave] || {}, code);
+          stocks[suc.clave] = cantidad;
+          total += cantidad;
+        }
+        if (total > 0) {
+          stockTotalGeneral += total;
+          if (total < 5) productosBajos++;
+        }
+        datosStock.push({ code, nombre: nombresProductos[code] || code, stocks, total });
+      }
+      
+      datosStock.sort((a,b) => a.code.localeCompare(b.code));
+      
+      document.getElementById('totalProductos').textContent = datosStock.filter(p => p.total > 0).length;
+      document.getElementById('stockTotalGeneral').textContent = stockTotalGeneral.toLocaleString();
+      document.getElementById('productosBajos').textContent = productosBajos;
+      
+      if (tabActual === 'stock') renderizarTablaStock();
+    } catch (error) {
+      console.error('Error cargando stock:', error);
+    }
+  }
+
+  function renderizarTablaStock() {
+    const termino = document.getElementById('busqueda')?.value.toLowerCase() || '';
+    const filtrados = datosStock.filter(p => p.code.toLowerCase().includes(termino));
+    
+    const html = `
+      <table>
+        <thead>
+          <tr><th>Código</th><th>Total Stock</th>
+            <th>🏢 Laureles</th><th>🏢 Elisa</th><th>🏢 Lambare</th><th>🏢 Morra</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtrados.map(p => `
+            <tr>
+              <td class="product-code">${p.code}</td>
+              <td><span class="stock-total ${p.total < 5 ? 'stock-low' : (p.total < 20 ? 'stock-medium' : '')}">${p.total}</span></td>
+              <td class="${p.stocks.laureles <= 0 ? 'stock-low' : ''}">${p.stocks.laureles || 0}</td>
+              <td class="${p.stocks.elisa <= 0 ? 'stock-low' : ''}">${p.stocks.elisa || 0}</td>
+              <td class="${p.stocks.lambare <= 0 ? 'stock-low' : ''}">${p.stocks.lambare || 0}</td>
+              <td class="${p.stocks.morra <= 0 ? 'stock-low' : ''}">${p.stocks.morra || 0}</td>
+            </tr>
+          `).join('')}
+          ${filtrados.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">🔍 No se encontraron productos</td></tr>' : ''}
+        </tbody>
+      </table>
+    `;
+    document.querySelector('#tabStock .products-table').innerHTML = html;
+  }
+
+  // Cargar ventas unificadas
+  async function cargarVentasUnificadas() {
+    try {
+      const ventasPorSucursal = {};
+      todasLasVentas = [];
+      
+      for (const suc of sucursales) {
+        const db = dbs[suc.clave];
+        if (db) {
+          const ventas = await obtenerCarritoSucursal(db);
+          ventasPorSucursal[suc.clave] = ventas;
+          ventas.forEach(v => {
+            todasLasVentas.push({
+              ...v,
+              sucursal: suc.nombre,
+              sucursalClave: suc.clave,
+              timestamp: v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime() || Date.now()
+            });
+          });
+        }
+      }
+      
+      // Ordenar por fecha descendente
+      todasLasVentas.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+      
+      // Calcular totales
+      const totalDinero = todasLasVentas.reduce((sum, v) => sum + (v.money || 0), 0);
+      const totalPuntos = todasLasVentas.reduce((sum, v) => sum + (v.points || 0), 0);
+      const totalFichas = todasLasVentas.reduce((sum, v) => sum + (v.fichaConsumption || 0), 0);
+      
+      document.getElementById('totalDinero').textContent = totalDinero.toLocaleString();
+      document.getElementById('totalPuntos').textContent = totalPuntos.toLocaleString();
+      document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
+      document.getElementById('totalVentas').textContent = todasLasVentas.length.toLocaleString();
+      
+      // Ventas por sucursal
+      const sucursalStats = {};
+      for (const suc of sucursales) {
+        const ventasSuc = ventasPorSucursal[suc.clave] || [];
+        sucursalStats[suc.clave] = {
+          nombre: suc.nombre,
+          color: suc.color,
+          totalVentas: ventasSuc.length,
+          totalDinero: ventasSuc.reduce((s, v) => s + (v.money || 0), 0),
+          totalPuntos: ventasSuc.reduce((s, v) => s + (v.points || 0), 0),
+          totalFichas: ventasSuc.reduce((s, v) => s + (v.fichaConsumption || 0), 0)
+        };
+      }
+      
+      const sucHtml = sucursales.map(suc => {
+        const stats = sucursalStats[suc.clave];
+        return `
+          <div class="suc-card ${suc.clave}" style="border-top-color: ${suc.color};">
+            <h4><span style="color:${suc.color}">🏢</span> ${stats.nombre}</h4>
+            <div class="venta-item"><span class="label">🛒 Ventas:</span><span class="amount">${stats.totalVentas}</span></div>
+            <div class="venta-item"><span class="label">💰 Dinero:</span><span class="amount">Gs. ${stats.totalDinero.toLocaleString()}</span></div>
+            <div class="venta-item"><span class="label">🎯 Puntos:</span><span class="amount">${stats.totalPuntos.toLocaleString()}</span></div>
+            <div class="venta-item"><span class="label">🎴 Fichas:</span><span class="amount">${stats.totalFichas.toLocaleString()}</span></div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('ventasPorSucursal').innerHTML = sucHtml;
+      
+      if (tabActual === 'ventas') renderizarTablaVentas();
+    } catch (error) {
+      console.error('Error cargando ventas:', error);
+    }
+  }
+
+  function renderizarTablaVentas() {
+    const html = `
+      <table>
+        <thead>
+          <tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr>
+        </thead>
+        <tbody>
+          ${todasLasVentas.slice(0, 200).map(v => `
+            <tr>
+              <td style="font-weight:600; color:${sucursales.find(s=>s.nombre===v.sucursal)?.color || '#333'}">${v.sucursal}</td>
+              <td>${v.name || v.code}</td>
+              <td>${(v.points || 0).toLocaleString()}</td>
+              <td>Gs. ${(v.money || 0).toLocaleString()}</td>
+              <td>${(v.fichaConsumption || 0)}</td>
+              <td style="font-size:0.75rem;">${v.timestamp || (v.fecha + ' ' + v.hora)}</td>
+            </tr>
+          `).join('')}
+          ${todasLasVentas.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">📭 No hay ventas registradas</td></tr>' : ''}
+          ${todasLasVentas.length > 200 ? `<tr><td colspan="6" style="text-align:center; padding:10px; background:#f0f0f0;">📋 Mostrando las últimas 200 ventas de ${todasLasVentas.length} totales</td></tr>` : ''}
+        </tbody>
+      </table>
+    `;
+    document.querySelector('#tabVentas .ventas-table').innerHTML = html;
+  }
+
+  // Funciones de UI
+  window.mostrarTab = function(tab) {
+    tabActual = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (tab === 'stock') {
+      document.querySelector('.tab-btn:first-child').classList.add('active');
+      document.getElementById('tabStock').style.display = 'block';
+      document.getElementById('tabVentas').style.display = 'none';
+      document.getElementById('searchContainer').style.display = 'block';
+      renderizarTablaStock();
+    } else {
+      document.querySelector('.tab-btn:last-child').classList.add('active');
+      document.getElementById('tabStock').style.display = 'none';
+      document.getElementById('tabVentas').style.display = 'block';
+      document.getElementById('searchContainer').style.display = 'none';
+      renderizarTablaVentas();
+    }
+  };
+
+  window.recargarTodo = () => cargarTodo();
+
+  // Evento de búsqueda
+  if (document.getElementById('busqueda')) {
+    document.getElementById('busqueda').addEventListener('input', () => {
+      if (tabActual === 'stock') renderizarTablaStock();
+    });
+  }
+
+  // Inicializar
+  await cargarTodo();
+  
+  // Actualización automática cada 15 segundos
+  setInterval(() => cargarTodo(), 15000);
+</script>
+</body>
+</html>
