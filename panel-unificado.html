@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ASTROLAND - Panel Unificado (Stock + Ventas + Imágenes)</title>
 <style>
 :root { color-scheme: light; }
@@ -64,17 +64,43 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .tab-btn.active { background:#2196F3; color:white; }
 .tab-btn:hover:not(.active) { background:#ccc; }
 
-/* Grid de productos (con imágenes) */
+/* Grid de productos - FUERZA 3 COLUMNAS EN MÓVILES */
 .productos-grid { 
   display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
-  gap: 16px; 
+  gap: 12px; 
   margin-top: 10px;
 }
+
+/* Desktop: 5 columnas */
+@media (min-width: 1200px) {
+  .productos-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+/* Tablet: 4 columnas */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .productos-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* MÓVILES: FUERZA EXACTAMENTE 3 COLUMNAS */
+@media (max-width: 767px) {
+  .productos-grid { 
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px;
+  }
+}
+
+/* Pantallas muy pequeñas (menos de 400px) también 3 columnas */
+@media (max-width: 480px) {
+  .productos-grid { 
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px;
+  }
+}
+
 .producto-card {
   background: white;
   border-radius: 12px;
-  padding: 12px;
+  padding: 8px;
   text-align: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   transition: transform 0.2s;
@@ -83,60 +109,62 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .producto-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
 .producto-card img {
   width: 100%;
-  max-width: 120px;
-  height: 120px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1/1;
   object-fit: contain;
-  margin: 0 auto 10px;
+  margin: 0 auto 8px;
   display: block;
   background: #f9f9f9;
   border-radius: 8px;
 }
 .producto-card .img-placeholder {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 10px;
+  width: 100%;
+  aspect-ratio: 1/1;
+  margin: 0 auto 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: bold;
   border-radius: 8px;
 }
 .producto-card .codigo {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: #1976D2;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
+  word-break: break-word;
 }
 .producto-card .stock-total {
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 0.85rem;
   display: inline-block;
-  padding: 4px 12px;
+  padding: 2px 8px;
   border-radius: 20px;
-  margin: 8px 0;
+  margin: 5px 0;
 }
 .producto-card .stock-bajo { background:#ffebee; color:#f44336; }
 .producto-card .stock-medio { background:#fff3e0; color:#ff9800; }
 .producto-card .stock-normal { background:#e8f5e9; color:#2e7d32; }
 
-/* Tabla de stock por sucursal */
+/* Tabla de stock por sucursal - Compacta para móviles */
 .sucursales-tabla {
-  margin-top: 12px;
+  margin-top: 8px;
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
 }
 .sucursales-tabla td {
-  padding: 5px 4px;
+  padding: 3px 2px;
   text-align: center;
-  border-radius: 6px;
 }
 .sucursal-nombre {
   font-weight: 600;
   text-align: left !important;
+  font-size: 0.55rem;
 }
 .sucursal-cantidad {
   font-weight: bold;
@@ -159,11 +187,18 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 /* Footer */
 footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size:0.8rem; border-top:1px solid #ddd; }
 
-/* Responsive */
-@media (max-width:600px) {
-  .productos-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
-  .producto-card img, .producto-card .img-placeholder { width: 90px; height: 90px; }
-  .sucursales-tabla { font-size: 0.6rem; }
+/* Ajustes adicionales para móviles */
+@media (max-width: 480px) {
+  .container { padding: 10px; }
+  .header h1 { font-size: 1.3rem; }
+  .badge { padding: 4px 10px; font-size: 0.7rem; }
+  .stat-card .value { font-size: 1.2rem; }
+  .stat-card .label { font-size: 0.65rem; }
+  .tab-btn { padding: 6px 15px; font-size: 0.75rem; }
+  .suc-card .venta-item { font-size: 0.7rem; }
+  .producto-card .codigo { font-size: 0.65rem; }
+  .sucursal-nombre { font-size: 0.5rem; }
+  .sucursal-cantidad { font-size: 0.5rem; }
 }
 </style>
 </head>
@@ -263,12 +298,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     try { const snap = await get(ref(db, 'carrito')); const data = snap.val(); return data ? Object.values(data) : []; } catch { return []; }
   }
 
-  let todosLosProductos = []; // Almacena todos los productos (incluyendo los que tienen stock 0)
-  let productosVisibles = [];  // Almacena solo los productos con al menos 1 unidad en alguna sucursal
+  let todosLosProductos = [];
+  let productosVisibles = [];
   let todasLasVentas = [];
   let tabActual = 'stock';
 
-  // Colores para los placeholders de imágenes
   const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
   
   function getColorIndex(code) {
@@ -299,7 +333,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         Object.keys(stocksPorSucursal[suc.clave] || {}).forEach(c => todosLosCodigos.add(c));
       }
       
-      // Agregar también códigos comunes que puedan no estar en stock aún
       const codigosBase = ['000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06'];
       codigosBase.forEach(c => todosLosCodigos.add(c));
       
@@ -315,10 +348,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         todosLosProductos.push({ code, stocks, total });
       }
       
-      // FILTRO CLAVE: Solo mostrar productos con al menos 1 unidad en alguna sucursal
       productosVisibles = todosLosProductos.filter(p => p.total > 0);
-      
-      // Ordenar por código
       productosVisibles.sort((a,b) => a.code.localeCompare(b.code));
       
       if (tabActual === 'stock') renderizarGridStock();
@@ -329,20 +359,13 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 
   function renderizarGridStock() {
     const termino = document.getElementById('busqueda')?.value.toLowerCase() || '';
-    // Filtrar solo sobre productos visibles (los que tienen stock > 0)
     let filtrados = productosVisibles.filter(p => p.code.toLowerCase().includes(termino));
-    
-    // Si hay término de búsqueda y no encuentra, mostrar mensaje
-    if (termino !== '' && filtrados.length === 0) {
-      filtrados = productosVisibles.filter(p => p.code.toLowerCase().includes(termino));
-    }
     
     const html = filtrados.map(p => {
       let stockClass = 'stock-normal';
       if (p.total < 5) stockClass = 'stock-bajo';
       else if (p.total < 20) stockClass = 'stock-medio';
       
-      // Generar tabla de sucursales con nombres visibles
       const sucursalesHtml = sucursales.map(suc => {
         const cantidad = p.stocks[suc.clave] || 0;
         const cantidadClass = cantidad === 0 ? 'cantidad-cero' : '';
@@ -360,7 +383,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
             ${getImagenHtml(p.code)}
           </div>
           <div class="codigo">${p.code}</div>
-          <div class="stock-total ${stockClass}">📦 TOTAL: ${p.total}</div>
+          <div class="stock-total ${stockClass}">📦 ${p.total}</div>
           <table class="sucursales-tabla">
             ${sucursalesHtml}
           </table>
@@ -440,7 +463,9 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   function renderizarTablaVentas() {
     const html = `
       <table>
-        <thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead>
+        <thead>
+          <tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr>
+        </thead>
         <tbody>
           ${todasLasVentas.slice(0, 200).map(v => {
             const suc = sucursales.find(s=>s.nombre===v.sucursal);
@@ -453,7 +478,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
               <td style="font-size:0.75rem;">${v.timestamp || (v.fecha + ' ' + v.hora)}</td>
             </tr>`;
           }).join('')}
-          ${todasLasVentas.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">📭 No hay ventas registradas</td>' : ''}
+          ${todasLasVentas.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">📭 No hay ventas registradas</td></tr>' : ''}
         </tbody>
       </table>
     `;
