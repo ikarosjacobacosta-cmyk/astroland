@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ASTROLAND - Panel Unificado (Stock + Ventas)</title>
+<title>ASTROLAND - Panel Unificado (Stock + Ventas + Imágenes)</title>
 <style>
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
@@ -64,26 +64,84 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .tab-btn.active { background:#2196F3; color:white; }
 .tab-btn:hover:not(.active) { background:#ccc; }
 
-/* Tabla de productos */
-.products-table { background:white; border-radius:16px; overflow-x:auto; box-shadow:0 4px 12px rgba(0,0,0,0.08); }
-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-th { background:#1a1a2e; color:white; padding:14px 12px; text-align:center; font-weight:600; position:sticky; top:0; }
-td { padding:10px 8px; text-align:center; border-bottom:1px solid #eee; }
-tr:hover { background:#f8f9ff; }
-.product-code { font-weight:700; color:#1976D2; text-align:left !important; }
-.stock-total { font-weight:800; font-size:1rem; color:#2e7d32; background:#e8f5e9; border-radius:20px; display:inline-block; padding:4px 12px; }
-.stock-low { color:#f44336; font-weight:600; background:#ffebee; }
-.stock-medium { color:#ff9800; font-weight:600; background:#fff3e0; }
-.sucursal-col { min-width:80px; }
-
-/* Tabla de ventas */
-.ventas-table { background:white; border-radius:16px; overflow-x:auto; margin-top:10px; }
-.ventas-table table { font-size:0.8rem; }
-.ventas-table th, .ventas-table td { padding:8px 6px; }
-.venta-item-row { cursor:pointer; }
-.venta-detalle { background:#f9f9f9; display:none; }
-.venta-detalle.show { display:table-row; }
-.venta-detalle td { padding:10px; background:#f5f5f5; }
+/* Grid de productos (con imágenes) */
+.productos-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+  gap: 16px; 
+  margin-top: 10px;
+}
+.producto-card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.2s;
+  position: relative;
+}
+.producto-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.producto-card img {
+  width: 100%;
+  max-width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin: 0 auto 10px;
+  display: block;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+.producto-card .img-placeholder {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+}
+.producto-card .codigo {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #1976D2;
+  margin-bottom: 5px;
+}
+.producto-card .stock-total {
+  font-weight: 800;
+  font-size: 1.2rem;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin: 8px 0;
+}
+.producto-card .stock-bajo { background:#ffebee; color:#f44336; }
+.producto-card .stock-medio { background:#fff3e0; color:#ff9800; }
+.producto-card .stock-normal { background:#e8f5e9; color:#2e7d32; }
+.producto-card .sucursales-stock {
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.producto-card .sucursal-stock {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: #f5f5f5;
+}
+.sucursal-stock.laureles { background:#e3f2fd; }
+.sucursal-stock.elisa { background:#f3e5f5; }
+.sucursal-stock.lambare { background:#fff3e0; }
+.sucursal-stock.morra { background:#e8f5e9; }
 
 /* Loading y actualización */
 .loading { text-align:center; padding:50px; color:#666; }
@@ -91,14 +149,21 @@ tr:hover { background:#f8f9ff; }
 .update-info .time { font-weight:600; color:#2196F3; }
 .refresh-btn { background:#2196F3; color:white; border:none; border-radius:20px; padding:5px 15px; margin-left:10px; cursor:pointer; font-size:0.7rem; }
 
+/* Tabla de ventas */
+.ventas-table { background:white; border-radius:16px; overflow-x:auto; margin-top:10px; }
+.ventas-table table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+.ventas-table th, .ventas-table td { padding:10px 8px; text-align:center; border-bottom:1px solid #eee; }
+.ventas-table th { background:#1a1a2e; color:white; }
+
 /* Footer */
 footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size:0.8rem; border-top:1px solid #ddd; }
 
 /* Responsive */
-@media (max-width:900px) {
-  th, td { font-size:0.7rem; padding:6px 4px; }
-  .stock-total { font-size:0.85rem; padding:2px 8px; }
-  .stat-card .value { font-size:1.3rem; }
+@media (max-width:700px) {
+  .productos-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .producto-card img, .producto-card .img-placeholder { width: 90px; height: 90px; }
+  .producto-card .codigo { font-size: 0.75rem; }
+  .producto-card .stock-total { font-size: 1rem; }
 }
 </style>
 </head>
@@ -124,9 +189,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   </div>
 
   <!-- Ventas por sucursal -->
-  <div class="sucursales-ventas" id="ventasPorSucursal">
-    <!-- Se llena dinámicamente -->
-  </div>
+  <div class="sucursales-ventas" id="ventasPorSucursal"></div>
 
   <!-- Tabs -->
   <div class="tabs">
@@ -134,14 +197,14 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     <button class="tab-btn" onclick="mostrarTab('ventas')">🛒 Historial de Ventas</button>
   </div>
 
-  <!-- Búsqueda (solo para stock) -->
+  <!-- Búsqueda -->
   <div class="search-container" id="searchContainer">
     <input type="text" id="busqueda" placeholder="🔍 Buscar por código (ej: 010, 000-01)..." autocomplete="off">
   </div>
 
-  <!-- Contenedor de tablas -->
+  <!-- Contenedor de productos (grid con imágenes) -->
   <div id="tabStock" class="tab-content">
-    <div class="products-table">
+    <div id="productosGrid" class="productos-grid">
       <div class="loading">🔄 Cargando stock de las 4 sucursales...</div>
     </div>
   </div>
@@ -166,102 +229,24 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // ============================================
   // CONFIGURACIONES DE FIREBASE - 4 SUCURSALES
-  // ============================================
   const sucursales = [
-    {
-      nombre: "Los Laureles",
-      clave: "laureles",
-      color: "#2196F3",
-      config: {
-        apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
-        authDomain: "los-laureles-49117.firebaseapp.com",
-        projectId: "los-laureles-49117",
-        storageBucket: "los-laureles-49117.firebasestorage.app",
-        messagingSenderId: "523096933391",
-        appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a"
-      }
-    },
-    {
-      nombre: "Villa Elisa",
-      clave: "elisa",
-      color: "#9c27b0",
-      config: {
-        apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ",
-        authDomain: "villa-elisa-3adbe.firebaseapp.com",
-        projectId: "villa-elisa-3adbe",
-        storageBucket: "villa-elisa-3adbe.firebasestorage.app",
-        messagingSenderId: "147294403718",
-        appId: "1:147294403718:web:96d8289e6d3d3c7ce72507"
-      }
-    },
-    {
-      nombre: "Lambare",
-      clave: "lambare",
-      color: "#ff9800",
-      config: {
-        apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
-        authDomain: "lambare-85124.firebaseapp.com",
-        projectId: "lambare-85124",
-        storageBucket: "lambare-85124.firebasestorage.app",
-        messagingSenderId: "683666735879",
-        appId: "1:683666735879:web:c654add46d1dad6160bba2"
-      }
-    },
-    {
-      nombre: "Villa Morra",
-      clave: "morra",
-      color: "#4caf50",
-      config: {
-        apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
-        authDomain: "villa-morra.firebaseapp.com",
-        projectId: "villa-morra",
-        storageBucket: "villa-morra.firebasestorage.app",
-        messagingSenderId: "184849063287",
-        appId: "1:184849063287:web:15f360231ade1b85ab5572"
-      }
-    }
+    { nombre: "Los Laureles", clave: "laureles", color: "#2196F3", config: { apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w", authDomain: "los-laureles-49117.firebaseapp.com", projectId: "los-laureles-49117", storageBucket: "los-laureles-49117.firebasestorage.app", messagingSenderId: "523096933391", appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a" } },
+    { nombre: "Villa Elisa", clave: "elisa", color: "#9c27b0", config: { apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ", authDomain: "villa-elisa-3adbe.firebaseapp.com", projectId: "villa-elisa-3adbe", storageBucket: "villa-elisa-3adbe.firebasestorage.app", messagingSenderId: "147294403718", appId: "1:147294403718:web:96d8289e6d3d3c7ce72507" } },
+    { nombre: "Lambare", clave: "lambare", color: "#ff9800", config: { apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY", authDomain: "lambare-85124.firebaseapp.com", projectId: "lambare-85124", storageBucket: "lambare-85124.firebasestorage.app", messagingSenderId: "683666735879", appId: "1:683666735879:web:c654add46d1dad6160bba2" } },
+    { nombre: "Villa Morra", clave: "morra", color: "#4caf50", config: { apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", authDomain: "villa-morra.firebaseapp.com", projectId: "villa-morra", storageBucket: "villa-morra.firebasestorage.app", messagingSenderId: "184849063287", appId: "1:184849063287:web:15f360231ade1b85ab5572" } }
   ];
 
-  // Inicializar apps de Firebase para cada sucursal
   const dbs = {};
   sucursales.forEach(suc => {
     try {
       const app = initializeApp(suc.config, suc.clave);
       dbs[suc.clave] = getDatabase(app);
-    } catch(e) {
-      console.warn(`Error inicializando ${suc.nombre}:`, e);
-    }
+    } catch(e) { console.warn(`Error inicializando ${suc.nombre}:`, e); }
   });
 
-  // Mapeo de códigos de producto
-  const nombresProductos = {};
-  function generarNombresProductos() {
-    const codigos000 = ['000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06'];
-    codigos000.forEach(c => { nombresProductos[c] = c; });
-    
-    const categorias = [
-      { pref: '010', desde: 0, hasta: 14 }, { pref: '020', desde: 0, hasta: 67 },
-      { pref: '035', desde: 0, hasta: 71 }, { pref: '050', desde: 0, hasta: 53 },
-      { pref: '075', desde: 0, hasta: 51 }, { pref: '100', desde: 0, hasta: 29 },
-      { pref: '150', desde: 0, hasta: 39 }, { pref: '200', desde: 0, hasta: 37 },
-      { pref: '220', desde: 0, hasta: 7 }, { pref: '250', desde: 0, hasta: 3 },
-      { pref: '350', desde: 0, hasta: 1 }
-    ];
-    
-    categorias.forEach(cat => {
-      for (let i = cat.desde; i <= cat.hasta; i++) {
-        nombresProductos[`${cat.pref}-${i.toString().padStart(2,'0')}`] = `${cat.pref}-${i.toString().padStart(2,'0')}`;
-      }
-    });
-    ['420-00', '420-01', '420-02'].forEach(c => { nombresProductos[c] = c; });
-  }
-  generarNombresProductos();
-
-  // Consumo de fichas
   const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
-
+  
   function getStockProducto(stockData, code) {
     if (fichasConsumo[code]) {
       const fichaStock = stockData['000-00'] ?? 0;
@@ -270,55 +255,51 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     return stockData[code] ?? 0;
   }
 
-  // Obtener stock de una sucursal
   async function obtenerStockSucursal(db) {
-    try {
-      const snapshot = await get(ref(db, 'stock'));
-      return snapshot.val() || {};
-    } catch { return {}; }
+    try { const snap = await get(ref(db, 'stock')); return snap.val() || {}; } catch { return {}; }
   }
 
-  // Obtener carrito de una sucursal
   async function obtenerCarritoSucursal(db) {
-    try {
-      const snapshot = await get(ref(db, 'carrito'));
-      const data = snapshot.val();
-      if (!data) return [];
-      return Object.values(data);
-    } catch { return []; }
+    try { const snap = await get(ref(db, 'carrito')); const data = snap.val(); return data ? Object.values(data) : []; } catch { return []; }
   }
 
-  // Variables globales
   let datosStock = [];
   let todasLasVentas = [];
   let tabActual = 'stock';
 
-  // Función para cargar todo
+  // Colores para los placeholders de imágenes
+  const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
+  
+  function getColorIndex(code) {
+    return code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
+  }
+
+  function getImagenHtml(code) {
+    // Intentar cargar imagen real, si no existe mostrar placeholder
+    const colorIndex = getColorIndex(code);
+    return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" loading="lazy">
+            <div class="img-placeholder" style="background: ${colores[colorIndex]}; display: none;">${code.replace('-', ' ')}</div>`;
+  }
+
   async function cargarTodo() {
     await Promise.all([cargarStockUnificado(), cargarVentasUnificadas()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
   }
 
-  // Cargar stock unificado
   async function cargarStockUnificado() {
     try {
       const stocksPorSucursal = {};
       for (const suc of sucursales) {
         const db = dbs[suc.clave];
-        if (db) stocksPorSucursal[suc.clave] = await obtenerStockSucursal(db);
-        else stocksPorSucursal[suc.clave] = {};
+        stocksPorSucursal[suc.clave] = db ? await obtenerStockSucursal(db) : {};
       }
       
       const todosLosCodigos = new Set();
       for (const suc of sucursales) {
         Object.keys(stocksPorSucursal[suc.clave] || {}).forEach(c => todosLosCodigos.add(c));
       }
-      Object.keys(nombresProductos).forEach(c => todosLosCodigos.add(c));
       
       datosStock = [];
-      let stockTotalGeneral = 0;
-      let productosBajos = 0;
-      
       for (const code of Array.from(todosLosCodigos).sort()) {
         let total = 0;
         const stocks = {};
@@ -327,59 +308,52 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
           stocks[suc.clave] = cantidad;
           total += cantidad;
         }
-        if (total > 0) {
-          stockTotalGeneral += total;
-          if (total < 5) productosBajos++;
+        if (total > 0 || code.startsWith('000-') || code.includes('-')) {
+          datosStock.push({ code, stocks, total });
         }
-        datosStock.push({ code, nombre: nombresProductos[code] || code, stocks, total });
       }
       
       datosStock.sort((a,b) => a.code.localeCompare(b.code));
       
-      document.getElementById('totalProductos').textContent = datosStock.filter(p => p.total > 0).length;
-      document.getElementById('stockTotalGeneral').textContent = stockTotalGeneral.toLocaleString();
-      document.getElementById('productosBajos').textContent = productosBajos;
-      
-      if (tabActual === 'stock') renderizarTablaStock();
+      if (tabActual === 'stock') renderizarGridStock();
     } catch (error) {
       console.error('Error cargando stock:', error);
     }
   }
 
-  function renderizarTablaStock() {
+  function renderizarGridStock() {
     const termino = document.getElementById('busqueda')?.value.toLowerCase() || '';
     const filtrados = datosStock.filter(p => p.code.toLowerCase().includes(termino));
     
-    const html = `
-      <table>
-        <thead>
-          <tr><th>Código</th><th>Total Stock</th>
-            <th>🏢 Laureles</th><th>🏢 Elisa</th><th>🏢 Lambare</th><th>🏢 Morra</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filtrados.map(p => `
-            <tr>
-              <td class="product-code">${p.code}</td>
-              <td><span class="stock-total ${p.total < 5 ? 'stock-low' : (p.total < 20 ? 'stock-medium' : '')}">${p.total}</span></td>
-              <td class="${p.stocks.laureles <= 0 ? 'stock-low' : ''}">${p.stocks.laureles || 0}</td>
-              <td class="${p.stocks.elisa <= 0 ? 'stock-low' : ''}">${p.stocks.elisa || 0}</td>
-              <td class="${p.stocks.lambare <= 0 ? 'stock-low' : ''}">${p.stocks.lambare || 0}</td>
-              <td class="${p.stocks.morra <= 0 ? 'stock-low' : ''}">${p.stocks.morra || 0}</td>
-            </tr>
-          `).join('')}
-          ${filtrados.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">🔍 No se encontraron productos</td></tr>' : ''}
-        </tbody>
-      </table>
-    `;
-    document.querySelector('#tabStock .products-table').innerHTML = html;
+    const html = filtrados.map(p => {
+      let stockClass = 'stock-normal';
+      if (p.total < 5) stockClass = 'stock-bajo';
+      else if (p.total < 20) stockClass = 'stock-medio';
+      
+      return `
+        <div class="producto-card">
+          <div style="position: relative;">
+            ${getImagenHtml(p.code)}
+          </div>
+          <div class="codigo">${p.code}</div>
+          <div class="stock-total ${stockClass}">📦 ${p.total}</div>
+          <div class="sucursales-stock">
+            <span class="sucursal-stock laureles">🏢 ${p.stocks.laureles || 0}</span>
+            <span class="sucursal-stock elisa">🏢 ${p.stocks.elisa || 0}</span>
+            <span class="sucursal-stock lambare">🏢 ${p.stocks.lambare || 0}</span>
+            <span class="sucursal-stock morra">🏢 ${p.stocks.morra || 0}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    document.getElementById('productosGrid').innerHTML = filtrados.length > 0 ? html : '<div class="loading" style="grid-column:1/-1;">🔍 No se encontraron productos</div>';
   }
 
-  // Cargar ventas unificadas
   async function cargarVentasUnificadas() {
     try {
-      const ventasPorSucursal = {};
       todasLasVentas = [];
+      const ventasPorSucursal = {};
       
       for (const suc of sucursales) {
         const db = dbs[suc.clave];
@@ -388,19 +362,15 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
           ventasPorSucursal[suc.clave] = ventas;
           ventas.forEach(v => {
             todasLasVentas.push({
-              ...v,
-              sucursal: suc.nombre,
-              sucursalClave: suc.clave,
+              ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
               timestamp: v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime() || Date.now()
             });
           });
         }
       }
       
-      // Ordenar por fecha descendente
       todasLasVentas.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
       
-      // Calcular totales
       const totalDinero = todasLasVentas.reduce((sum, v) => sum + (v.money || 0), 0);
       const totalPuntos = todasLasVentas.reduce((sum, v) => sum + (v.points || 0), 0);
       const totalFichas = todasLasVentas.reduce((sum, v) => sum + (v.fichaConsumption || 0), 0);
@@ -410,13 +380,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
       document.getElementById('totalVentas').textContent = todasLasVentas.length.toLocaleString();
       
-      // Ventas por sucursal
       const sucursalStats = {};
       for (const suc of sucursales) {
         const ventasSuc = ventasPorSucursal[suc.clave] || [];
         sucursalStats[suc.clave] = {
-          nombre: suc.nombre,
-          color: suc.color,
+          nombre: suc.nombre, color: suc.color,
           totalVentas: ventasSuc.length,
           totalDinero: ventasSuc.reduce((s, v) => s + (v.money || 0), 0),
           totalPuntos: ventasSuc.reduce((s, v) => s + (v.points || 0), 0),
@@ -447,29 +415,26 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   function renderizarTablaVentas() {
     const html = `
       <table>
-        <thead>
-          <tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr>
-        </thead>
+        <thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead>
         <tbody>
-          ${todasLasVentas.slice(0, 200).map(v => `
-            <tr>
-              <td style="font-weight:600; color:${sucursales.find(s=>s.nombre===v.sucursal)?.color || '#333'}">${v.sucursal}</td>
+          ${todasLasVentas.slice(0, 200).map(v => {
+            const sucColor = sucursales.find(s=>s.nombre===v.sucursal)?.color || '#333';
+            return `<tr>
+              <td style="font-weight:600; color:${sucColor}">${v.sucursal}</td>
               <td>${v.name || v.code}</td>
               <td>${(v.points || 0).toLocaleString()}</td>
               <td>Gs. ${(v.money || 0).toLocaleString()}</td>
               <td>${(v.fichaConsumption || 0)}</td>
               <td style="font-size:0.75rem;">${v.timestamp || (v.fecha + ' ' + v.hora)}</td>
-            </tr>
-          `).join('')}
+            </tr>`;
+          }).join('')}
           ${todasLasVentas.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">📭 No hay ventas registradas</td></tr>' : ''}
-          ${todasLasVentas.length > 200 ? `<tr><td colspan="6" style="text-align:center; padding:10px; background:#f0f0f0;">📋 Mostrando las últimas 200 ventas de ${todasLasVentas.length} totales</td></tr>` : ''}
         </tbody>
       </table>
     `;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
-  // Funciones de UI
   window.mostrarTab = function(tab) {
     tabActual = tab;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -478,7 +443,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       document.getElementById('tabStock').style.display = 'block';
       document.getElementById('tabVentas').style.display = 'none';
       document.getElementById('searchContainer').style.display = 'block';
-      renderizarTablaStock();
+      renderizarGridStock();
     } else {
       document.querySelector('.tab-btn:last-child').classList.add('active');
       document.getElementById('tabStock').style.display = 'none';
@@ -490,17 +455,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 
   window.recargarTodo = () => cargarTodo();
 
-  // Evento de búsqueda
-  if (document.getElementById('busqueda')) {
-    document.getElementById('busqueda').addEventListener('input', () => {
-      if (tabActual === 'stock') renderizarTablaStock();
-    });
-  }
+  document.getElementById('busqueda')?.addEventListener('input', () => {
+    if (tabActual === 'stock') renderizarGridStock();
+  });
 
-  // Inicializar
   await cargarTodo();
-  
-  // Actualización automática cada 15 segundos
   setInterval(() => cargarTodo(), 15000);
 </script>
 </body>
