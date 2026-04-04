@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ASTROLAND - Los Laureles</title>
-<!-- Librería para generar Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root { color-scheme: light; }
@@ -14,7 +13,6 @@ html, body { margin:0; padding:0; background:#fff !important; font-family: Inter
 header { text-align:center; margin-bottom:10px; }
 h1 { margin:10px 0 20px; font-size:1.8rem; }
 
-/* Barra de búsqueda flotante */
 .floating-search-container {
   position: fixed;
   top: 0;
@@ -173,7 +171,6 @@ body { padding-top: 80px; }
   .imagen-item img { width:100%; height:auto; aspect-ratio:1/1; }
 }
 
-/* Modal styles */
 .modal {
   display: none;
   position: fixed;
@@ -252,7 +249,6 @@ body { padding-top: 80px; }
 #cancelModal { background: #f44336; color: white; }
 #cancelModal:hover { background: #da190b; }
 
-/* Carrito flotante */
 .cart-button {
   position: fixed;
   bottom: 20px;
@@ -295,7 +291,6 @@ body { padding-top: 80px; }
 }
 .stock-button:hover { background: #F57C00; }
 
-/* Estilos del carrito con hora */
 .cart-modal {
   display: none;
   position: fixed;
@@ -355,7 +350,6 @@ body { padding-top: 80px; }
 #clearCart { background: #ff9800; color: white; }
 #clearCart:hover { background: #f57c00; }
 
-/* Responsive para móviles */
 @media (max-width: 700px) {
   .cart-item {
     grid-template-columns: 1fr 0.8fr 0.8fr 1.2fr 0.8fr;
@@ -464,7 +458,6 @@ body { padding-top: 80px; }
 </style>
 </head>
 <body>
-  <!-- Barra de búsqueda flotante -->
   <div class="floating-search-container">
     <div class="busqueda-container">
       <input type="text" id="busqueda" placeholder="Buscar código (ej: 010)..." aria-label="Buscar" inputmode="numeric" pattern="\d*">
@@ -482,11 +475,9 @@ body { padding-top: 80px; }
     <p>© 2026 ASTROLAND - Los Laureles</p>
   </footer>
 
-  <!-- Botones -->
   <button class="cart-button" onclick="openCartModal()">🛒 Carrito (<span id="cartCount">0</span>)</button>
   <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
 
-  <!-- Modal de compra -->
   <div id="purchaseModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
@@ -515,7 +506,6 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal de gestión de stock -->
   <div id="stockModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeStockModal()">&times;</span>
@@ -542,7 +532,6 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal del carrito -->
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
       <span class="close" onclick="closeCartModal()">&times;</span>
@@ -581,9 +570,6 @@ body { padding-top: 80px; }
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, set, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // ============================================
-  // CONFIGURACIÓN DE FIREBASE - LOS LAURELES
-  // ============================================
   const firebaseConfig = {
     apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
     authDomain: "los-laureles-49117.firebaseapp.com",
@@ -604,12 +590,9 @@ body { padding-top: 80px; }
   const PASSWORD = "deisy";
   const STOCK_INICIAL = 100;
 
-  // Detectar iOS para comportamientos específicos
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-  const FICHA_CONSUMPTION = {
-    '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30
-  };
+  const FICHA_CONSUMPTION = { '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
   const NON_FICHA_CODES = ['000-05', '000-06'];
 
   function generarTodosLosProductos() {
@@ -832,7 +815,6 @@ body { padding-top: 80px; }
 
   window.closeModal = () => document.getElementById('purchaseModal').style.display = 'none';
 
-  // FUNCIÓN CALCULATE REMAINING MONEY MEJORADA PARA iOS
   window.calculateRemainingMoney = function() {
     if (!currentProduct) return;
     
@@ -856,11 +838,9 @@ body { padding-top: 80px; }
     }
   };
 
-  // FUNCIÓN ADD TO CART MEJORADA PARA iOS
   window.addToCart = function() {
     if (!currentProduct) return;
     
-    // Cerrar teclado en iOS y Android
     if (document.activeElement && document.activeElement.blur) {
       document.activeElement.blur();
     }
@@ -941,7 +921,6 @@ body { padding-top: 80px; }
     if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="5" style="text-align:center; padding:20px;">Carrito vacío</span></div>';
   }
 
-  // GESTIÓN DE STOCK
   window.showStockManagement = function() {
     document.getElementById('stockModal').style.display = 'block';
     document.getElementById('stockPasswordPrompt').style.display = 'block';
