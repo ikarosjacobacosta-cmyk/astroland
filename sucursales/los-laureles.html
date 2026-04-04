@@ -690,19 +690,9 @@ body { padding-top: 80px; }
     try {
       const snap = await get(stockRef);
       stock = snap.val() || {};
-      document.querySelectorAll('.imagen-item').forEach(item => {
-        const code = item.getAttribute('data-code');
-        if (stock[code] === undefined) {
-          stock[code] = STOCK_INICIAL;
-          set(ref(database, `stock/${code}`), STOCK_INICIAL).catch(e => {});
-        }
-      });
+      // IMPORTANTE: NO sobrescribir stock existente, solo actualizar indicadores
       updateAllStockIndicators();
     } catch {
-      document.querySelectorAll('.imagen-item').forEach(item => {
-        const code = item.getAttribute('data-code');
-        stock[code] = STOCK_INICIAL;
-      });
       updateAllStockIndicators();
     }
   }
