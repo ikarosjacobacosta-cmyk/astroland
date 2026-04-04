@@ -397,7 +397,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .stock-button { left: 20px; background: #FF9800; color: white; }
 .historial-btn { left: 180px; background: #9C27B0; color: white; }
 
-/* Gestión de stock - MISMO GRID QUE CATÁLOGO (3 columnas en móvil) */
+/* Gestión de stock */
 .stock-search-container { text-align: center; margin: 20px 0; }
 .stock-category { margin-top: 20px; }
 .stock-category h4 { margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid #FF9800; }
@@ -443,14 +443,13 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
-/* 3 COLUMNAS EN CELULAR - SIN ZOOM INICIAL */
+/* 3 COLUMNAS EN CELULAR */
 @media (min-width: 1200px) { .galeria { grid-template-columns: repeat(5, 1fr); } }
 @media (min-width: 901px) and (max-width:1199px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 601px) and (max-width:900px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width:600px) { 
   .galeria { grid-template-columns: repeat(3, 1fr); }
   .imagen-item img { width: 100%; height: auto; aspect-ratio: 1/1; }
-  .imagen-item .img-placeholder { width: 100%; height: auto; aspect-ratio: 1/1; }
 }
 </style>
 </head>
@@ -482,13 +481,11 @@ body { padding-top: 80px; }
       <button class="close" onclick="closeModal()">&times;</button>
       <h3>🛍️ Producto</h3>
       
-      <!-- PESTAÑAS -->
       <div class="tabs-compras">
         <button class="tab-btn-compras active" data-tab="compra">🛒 Compra</button>
         <button class="tab-btn-compras" data-tab="maquina">🎰 Máquina</button>
       </div>
       
-      <!-- Pestaña Compra -->
       <div id="tabCompra" class="tab-pane-compras active">
         <div id="modalProductInfo" class="product-info"></div>
         <div id="modalStockInfo" class="stock-info"></div>
@@ -509,7 +506,6 @@ body { padding-top: 80px; }
         </div>
       </div>
       
-      <!-- Pestaña Máquina -->
       <div id="tabMaquina" class="tab-pane-compras">
         <div id="maquinaProductInfo" class="product-info"></div>
         <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades">
@@ -807,7 +803,7 @@ body { padding-top: 80px; }
 
   document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
 
-  // Pestañas en el modal
+  // Pestañas
   document.querySelectorAll('.tab-btn-compras').forEach(btn => {
     btn.addEventListener('click', function() {
       const tabId = this.getAttribute('data-tab');
@@ -818,11 +814,9 @@ body { padding-top: 80px; }
         document.getElementById('tabCompra').classList.add('active');
       } else {
         document.getElementById('tabMaquina').classList.add('active');
-        // Pedir contraseña al abrir pestaña máquina
         const pwd = prompt('🔐 Ingrese contraseña para acceder a Máquina:');
         if (pwd !== 'mili') {
           alert('Contraseña incorrecta');
-          // Volver a pestaña compra
           document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
         }
       }
@@ -861,7 +855,6 @@ body { padding-top: 80px; }
       currentProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
       currentMaquinaProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
       
-      // Resetear pestañas a compra
       document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
       
       document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>🎯 Puntos base: ${currentProduct.points}<br>💰 Precio total: G.${currentProduct.price.toLocaleString()}`;
@@ -1150,4 +1143,235 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<tr><thead>
+    let html = `<table><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th></tr></thead><tbody>`;
+    filtrados.forEach(h => {
+      const fechaMostrar = new Date(h.timestamp).toLocaleDateString('es-PY');
+      html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td>${h.totalVentas || 0}</td><td>Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td>${(h.totalPuntos || 0).toLocaleString()}</td><td>${(h.totalFichas || 0).toLocaleString()}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
+    document.getElementById('historialTabla').innerHTML = html;
+  };
+
+  window.exportarHistorialExcel = function() {
+    const desde = document.getElementById('fechaDesde').value;
+    const hasta = document.getElementById('fechaHasta').value;
+    if (!desde || !hasta) return;
+    const desdeTime = new Date(desde).setHours(0,0,0,0);
+    const hastaTime = new Date(hasta).setHours(23,59,59,999);
+    const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
+    
+    const data = [['Fecha Eliminación', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Totales']];
+    filtrados.forEach(h => {
+      data.push([new Date(h.timestamp).toLocaleDateString('es-PY'), h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0]);
+    });
+    data.push([], ['RESUMEN TOTAL', '', '', '', '']);
+    data.push(['Total General', filtrados.reduce((s,h)=>s+(h.totalVentas||0),0), filtrados.reduce((s,h)=>s+(h.totalDinero||0),0), filtrados.reduce((s,h)=>s+(h.totalPuntos||0),0), filtrados.reduce((s,h)=>s+(h.totalFichas||0),0)]);
+    
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, 'Historial');
+    XLSX.writeFile(wb, `Historial_VillaMorra_${desde}_${hasta}.xlsx`);
+  };
+
+  function renderCart() {
+    const div = document.getElementById('cartItems');
+    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
+    cart.forEach(item => {
+      if (!item) return;
+      const d = document.createElement('div');
+      d.className = 'cart-item';
+      
+      let maquinaTexto = '';
+      let maquinaClase = '';
+      if (item.esMaquina) {
+        const unidades = item.unidades || 0;
+        if (unidades > 0) {
+          maquinaTexto = `+${unidades}`;
+          maquinaClase = 'unidades-positivo';
+        } else if (unidades < 0) {
+          maquinaTexto = `${unidades}`;
+          maquinaClase = 'unidades-negativo';
+        } else {
+          maquinaTexto = '1';
+        }
+      } else {
+        maquinaTexto = '-';
+      }
+      
+      d.innerHTML = `<span>${item.name}${item.fichaConsumption ? ` (${Math.abs(item.fichaConsumption)} f)` : ''}</span>
+        <span>${(item.points || 0).toLocaleString()}</span>
+        <span>G.${(item.money || 0).toLocaleString()}</span>
+        <span class="unidades-maquina ${maquinaClase}">${maquinaTexto}</span>
+        <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
+        <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">🗑️</button></span>`;
+      div.appendChild(d);
+    });
+    if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="6" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
+  }
+
+  window.showDeletePrompt = function(firebaseKey) {
+    const pwd = prompt('🔐 Contraseña para eliminar:');
+    if (pwd !== PASSWORD) { alert('Contraseña incorrecta'); return; }
+    const item = cart.find(i => i.firebaseKey === firebaseKey);
+    if (!item) { alert('Item no encontrado'); return; }
+    const consumo = item.fichaConsumption || 0;
+    const unidades = item.unidades || 1;
+    if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
+      const actual = stock['000-00'] ?? STOCK_INICIAL;
+      set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
+    } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+      const actual = stock[item.code] ?? STOCK_INICIAL;
+      set(ref(database, `stock/${item.code}`), actual + Math.abs(unidades));
+    }
+    remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
+  };
+
+  window.showStockManagement = function() {
+    document.getElementById('stockModal').style.display = 'block';
+    document.getElementById('stockPasswordPrompt').style.display = 'block';
+    document.getElementById('stockManagementContent').style.display = 'none';
+    document.getElementById('stockPassword').value = '';
+  };
+
+  window.closeStockModal = function() {
+    document.getElementById('stockModal').style.display = 'none';
+    document.getElementById('stockPasswordPrompt').style.display = 'block';
+    document.getElementById('stockManagementContent').style.display = 'none';
+    updateAllStockIndicators();
+  };
+
+  window.verifyStockPassword = function() {
+    if (document.getElementById('stockPassword').value === PASSWORD) {
+      document.getElementById('stockPasswordPrompt').style.display = 'none';
+      document.getElementById('stockManagementContent').style.display = 'block';
+      loadAllStockItems();
+    } else alert('Contraseña incorrecta');
+  };
+
+  function getCategoryName(code) {
+    const names = { '000':'000 puntos','005':'005 puntos','020':'20 puntos','035':'35 puntos','050':'50 puntos','075':'75 puntos','100':'100 puntos','150':'150 puntos','180':'180 puntos','200':'200 puntos','220':'220 puntos','250':'250 puntos','350':'350 puntos','420':'420 puntos' };
+    return names[code] || code + ' puntos';
+  }
+
+  function loadAllStockItems() {
+    const container = document.getElementById('stockItemsContainer');
+    const categories = {};
+    document.querySelectorAll('.imagen-item').forEach(item => {
+      const cat = item.getAttribute('data-category');
+      if (!categories[cat]) categories[cat] = [];
+      const code = item.getAttribute('data-code');
+      const name = item.querySelector('p')?.textContent || code;
+      const img = item.querySelector('img')?.outerHTML || item.querySelector('.img-placeholder')?.outerHTML || '';
+      let display = getProductStock(code);
+      const isFichaBase = code === '000-00';
+      const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
+      categories[cat].push({ code, name, img, currentStock: display, isFichaBase, isFichaProduct });
+    });
+    const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a)-parseInt(b));
+    let html = '';
+    for (let cat of sortedCats) {
+      html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
+      if (cat === '000') {
+        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
+      }
+      html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
+      const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
+      sortedProds.forEach(p => {
+        html += `<div class="stock-item" data-code="${p.code}">${p.img}<p>${p.name}</p><div class="stock-control">`;
+        if (p.isFichaBase || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
+          html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
+        } else {
+          html += `<input type="number" value="${p.currentStock}" readonly disabled><span>🎴 Stock de fichas</span>`;
+        }
+        html += `</div></div>`;
+      });
+      html += `</div></div>`;
+    }
+    container.innerHTML = html;
+  }
+
+  window.filterStockItems = function(term) {
+    document.querySelectorAll('.stock-category').forEach(cat => {
+      let any = false;
+      cat.querySelectorAll('.stock-item').forEach(item => {
+        const code = item.getAttribute('data-code').toLowerCase();
+        if (term === '' || code.startsWith(term)) { item.style.display = 'flex'; any = true; }
+        else { item.style.display = 'none'; }
+      });
+      cat.style.display = any ? 'block' : 'none';
+    });
+  };
+
+  window.handleStockSearchInput = function(input) {
+    let v = input.value.replace(/\D/g, '');
+    if (v.length > 3) v = v.substring(0, 3);
+    input.value = v;
+    filterStockItems(v);
+  };
+
+  window.guardarStockIndividual = function(code, valor) {
+    const inp = document.getElementById(`stock-${code}`);
+    if (!inp) return;
+    
+    let newStock = parseInt(valor, 10);
+    if (isNaN(newStock)) newStock = 0;
+    if (newStock < 0) newStock = 0;
+    
+    inp.style.backgroundColor = '#d4edda';
+    inp.style.transition = 'background-color 0.3s';
+    inp.style.border = '2px solid #4CAF50';
+    
+    set(ref(database, `stock/${code}`), newStock).then(() => {
+      stock[code] = newStock;
+      updateAllStockIndicators();
+      
+      setTimeout(() => {
+        inp.style.backgroundColor = '';
+        inp.style.border = '';
+      }, 1000);
+    }).catch(e => {
+      inp.style.backgroundColor = '#f8d7da';
+      inp.style.border = '2px solid #dc3545';
+      setTimeout(() => {
+        inp.style.backgroundColor = '';
+        inp.style.border = '';
+      }, 1000);
+    });
+  };
+
+  window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente al editar cada valor');
+
+  window.openCartModal = function() { renderCart(); document.getElementById('cartModal').style.display = 'block'; };
+  window.closeCartModal = function() { document.getElementById('cartModal').style.display = 'none'; hideExportPrompt(); hideClearPrompt(); };
+  window.showExportPasswordPrompt = () => document.getElementById('exportPasswordPrompt').style.display = 'block';
+  window.hideExportPrompt = () => { document.getElementById('exportPasswordPrompt').style.display = 'none'; document.getElementById('exportPassword').value = ''; };
+  window.showClearPasswordPrompt = () => document.getElementById('clearPasswordPrompt').style.display = 'block';
+  window.hideClearPrompt = () => { document.getElementById('clearPasswordPrompt').style.display = 'none'; document.getElementById('clearPassword').value = ''; };
+  window.verifyAndExport = function() { if (document.getElementById('exportPassword').value === PASSWORD) { exportToExcel(); hideExportPrompt(); } else alert('Contraseña incorrecta'); };
+
+  function exportToExcel() {
+    if (cart.length === 0) { alert('Carrito vacío'); return; }
+    const totalP = cart.reduce((s,i) => s + (i.points||0), 0);
+    const totalM = cart.reduce((s,i) => s + (i.money||0), 0);
+    const totalF = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption)||0), 0);
+    const data = [['ASTROLAND - Villa Morra'], ['IN GOD WE TRUST'], [],
+      ['Producto','Puntos','Dinero','Unidades Máquina','Fichas','Fecha','Hora'],
+      ...cart.map(i => [i.name, i.points||0, i.money||0, i.unidades || (i.esMaquina ? '1' : '-'), Math.abs(i.fichaConsumption)||0, i.fecha, i.hora]),
+      [], ['TOTALES', totalP, totalM, '', totalF, '', '']];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, 'Carrito');
+    XLSX.writeFile(wb, `ASTROLAND_VillaMorra_${new Date().toLocaleDateString('es-PY').replace(/\//g,'-')}.xlsx`);
+  }
+
+  window.onclick = function(e) {};
+
+  Promise.all([loadInitialCart(), loadInitialStock()]).then(() => {
+    onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
+    onValue(stockRef, snap => { stock = snap.val() || {}; updateAllStockIndicators(); });
+  });
+</script>
+</body>
+</html>
