@@ -134,7 +134,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border: 1px solid #e0e0e0;
 }
 
-/* MODALES A PANTALLA COMPLETA */
+/* MODALES A PANTALLA COMPLETA - CORREGIDO SCROLL */
 .modal, .maquina-modal, .cierre-modal, .cart-modal {
   display: none;
   position: fixed;
@@ -144,6 +144,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   width: 100%;
   height: 100%;
   background-color: rgba(0,0,0,0.95);
+  overflow: hidden;
 }
 .modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content, .cart-content {
   background-color: #fff;
@@ -156,6 +157,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   position: relative;
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: touch;
 }
 .close {
   color: #aaa;
@@ -281,7 +283,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   font-weight: bold;
 }
 
-/* CARRITO - CORREGIDO */
+/* CARRITO - CORREGIDO SCROLL */
 .cart-content {
   background-color: #fff;
   margin: 0;
@@ -289,16 +291,16 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-radius: 0;
   width: 100%;
   height: 100%;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 .cart-items { 
   margin: 20px 0; 
   border: 1px solid #eee; 
   border-radius: 10px;
-  overflow: auto;
-  flex: 1;
+  overflow-x: auto;
 }
 .cart-item { 
   display: grid; 
@@ -357,6 +359,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   width: 100%;
   height: 100%;
   background-color: rgba(0,0,0,0.95);
+  overflow: hidden;
 }
 .historial-modal .modal-content {
   background-color: #fff;
@@ -366,6 +369,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   width: 100%;
   height: 100%;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .historial-modal input, .historial-modal button {
   padding: 12px 15px;
@@ -407,7 +411,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .stock-button { left: 20px; background: #FF9800; color: white; }
 .historial-btn { left: 180px; background: #9C27B0; color: white; }
 
-/* Gestión de stock */
+/* Gestión de stock - CORREGIDO SCROLL */
 .stock-search-container { text-align: center; margin: 20px 0; }
 .stock-search-container input { padding: 12px; font-size: 1rem; width: 80%; max-width: 400px; border-radius: 10px; border: 1px solid #ccc; }
 .stock-category { margin-top: 20px; }
@@ -437,6 +441,8 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   margin: 10% auto;
   width: 90%;
   max-width: 500px;
+  overflow-y: auto;
+  position: relative;
 }
 @media (max-width:600px) {
   #stockModal .modal-content, #cartModal .cart-content {
@@ -455,7 +461,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
-/* 3 COLUMNAS EN CELULAR - IMÁGENES GRANDES Y LETRAS GRANDES */
+/* 3 COLUMNAS EN CELULAR */
 @media (min-width: 1200px) { 
   .galeria { grid-template-columns: repeat(5, 1fr); }
   .imagen-item p { font-size: 0.9rem; }
