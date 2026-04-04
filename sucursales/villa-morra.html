@@ -13,14 +13,6 @@ html, body { margin:0; padding:0; background:#fff !important; font-family: 'Sego
 header { text-align:center; margin-bottom:10px; }
 h1 { margin:10px 0 20px; font-size:1.8rem; }
 
-/* CLASE PARA BLOQUEAR SCROLL DEL BODY */
-body.modal-open {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-}
-
 .floating-search-container {
   position: fixed;
   top: 0;
@@ -415,7 +407,14 @@ body.modal-open {
 .stock-button { left: 20px; background: #FF9800; color: white; }
 .historial-btn { left: 180px; background: #9C27B0; color: white; }
 
-/* Gestión de stock */
+/* GESTIÓN DE STOCK - PANTALLA COMPLETA, MISMA QUE CATÁLOGO */
+.stock-fullscreen {
+  background-color: #fff;
+  margin: 0;
+  padding: 20px;
+  width: 100%;
+  min-height: 100%;
+}
 .stock-search-container { text-align: center; margin: 20px 0; }
 .stock-search-container input { padding: 12px; font-size: 1rem; width: 80%; max-width: 400px; border-radius: 10px; border: 1px solid #ccc; }
 .stock-category { margin-top: 20px; }
@@ -430,29 +429,12 @@ body.modal-open {
 @media (max-width:600px) { .stock-gallery { grid-template-columns: repeat(3, 1fr); } }
 
 .stock-item { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.stock-item img { width: 80px; height: 80px; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 6px; }
-.stock-item p { margin: 8px 0; font-size: 0.75rem; text-align: center; font-weight: 500; }
-.stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; }
-.stock-item .stock-control input { width: 65px; padding: 8px; text-align: center; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 6px; }
+.stock-item img { width: 100%; aspect-ratio: 1/1; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 120px; }
+.stock-item p { margin: 8px 0; font-size: 0.8rem; text-align: center; font-weight: 500; }
+.stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; justify-content: center; width: 100%; }
+.stock-item .stock-control input { width: 70px; padding: 8px; text-align: center; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 6px; }
 .stock-item .stock-control input:focus { outline: none; border-color: #4CAF50; }
-.stock-item .stock-control span { background: #999; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; }
-
-/* Stock password modal - ventana pequeña */
-#stockModal .modal-content {
-  background-color: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  min-height: auto;
-}
-@media (max-width:600px) {
-  #stockModal .modal-content {
-    margin: 5% auto;
-    width: 95%;
-  }
-}
+.stock-item .stock-control span { background: #999; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; white-space: nowrap; }
 
 .password-input { display: none; margin-top: 10px; text-align: center; }
 .password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 1rem; }
@@ -480,6 +462,7 @@ body { padding-top: 80px; }
   .imagen-item p { font-size: 0.8rem; margin-top: 8px; }
   .stock-indicator { font-size: 0.7rem; padding: 2px 6px; }
   .categoria h2 { font-size: 1.1rem; }
+  .stock-item img { max-width: 100%; }
 }
 </style>
 </head>
@@ -562,13 +545,13 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal de gestión de stock -->
+  <!-- Modal de gestión de stock - PANTALLA COMPLETA -->
   <div id="stockModal" class="modal">
-    <div class="modal-content">
+    <div class="stock-fullscreen">
       <button class="close" onclick="closeStockModal()">&times;</button>
       <h3>📦 Gestionar Stock</h3>
-      <div id="stockPasswordPrompt" class="password-input" style="display:block;">
-        <input type="password" id="stockPassword" placeholder="Contraseña">
+      <div id="stockPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
+        <input type="password" id="stockPassword" placeholder="Contraseña para gestionar stock">
         <button onclick="verifyStockPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
         <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
@@ -841,7 +824,7 @@ body { padding-top: 80px; }
 
   document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
 
-  // Pestañas
+  // Pestañas - SIN CONTRASEÑA
   document.querySelectorAll('.tab-btn-compras').forEach(btn => {
     btn.addEventListener('click', function() {
       const tabId = this.getAttribute('data-tab');
@@ -852,11 +835,6 @@ body { padding-top: 80px; }
         document.getElementById('tabCompra').classList.add('active');
       } else {
         document.getElementById('tabMaquina').classList.add('active');
-        const pwd = prompt('🔐 Ingrese contraseña para acceder a Máquina:');
-        if (pwd !== 'mili') {
-          alert('Contraseña incorrecta');
-          document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
-        }
       }
     });
   });
@@ -1194,7 +1172,7 @@ body { padding-top: 80px; }
     let html = `<table><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = new Date(h.timestamp).toLocaleDateString('es-PY');
-      html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td>${h.totalVentas || 0}</td><td>Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td>${(h.totalPuntos || 0).toLocaleString()}</td><td>${(h.totalFichas || 0).toLocaleString()}</td></tr>`;
+      html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td style="text-align:center;">${h.totalVentas || 0}</td><td style="text-align:center;">Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td></tr>`;
     });
     html += `</tbody></table>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
@@ -1265,12 +1243,15 @@ body { padding-top: 80px; }
     if (!item) { alert('Item no encontrado'); return; }
     const consumo = item.fichaConsumption || 0;
     const unidades = item.unidades || 1;
+    // Revertir la operación: si fue agregar (unidades > 0), sumamos al stock; si fue quitar (unidades < 0), restamos del stock
     if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
       const actual = stock['000-00'] ?? STOCK_INICIAL;
+      // Invertir la operación: si se consumieron fichas al agregar, al eliminar devolvemos fichas
       set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
     } else if (item.code && !CIERRE_CODES.includes(item.code)) {
       const actual = stock[item.code] ?? STOCK_INICIAL;
-      set(ref(database, `stock/${item.code}`), actual + Math.abs(unidades));
+      // Invertir: si se restó stock al agregar, al eliminar sumamos; si se sumó stock al quitar, al eliminar restamos
+      set(ref(database, `stock/${item.code}`), actual - unidades);
     }
     remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
   };
@@ -1324,7 +1305,7 @@ body { padding-top: 80px; }
       html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
