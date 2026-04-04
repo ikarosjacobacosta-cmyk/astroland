@@ -102,9 +102,10 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   z-index: 2;
 }
 .imagen-item img { 
-  width: 5cm; 
-  height: 5cm; 
-  object-fit:contain; 
+  width: 100%;
+  max-width: 120px;
+  height: 120px;
+  object-fit: contain;
   background:#f9f9f9; 
   border:1px solid #e0e0e0; 
   border-radius:6px;
@@ -113,19 +114,22 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .imagen-item p { 
   margin-top:8px; 
-  font-size:0.95rem; 
+  font-size:0.85rem; 
   color:#333;
   font-weight: 500;
+  text-align: center;
+  word-break: break-word;
 }
 .imagen-item .img-placeholder {
-  width: 5cm;
-  height: 5cm;
+  width: 100%;
+  max-width: 120px;
+  height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-size: 1.5rem;
+  font-size: 0.9rem;
   font-weight: bold;
   border-radius: 6px;
   border: 1px solid #e0e0e0;
@@ -278,7 +282,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   font-weight: bold;
 }
 
-/* CARRITO */
+/* CARRITO - CORREGIDO PARA SCROLL EN PC */
 .cart-content {
   background-color: #fff;
   margin: 0;
@@ -287,12 +291,15 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   width: 100%;
   height: 100%;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 .cart-items { 
   margin: 20px 0; 
   border: 1px solid #eee; 
   border-radius: 10px;
   overflow-x: auto;
+  flex: 1;
 }
 .cart-item { 
   display: grid; 
@@ -315,6 +322,8 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   color: white;
   font-weight: bold;
   border-radius: 10px 10px 0 0;
+  position: sticky;
+  top: 0;
 }
 .cart-actions { 
   display: flex; 
@@ -322,6 +331,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   margin-top: 20px; 
   flex-wrap: wrap;
   justify-content: center;
+  padding-bottom: 10px;
 }
 .cart-actions button { 
   padding: 14px 20px; 
@@ -411,11 +421,12 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 @media (max-width:600px) { .stock-gallery { grid-template-columns: repeat(3, 1fr); } }
 
 .stock-item { display: flex; flex-direction: column; align-items: center; padding: 8px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.stock-item img { width: 3cm; height: 3cm; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 6px; }
+.stock-item img { width: 80px; height: 80px; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 6px; }
+.stock-item p { margin: 5px 0; font-size: 0.7rem; text-align: center; }
 .stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; }
-.stock-item .stock-control input { width: 70px; padding: 8px; text-align: center; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; }
+.stock-item .stock-control input { width: 60px; padding: 6px; text-align: center; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 6px; }
 .stock-item .stock-control input:focus { outline: none; border-color: #4CAF50; }
-.stock-item .stock-control span { background: #999; color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; }
+.stock-item .stock-control span { background: #999; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; }
 
 /* Stock password modal */
 #stockModal .modal-content, #cartModal .cart-content {
@@ -443,13 +454,14 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
-/* 3 COLUMNAS EN CELULAR */
+/* 3 COLUMNAS EN CELULAR - IMÁGENES IGUALES */
 @media (min-width: 1200px) { .galeria { grid-template-columns: repeat(5, 1fr); } }
 @media (min-width: 901px) and (max-width:1199px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 601px) and (max-width:900px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width:600px) { 
   .galeria { grid-template-columns: repeat(3, 1fr); }
-  .imagen-item img { width: 100%; height: auto; aspect-ratio: 1/1; }
+  .imagen-item img { width: 100%; height: auto; aspect-ratio: 1/1; max-width: none; }
+  .imagen-item .img-placeholder { width: 100%; height: auto; aspect-ratio: 1/1; max-width: none; }
 }
 </style>
 </head>
@@ -1143,7 +1155,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th></tr></thead><tbody>`;
+    let html = `<tr><thead>麣<th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td>${h.totalVentas || 0}</td><td>Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td>${(h.totalPuntos || 0).toLocaleString()}</td><td>${(h.totalFichas || 0).toLocaleString()}</td></tr>`;
