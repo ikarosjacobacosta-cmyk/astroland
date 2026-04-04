@@ -147,7 +147,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .maquina-producto-btn:hover { background: #7B1FA2; }
 
 /* MODALES A PANTALLA COMPLETA */
-.modal, .maquina-modal, .cierre-modal {
+.modal, .maquina-modal, .cierre-modal, .cart-modal {
   display: none;
   position: fixed;
   z-index: 2000;
@@ -157,7 +157,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   height: 100%;
   background-color: rgba(0,0,0,0.9);
 }
-.modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content {
+.modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content, .cart-content {
   background-color: #fff;
   margin: 0;
   padding: 20px;
@@ -189,7 +189,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   justify-content: center;
 }
 .close:hover { color: #000; background: #eee; }
-.modal h3, .maquina-modal h3, .cierre-modal h3 { 
+.modal h3, .maquina-modal h3, .cierre-modal h3, .cart-content h3 { 
   margin-top: 0; 
   border-bottom: 2px solid #eee; 
   padding-bottom: 10px;
@@ -248,7 +248,66 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-radius: 10px;
 }
 
-/* Historial modal (pantalla completa también) */
+/* CARRITO - PANTALLA COMPLETA */
+.cart-content {
+  background-color: #fff;
+  margin: 0;
+  padding: 20px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+.cart-items { 
+  margin: 20px 0; 
+  border: 1px solid #eee; 
+  border-radius: 10px;
+  overflow-x: auto;
+}
+.cart-item { 
+  display: grid; 
+  grid-template-columns: 2fr 0.8fr 1fr 1fr 1.2fr 0.8fr; 
+  padding: 12px; 
+  border-bottom: 1px solid #eee; 
+  align-items: center; 
+  gap: 5px; 
+  font-size: 0.75rem;
+}
+@media (max-width:600px) {
+  .cart-item { 
+    grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr 1fr 0.6fr;
+    font-size: 0.65rem;
+    gap: 3px;
+  }
+}
+.cart-header { 
+  background: #1a1a2e; 
+  color: white;
+  font-weight: bold;
+  border-radius: 10px 10px 0 0;
+}
+.cart-actions { 
+  display: flex; 
+  gap: 10px; 
+  margin-top: 20px; 
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.cart-actions button { 
+  padding: 14px 20px; 
+  border: none; 
+  border-radius: 10px; 
+  cursor: pointer; 
+  font-weight: bold;
+  font-size: 1rem;
+}
+.unidades-maquina {
+  font-weight: bold;
+}
+.unidades-positivo { color: #4CAF50; }
+.unidades-negativo { color: #f44336; }
+
+/* Historial modal */
 .historial-modal {
   display: none;
   position: fixed;
@@ -307,32 +366,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .cart-button { right: 20px; background: #2196F3; color: white; }
 .stock-button { left: 20px; background: #FF9800; color: white; }
 .historial-btn { left: 180px; background: #9C27B0; color: white; }
-
-/* Carrito modal */
-.cart-modal {
-  display: none;
-  position: fixed;
-  z-index: 2500;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.9);
-}
-.cart-content {
-  background-color: #fff;
-  margin: 0;
-  padding: 20px;
-  border-radius: 0;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-}
-.cart-items { margin: 20px 0; border: 1px solid #eee; border-radius: 10px; }
-.cart-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr 0.8fr; padding: 12px; border-bottom: 1px solid #eee; align-items: center; gap: 5px; font-size: 0.8rem; }
-.cart-header { background: #f5f5f5; font-weight: bold; }
-.cart-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-.cart-actions button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
 /* Gestión de stock */
 .stock-search-container { text-align: center; margin: 20px 0; }
@@ -481,14 +514,14 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal del carrito -->
+  <!-- Modal del carrito - PANTALLA COMPLETA -->
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
       <button class="close" onclick="closeCartModal()">&times;</button>
       <h3>🛒 Carrito de Compras</h3>
       <div id="cartItems" class="cart-items">
         <div class="cart-item cart-header">
-          <span>Producto</span><span>Puntos</span><span>Dinero</span><span>Fecha/Hora</span><span>Acciones</span>
+          <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>📅 Fecha/Hora</span><span>🗑️</span>
         </div>
       </div>
       <div class="cart-actions">
@@ -821,7 +854,7 @@ body { padding-top: 80px; }
       code, name: nombreProducto, points: 0, money: 0, 
       totalPrice: 0, fecha, hora, 
       timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: fichasAConsumir, esFichaGratis: true 
+      fichaConsumption: fichasAConsumir, esFichaGratis: true, unidades: 1
     });
     
     alert(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code}`);
@@ -856,7 +889,7 @@ body { padding-top: 80px; }
       code, name, points: 0, money: montoNum, 
       totalPrice: montoNum, fecha, hora, 
       timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: 0, esCierre: true 
+      fichaConsumption: 0, esCierre: true, unidades: 1
     });
     
     closeCierreModal();
@@ -1107,19 +1140,38 @@ body { padding-top: 80px; }
 
   function renderCart() {
     const div = document.getElementById('cartItems');
-    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>Puntos</span><span>Dinero</span><span>Fecha/Hora</span><span>Acciones</span></div>';
+    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
     cart.forEach(item => {
       if (!item) return;
       const d = document.createElement('div');
       d.className = 'cart-item';
-      d.innerHTML = `<span>${item.name}${item.fichaConsumption ? ` (${Math.abs(item.fichaConsumption)} fichas)` : ''}</span>
+      
+      let maquinaTexto = '';
+      let maquinaClase = '';
+      if (item.esMaquina) {
+        const unidades = item.unidades || 0;
+        if (unidades > 0) {
+          maquinaTexto = `+${unidades}`;
+          maquinaClase = 'unidades-positivo';
+        } else if (unidades < 0) {
+          maquinaTexto = `${unidades}`;
+          maquinaClase = 'unidades-negativo';
+        } else {
+          maquinaTexto = '1';
+        }
+      } else {
+        maquinaTexto = '-';
+      }
+      
+      d.innerHTML = `<span>${item.name}${item.fichaConsumption ? ` (${Math.abs(item.fichaConsumption)} f)` : ''}</span>
         <span>${(item.points || 0).toLocaleString()}</span>
         <span>G.${(item.money || 0).toLocaleString()}</span>
-        <span style="font-size:0.75rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
-        <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">🗑️</button></span>`;
+        <span class="unidades-maquina ${maquinaClase}">${maquinaTexto}</span>
+        <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
+        <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">🗑️</button></span>`;
       div.appendChild(d);
     });
-    if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="5" style="text-align:center; padding:20px;">Carrito vacío</span></div>';
+    if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="6" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
   }
 
   window.showDeletePrompt = function(firebaseKey) {
@@ -1128,12 +1180,13 @@ body { padding-top: 80px; }
     const item = cart.find(i => i.firebaseKey === firebaseKey);
     if (!item) { alert('Item no encontrado'); return; }
     const consumo = item.fichaConsumption || 0;
+    const unidades = item.unidades || 1;
     if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
       const actual = stock['000-00'] ?? STOCK_INICIAL;
       set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
     } else if (item.code && !CIERRE_CODES.includes(item.code)) {
       const actual = stock[item.code] ?? STOCK_INICIAL;
-      set(ref(database, `stock/${item.code}`), actual + (item.unidades || 1));
+      set(ref(database, `stock/${item.code}`), actual + Math.abs(unidades));
     }
     remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
   };
@@ -1230,7 +1283,6 @@ body { padding-top: 80px; }
     if (isNaN(newStock)) newStock = 0;
     if (newStock < 0) newStock = 0;
     
-    // Marcar input como "guardando" con color verde
     inp.style.backgroundColor = '#d4edda';
     inp.style.transition = 'background-color 0.3s';
     inp.style.border = '2px solid #4CAF50';
@@ -1239,7 +1291,6 @@ body { padding-top: 80px; }
       stock[code] = newStock;
       updateAllStockIndicators();
       
-      // Mantener verde por 1 segundo, luego volver a normal
       setTimeout(() => {
         inp.style.backgroundColor = '';
         inp.style.border = '';
@@ -1270,19 +1321,17 @@ body { padding-top: 80px; }
     const totalM = cart.reduce((s,i) => s + (i.money||0), 0);
     const totalF = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption)||0), 0);
     const data = [['ASTROLAND - Villa Morra'], ['IN GOD WE TRUST'], [],
-      ['Producto','Puntos','Dinero','Fichas','Fecha','Hora'],
-      ...cart.map(i => [i.name, i.points||0, i.money||0, Math.abs(i.fichaConsumption)||0, i.fecha, i.hora]),
-      [], ['TOTALES', totalP, totalM, totalF, '', '']];
+      ['Producto','Puntos','Dinero','Unidades Máquina','Fichas','Fecha','Hora'],
+      ...cart.map(i => [i.name, i.points||0, i.money||0, i.unidades || (i.esMaquina ? '1' : '-'), Math.abs(i.fichaConsumption)||0, i.fecha, i.hora]),
+      [], ['TOTALES', totalP, totalM, '', totalF, '', '']];
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, 'Carrito');
     XLSX.writeFile(wb, `ASTROLAND_VillaMorra_${new Date().toLocaleDateString('es-PY').replace(/\//g,'-')}.xlsx`);
   }
 
-  // Prevenir cierre con click fuera (solo se cierra con botón cancelar)
-  window.onclick = function(e) {
-    // No hacer nada - los modales solo se cierran con sus botones específicos
-  };
+  // Prevenir cierre con click fuera
+  window.onclick = function(e) {};
 
   Promise.all([loadInitialCart(), loadInitialStock()]).then(() => {
     onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
