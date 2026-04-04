@@ -680,7 +680,9 @@ body { padding-top: 80px; }
       const data = snap.val();
       cart = data ? Object.entries(data).map(([k, v]) => ({ ...v, firebaseKey: k })) : [];
       updateCartCount();
-    } catch {
+      console.log('Carrito cargado:', cart.length, 'items');
+    } catch (error) {
+      console.error('Error cargando carrito:', error);
       cart = [];
       updateCartCount();
     }
@@ -689,21 +691,29 @@ body { padding-top: 80px; }
   async function loadInitialStock() {
     try {
       const snap = await get(stockRef);
-      stock = snap.val() || {};
-      // IMPORTANTE: NO sobrescribir stock existente, solo actualizar indicadores
+      const data = snap.val();
+      if (data && Object.keys(data).length > 0) {
+        stock = data;
+        console.log('Stock cargado desde Firebase:', Object.keys(stock).length, 'productos');
+      } else {
+        console.log('No hay stock en Firebase, usando valores por defecto');
+        stock = {};
+      }
       updateAllStockIndicators();
-    } catch {
+    } catch (error) {
+      console.error('Error cargando stock:', error);
       updateAllStockIndicators();
     }
   }
 
   function getProductStock(code) {
     if (FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code)) {
-      const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
+      const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
       const consumo = FICHA_CONSUMPTION[code];
-      return Math.floor(fichaStock / consumo);
+      const calculado = Math.floor(fichaStock / consumo);
+      return calculado;
     } else {
-      return stock[code] ?? STOCK_INICIAL;
+      return stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
     }
   }
 
@@ -841,10 +851,10 @@ body { padding-top: 80px; }
       let currentStock;
       
       if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-        currentStock = stock['000-00'] ?? STOCK_INICIAL;
+        currentStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
         if (currentStock < consumo) { alert('No hay suficientes fichas'); closeModal(); return; }
       } else {
-        currentStock = stock[code] ?? STOCK_INICIAL;
+        currentStock = stock[code] !== undefined ? stock[code] : STOCK_INICIAL;
         if (currentStock <= 0) { alert('No hay stock'); closeModal(); return; }
       }
       
@@ -860,7 +870,7 @@ body { padding-top: 80px; }
       if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) { alert('Si pagas todos los puntos, dinero debe ser 0'); return; }
       
       if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-        const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - consumo;
+        const nuevo = (stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL) - consumo;
         set(ref(database, `stock/000-00`), nuevo);
       } else {
         set(ref(database, `stock/${code}`), currentStock - 1);
@@ -887,10 +897,10 @@ body { padding-top: 80px; }
     const item = cart.find(i => i.firebaseKey === firebaseKey);
     if (!item) { alert('Item no encontrado'); return; }
     if (item.fichaConsumption && item.fichaConsumption > 0 && !NON_FICHA_CODES.includes(item.code)) {
-      const actual = stock['000-00'] ?? STOCK_INICIAL;
+      const actual = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
       set(ref(database, `stock/000-00`), actual + item.fichaConsumption);
     } else if (item.code) {
-      const actual = stock[item.code] ?? STOCK_INICIAL;
+      const actual = stock[item.code] !== undefined ? stock[item.code] : STOCK_INICIAL;
       set(ref(database, `stock/${item.code}`), actual + 1);
     }
     remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado')).catch(e => alert('Error: ' + e.message));
@@ -961,7 +971,7 @@ body { padding-top: 80px; }
     for (let cat of sortedCats) {
       html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
       if (cat === '000') {
-        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
+        const fichaStock = stock['000-00'] !== undefined ? stock['000-00'] : STOCK_INICIAL;
         html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px; font-size:0.9rem;"><strong>Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01 (3), 000-02 (9), 000-03 (20), 000-04 (30)</small></p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
@@ -1135,16 +1145,21 @@ body { padding-top: 80px; }
 
   const cnt = document.getElementById('cartCount');
   if (cnt) cnt.textContent = '...';
+  
+  // Inicializar todo
   Promise.all([loadInitialCart(), loadInitialStock()]).then(() => {
+    // Escuchar cambios en tiempo real
     onValue(cartRef, snap => {
       const d = snap.val();
       cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : [];
       updateCartCount();
       if (document.getElementById('cartModal').style.display === 'block') renderCart();
+      console.log('Carrito actualizado en tiempo real:', cart.length, 'items');
     });
     onValue(stockRef, snap => {
       stock = snap.val() || {};
       updateAllStockIndicators();
+      console.log('Stock actualizado en tiempo real');
     });
   });
 </script>
