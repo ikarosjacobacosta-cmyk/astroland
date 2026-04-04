@@ -33,7 +33,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .floating-search-container #busqueda {
   width: 90%;
   max-width: 480px;
-  padding: 10px 12px;
+  padding: 12px 16px;
   font-size: 1rem;
   border-radius: 10px;
   border: 1px solid #ccc;
@@ -41,7 +41,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   pattern: \d*;
 }
 @media (max-width:600px) {
-  .floating-search-container #busqueda { inputmode: numeric; pattern: \d*; -webkit-appearance: none; appearance: none; }
+  .floating-search-container #busqueda { inputmode: numeric; pattern: \d*; -webkit-appearance: none; appearance: none; font-size: 1rem; padding: 10px 12px; }
   body { padding-top: 70px; }
   .floating-search-container { padding: 10px 0; }
 }
@@ -50,7 +50,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .categoria h2 { 
   margin:0 0 12px; 
   text-align:left; 
-  font-size:1.2rem; 
+  font-size:1.3rem; 
   border-left:6px solid #333; 
   padding-left:10px; 
   color:#000;
@@ -95,25 +95,25 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   right: 5px;
   background: rgba(33, 150, 243, 0.9);
   color: white;
-  padding: 2px 6px;
-  border-radius: 12px;
-  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 15px;
+  font-size: 0.75rem;
   font-weight: bold;
   z-index: 2;
 }
 .imagen-item img { 
   width: 100%;
-  max-width: 120px;
-  height: 120px;
+  height: auto;
+  aspect-ratio: 1/1;
   object-fit: contain;
   background:#f9f9f9; 
   border:1px solid #e0e0e0; 
-  border-radius:6px;
+  border-radius:8px;
   loading: lazy;
   decoding: async;
 }
 .imagen-item p { 
-  margin-top:8px; 
+  margin-top:10px; 
   font-size:0.85rem; 
   color:#333;
   font-weight: 500;
@@ -122,8 +122,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .imagen-item .img-placeholder {
   width: 100%;
-  max-width: 120px;
-  height: 120px;
+  aspect-ratio: 1/1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -131,7 +130,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   color: white;
   font-size: 0.9rem;
   font-weight: bold;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #e0e0e0;
 }
 
@@ -144,7 +143,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.9);
+  background-color: rgba(0,0,0,0.95);
 }
 .modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content, .cart-content {
   background-color: #fff;
@@ -195,12 +194,12 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .tab-btn-compras {
   flex: 1;
-  padding: 12px;
+  padding: 14px;
   background: #f0f0f0;
   border: none;
   border-radius: 10px 10px 0 0;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: bold;
   transition: all 0.3s;
 }
@@ -282,7 +281,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   font-weight: bold;
 }
 
-/* CARRITO - CORREGIDO PARA SCROLL EN PC */
+/* CARRITO - CORREGIDO */
 .cart-content {
   background-color: #fff;
   margin: 0;
@@ -290,15 +289,15 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-radius: 0;
   width: 100%;
   height: 100%;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .cart-items { 
   margin: 20px 0; 
   border: 1px solid #eee; 
   border-radius: 10px;
-  overflow-x: auto;
+  overflow: auto;
   flex: 1;
 }
 .cart-item { 
@@ -308,12 +307,12 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-bottom: 1px solid #eee; 
   align-items: center; 
   gap: 5px; 
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 @media (max-width:600px) {
   .cart-item { 
     grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr 1fr 0.6fr;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     gap: 3px;
   }
 }
@@ -324,6 +323,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-radius: 10px 10px 0 0;
   position: sticky;
   top: 0;
+  z-index: 5;
 }
 .cart-actions { 
   display: flex; 
@@ -356,7 +356,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.9);
+  background-color: rgba(0,0,0,0.95);
 }
 .historial-modal .modal-content {
   background-color: #fff;
@@ -368,7 +368,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   overflow-y: auto;
 }
 .historial-modal input, .historial-modal button {
-  padding: 10px 15px;
+  padding: 12px 15px;
   margin: 5px;
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -382,7 +382,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .historial-modal th, .historial-modal td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 10px;
   text-align: center;
 }
 .historial-modal th { background: #1a1a2e; color: white; }
@@ -391,7 +391,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .cart-button, .stock-button, .historial-btn {
   position: fixed;
   bottom: 20px;
-  padding: 12px 20px;
+  padding: 14px 22px;
   border: none;
   border-radius: 50px;
   font-weight: bold;
@@ -401,7 +401,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 .cart-button { right: 20px; background: #2196F3; color: white; }
 .stock-button { left: 20px; background: #FF9800; color: white; }
@@ -409,8 +409,9 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 
 /* Gestión de stock */
 .stock-search-container { text-align: center; margin: 20px 0; }
+.stock-search-container input { padding: 12px; font-size: 1rem; width: 80%; max-width: 400px; border-radius: 10px; border: 1px solid #ccc; }
 .stock-category { margin-top: 20px; }
-.stock-category h4 { margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid #FF9800; }
+.stock-category h4 { margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid #FF9800; font-size: 1.2rem; }
 .stock-gallery { 
   display: grid; 
   gap: 12px; 
@@ -420,13 +421,13 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 @media (min-width: 901px) and (max-width:1199px) { .stock-gallery { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width:600px) { .stock-gallery { grid-template-columns: repeat(3, 1fr); } }
 
-.stock-item { display: flex; flex-direction: column; align-items: center; padding: 8px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.stock-item { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .stock-item img { width: 80px; height: 80px; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 6px; }
-.stock-item p { margin: 5px 0; font-size: 0.7rem; text-align: center; }
+.stock-item p { margin: 8px 0; font-size: 0.75rem; text-align: center; font-weight: 500; }
 .stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; }
-.stock-item .stock-control input { width: 60px; padding: 6px; text-align: center; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 6px; }
+.stock-item .stock-control input { width: 65px; padding: 8px; text-align: center; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 6px; }
 .stock-item .stock-control input:focus { outline: none; border-color: #4CAF50; }
-.stock-item .stock-control span { background: #999; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; }
+.stock-item .stock-control span { background: #999; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; }
 
 /* Stock password modal */
 #stockModal .modal-content, #cartModal .cart-content {
@@ -448,20 +449,31 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 
 .password-input { display: none; margin-top: 10px; text-align: center; }
-.password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; }
-.password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 1rem; }
+.password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
 
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
-/* 3 COLUMNAS EN CELULAR - IMÁGENES IGUALES */
-@media (min-width: 1200px) { .galeria { grid-template-columns: repeat(5, 1fr); } }
-@media (min-width: 901px) and (max-width:1199px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
-@media (min-width: 601px) and (max-width:900px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
+/* 3 COLUMNAS EN CELULAR - IMÁGENES GRANDES Y LETRAS GRANDES */
+@media (min-width: 1200px) { 
+  .galeria { grid-template-columns: repeat(5, 1fr); }
+  .imagen-item p { font-size: 0.9rem; }
+}
+@media (min-width: 901px) and (max-width:1199px) { 
+  .galeria { grid-template-columns: repeat(4, 1fr); }
+  .imagen-item p { font-size: 0.85rem; }
+}
+@media (min-width: 601px) and (max-width:900px) { 
+  .galeria { grid-template-columns: repeat(3, 1fr); }
+  .imagen-item p { font-size: 0.85rem; }
+}
 @media (max-width:600px) { 
   .galeria { grid-template-columns: repeat(3, 1fr); }
-  .imagen-item img { width: 100%; height: auto; aspect-ratio: 1/1; max-width: none; }
-  .imagen-item .img-placeholder { width: 100%; height: auto; aspect-ratio: 1/1; max-width: none; }
+  .imagen-item { padding: 10px; }
+  .imagen-item p { font-size: 0.8rem; margin-top: 8px; }
+  .stock-indicator { font-size: 0.7rem; padding: 2px 6px; }
+  .categoria h2 { font-size: 1.1rem; }
 }
 </style>
 </head>
@@ -1155,7 +1167,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<tr><thead>麣<th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th></tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td>${h.totalVentas || 0}</td><td>Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td>${(h.totalPuntos || 0).toLocaleString()}</td><td>${(h.totalFichas || 0).toLocaleString()}</td></tr>`;
