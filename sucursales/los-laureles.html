@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ASTROLAND - Los Laureles</title>
 <!-- Librería para generar Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -101,7 +101,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .imagen-item.out-of-stock {
   opacity: 0.5;
   cursor: not-allowed;
-  display: none;
 }
 .imagen-item.out-of-stock:hover {
   transform: none;
@@ -191,7 +190,7 @@ body { padding-top: 80px; }
   padding: 25px;
   border-radius: 12px;
   width: 95%;
-  max-width: 1200px;
+  max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
@@ -477,8 +476,7 @@ body { padding-top: 80px; }
       <h1>ASTROLAND - Los Laureles</h1>
       <p style="color: #4CAF50; font-size: 0.9rem;">✓ Sucursal Los Laureles</p>
     </header>
-    <!-- Los productos se generarán automáticamente aquí -->
-  </div> <!-- container -->
+  </div>
   
   <footer>
     <p>© 2026 ASTROLAND - Los Laureles</p>
@@ -499,7 +497,7 @@ body { padding-top: 80px; }
       <div class="payment-options">
         <div class="payment-option">
           <label>Pagar con Puntos</label>
-          <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onfocus="this.placeholder=''">
+          <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" onfocus="this.placeholder=''" inputmode="numeric">
           <div class="auto-calc">Total del producto: G.<span id="totalPrice">0</span></div>
         </div>
         
@@ -511,7 +509,7 @@ body { padding-top: 80px; }
       </div>
 
       <div class="modal-buttons">
-        <button id="addToCart" onclick="addToCart()">Agregar al Carrito</button>
+        <button id="addToCart" type="button" onclick="addToCart()" ontouchstart="addToCart()">Agregar al Carrito</button>
         <button id="cancelModal" onclick="closeModal()">Cancelar</button>
       </div>
     </div>
@@ -534,9 +532,7 @@ body { padding-top: 80px; }
           <input type="text" id="stockSearch" placeholder="Buscar código (ej: 010)..." oninput="handleStockSearchInput(this)" inputmode="numeric" pattern="\d*">
         </div>
 
-        <div id="stockItemsContainer">
-          <!-- Los items se cargarán dinámicamente -->
-        </div>
+        <div id="stockItemsContainer"></div>
 
         <div class="modal-buttons" style="margin-top:20px;">
           <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">Guardar Todos los Cambios</button>
@@ -582,7 +578,6 @@ body { padding-top: 80px; }
   </div>
 
 <script type="module">
-  // Import Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, set, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
@@ -609,11 +604,12 @@ body { padding-top: 80px; }
   const PASSWORD = "deisy";
   const STOCK_INICIAL = 100;
 
-  // Solo los códigos que consumen fichas
+  // Detectar iOS para comportamientos específicos
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
   const FICHA_CONSUMPTION = {
     '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30
   };
-  // Lista de códigos que NO consumen fichas (se gestionan con stock individual)
   const NON_FICHA_CODES = ['000-05', '000-06'];
 
   function generarTodosLosProductos() {
@@ -728,16 +724,12 @@ body { padding-top: 80px; }
     }
   }
 
-  // Función para obtener el stock disponible de un producto
   function getProductStock(code) {
-    // Si es un código que consume fichas (excepto 000-05 y 000-06)
     if (FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code)) {
       const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
       const consumo = FICHA_CONSUMPTION[code];
       return Math.floor(fichaStock / consumo);
-    } 
-    // Para 000-05, 000-06 y el resto de productos, usan stock individual
-    else {
+    } else {
       return stock[code] ?? STOCK_INICIAL;
     }
   }
@@ -840,61 +832,83 @@ body { padding-top: 80px; }
 
   window.closeModal = () => document.getElementById('purchaseModal').style.display = 'none';
 
+  // FUNCIÓN CALCULATE REMAINING MONEY MEJORADA PARA iOS
   window.calculateRemainingMoney = function() {
     if (!currentProduct) return;
-    const pagado = parseFloat(document.getElementById('pointsInput').value) || 0;
-    if (currentProduct.points > 0) {
-      if (pagado > currentProduct.points) { document.getElementById('pointsInput').value = currentProduct.points; calculateRemainingMoney(); return; }
-      document.getElementById('moneyInput').value = Math.round(currentProduct.price * (1 - pagado / currentProduct.points));
-    }
-    const inp = document.getElementById('pointsInput');
-    const v = inp.value;
-    if (currentProduct.points >= 10 && currentProduct.points <= 75) {
-      if (v.length >= 2) inp.blur();
-    } else if (currentProduct.points >= 100 && currentProduct.points <= 420) {
-      if (v.length >= 3) inp.blur();
+    
+    const calcular = () => {
+      let pagado = parseFloat(document.getElementById('pointsInput').value) || 0;
+      
+      if (currentProduct.points > 0) {
+        if (pagado > currentProduct.points) { 
+          document.getElementById('pointsInput').value = currentProduct.points; 
+          pagado = currentProduct.points;
+        }
+        const moneyValue = Math.round(currentProduct.price * (1 - pagado / currentProduct.points));
+        document.getElementById('moneyInput').value = moneyValue;
+      }
+    };
+    
+    if (isIOS) {
+      setTimeout(calcular, 10);
+    } else {
+      calcular();
     }
   };
 
+  // FUNCIÓN ADD TO CART MEJORADA PARA iOS
   window.addToCart = function() {
     if (!currentProduct) return;
-    const code = currentProduct.code;
-    const consumo = currentProduct.fichaConsumption || 0;
-    let currentStock;
     
-    // Verificar stock según el tipo de producto
-    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-      currentStock = stock['000-00'] ?? STOCK_INICIAL;
-      if (currentStock < consumo) { alert('No hay suficientes fichas'); closeModal(); return; }
+    // Cerrar teclado en iOS y Android
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
+    
+    const procesar = () => {
+      const code = currentProduct.code;
+      const consumo = currentProduct.fichaConsumption || 0;
+      let currentStock;
+      
+      if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+        currentStock = stock['000-00'] ?? STOCK_INICIAL;
+        if (currentStock < consumo) { alert('No hay suficientes fichas'); closeModal(); return; }
+      } else {
+        currentStock = stock[code] ?? STOCK_INICIAL;
+        if (currentStock <= 0) { alert('No hay stock'); closeModal(); return; }
+      }
+      
+      const points = parseInt(document.getElementById('pointsInput').value) || 0;
+      const money = parseFloat(document.getElementById('moneyInput').value) || 0;
+      
+      if (currentProduct.points > 0 && points > currentProduct.points) { alert(`Máximo ${currentProduct.points} puntos`); return; }
+      if (currentProduct.points > 0) {
+        const esperado = Math.round(currentProduct.price * (1 - points / currentProduct.points));
+        if (Math.abs(money - esperado) > 1) { alert('Error en cálculo'); return; }
+      }
+      if (points === 0 && money === 0) { alert('Debes pagar con puntos o dinero'); return; }
+      if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) { alert('Si pagas todos los puntos, dinero debe ser 0'); return; }
+      
+      if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+        const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - consumo;
+        set(ref(database, `stock/000-00`), nuevo);
+      } else {
+        set(ref(database, `stock/${code}`), currentStock - 1);
+      }
+      
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      push(cartRef, { code, name: currentProduct.name, points, money, totalPrice: currentProduct.price, fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), fichaConsumption: consumo });
+      resetSearch();
+      closeModal();
+    };
+    
+    if (isIOS) {
+      setTimeout(procesar, 50);
     } else {
-      currentStock = stock[code] ?? STOCK_INICIAL;
-      if (currentStock <= 0) { alert('No hay stock'); closeModal(); return; }
+      procesar();
     }
-    
-    const points = parseInt(document.getElementById('pointsInput').value) || 0;
-    const money = parseFloat(document.getElementById('moneyInput').value) || 0;
-    if (currentProduct.points > 0 && points > currentProduct.points) { alert(`Máximo ${currentProduct.points} puntos`); return; }
-    if (currentProduct.points > 0) {
-      const esperado = Math.round(currentProduct.price * (1 - points / currentProduct.points));
-      if (Math.abs(money - esperado) > 1) { alert('Error en cálculo'); return; }
-    }
-    if (points === 0 && money === 0) { alert('Debes pagar con puntos o dinero'); return; }
-    if (currentProduct.points > 0 && points === currentProduct.points && money !== 0) { alert('Si pagas todos los puntos, dinero debe ser 0'); return; }
-    
-    // Actualizar stock según el tipo de producto
-    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-      const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - consumo;
-      set(ref(database, `stock/000-00`), nuevo);
-    } else {
-      set(ref(database, `stock/${code}`), currentStock - 1);
-    }
-    
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    push(cartRef, { code, name: currentProduct.name, points, money, totalPrice: currentProduct.price, fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), fichaConsumption: consumo });
-    resetSearch();
-    closeModal();
   };
 
   window.showDeletePrompt = function(firebaseKey) {
@@ -902,7 +916,6 @@ body { padding-top: 80px; }
     if (pwd !== PASSWORD) { alert('Contraseña incorrecta'); return; }
     const item = cart.find(i => i.firebaseKey === firebaseKey);
     if (!item) { alert('Item no encontrado'); return; }
-    // Revertir stock según el tipo de producto
     if (item.fichaConsumption && item.fichaConsumption > 0 && !NON_FICHA_CODES.includes(item.code)) {
       const actual = stock['000-00'] ?? STOCK_INICIAL;
       set(ref(database, `stock/000-00`), actual + item.fichaConsumption);
