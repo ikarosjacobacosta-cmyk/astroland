@@ -96,13 +96,10 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   width: 100%;
 }
 .imagen-item:hover { transform:scale(1.02); box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+
+/* 🔑 IMPORTANTE: Productos con stock 0 desaparecen completamente */
 .imagen-item.out-of-stock {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.imagen-item.out-of-stock:hover {
-  transform: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  display: none;
 }
 
 .stock-indicator {
@@ -723,10 +720,17 @@ body { padding-top: 80px; }
       let val = getProductStock(code);
       const ind = item.querySelector('.stock-indicator');
       if (ind) ind.textContent = val;
-      if (val <= 0) item.classList.add('out-of-stock');
-      else item.classList.remove('out-of-stock');
+      if (val <= 0) {
+        item.classList.add('out-of-stock');
+      } else {
+        item.classList.remove('out-of-stock');
+      }
     });
     updateCategoryStockCounters();
+    
+    // Aplicar filtro de búsqueda actual para ocultar productos sin stock
+    const searchValue = document.getElementById('busqueda')?.value || '';
+    filterProducts(searchValue);
   }
 
   function updateCategoryStockCounters() {
@@ -756,15 +760,16 @@ body { padding-top: 80px; }
       let any = false;
       cat.querySelectorAll('.imagen-item').forEach(item => {
         const code = item.getAttribute('data-code') || '';
-        if (!item.classList.contains('out-of-stock')) {
+        // IMPORTANTE: No mostrar productos con out-of-stock (stock 0)
+        if (item.classList.contains('out-of-stock')) {
+          item.style.display = 'none';
+        } else {
           if (q === '' || code.startsWith(q)) {
             item.style.display = 'flex';
             any = true;
           } else {
             item.style.display = 'none';
           }
-        } else {
-          item.style.display = 'none';
         }
       });
       cat.style.display = any ? 'block' : 'none';
