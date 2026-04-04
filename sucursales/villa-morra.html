@@ -2,13 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes" />
 <title>ASTROLAND - Villa Morra</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
-html, body { margin:0; padding:0; background:#fff !important; font-family: Inter, Arial, sans-serif; color:#222; }
+html, body { margin:0; padding:0; background:#fff !important; font-family: 'Segoe UI', Inter, Arial, sans-serif; color:#222; }
 .container { max-width:1200px; margin:0 auto; padding:20px; }
 header { text-align:center; margin-bottom:10px; }
 h1 { margin:10px 0 20px; font-size:1.8rem; }
@@ -68,17 +68,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   color: #333;
   font-weight: normal;
 }
-.maquina-categoria-btn {
-  background: #9C27B0;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 5px 15px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-.maquina-categoria-btn:hover { background: #7B1FA2; }
 
 .galeria { 
   display:grid; 
@@ -141,102 +130,214 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-radius: 6px;
   border: 1px solid #e0e0e0;
 }
-.maquina-producto-btn {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  background: #9C27B0;
-  color: white;
-  border: none;
-  border-radius: 15px;
-  padding: 2px 8px;
-  font-size: 0.6rem;
-  cursor: pointer;
-  z-index: 3;
-  font-weight: bold;
-}
-.maquina-producto-btn:hover { background: #7B1FA2; }
 
-/* Modal para máquina */
-.maquina-modal {
+/* MODALES A PANTALLA COMPLETA */
+.modal, .maquina-modal, .cierre-modal, .cart-modal {
   display: none;
   position: fixed;
-  z-index: 3000;
+  z-index: 2000;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0,0,0,0.9);
 }
-.maquina-modal .modal-content {
+.modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content, .cart-content {
   background-color: #fff;
-  margin: 10% auto;
-  padding: 25px;
-  border-radius: 12px;
-  width: 95%;
-  max-width: 400px;
+  margin: 0;
+  padding: 20px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  z-index: 10;
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.close:hover { color: #000; background: #eee; }
+.modal h3, .maquina-modal h3, .cierre-modal h3, .cart-content h3 { 
+  margin-top: 0; 
+  border-bottom: 2px solid #eee; 
+  padding-bottom: 10px;
+  font-size: 1.6rem;
   text-align: center;
 }
-.maquina-modal input {
-  width: 100%;
+
+/* PESTAÑAS */
+.tabs-compras {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ddd;
+}
+.tab-btn-compras {
+  flex: 1;
   padding: 12px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+.tab-btn-compras.active {
+  background: #2196F3;
+  color: white;
+}
+.tab-pane-compras {
+  display: none;
+}
+.tab-pane-compras.active {
+  display: block;
+}
+
+.product-info, .stock-info { 
+  background: #f8f8f8; 
+  padding: 15px; 
+  border-radius: 10px; 
+  margin: 15px 0;
   font-size: 1.2rem;
+}
+.stock-info { background: #e3f2fd; text-align: center; font-weight: bold; color: #1976D2; }
+.payment-options { margin: 20px 0; }
+.payment-option { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 10px; background: #fafafa; }
+.payment-option label { font-weight: bold; display: block; margin-bottom: 10px; font-size: 1.1rem; }
+.payment-option input { width: 100%; padding: 14px; font-size: 1.3rem; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
+.auto-calc { font-size: 1rem; margin-top: 8px; color: #666; }
+.modal-buttons { display: flex; gap: 15px; margin-top: 20px; }
+.modal-buttons button { flex: 1; padding: 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
+#addToCart { background: #4CAF50; color: white; }
+#cancelModal { background: #f44336; color: white; }
+
+/* Máquina dentro del modal */
+.maquina-input {
+  width: 100%;
+  padding: 18px;
+  font-size: 1.5rem;
   text-align: center;
   margin: 15px 0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
 }
-.maquina-modal button {
-  padding: 10px 20px;
-  margin: 5px;
+.maquina-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+.maquina-buttons button {
+  flex: 1;
+  padding: 14px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 .btn-agregar { background: #4CAF50; color: white; }
 .btn-quitar { background: #f44336; color: white; }
-.btn-cancelar { background: #999; color: white; }
+.btn-cancelar { background: #666; color: white; }
 
-/* Modal para cierre de caja */
-.cierre-modal {
-  display: none;
-  position: fixed;
-  z-index: 3000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.5);
-}
-.cierre-modal .modal-content {
-  background-color: #fff;
-  margin: 10% auto;
-  padding: 25px;
-  border-radius: 12px;
-  width: 95%;
-  max-width: 400px;
-  text-align: center;
-}
+/* Cierre modal */
 .cierre-modal input {
   width: 100%;
-  padding: 12px;
-  font-size: 1.2rem;
+  padding: 18px;
+  font-size: 1.5rem;
   text-align: center;
   margin: 15px 0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
 }
 .cierre-modal button {
-  padding: 10px 20px;
-  margin: 5px;
+  padding: 14px 20px;
+  margin: 8px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: bold;
 }
 
-/* Modal de historial */
+/* CARRITO */
+.cart-content {
+  background-color: #fff;
+  margin: 0;
+  padding: 20px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+.cart-items { 
+  margin: 20px 0; 
+  border: 1px solid #eee; 
+  border-radius: 10px;
+  overflow-x: auto;
+}
+.cart-item { 
+  display: grid; 
+  grid-template-columns: 2fr 0.8fr 1fr 1fr 1.2fr 0.8fr; 
+  padding: 12px; 
+  border-bottom: 1px solid #eee; 
+  align-items: center; 
+  gap: 5px; 
+  font-size: 0.75rem;
+}
+@media (max-width:600px) {
+  .cart-item { 
+    grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr 1fr 0.6fr;
+    font-size: 0.65rem;
+    gap: 3px;
+  }
+}
+.cart-header { 
+  background: #1a1a2e; 
+  color: white;
+  font-weight: bold;
+  border-radius: 10px 10px 0 0;
+}
+.cart-actions { 
+  display: flex; 
+  gap: 10px; 
+  margin-top: 20px; 
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.cart-actions button { 
+  padding: 14px 20px; 
+  border: none; 
+  border-radius: 10px; 
+  cursor: pointer; 
+  font-weight: bold;
+  font-size: 1rem;
+}
+.unidades-maquina {
+  font-weight: bold;
+}
+.unidades-positivo { color: #4CAF50; }
+.unidades-negativo { color: #f44336; }
+
+/* Historial modal */
 .historial-modal {
   display: none;
   position: fixed;
@@ -245,102 +346,112 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0,0,0,0.9);
 }
 .historial-modal .modal-content {
   background-color: #fff;
-  margin: 5% auto;
-  padding: 25px;
-  border-radius: 12px;
-  width: 95%;
-  max-width: 1200px;
-  max-height: 80vh;
+  margin: 0;
+  padding: 20px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
 }
 .historial-modal input, .historial-modal button {
-  padding: 8px 12px;
+  padding: 10px 15px;
   margin: 5px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #ccc;
+  font-size: 0.9rem;
 }
 .historial-modal table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
+  font-size: 0.8rem;
 }
 .historial-modal th, .historial-modal td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: center;
-  font-size: 0.8rem;
 }
-.historial-modal th {
-  background: #1a1a2e;
-  color: white;
-}
-.historial-btn {
+.historial-modal th { background: #1a1a2e; color: white; }
+
+/* Botones flotantes */
+.cart-button, .stock-button, .historial-btn {
   position: fixed;
   bottom: 20px;
-  left: 180px;
-  background: #9C27B0;
-  color: white;
+  padding: 12px 20px;
   border: none;
   border-radius: 50px;
-  padding: 12px 20px;
-  font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   z-index: 1500;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 0.9rem;
 }
-.historial-btn:hover { background: #7B1FA2; }
+.cart-button { right: 20px; background: #2196F3; color: white; }
+.stock-button { left: 20px; background: #FF9800; color: white; }
+.historial-btn { left: 180px; background: #9C27B0; color: white; }
+
+/* Gestión de stock - MISMO GRID QUE CATÁLOGO (3 columnas en móvil) */
+.stock-search-container { text-align: center; margin: 20px 0; }
+.stock-category { margin-top: 20px; }
+.stock-category h4 { margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid #FF9800; }
+.stock-gallery { 
+  display: grid; 
+  gap: 12px; 
+  margin-bottom: 20px; 
+}
+@media (min-width: 1200px) { .stock-gallery { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 901px) and (max-width:1199px) { .stock-gallery { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width:600px) { .stock-gallery { grid-template-columns: repeat(3, 1fr); } }
+
+.stock-item { display: flex; flex-direction: column; align-items: center; padding: 8px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.stock-item img { width: 3cm; height: 3cm; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 6px; }
+.stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; }
+.stock-item .stock-control input { width: 70px; padding: 8px; text-align: center; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; }
+.stock-item .stock-control input:focus { outline: none; border-color: #4CAF50; }
+.stock-item .stock-control span { background: #999; color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; }
+
+/* Stock password modal */
+#stockModal .modal-content, #cartModal .cart-content {
+  height: auto;
+  min-height: auto;
+  border-radius: 12px;
+  margin: 10% auto;
+  width: 90%;
+  max-width: 500px;
+}
+@media (max-width:600px) {
+  #stockModal .modal-content, #cartModal .cart-content {
+    margin: 5% auto;
+    width: 95%;
+    height: auto;
+    max-height: 90vh;
+    border-radius: 12px;
+  }
+}
+
+.password-input { display: none; margin-top: 10px; text-align: center; }
+.password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; }
+.password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
+/* 3 COLUMNAS EN CELULAR - SIN ZOOM INICIAL */
 @media (min-width: 1200px) { .galeria { grid-template-columns: repeat(5, 1fr); } }
 @media (min-width: 901px) and (max-width:1199px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 601px) and (max-width:900px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
-@media (max-width:600px) { .galeria { grid-template-columns: repeat(3, 1fr); } }
-
-.modal, .cart-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-.modal-content, .cart-content { background-color: #fff; margin: 5% auto; padding: 25px; border-radius: 12px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; }
-.cart-content { max-width: 900px; }
-.close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; position: absolute; right: 20px; top: 10px; }
-.close:hover { color: #000; }
-.modal h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-.product-info, .stock-info { background: #f8f8f8; padding: 10px; border-radius: 6px; margin: 15px 0; }
-.stock-info { background: #e3f2fd; text-align: center; font-weight: bold; color: #1976D2; }
-.payment-options { margin: 20px 0; }
-.payment-option { margin: 15px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-.payment-option label { font-weight: bold; display: block; margin-bottom: 8px; }
-.payment-option input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-.modal-buttons button { flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-#addToCart { background: #4CAF50; color: white; }
-#cancelModal { background: #f44336; color: white; }
-.cart-button, .stock-button { position: fixed; bottom: 20px; padding: 12px 20px; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1500; display: flex; align-items: center; gap: 8px; }
-.cart-button { right: 20px; background: #2196F3; color: white; }
-.stock-button { left: 20px; background: #FF9800; color: white; }
-.cart-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr 0.8fr; padding: 10px; border-bottom: 1px solid #eee; align-items: center; gap: 5px; }
-.cart-header { background: #f5f5f5; font-weight: bold; }
-.cart-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-.password-input { display: none; margin-top: 10px; }
-.password-input input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 5px; }
-.stock-search-container { text-align: center; margin: 20px 0; }
-.stock-category { margin-top: 20px; }
-.stock-category h4 { margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid #FF9800; }
-.stock-gallery { display: grid; gap: 12px; margin-bottom: 20px; }
-@media (min-width:1200px){ .stock-gallery { grid-template-columns: repeat(5,1fr); } }
-@media (min-width:901px) and (max-width:1199px){ .stock-gallery { grid-template-columns: repeat(4,1fr); } }
-@media (max-width:600px){ .stock-gallery { grid-template-columns: repeat(3,1fr); } }
-.stock-item { display: flex; flex-direction: column; align-items: center; padding: 8px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.stock-item img { width: 3cm; height: 3cm; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 6px; }
-.stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; }
-.stock-item .stock-control input { width: 60px; padding: 4px; text-align: center; }
+@media (max-width:600px) { 
+  .galeria { grid-template-columns: repeat(3, 1fr); }
+  .imagen-item img { width: 100%; height: auto; aspect-ratio: 1/1; }
+  .imagen-item .img-placeholder { width: 100%; height: auto; aspect-ratio: 1/1; }
+}
 </style>
 </head>
 <body>
@@ -365,42 +476,48 @@ body { padding-top: 80px; }
   <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
   <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
 
-  <!-- Modal de compra normal -->
+  <!-- Modal de compra normal CON PESTAÑAS -->
   <div id="purchaseModal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h3>Comprar Producto</h3>
-      <div id="modalProductInfo" class="product-info"></div>
-      <div id="modalStockInfo" class="stock-info"></div>
-      <div class="payment-options">
-        <div class="payment-option">
-          <label>Pagar con Puntos</label>
-          <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" inputmode="numeric">
-          <div class="auto-calc">Total del producto: G.<span id="totalPrice">0</span></div>
+      <button class="close" onclick="closeModal()">&times;</button>
+      <h3>🛍️ Producto</h3>
+      
+      <!-- PESTAÑAS -->
+      <div class="tabs-compras">
+        <button class="tab-btn-compras active" data-tab="compra">🛒 Compra</button>
+        <button class="tab-btn-compras" data-tab="maquina">🎰 Máquina</button>
+      </div>
+      
+      <!-- Pestaña Compra -->
+      <div id="tabCompra" class="tab-pane-compras active">
+        <div id="modalProductInfo" class="product-info"></div>
+        <div id="modalStockInfo" class="stock-info"></div>
+        <div class="payment-options">
+          <div class="payment-option">
+            <label>🎯 Pagar con Puntos</label>
+            <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" inputmode="numeric">
+            <div class="auto-calc">💰 Total del producto: G.<span id="totalPrice">0</span></div>
+          </div>
+          <div class="payment-option">
+            <label>💵 Completar con Dinero (G.)</label>
+            <input type="number" id="moneyInput" min="0" step="1000" value="0" readonly style="background-color:#f5f5f5;">
+          </div>
         </div>
-        <div class="payment-option">
-          <label>Completar con Dinero (G.)</label>
-          <input type="number" id="moneyInput" min="0" step="1000" value="0" readonly style="background-color:#f5f5f5;">
+        <div class="modal-buttons">
+          <button id="addToCart" type="button" onclick="addToCart()">✅ Agregar al Carrito</button>
+          <button id="cancelModal" onclick="closeModal()">❌ Cancelar</button>
         </div>
       </div>
-      <div class="modal-buttons">
-        <button id="addToCart" type="button" onclick="addToCart()">Agregar al Carrito</button>
-        <button id="cancelModal" onclick="closeModal()">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal para máquina -->
-  <div id="maquinaModal" class="maquina-modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeMaquinaModal()">&times;</span>
-      <h3>🎰 Máquina - Unidades</h3>
-      <div id="maquinaProductInfo"></div>
-      <input type="number" id="unidadesInput" min="1" step="1" value="1" placeholder="Cantidad de unidades">
-      <div>
-        <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
-        <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
-        <button class="btn-cancelar" onclick="closeMaquinaModal()">Cancelar</button>
+      
+      <!-- Pestaña Máquina -->
+      <div id="tabMaquina" class="tab-pane-compras">
+        <div id="maquinaProductInfo" class="product-info"></div>
+        <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades">
+        <div class="maquina-buttons">
+          <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
+          <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
+          <button class="btn-cancelar" onclick="closeModal()">❌ Cancelar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -408,13 +525,13 @@ body { padding-top: 80px; }
   <!-- Modal para cierre de caja -->
   <div id="cierreModal" class="cierre-modal">
     <div class="modal-content">
-      <span class="close" onclick="closeCierreModal()">&times;</span>
-      <h3 id="cierreTitulo">Registrar Monto</h3>
-      <p id="cierreDescripcion"></p>
+      <button class="close" onclick="closeCierreModal()">&times;</button>
+      <h3 id="cierreTitulo">💰 Cierre de Caja</h3>
+      <p id="cierreDescripcion" style="font-size:1.1rem; text-align:center;"></p>
       <input type="text" id="cierreMonto" placeholder="Ingrese el monto" inputmode="numeric">
-      <div>
-        <button id="cierreBtnConfirmar" style="background:#4CAF50; color:white; padding:10px 20px; margin:5px; border:none; border-radius:6px; cursor:pointer;">Confirmar</button>
-        <button onclick="closeCierreModal()" style="background:#f44336; color:white; padding:10px 20px; margin:5px; border:none; border-radius:6px; cursor:pointer;">Cancelar</button>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="cierreBtnConfirmar" style="background:#4CAF50; color:white;">✅ Confirmar</button>
+        <button onclick="closeCierreModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
     </div>
   </div>
@@ -422,21 +539,21 @@ body { padding-top: 80px; }
   <!-- Modal de gestión de stock -->
   <div id="stockModal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="closeStockModal()">&times;</span>
-      <h3>Gestionar Stock</h3>
+      <button class="close" onclick="closeStockModal()">&times;</button>
+      <h3>📦 Gestionar Stock</h3>
       <div id="stockPasswordPrompt" class="password-input" style="display:block;">
         <input type="password" id="stockPassword" placeholder="Contraseña">
-        <button onclick="verifyStockPassword()">Acceder</button>
-        <button onclick="closeStockModal()" style="background:#f44336;">Cancelar</button>
+        <button onclick="verifyStockPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
+        <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
       <div id="stockManagementContent" style="display:none;">
         <div class="stock-search-container">
-          <input type="text" id="stockSearch" placeholder="Buscar código..." oninput="handleStockSearchInput(this)">
+          <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." oninput="handleStockSearchInput(this)">
         </div>
         <div id="stockItemsContainer"></div>
         <div class="modal-buttons" style="margin-top:20px;">
-          <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">Guardar</button>
-          <button onclick="closeStockModal()" style="background:#f44336;">Cerrar</button>
+          <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
+          <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cerrar</button>
         </div>
       </div>
     </div>
@@ -445,26 +562,26 @@ body { padding-top: 80px; }
   <!-- Modal del carrito -->
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
-      <span class="close" onclick="closeCartModal()">&times;</span>
-      <h3>Carrito de Compras - Villa Morra</h3>
+      <button class="close" onclick="closeCartModal()">&times;</button>
+      <h3>🛒 Carrito de Compras</h3>
       <div id="cartItems" class="cart-items">
         <div class="cart-item cart-header">
-          <span>Producto</span><span>Puntos</span><span>Dinero (G.)</span><span>Fecha/Hora</span><span>Acciones</span>
+          <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>📅 Fecha/Hora</span><span>🗑️</span>
         </div>
       </div>
       <div class="cart-actions">
-        <button onclick="showExportPasswordPrompt()">📥 Descargar Excel</button>
-        <button onclick="showClearPasswordPrompt()">🗑️ Vaciar Carrito</button>
+        <button onclick="showExportPasswordPrompt()" style="background:#4CAF50; color:white;">📥 Descargar Excel</button>
+        <button onclick="showClearPasswordPrompt()" style="background:#ff9800; color:white;">🗑️ Vaciar Carrito</button>
       </div>
       <div id="exportPasswordPrompt" class="password-input">
         <input type="password" id="exportPassword" placeholder="Contraseña">
-        <button onclick="verifyAndExport()">Confirmar</button>
-        <button onclick="hideExportPrompt()">Cancelar</button>
+        <button onclick="verifyAndExport()" style="background:#2196F3; color:white;">Confirmar</button>
+        <button onclick="hideExportPrompt()" style="background:#f44336;">Cancelar</button>
       </div>
       <div id="clearPasswordPrompt" class="password-input">
         <input type="password" id="clearPassword" placeholder="Contraseña">
-        <button onclick="verifyAndClearCart()">Confirmar</button>
-        <button onclick="hideClearPrompt()">Cancelar</button>
+        <button onclick="verifyAndClearCart()" style="background:#2196F3; color:white;">Confirmar</button>
+        <button onclick="hideClearPrompt()" style="background:#f44336;">Cancelar</button>
       </div>
     </div>
   </div>
@@ -472,19 +589,19 @@ body { padding-top: 80px; }
   <!-- Modal de historial -->
   <div id="historialModal" class="historial-modal">
     <div class="modal-content">
-      <span class="close" onclick="closeHistorialModal()">&times;</span>
+      <button class="close" onclick="closeHistorialModal()">&times;</button>
       <h3>📜 Historial de Ventas</h3>
       <div id="historialPasswordPrompt" class="password-input" style="display:block;">
         <input type="password" id="historialPassword" placeholder="Contraseña">
-        <button onclick="verifyHistorialPassword()">Acceder</button>
-        <button onclick="closeHistorialModal()">Cancelar</button>
+        <button onclick="verifyHistorialPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
+        <button onclick="closeHistorialModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
       <div id="historialContent" style="display:none;">
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
-          <label>Desde: <input type="date" id="fechaDesde"></label>
-          <label>Hasta: <input type="date" id="fechaHasta"></label>
-          <button onclick="filtrarHistorial()">🔍 Filtrar</button>
-          <button onclick="exportarHistorialExcel()">📥 Exportar Excel</button>
+          <label>📅 Desde: <input type="date" id="fechaDesde"></label>
+          <label>📅 Hasta: <input type="date" id="fechaHasta"></label>
+          <button onclick="filtrarHistorial()" style="background:#2196F3; color:white;">🔍 Filtrar</button>
+          <button onclick="exportarHistorialExcel()" style="background:#4CAF50; color:white;">📥 Exportar Excel</button>
         </div>
         <div id="historialStats" style="background:#f0f0f0; padding:10px; border-radius:8px; margin-bottom:15px;"></div>
         <div id="historialTabla"></div>
@@ -513,7 +630,6 @@ body { padding-top: 80px; }
 
   let currentProduct = null;
   let currentMaquinaProduct = null;
-  let currentCierreProduct = null;
   let cart = [];
   let stock = {};
   let historialVentas = [];
@@ -571,8 +687,7 @@ body { padding-top: 80px; }
       else if (cat.productos) cantidadProductos = cat.productos.length;
       
       const titulo = document.createElement('h2');
-      titulo.innerHTML = `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">Stock: <span>${cantidadProductos * STOCK_INICIAL}</span></span>
-        <button class="maquina-categoria-btn" data-categoria="${cat.categoria}">🎰 Máquina</button>`;
+      titulo.innerHTML = `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">📦 <span>${cantidadProductos * STOCK_INICIAL}</span></span>`;
       section.appendChild(titulo);
       
       const galeria = document.createElement('div');
@@ -590,8 +705,7 @@ body { padding-top: 80px; }
         let textoPrecio = precio > 0 ? `- G.${precio.toLocaleString('es-PY')}` : '';
         item.innerHTML = `<div class="img-placeholder" style="background: ${colores[index]};">${codigo.replace('-', ' ')}</div>
           <p>${codigo} ${textoPrecio}</p>
-          <div class="stock-indicator">${STOCK_INICIAL}</div>
-          <button class="maquina-producto-btn" data-code="${codigo}" data-price="${precio}" data-points="${cat.puntos}" data-category="${cat.categoria}">🎰 Máquina</button>`;
+          <div class="stock-indicator">${STOCK_INICIAL}</div>`;
         
         const img = new Image();
         img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; };
@@ -611,41 +725,6 @@ body { padding-top: 80px; }
       }
       section.appendChild(galeria);
       container.appendChild(section);
-    });
-    
-    // Evento para botones de máquina en cada producto
-    document.querySelectorAll('.maquina-producto-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const code = btn.getAttribute('data-code');
-        const price = parseFloat(btn.getAttribute('data-price'));
-        const points = parseInt(btn.getAttribute('data-points'));
-        const categoria = btn.getAttribute('data-category');
-        const name = btn.parentElement.querySelector('p')?.textContent || code;
-        const stockVal = getProductStock(code);
-        const consumo = FICHA_CONSUMPTION[code] || 0;
-        
-        const pwd = prompt('🔐 Ingrese contraseña para acceder a Máquina:');
-        if (pwd !== 'mili') { alert('Contraseña incorrecta'); return; }
-        
-        currentMaquinaProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo, categoria };
-        document.getElementById('maquinaProductInfo').innerHTML = `<strong>${currentMaquinaProduct.name}</strong><br>Stock: ${stockVal} unidades<br>${price > 0 ? `Precio: G.${price.toLocaleString()}` : 'Valor: 0 Gs.'}`;
-        document.getElementById('unidadesInput').value = 1;
-        document.getElementById('maquinaModal').style.display = 'block';
-      });
-    });
-    
-    // Evento para botones de máquina por categoría
-    document.querySelectorAll('.maquina-categoria-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const categoria = btn.getAttribute('data-categoria');
-        const primerProducto = document.querySelector(`.imagen-item[data-category="${categoria}"]`);
-        if (primerProducto) {
-          const btnProducto = primerProducto.querySelector('.maquina-producto-btn');
-          if (btnProducto) btnProducto.click();
-        }
-      });
     });
   }
 
@@ -728,12 +807,30 @@ body { padding-top: 80px; }
 
   document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
 
-  // CLICK NORMAL EN PRODUCTO - Compra normal
+  // Pestañas en el modal
+  document.querySelectorAll('.tab-btn-compras').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const tabId = this.getAttribute('data-tab');
+      document.querySelectorAll('.tab-btn-compras').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelectorAll('.tab-pane-compras').forEach(pane => pane.classList.remove('active'));
+      if (tabId === 'compra') {
+        document.getElementById('tabCompra').classList.add('active');
+      } else {
+        document.getElementById('tabMaquina').classList.add('active');
+        // Pedir contraseña al abrir pestaña máquina
+        const pwd = prompt('🔐 Ingrese contraseña para acceder a Máquina:');
+        if (pwd !== 'mili') {
+          alert('Contraseña incorrecta');
+          // Volver a pestaña compra
+          document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
+        }
+      }
+    });
+  });
+
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function(e) {
-      // Si el click fue en el botón de máquina, no hacer nada (ya manejado)
-      if (e.target.classList.contains('maquina-producto-btn')) return;
-      
       const code = this.getAttribute('data-code');
       const points = parseInt(this.getAttribute('data-points'));
       
@@ -759,16 +856,27 @@ body { padding-top: 80px; }
       if (stockVal <= 0) { alert('Sin stock'); return; }
       const price = parseFloat(this.getAttribute('data-price'));
       const consumo = FICHA_CONSUMPTION[code] || 0;
+      const name = this.querySelector('p').textContent;
       
-      currentProduct = { code, price, points, name: this.querySelector('p').textContent, stock: stockVal, fichaConsumption: consumo };
-      document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>Puntos base: ${currentProduct.points}<br>Precio total: G.${currentProduct.price.toLocaleString()}`;
-      document.getElementById('modalStockInfo').innerHTML = `Stock disponible: <strong>${stockVal} unidades</strong>`;
+      currentProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
+      currentMaquinaProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
+      
+      // Resetear pestañas a compra
+      document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
+      
+      document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>🎯 Puntos base: ${currentProduct.points}<br>💰 Precio total: G.${currentProduct.price.toLocaleString()}`;
+      document.getElementById('modalStockInfo').innerHTML = `📦 Stock disponible: <strong>${stockVal} unidades</strong>`;
       document.getElementById('pointsInput').value = '';
       document.getElementById('pointsInput').max = currentProduct.points || 999999;
       document.getElementById('moneyInput').value = currentProduct.price;
       document.getElementById('totalPrice').textContent = currentProduct.price.toLocaleString();
       document.getElementById('addToCart').disabled = (stockVal <= 0);
+      
+      document.getElementById('maquinaProductInfo').innerHTML = `<strong>${currentMaquinaProduct.name}</strong><br>📦 Stock: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}`;
+      document.getElementById('unidadesInput').value = 1;
+      
       document.getElementById('purchaseModal').style.display = 'block';
+      history.pushState({modal: 'purchase'}, null, location.href);
     });
   });
 
@@ -790,7 +898,7 @@ body { padding-top: 80px; }
       code, name: nombreProducto, points: 0, money: 0, 
       totalPrice: 0, fecha, hora, 
       timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: fichasAConsumir, esFichaGratis: true 
+      fichaConsumption: fichasAConsumir, esFichaGratis: true, unidades: 1
     });
     
     alert(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code}`);
@@ -825,7 +933,7 @@ body { padding-top: 80px; }
       code, name, points: 0, money: montoNum, 
       totalPrice: montoNum, fecha, hora, 
       timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: 0, esCierre: true 
+      fichaConsumption: 0, esCierre: true, unidades: 1
     });
     
     closeCierreModal();
@@ -833,7 +941,6 @@ body { padding-top: 80px; }
   }
 
   window.closeCierreModal = () => document.getElementById('cierreModal').style.display = 'none';
-  window.closeMaquinaModal = () => document.getElementById('maquinaModal').style.display = 'none';
 
   window.agregarUnidades = async function() {
     if (!currentMaquinaProduct) return;
@@ -870,7 +977,7 @@ body { padding-top: 80px; }
       fichaConsumption: consumo * cantidad 
     });
     
-    closeMaquinaModal();
+    closeModal();
     alert(`✅ Agregado ${cantidad} unidad(es) de ${currentMaquinaProduct.name}`);
   };
 
@@ -901,11 +1008,13 @@ body { padding-top: 80px; }
       fichaConsumption: -(consumo * cantidad) 
     });
     
-    closeMaquinaModal();
+    closeModal();
     alert(`✅ Quitado ${cantidad} unidad(es) de ${currentMaquinaProduct.name}`);
   };
 
-  window.closeModal = () => document.getElementById('purchaseModal').style.display = 'none';
+  window.closeModal = function() {
+    document.getElementById('purchaseModal').style.display = 'none';
+  };
 
   window.calculateRemainingMoney = function() {
     if (!currentProduct) return;
@@ -1041,200 +1150,4 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th></tr></thead><tbody>`;
-    filtrados.forEach(h => {
-      const fechaMostrar = new Date(h.timestamp).toLocaleDateString('es-PY');
-      html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td>${h.totalVentas || 0}</td><td>Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td>${(h.totalPuntos || 0).toLocaleString()}</td><td>${(h.totalFichas || 0).toLocaleString()}</td></tr>`;
-    });
-    html += `</tbody></table>`;
-    if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
-    document.getElementById('historialTabla').innerHTML = html;
-  };
-
-  window.exportarHistorialExcel = function() {
-    const desde = document.getElementById('fechaDesde').value;
-    const hasta = document.getElementById('fechaHasta').value;
-    if (!desde || !hasta) return;
-    const desdeTime = new Date(desde).setHours(0,0,0,0);
-    const hastaTime = new Date(hasta).setHours(23,59,59,999);
-    const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
-    
-    const data = [['Fecha Eliminación', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Totales']];
-    filtrados.forEach(h => {
-      data.push([new Date(h.timestamp).toLocaleDateString('es-PY'), h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0]);
-    });
-    data.push([], ['RESUMEN TOTAL', '', '', '', '']);
-    data.push(['Total General', filtrados.reduce((s,h)=>s+(h.totalVentas||0),0), filtrados.reduce((s,h)=>s+(h.totalDinero||0),0), filtrados.reduce((s,h)=>s+(h.totalPuntos||0),0), filtrados.reduce((s,h)=>s+(h.totalFichas||0),0)]);
-    
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, 'Historial');
-    XLSX.writeFile(wb, `Historial_VillaMorra_${desde}_${hasta}.xlsx`);
-  };
-
-  function renderCart() {
-    const div = document.getElementById('cartItems');
-    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>Puntos</span><span>Dinero (G.)</span><span>Fecha/Hora</span><span>Acciones</span></div>';
-    cart.forEach(item => {
-      if (!item) return;
-      const d = document.createElement('div');
-      d.className = 'cart-item';
-      d.innerHTML = `<span>${item.name}${item.fichaConsumption ? ` (${Math.abs(item.fichaConsumption)} fichas)` : ''}</span>
-        <span>${(item.points || 0).toLocaleString()}</span>
-        <span>G.${(item.money || 0).toLocaleString()}</span>
-        <span style="font-size:0.75rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
-        <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">🗑️</button></span>`;
-      div.appendChild(d);
-    });
-    if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="5" style="text-align:center; padding:20px;">Carrito vacío</span></div>';
-  }
-
-  window.showDeletePrompt = function(firebaseKey) {
-    const pwd = prompt('🔐 Contraseña para eliminar:');
-    if (pwd !== PASSWORD) { alert('Contraseña incorrecta'); return; }
-    const item = cart.find(i => i.firebaseKey === firebaseKey);
-    if (!item) { alert('Item no encontrado'); return; }
-    const consumo = item.fichaConsumption || 0;
-    if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
-      const actual = stock['000-00'] ?? STOCK_INICIAL;
-      set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
-    } else if (item.code && !CIERRE_CODES.includes(item.code)) {
-      const actual = stock[item.code] ?? STOCK_INICIAL;
-      set(ref(database, `stock/${item.code}`), actual + (item.unidades || 1));
-    }
-    remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
-  };
-
-  window.showStockManagement = function() {
-    document.getElementById('stockModal').style.display = 'block';
-    document.getElementById('stockPasswordPrompt').style.display = 'block';
-    document.getElementById('stockManagementContent').style.display = 'none';
-    document.getElementById('stockPassword').value = '';
-  };
-
-  window.closeStockModal = function() {
-    document.getElementById('stockModal').style.display = 'none';
-    document.getElementById('stockPasswordPrompt').style.display = 'block';
-    document.getElementById('stockManagementContent').style.display = 'none';
-    updateAllStockIndicators();
-  };
-
-  window.verifyStockPassword = function() {
-    if (document.getElementById('stockPassword').value === PASSWORD) {
-      document.getElementById('stockPasswordPrompt').style.display = 'none';
-      document.getElementById('stockManagementContent').style.display = 'block';
-      loadAllStockItems();
-    } else alert('Contraseña incorrecta');
-  };
-
-  function getCategoryName(code) {
-    const names = { '000':'000 puntos','005':'005 puntos','020':'20 puntos','035':'35 puntos','050':'50 puntos','075':'75 puntos','100':'100 puntos','150':'150 puntos','180':'180 puntos','200':'200 puntos','220':'220 puntos','250':'250 puntos','350':'350 puntos','420':'420 puntos' };
-    return names[code] || code + ' puntos';
-  }
-
-  function loadAllStockItems() {
-    const container = document.getElementById('stockItemsContainer');
-    const categories = {};
-    document.querySelectorAll('.imagen-item').forEach(item => {
-      const cat = item.getAttribute('data-category');
-      if (!categories[cat]) categories[cat] = [];
-      const code = item.getAttribute('data-code');
-      const name = item.querySelector('p')?.textContent || code;
-      const img = item.querySelector('img')?.outerHTML || item.querySelector('.img-placeholder')?.outerHTML || '';
-      let display = getProductStock(code);
-      const isFichaBase = code === '000-00';
-      const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
-      categories[cat].push({ code, name, img, currentStock: display, isFichaBase, isFichaProduct });
-    });
-    const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a)-parseInt(b));
-    let html = '';
-    for (let cat of sortedCats) {
-      html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
-      if (cat === '000') {
-        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>Stock de fichas:</strong> ${fichaStock} fichas<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
-      }
-      html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
-      const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
-      sortedProds.forEach(p => {
-        html += `<div class="stock-item" data-code="${p.code}">${p.img}<p>${p.name}</p><div class="stock-control">`;
-        if (p.isFichaBase || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
-          html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
-        } else {
-          html += `<input type="number" value="${p.currentStock}" readonly disabled><span>Stock de fichas</span>`;
-        }
-        html += `</div></div>`;
-      });
-      html += `</div></div>`;
-    }
-    container.innerHTML = html;
-  }
-
-  window.filterStockItems = function(term) {
-    document.querySelectorAll('.stock-category').forEach(cat => {
-      let any = false;
-      cat.querySelectorAll('.stock-item').forEach(item => {
-        const code = item.getAttribute('data-code').toLowerCase();
-        if (term === '' || code.startsWith(term)) { item.style.display = 'flex'; any = true; }
-        else { item.style.display = 'none'; }
-      });
-      cat.style.display = any ? 'block' : 'none';
-    });
-  };
-
-  window.handleStockSearchInput = function(input) {
-    let v = input.value.replace(/\D/g, '');
-    if (v.length > 3) v = v.substring(0, 3);
-    input.value = v;
-    filterStockItems(v);
-  };
-
-  window.guardarStockIndividual = function(code, valor) {
-    let newStock = parseInt(valor, 10);
-    if (isNaN(newStock)) newStock = 0;
-    if (newStock < 0) newStock = 0;
-    set(ref(database, `stock/${code}`), newStock).then(() => {
-      stock[code] = newStock;
-      updateAllStockIndicators();
-    });
-  };
-
-  window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente');
-
-  window.openCartModal = function() { renderCart(); document.getElementById('cartModal').style.display = 'block'; };
-  window.closeCartModal = function() { document.getElementById('cartModal').style.display = 'none'; hideExportPrompt(); hideClearPrompt(); };
-  window.showExportPasswordPrompt = () => document.getElementById('exportPasswordPrompt').style.display = 'block';
-  window.hideExportPrompt = () => { document.getElementById('exportPasswordPrompt').style.display = 'none'; document.getElementById('exportPassword').value = ''; };
-  window.showClearPasswordPrompt = () => document.getElementById('clearPasswordPrompt').style.display = 'block';
-  window.hideClearPrompt = () => { document.getElementById('clearPasswordPrompt').style.display = 'none'; document.getElementById('clearPassword').value = ''; };
-  window.verifyAndExport = function() { if (document.getElementById('exportPassword').value === PASSWORD) { exportToExcel(); hideExportPrompt(); } else alert('Contraseña incorrecta'); };
-
-  function exportToExcel() {
-    if (cart.length === 0) { alert('Carrito vacío'); return; }
-    const totalP = cart.reduce((s,i) => s + (i.points||0), 0);
-    const totalM = cart.reduce((s,i) => s + (i.money||0), 0);
-    const totalF = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption)||0), 0);
-    const data = [['ASTROLAND - Villa Morra'], ['IN GOD WE TRUST'], [],
-      ['Producto','Puntos','Dinero','Fichas','Fecha','Hora'],
-      ...cart.map(i => [i.name, i.points||0, i.money||0, Math.abs(i.fichaConsumption)||0, i.fecha, i.hora]),
-      [], ['TOTALES', totalP, totalM, totalF, '', '']];
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, 'Carrito');
-    XLSX.writeFile(wb, `ASTROLAND_VillaMorra_${new Date().toLocaleDateString('es-PY').replace(/\//g,'-')}.xlsx`);
-  }
-
-  window.onclick = function(e) {
-    if (e.target.classList.contains('modal')) e.target.style.display = 'none';
-    if (e.target.classList.contains('cart-modal')) e.target.style.display = 'none';
-    if (e.target.classList.contains('maquina-modal')) e.target.style.display = 'none';
-    if (e.target.classList.contains('cierre-modal')) e.target.style.display = 'none';
-  };
-
-  Promise.all([loadInitialCart(), loadInitialStock()]).then(() => {
-    onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
-    onValue(stockRef, snap => { stock = snap.val() || {}; updateAllStockIndicators(); });
-  });
-</script>
-</body>
-</html>
+    let html = `<tr><thead>
