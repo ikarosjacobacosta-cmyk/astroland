@@ -8,7 +8,7 @@
 <style>
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
-html, body { margin:0; padding:0; background:#fff !important; font-family: Inter, Arial, sans-serif; color:#222; }
+html, body { margin:0; padding:0; background:#fff !important; font-family: 'Segoe UI', Inter, Arial, sans-serif; color:#222; }
 .container { max-width:1200px; margin:0 auto; padding:20px; }
 header { text-align:center; margin-bottom:10px; }
 h1 { margin:10px 0 20px; font-size:1.8rem; }
@@ -146,8 +146,8 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .maquina-producto-btn:hover { background: #7B1FA2; }
 
-/* Modal de compra - TAMAÑO COMPLETO EN CELULAR */
-.modal {
+/* MODALES A PANTALLA COMPLETA */
+.modal, .maquina-modal, .cierre-modal {
   display: none;
   position: fixed;
   z-index: 2000;
@@ -155,163 +155,100 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.8);
+  background-color: rgba(0,0,0,0.9);
 }
-.modal-content {
+.modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content {
   background-color: #fff;
-  margin: 0 auto;
-  padding: 25px;
+  margin: 0;
+  padding: 20px;
   border-radius: 0;
   width: 100%;
   height: 100%;
   overflow-y: auto;
   position: relative;
-}
-@media (min-width: 768px) {
-  .modal-content {
-    margin: 5% auto;
-    border-radius: 12px;
-    width: 95%;
-    max-width: 500px;
-    height: auto;
-    max-height: 90vh;
-  }
+  display: flex;
+  flex-direction: column;
 }
 .close {
   color: #aaa;
   float: right;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: bold;
   cursor: pointer;
   position: absolute;
   right: 20px;
-  top: 10px;
+  top: 15px;
   z-index: 10;
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.close:hover { color: #000; }
-.modal h3 { 
+.close:hover { color: #000; background: #eee; }
+.modal h3, .maquina-modal h3, .cierre-modal h3 { 
   margin-top: 0; 
   border-bottom: 2px solid #eee; 
   padding-bottom: 10px;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  text-align: center;
 }
 .product-info, .stock-info { 
   background: #f8f8f8; 
   padding: 15px; 
-  border-radius: 6px; 
+  border-radius: 10px; 
   margin: 15px 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
 }
 .stock-info { background: #e3f2fd; text-align: center; font-weight: bold; color: #1976D2; }
 .payment-options { margin: 20px 0; }
-.payment-option { margin: 15px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-.payment-option label { font-weight: bold; display: block; margin-bottom: 8px; font-size: 1rem; }
-.payment-option input { width: 100%; padding: 12px; font-size: 1.2rem; border: 1px solid #ccc; border-radius: 4px; }
-.auto-calc { font-size: 0.9rem; margin-top: 5px; }
-.modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-.modal-buttons button { flex: 1; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem; }
+.payment-option { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 10px; background: #fafafa; }
+.payment-option label { font-weight: bold; display: block; margin-bottom: 10px; font-size: 1.1rem; }
+.payment-option input { width: 100%; padding: 14px; font-size: 1.3rem; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
+.auto-calc { font-size: 1rem; margin-top: 8px; color: #666; }
+.modal-buttons { display: flex; gap: 15px; margin-top: 20px; }
+.modal-buttons button { flex: 1; padding: 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
 #addToCart { background: #4CAF50; color: white; }
 #cancelModal { background: #f44336; color: white; }
 
-/* Modal para máquina */
-.maquina-modal {
-  display: none;
-  position: fixed;
-  z-index: 3000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.8);
-}
-.maquina-modal .modal-content {
-  background-color: #fff;
-  margin: 0 auto;
-  padding: 25px;
-  border-radius: 0;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  text-align: center;
-}
-@media (min-width: 768px) {
-  .maquina-modal .modal-content {
-    margin: 10% auto;
-    border-radius: 12px;
-    width: 95%;
-    max-width: 400px;
-    height: auto;
-  }
-}
+/* Máquina modal */
 .maquina-modal input {
   width: 100%;
-  padding: 15px;
-  font-size: 1.3rem;
+  padding: 18px;
+  font-size: 1.5rem;
   text-align: center;
   margin: 15px 0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
 }
-.maquina-modal button {
-  padding: 12px 20px;
-  margin: 5px;
+.maquina-modal button, .cierre-modal button {
+  padding: 14px 20px;
+  margin: 8px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: bold;
 }
-.btn-agregar { background: #4CAF50; color: white; }
-.btn-quitar { background: #f44336; color: white; }
-.btn-cancelar { background: #999; color: white; }
+.btn-agregar { background: #4CAF50; color: white; flex: 1; }
+.btn-quitar { background: #f44336; color: white; flex: 1; }
+.btn-cancelar { background: #666; color: white; flex: 1; }
 
-/* Modal para cierre de caja */
-.cierre-modal {
-  display: none;
-  position: fixed;
-  z-index: 3000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.8);
-}
-.cierre-modal .modal-content {
-  background-color: #fff;
-  margin: 0 auto;
-  padding: 25px;
-  border-radius: 0;
-  width: 100%;
-  height: 100%;
-  text-align: center;
-}
-@media (min-width: 768px) {
-  .cierre-modal .modal-content {
-    margin: 10% auto;
-    border-radius: 12px;
-    width: 95%;
-    max-width: 400px;
-    height: auto;
-  }
-}
+/* Cierre modal */
 .cierre-modal input {
   width: 100%;
-  padding: 15px;
-  font-size: 1.3rem;
+  padding: 18px;
+  font-size: 1.5rem;
   text-align: center;
   margin: 15px 0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-.cierre-modal button {
-  padding: 12px 20px;
-  margin: 5px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  border: 2px solid #ccc;
+  border-radius: 10px;
 }
 
-/* Modal de historial */
+/* Historial modal (pantalla completa también) */
 .historial-modal {
   display: none;
   position: fixed;
@@ -320,68 +257,58 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0,0,0,0.9);
 }
 .historial-modal .modal-content {
   background-color: #fff;
-  margin: 5% auto;
-  padding: 25px;
-  border-radius: 12px;
-  width: 95%;
-  max-width: 1200px;
-  max-height: 80vh;
+  margin: 0;
+  padding: 20px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
 }
 .historial-modal input, .historial-modal button {
-  padding: 8px 12px;
+  padding: 10px 15px;
   margin: 5px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #ccc;
+  font-size: 0.9rem;
 }
 .historial-modal table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
+  font-size: 0.8rem;
 }
 .historial-modal th, .historial-modal td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: center;
-  font-size: 0.8rem;
 }
-.historial-modal th {
-  background: #1a1a2e;
-  color: white;
-}
-.historial-btn {
+.historial-modal th { background: #1a1a2e; color: white; }
+
+/* Botones flotantes */
+.cart-button, .stock-button, .historial-btn {
   position: fixed;
   bottom: 20px;
-  left: 180px;
-  background: #9C27B0;
-  color: white;
+  padding: 12px 20px;
   border: none;
   border-radius: 50px;
-  padding: 12px 20px;
-  font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   z-index: 1500;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 0.9rem;
 }
-.historial-btn:hover { background: #7B1FA2; }
+.cart-button { right: 20px; background: #2196F3; color: white; }
+.stock-button { left: 20px; background: #FF9800; color: white; }
+.historial-btn { left: 180px; background: #9C27B0; color: white; }
 
-footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
-body { padding-top: 80px; }
-
-/* 3 COLUMNAS EN CELULAR - NO CAMBIAR */
-@media (min-width: 1200px) { .galeria { grid-template-columns: repeat(5, 1fr); } }
-@media (min-width: 901px) and (max-width:1199px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
-@media (min-width: 601px) and (max-width:900px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
-@media (max-width:600px) { .galeria { grid-template-columns: repeat(3, 1fr); } }
-
+/* Carrito modal */
 .cart-modal {
   display: none;
   position: fixed;
@@ -390,57 +317,24 @@ body { padding-top: 80px; }
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0,0,0,0.9);
 }
 .cart-content {
   background-color: #fff;
-  margin: 5% auto;
-  padding: 25px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 900px;
-  max-height: 80vh;
+  margin: 0;
+  padding: 20px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
   overflow-y: auto;
 }
-.cart-items {
-  margin: 20px 0;
-  border: 1px solid #eee;
-  border-radius: 6px;
-}
-.cart-item {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.5fr 0.8fr;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  align-items: center;
-  gap: 5px;
-}
-.cart-header {
-  background: #f5f5f5;
-  font-weight: bold;
-}
-.cart-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  flex-wrap: wrap;
-}
-.cart-actions button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.password-input {
-  display: none;
-  margin-top: 10px;
-}
-.password-input input {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-right: 5px;
-}
+.cart-items { margin: 20px 0; border: 1px solid #eee; border-radius: 10px; }
+.cart-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr 0.8fr; padding: 12px; border-bottom: 1px solid #eee; align-items: center; gap: 5px; font-size: 0.8rem; }
+.cart-header { background: #f5f5f5; font-weight: bold; }
+.cart-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.cart-actions button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+/* Gestión de stock */
 .stock-search-container { text-align: center; margin: 20px 0; }
 .stock-category { margin-top: 20px; }
 .stock-category h4 { margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid #FF9800; }
@@ -451,10 +345,41 @@ body { padding-top: 80px; }
 .stock-item { display: flex; flex-direction: column; align-items: center; padding: 8px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .stock-item img { width: 3cm; height: 3cm; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 6px; }
 .stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; }
-.stock-item .stock-control input { width: 60px; padding: 4px; text-align: center; }
-.cart-button, .stock-button { position: fixed; bottom: 20px; padding: 12px 20px; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1500; display: flex; align-items: center; gap: 8px; }
-.cart-button { right: 20px; background: #2196F3; color: white; }
-.stock-button { left: 20px; background: #FF9800; color: white; }
+.stock-item .stock-control input { width: 70px; padding: 8px; text-align: center; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; }
+.stock-item .stock-control input:focus { outline: none; border-color: #4CAF50; }
+.stock-item .stock-control span { background: #999; color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; }
+
+/* Stock password modal */
+#stockModal .modal-content, #cartModal .cart-content {
+  height: auto;
+  min-height: auto;
+  border-radius: 12px;
+  margin: 10% auto;
+  width: 90%;
+  max-width: 500px;
+}
+@media (max-width:600px) {
+  #stockModal .modal-content, #cartModal .cart-content {
+    margin: 5% auto;
+    width: 95%;
+    height: auto;
+    max-height: 90vh;
+    border-radius: 12px;
+  }
+}
+
+.password-input { display: none; margin-top: 10px; text-align: center; }
+.password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; }
+.password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
+body { padding-top: 80px; }
+
+/* 3 COLUMNAS EN CELULAR */
+@media (min-width: 1200px) { .galeria { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 901px) and (max-width:1199px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 601px) and (max-width:900px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width:600px) { .galeria { grid-template-columns: repeat(3, 1fr); } }
 </style>
 </head>
 <body>
@@ -482,24 +407,24 @@ body { padding-top: 80px; }
   <!-- Modal de compra normal -->
   <div id="purchaseModal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h3>Comprar Producto</h3>
+      <button class="close" onclick="closeModal()">&times;</button>
+      <h3>🛍️ Comprar Producto</h3>
       <div id="modalProductInfo" class="product-info"></div>
       <div id="modalStockInfo" class="stock-info"></div>
       <div class="payment-options">
         <div class="payment-option">
-          <label>Pagar con Puntos</label>
+          <label>🎯 Pagar con Puntos</label>
           <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" inputmode="numeric">
-          <div class="auto-calc">Total del producto: G.<span id="totalPrice">0</span></div>
+          <div class="auto-calc">💰 Total del producto: G.<span id="totalPrice">0</span></div>
         </div>
         <div class="payment-option">
-          <label>Completar con Dinero (G.)</label>
+          <label>💵 Completar con Dinero (G.)</label>
           <input type="number" id="moneyInput" min="0" step="1000" value="0" readonly style="background-color:#f5f5f5;">
         </div>
       </div>
       <div class="modal-buttons">
-        <button id="addToCart" type="button" onclick="addToCart()">Agregar al Carrito</button>
-        <button id="cancelModal" onclick="closeModal()">Cancelar</button>
+        <button id="addToCart" type="button" onclick="addToCart()">✅ Agregar al Carrito</button>
+        <button id="cancelModal" onclick="closeModal()">❌ Cancelar</button>
       </div>
     </div>
   </div>
@@ -507,14 +432,14 @@ body { padding-top: 80px; }
   <!-- Modal para máquina -->
   <div id="maquinaModal" class="maquina-modal">
     <div class="modal-content">
-      <span class="close" onclick="closeMaquinaModal()">&times;</span>
+      <button class="close" onclick="closeMaquinaModal()">&times;</button>
       <h3>🎰 Máquina - Unidades</h3>
-      <div id="maquinaProductInfo"></div>
+      <div id="maquinaProductInfo" class="product-info"></div>
       <input type="number" id="unidadesInput" min="1" step="1" value="1" placeholder="Cantidad de unidades">
-      <div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
         <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
-        <button class="btn-cancelar" onclick="closeMaquinaModal()">Cancelar</button>
+        <button class="btn-cancelar" onclick="closeMaquinaModal()">❌ Cancelar</button>
       </div>
     </div>
   </div>
@@ -522,13 +447,13 @@ body { padding-top: 80px; }
   <!-- Modal para cierre de caja -->
   <div id="cierreModal" class="cierre-modal">
     <div class="modal-content">
-      <span class="close" onclick="closeCierreModal()">&times;</span>
-      <h3 id="cierreTitulo">Registrar Monto</h3>
-      <p id="cierreDescripcion"></p>
+      <button class="close" onclick="closeCierreModal()">&times;</button>
+      <h3 id="cierreTitulo">💰 Cierre de Caja</h3>
+      <p id="cierreDescripcion" style="font-size:1.1rem; text-align:center;"></p>
       <input type="text" id="cierreMonto" placeholder="Ingrese el monto" inputmode="numeric">
-      <div>
-        <button id="cierreBtnConfirmar" style="background:#4CAF50; color:white; padding:10px 20px; margin:5px; border:none; border-radius:6px; cursor:pointer;">Confirmar</button>
-        <button onclick="closeCierreModal()" style="background:#f44336; color:white; padding:10px 20px; margin:5px; border:none; border-radius:6px; cursor:pointer;">Cancelar</button>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="cierreBtnConfirmar" style="background:#4CAF50; color:white;">✅ Confirmar</button>
+        <button onclick="closeCierreModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
     </div>
   </div>
@@ -536,21 +461,21 @@ body { padding-top: 80px; }
   <!-- Modal de gestión de stock -->
   <div id="stockModal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="closeStockModal()">&times;</span>
-      <h3>Gestionar Stock</h3>
+      <button class="close" onclick="closeStockModal()">&times;</button>
+      <h3>📦 Gestionar Stock</h3>
       <div id="stockPasswordPrompt" class="password-input" style="display:block;">
         <input type="password" id="stockPassword" placeholder="Contraseña">
-        <button onclick="verifyStockPassword()">Acceder</button>
-        <button onclick="closeStockModal()" style="background:#f44336;">Cancelar</button>
+        <button onclick="verifyStockPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
+        <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
       <div id="stockManagementContent" style="display:none;">
         <div class="stock-search-container">
-          <input type="text" id="stockSearch" placeholder="Buscar código..." oninput="handleStockSearchInput(this)">
+          <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." oninput="handleStockSearchInput(this)">
         </div>
         <div id="stockItemsContainer"></div>
         <div class="modal-buttons" style="margin-top:20px;">
-          <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">Guardar</button>
-          <button onclick="closeStockModal()" style="background:#f44336;">Cerrar</button>
+          <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
+          <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cerrar</button>
         </div>
       </div>
     </div>
@@ -559,26 +484,26 @@ body { padding-top: 80px; }
   <!-- Modal del carrito -->
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
-      <span class="close" onclick="closeCartModal()">&times;</span>
-      <h3>Carrito de Compras - Villa Morra</h3>
+      <button class="close" onclick="closeCartModal()">&times;</button>
+      <h3>🛒 Carrito de Compras</h3>
       <div id="cartItems" class="cart-items">
         <div class="cart-item cart-header">
-          <span>Producto</span><span>Puntos</span><span>Dinero (G.)</span><span>Fecha/Hora</span><span>Acciones</span>
+          <span>Producto</span><span>Puntos</span><span>Dinero</span><span>Fecha/Hora</span><span>Acciones</span>
         </div>
       </div>
       <div class="cart-actions">
-        <button onclick="showExportPasswordPrompt()">📥 Descargar Excel</button>
-        <button onclick="showClearPasswordPrompt()">🗑️ Vaciar Carrito</button>
+        <button onclick="showExportPasswordPrompt()" style="background:#4CAF50; color:white;">📥 Descargar Excel</button>
+        <button onclick="showClearPasswordPrompt()" style="background:#ff9800; color:white;">🗑️ Vaciar Carrito</button>
       </div>
       <div id="exportPasswordPrompt" class="password-input">
         <input type="password" id="exportPassword" placeholder="Contraseña">
-        <button onclick="verifyAndExport()">Confirmar</button>
-        <button onclick="hideExportPrompt()">Cancelar</button>
+        <button onclick="verifyAndExport()" style="background:#2196F3; color:white;">Confirmar</button>
+        <button onclick="hideExportPrompt()" style="background:#f44336;">Cancelar</button>
       </div>
       <div id="clearPasswordPrompt" class="password-input">
         <input type="password" id="clearPassword" placeholder="Contraseña">
-        <button onclick="verifyAndClearCart()">Confirmar</button>
-        <button onclick="hideClearPrompt()">Cancelar</button>
+        <button onclick="verifyAndClearCart()" style="background:#2196F3; color:white;">Confirmar</button>
+        <button onclick="hideClearPrompt()" style="background:#f44336;">Cancelar</button>
       </div>
     </div>
   </div>
@@ -586,19 +511,19 @@ body { padding-top: 80px; }
   <!-- Modal de historial -->
   <div id="historialModal" class="historial-modal">
     <div class="modal-content">
-      <span class="close" onclick="closeHistorialModal()">&times;</span>
+      <button class="close" onclick="closeHistorialModal()">&times;</button>
       <h3>📜 Historial de Ventas</h3>
       <div id="historialPasswordPrompt" class="password-input" style="display:block;">
         <input type="password" id="historialPassword" placeholder="Contraseña">
-        <button onclick="verifyHistorialPassword()">Acceder</button>
-        <button onclick="closeHistorialModal()">Cancelar</button>
+        <button onclick="verifyHistorialPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
+        <button onclick="closeHistorialModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
       <div id="historialContent" style="display:none;">
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
-          <label>Desde: <input type="date" id="fechaDesde"></label>
-          <label>Hasta: <input type="date" id="fechaHasta"></label>
-          <button onclick="filtrarHistorial()">🔍 Filtrar</button>
-          <button onclick="exportarHistorialExcel()">📥 Exportar Excel</button>
+          <label>📅 Desde: <input type="date" id="fechaDesde"></label>
+          <label>📅 Hasta: <input type="date" id="fechaHasta"></label>
+          <button onclick="filtrarHistorial()" style="background:#2196F3; color:white;">🔍 Filtrar</button>
+          <button onclick="exportarHistorialExcel()" style="background:#4CAF50; color:white;">📥 Exportar Excel</button>
         </div>
         <div id="historialStats" style="background:#f0f0f0; padding:10px; border-radius:8px; margin-bottom:15px;"></div>
         <div id="historialTabla"></div>
@@ -684,7 +609,7 @@ body { padding-top: 80px; }
       else if (cat.productos) cantidadProductos = cat.productos.length;
       
       const titulo = document.createElement('h2');
-      titulo.innerHTML = `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">Stock: <span>${cantidadProductos * STOCK_INICIAL}</span></span>`;
+      titulo.innerHTML = `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">📦 <span>${cantidadProductos * STOCK_INICIAL}</span></span>`;
       section.appendChild(titulo);
       
       const galeria = document.createElement('div');
@@ -704,7 +629,6 @@ body { padding-top: 80px; }
           <p>${codigo} ${textoPrecio}</p>
           <div class="stock-indicator">${STOCK_INICIAL}</div>`;
         
-        // Solo agregar botón de máquina para productos con puntos >= 5 (a partir de 005 puntos)
         if (cat.puntos >= 5) {
           const maquinaBtn = document.createElement('button');
           maquinaBtn.className = 'maquina-producto-btn';
@@ -736,7 +660,6 @@ body { padding-top: 80px; }
       container.appendChild(section);
     });
     
-    // Evento para botones de máquina en cada producto
     document.querySelectorAll('.maquina-producto-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -752,7 +675,7 @@ body { padding-top: 80px; }
         if (pwd !== 'mili') { alert('Contraseña incorrecta'); return; }
         
         currentMaquinaProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo, categoria };
-        document.getElementById('maquinaProductInfo').innerHTML = `<strong>${currentMaquinaProduct.name}</strong><br>Stock: ${stockVal} unidades<br>${price > 0 ? `Precio: G.${price.toLocaleString()}` : 'Valor: 0 Gs.'}`;
+        document.getElementById('maquinaProductInfo').innerHTML = `<strong>${currentMaquinaProduct.name}</strong><br>📦 Stock: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}`;
         document.getElementById('unidadesInput').value = 1;
         document.getElementById('maquinaModal').style.display = 'block';
       });
@@ -838,7 +761,6 @@ body { padding-top: 80px; }
 
   document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
 
-  // CLICK NORMAL EN PRODUCTO - Compra normal
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function(e) {
       if (e.target.classList.contains('maquina-producto-btn')) return;
@@ -870,17 +792,14 @@ body { padding-top: 80px; }
       const consumo = FICHA_CONSUMPTION[code] || 0;
       
       currentProduct = { code, price, points, name: this.querySelector('p').textContent, stock: stockVal, fichaConsumption: consumo };
-      document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>Puntos base: ${currentProduct.points}<br>Precio total: G.${currentProduct.price.toLocaleString()}`;
-      document.getElementById('modalStockInfo').innerHTML = `Stock disponible: <strong>${stockVal} unidades</strong>`;
+      document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>🎯 Puntos base: ${currentProduct.points}<br>💰 Precio total: G.${currentProduct.price.toLocaleString()}`;
+      document.getElementById('modalStockInfo').innerHTML = `📦 Stock disponible: <strong>${stockVal} unidades</strong>`;
       document.getElementById('pointsInput').value = '';
       document.getElementById('pointsInput').max = currentProduct.points || 999999;
       document.getElementById('moneyInput').value = currentProduct.price;
       document.getElementById('totalPrice').textContent = currentProduct.price.toLocaleString();
       document.getElementById('addToCart').disabled = (stockVal <= 0);
       document.getElementById('purchaseModal').style.display = 'block';
-      
-      // Prevenir cierre con botón atrás en móviles
-      history.pushState({modal: 'purchase'}, null, location.href);
     });
   });
 
@@ -1019,12 +938,6 @@ body { padding-top: 80px; }
 
   window.closeModal = function() {
     document.getElementById('purchaseModal').style.display = 'none';
-    // Limpiar el historial de navegación
-    setTimeout(() => {
-      if (window.history.state?.modal) {
-        window.history.back();
-      }
-    }, 100);
   };
 
   window.calculateRemainingMoney = function() {
@@ -1194,7 +1107,7 @@ body { padding-top: 80px; }
 
   function renderCart() {
     const div = document.getElementById('cartItems');
-    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>Puntos</span><span>Dinero (G.)</span><span>Fecha/Hora</span><span>Acciones</span></div>';
+    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>Puntos</span><span>Dinero</span><span>Fecha/Hora</span><span>Acciones</span></div>';
     cart.forEach(item => {
       if (!item) return;
       const d = document.createElement('div');
@@ -1272,16 +1185,16 @@ body { padding-top: 80px; }
       html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>Stock de fichas:</strong> ${fichaStock} fichas<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
       sortedProds.forEach(p => {
         html += `<div class="stock-item" data-code="${p.code}">${p.img}<p>${p.name}</p><div class="stock-control">`;
         if (p.isFichaBase || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
-          html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
+          html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
         } else {
-          html += `<input type="number" value="${p.currentStock}" readonly disabled><span>Stock de fichas</span>`;
+          html += `<input type="number" value="${p.currentStock}" readonly disabled><span>🎴 Stock de fichas</span>`;
         }
         html += `</div></div>`;
       });
@@ -1310,16 +1223,38 @@ body { padding-top: 80px; }
   };
 
   window.guardarStockIndividual = function(code, valor) {
+    const inp = document.getElementById(`stock-${code}`);
+    if (!inp) return;
+    
     let newStock = parseInt(valor, 10);
     if (isNaN(newStock)) newStock = 0;
     if (newStock < 0) newStock = 0;
+    
+    // Marcar input como "guardando" con color verde
+    inp.style.backgroundColor = '#d4edda';
+    inp.style.transition = 'background-color 0.3s';
+    inp.style.border = '2px solid #4CAF50';
+    
     set(ref(database, `stock/${code}`), newStock).then(() => {
       stock[code] = newStock;
       updateAllStockIndicators();
+      
+      // Mantener verde por 1 segundo, luego volver a normal
+      setTimeout(() => {
+        inp.style.backgroundColor = '';
+        inp.style.border = '';
+      }, 1000);
+    }).catch(e => {
+      inp.style.backgroundColor = '#f8d7da';
+      inp.style.border = '2px solid #dc3545';
+      setTimeout(() => {
+        inp.style.backgroundColor = '';
+        inp.style.border = '';
+      }, 1000);
     });
   };
 
-  window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente');
+  window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente al editar cada valor');
 
   window.openCartModal = function() { renderCart(); document.getElementById('cartModal').style.display = 'block'; };
   window.closeCartModal = function() { document.getElementById('cartModal').style.display = 'none'; hideExportPrompt(); hideClearPrompt(); };
@@ -1344,23 +1279,9 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `ASTROLAND_VillaMorra_${new Date().toLocaleDateString('es-PY').replace(/\//g,'-')}.xlsx`);
   }
 
-  // Prevenir cierre con botón atrás en móviles
-  window.addEventListener('popstate', function(e) {
-    if (document.getElementById('purchaseModal').style.display === 'block') {
-      e.preventDefault();
-      // No hacemos nada, solo prevenimos
-    }
-    if (document.getElementById('maquinaModal').style.display === 'block') {
-      e.preventDefault();
-    }
-    if (document.getElementById('cierreModal').style.display === 'block') {
-      e.preventDefault();
-    }
-  });
-
+  // Prevenir cierre con click fuera (solo se cierra con botón cancelar)
   window.onclick = function(e) {
-    // No cerrar al hacer click fuera - solo con botón cancelar
-    // Esta función está vacía a propósito
+    // No hacer nada - los modales solo se cierran con sus botones específicos
   };
 
   Promise.all([loadInitialCart(), loadInitialStock()]).then(() => {
