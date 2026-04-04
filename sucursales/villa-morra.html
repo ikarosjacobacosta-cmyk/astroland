@@ -68,17 +68,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   color: #333;
   font-weight: normal;
 }
-.maquina-categoria-btn {
-  background: #9C27B0;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 5px 15px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-.maquina-categoria-btn:hover { background: #7B1FA2; }
 
 .galeria { 
   display:grid; 
@@ -157,6 +146,73 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .maquina-producto-btn:hover { background: #7B1FA2; }
 
+/* Modal de compra - TAMAÑO COMPLETO EN CELULAR */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+}
+.modal-content {
+  background-color: #fff;
+  margin: 0 auto;
+  padding: 25px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+}
+@media (min-width: 768px) {
+  .modal-content {
+    margin: 5% auto;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 500px;
+    height: auto;
+    max-height: 90vh;
+  }
+}
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  z-index: 10;
+}
+.close:hover { color: #000; }
+.modal h3 { 
+  margin-top: 0; 
+  border-bottom: 2px solid #eee; 
+  padding-bottom: 10px;
+  font-size: 1.5rem;
+}
+.product-info, .stock-info { 
+  background: #f8f8f8; 
+  padding: 15px; 
+  border-radius: 6px; 
+  margin: 15px 0;
+  font-size: 1.1rem;
+}
+.stock-info { background: #e3f2fd; text-align: center; font-weight: bold; color: #1976D2; }
+.payment-options { margin: 20px 0; }
+.payment-option { margin: 15px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+.payment-option label { font-weight: bold; display: block; margin-bottom: 8px; font-size: 1rem; }
+.payment-option input { width: 100%; padding: 12px; font-size: 1.2rem; border: 1px solid #ccc; border-radius: 4px; }
+.auto-calc { font-size: 0.9rem; margin-top: 5px; }
+.modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+.modal-buttons button { flex: 1; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem; }
+#addToCart { background: #4CAF50; color: white; }
+#cancelModal { background: #f44336; color: white; }
+
 /* Modal para máquina */
 .maquina-modal {
   display: none;
@@ -166,28 +222,38 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0,0,0,0.8);
 }
 .maquina-modal .modal-content {
   background-color: #fff;
-  margin: 10% auto;
+  margin: 0 auto;
   padding: 25px;
-  border-radius: 12px;
-  width: 95%;
-  max-width: 400px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
   text-align: center;
+}
+@media (min-width: 768px) {
+  .maquina-modal .modal-content {
+    margin: 10% auto;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 400px;
+    height: auto;
+  }
 }
 .maquina-modal input {
   width: 100%;
-  padding: 12px;
-  font-size: 1.2rem;
+  padding: 15px;
+  font-size: 1.3rem;
   text-align: center;
   margin: 15px 0;
   border: 1px solid #ccc;
   border-radius: 6px;
 }
 .maquina-modal button {
-  padding: 10px 20px;
+  padding: 12px 20px;
   margin: 5px;
   border: none;
   border-radius: 6px;
@@ -208,28 +274,37 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0,0,0,0.8);
 }
 .cierre-modal .modal-content {
   background-color: #fff;
-  margin: 10% auto;
+  margin: 0 auto;
   padding: 25px;
-  border-radius: 12px;
-  width: 95%;
-  max-width: 400px;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
   text-align: center;
+}
+@media (min-width: 768px) {
+  .cierre-modal .modal-content {
+    margin: 10% auto;
+    border-radius: 12px;
+    width: 95%;
+    max-width: 400px;
+    height: auto;
+  }
 }
 .cierre-modal input {
   width: 100%;
-  padding: 12px;
-  font-size: 1.2rem;
+  padding: 15px;
+  font-size: 1.3rem;
   text-align: center;
   margin: 15px 0;
   border: 1px solid #ccc;
   border-radius: 6px;
 }
 .cierre-modal button {
-  padding: 10px 20px;
+  padding: 12px 20px;
   margin: 5px;
   border: none;
   border-radius: 6px;
@@ -301,35 +376,71 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
+/* 3 COLUMNAS EN CELULAR - NO CAMBIAR */
 @media (min-width: 1200px) { .galeria { grid-template-columns: repeat(5, 1fr); } }
 @media (min-width: 901px) and (max-width:1199px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 601px) and (max-width:900px) { .galeria { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width:600px) { .galeria { grid-template-columns: repeat(3, 1fr); } }
 
-.modal, .cart-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-.modal-content, .cart-content { background-color: #fff; margin: 5% auto; padding: 25px; border-radius: 12px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; }
-.cart-content { max-width: 900px; }
-.close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; position: absolute; right: 20px; top: 10px; }
-.close:hover { color: #000; }
-.modal h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-.product-info, .stock-info { background: #f8f8f8; padding: 10px; border-radius: 6px; margin: 15px 0; }
-.stock-info { background: #e3f2fd; text-align: center; font-weight: bold; color: #1976D2; }
-.payment-options { margin: 20px 0; }
-.payment-option { margin: 15px 0; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-.payment-option label { font-weight: bold; display: block; margin-bottom: 8px; }
-.payment-option input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-.modal-buttons button { flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-#addToCart { background: #4CAF50; color: white; }
-#cancelModal { background: #f44336; color: white; }
-.cart-button, .stock-button { position: fixed; bottom: 20px; padding: 12px 20px; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1500; display: flex; align-items: center; gap: 8px; }
-.cart-button { right: 20px; background: #2196F3; color: white; }
-.stock-button { left: 20px; background: #FF9800; color: white; }
-.cart-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr 0.8fr; padding: 10px; border-bottom: 1px solid #eee; align-items: center; gap: 5px; }
-.cart-header { background: #f5f5f5; font-weight: bold; }
-.cart-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-.password-input { display: none; margin-top: 10px; }
-.password-input input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 5px; }
+.cart-modal {
+  display: none;
+  position: fixed;
+  z-index: 2500;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+.cart-content {
+  background-color: #fff;
+  margin: 5% auto;
+  padding: 25px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.cart-items {
+  margin: 20px 0;
+  border: 1px solid #eee;
+  border-radius: 6px;
+}
+.cart-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr 0.8fr;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+  gap: 5px;
+}
+.cart-header {
+  background: #f5f5f5;
+  font-weight: bold;
+}
+.cart-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.cart-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.password-input {
+  display: none;
+  margin-top: 10px;
+}
+.password-input input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-right: 5px;
+}
 .stock-search-container { text-align: center; margin: 20px 0; }
 .stock-category { margin-top: 20px; }
 .stock-category h4 { margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid #FF9800; }
@@ -341,6 +452,9 @@ body { padding-top: 80px; }
 .stock-item img { width: 3cm; height: 3cm; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 6px; }
 .stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; }
 .stock-item .stock-control input { width: 60px; padding: 4px; text-align: center; }
+.cart-button, .stock-button { position: fixed; bottom: 20px; padding: 12px 20px; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1500; display: flex; align-items: center; gap: 8px; }
+.cart-button { right: 20px; background: #2196F3; color: white; }
+.stock-button { left: 20px; background: #FF9800; color: white; }
 </style>
 </head>
 <body>
@@ -513,7 +627,6 @@ body { padding-top: 80px; }
 
   let currentProduct = null;
   let currentMaquinaProduct = null;
-  let currentCierreProduct = null;
   let cart = [];
   let stock = {};
   let historialVentas = [];
@@ -571,8 +684,7 @@ body { padding-top: 80px; }
       else if (cat.productos) cantidadProductos = cat.productos.length;
       
       const titulo = document.createElement('h2');
-      titulo.innerHTML = `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">Stock: <span>${cantidadProductos * STOCK_INICIAL}</span></span>
-        <button class="maquina-categoria-btn" data-categoria="${cat.categoria}">🎰 Máquina</button>`;
+      titulo.innerHTML = `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">Stock: <span>${cantidadProductos * STOCK_INICIAL}</span></span>`;
       section.appendChild(titulo);
       
       const galeria = document.createElement('div');
@@ -590,8 +702,19 @@ body { padding-top: 80px; }
         let textoPrecio = precio > 0 ? `- G.${precio.toLocaleString('es-PY')}` : '';
         item.innerHTML = `<div class="img-placeholder" style="background: ${colores[index]};">${codigo.replace('-', ' ')}</div>
           <p>${codigo} ${textoPrecio}</p>
-          <div class="stock-indicator">${STOCK_INICIAL}</div>
-          <button class="maquina-producto-btn" data-code="${codigo}" data-price="${precio}" data-points="${cat.puntos}" data-category="${cat.categoria}">🎰 Máquina</button>`;
+          <div class="stock-indicator">${STOCK_INICIAL}</div>`;
+        
+        // Solo agregar botón de máquina para productos con puntos >= 5 (a partir de 005 puntos)
+        if (cat.puntos >= 5) {
+          const maquinaBtn = document.createElement('button');
+          maquinaBtn.className = 'maquina-producto-btn';
+          maquinaBtn.textContent = '🎰 Máquina';
+          maquinaBtn.setAttribute('data-code', codigo);
+          maquinaBtn.setAttribute('data-price', precio);
+          maquinaBtn.setAttribute('data-points', cat.puntos);
+          maquinaBtn.setAttribute('data-category', cat.categoria);
+          item.appendChild(maquinaBtn);
+        }
         
         const img = new Image();
         img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; };
@@ -632,19 +755,6 @@ body { padding-top: 80px; }
         document.getElementById('maquinaProductInfo').innerHTML = `<strong>${currentMaquinaProduct.name}</strong><br>Stock: ${stockVal} unidades<br>${price > 0 ? `Precio: G.${price.toLocaleString()}` : 'Valor: 0 Gs.'}`;
         document.getElementById('unidadesInput').value = 1;
         document.getElementById('maquinaModal').style.display = 'block';
-      });
-    });
-    
-    // Evento para botones de máquina por categoría
-    document.querySelectorAll('.maquina-categoria-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const categoria = btn.getAttribute('data-categoria');
-        const primerProducto = document.querySelector(`.imagen-item[data-category="${categoria}"]`);
-        if (primerProducto) {
-          const btnProducto = primerProducto.querySelector('.maquina-producto-btn');
-          if (btnProducto) btnProducto.click();
-        }
       });
     });
   }
@@ -731,7 +841,6 @@ body { padding-top: 80px; }
   // CLICK NORMAL EN PRODUCTO - Compra normal
   document.querySelectorAll('.imagen-item').forEach(item => {
     item.addEventListener('click', function(e) {
-      // Si el click fue en el botón de máquina, no hacer nada (ya manejado)
       if (e.target.classList.contains('maquina-producto-btn')) return;
       
       const code = this.getAttribute('data-code');
@@ -769,6 +878,9 @@ body { padding-top: 80px; }
       document.getElementById('totalPrice').textContent = currentProduct.price.toLocaleString();
       document.getElementById('addToCart').disabled = (stockVal <= 0);
       document.getElementById('purchaseModal').style.display = 'block';
+      
+      // Prevenir cierre con botón atrás en móviles
+      history.pushState({modal: 'purchase'}, null, location.href);
     });
   });
 
@@ -905,7 +1017,15 @@ body { padding-top: 80px; }
     alert(`✅ Quitado ${cantidad} unidad(es) de ${currentMaquinaProduct.name}`);
   };
 
-  window.closeModal = () => document.getElementById('purchaseModal').style.display = 'none';
+  window.closeModal = function() {
+    document.getElementById('purchaseModal').style.display = 'none';
+    // Limpiar el historial de navegación
+    setTimeout(() => {
+      if (window.history.state?.modal) {
+        window.history.back();
+      }
+    }, 100);
+  };
 
   window.calculateRemainingMoney = function() {
     if (!currentProduct) return;
@@ -1224,11 +1344,23 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `ASTROLAND_VillaMorra_${new Date().toLocaleDateString('es-PY').replace(/\//g,'-')}.xlsx`);
   }
 
+  // Prevenir cierre con botón atrás en móviles
+  window.addEventListener('popstate', function(e) {
+    if (document.getElementById('purchaseModal').style.display === 'block') {
+      e.preventDefault();
+      // No hacemos nada, solo prevenimos
+    }
+    if (document.getElementById('maquinaModal').style.display === 'block') {
+      e.preventDefault();
+    }
+    if (document.getElementById('cierreModal').style.display === 'block') {
+      e.preventDefault();
+    }
+  });
+
   window.onclick = function(e) {
-    if (e.target.classList.contains('modal')) e.target.style.display = 'none';
-    if (e.target.classList.contains('cart-modal')) e.target.style.display = 'none';
-    if (e.target.classList.contains('maquina-modal')) e.target.style.display = 'none';
-    if (e.target.classList.contains('cierre-modal')) e.target.style.display = 'none';
+    // No cerrar al hacer click fuera - solo con botón cancelar
+    // Esta función está vacía a propósito
   };
 
   Promise.all([loadInitialCart(), loadInitialStock()]).then(() => {
