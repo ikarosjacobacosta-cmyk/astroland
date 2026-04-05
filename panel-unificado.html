@@ -59,6 +59,9 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .suc-card .item .amount { font-weight: bold; }
 .suc-card .sub-section { margin-top: 10px; padding-top: 8px; border-top: 2px solid #ddd; }
 .suc-card .sub-label { font-size: 0.7rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
+.suc-card .sub-item { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.7rem; padding: 2px 0; }
+.suc-card .sub-item .label { color: #666; }
+.suc-card .sub-item .amount { font-weight: bold; }
 
 .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
 .tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
@@ -130,6 +133,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   .stat-card .value { font-size: 1rem; }
   .tab-btn { padding: 6px 15px; font-size: 0.75rem; }
   .ventas-table th, .ventas-table td { font-size: 0.65rem; padding: 6px 3px; }
+  .sub-item .label { font-size: 0.65rem; }
 }
 </style>
 </head>
@@ -205,7 +209,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     try { const app = initializeApp(suc.config, suc.clave); dbs[suc.clave] = getDatabase(app); } catch(e) { console.warn(e); }
   });
 
-  const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
   const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
 
   const CODIGOS_COMPLETOS = [
@@ -247,6 +250,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   ];
 
   function getProductStock(stockData, code) {
+    const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
     if (fichasConsumo[code]) {
       const fichaStock = stockData['000-00'] ?? 0;
       return Math.floor(fichaStock / fichasConsumo[code]);
@@ -283,10 +287,30 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const match = code.match(/^(\d+)-/);
     if (!match) return false;
     const num = parseInt(match[1]);
-    // Excluir códigos especiales
     const especiales = ['000-05', '000-06', '000-07', '000-08', '000-09', '000-10'];
     if (especiales.includes(code)) return false;
     return num >= 5 && num !== 0;
+  }
+
+  // Función para obtener estadísticas detalladas de fichas por sucursal
+  // Unitarias = código 000-00 (1 ficha por 10.000 Gs.)
+  function getFichasStats(ventas) {
+    let unitarias = 0;      // Cantidad de veces que se vendió 000-00
+    let combo30 = 0;        // Cantidad de veces que se vendió 000-01
+    let combo50 = 0;        // Cantidad de veces que se vendió 000-02
+    let combo100 = 0;       // Cantidad de veces que se vendió 000-03
+    let combo150 = 0;       // Cantidad de veces que se vendió 000-04
+    
+    for (const v of ventas) {
+      if (v.esFichaGratis) continue;
+      if (v.code === '000-00') unitarias++;
+      else if (v.code === '000-01') combo30++;
+      else if (v.code === '000-02') combo50++;
+      else if (v.code === '000-03') combo100++;
+      else if (v.code === '000-04') combo150++;
+    }
+    
+    return { unitarias, combo30, combo50, combo100, combo150 };
   }
 
   async function cargarTodo() {
@@ -425,6 +449,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         if (esJuguete(v.code)) juguetesMonto += v.money || 0;
       }
       
+      const fichasStats = getFichasStats(vNorm);
+      
       sucStats[suc.clave] = {
         operaciones: vSuc.length,
         ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
@@ -434,7 +460,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
         fichasMonto: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+(v.money||0),0),
         fichasCantidad: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
-        pulseras, billar, capsulas, error
+        pulseras, billar, capsulas, error,
+        unitarias: fichasStats.unitarias,
+        combo30: fichasStats.combo30,
+        combo50: fichasStats.combo50,
+        combo100: fichasStats.combo100,
+        combo150: fichasStats.combo150
       };
     }
     
@@ -456,6 +487,16 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">${s.puntos.toLocaleString()}</span></div>
         <div class="item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. ${s.fichasMonto.toLocaleString()}</span></div>
         <div class="item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">${s.fichasCantidad.toLocaleString()}</span></div>
+        
+        <div class="sub-section">
+          <div class="sub-label">📊 Detalle de Fichas:</div>
+          <div class="sub-item"><span class="label">🎴 Unitarias (000-00):</span><span class="amount">${s.unitarias.toLocaleString()} veces</span></div>
+          <div class="sub-item"><span class="label">🎴 Combo 30mil (000-01):</span><span class="amount">${s.combo30.toLocaleString()} veces</span></div>
+          <div class="sub-item"><span class="label">🎴 Combo 50mil (000-02):</span><span class="amount">${s.combo50.toLocaleString()} veces</span></div>
+          <div class="sub-item"><span class="label">🎴 Combo 100mil (000-03):</span><span class="amount">${s.combo100.toLocaleString()} veces</span></div>
+          <div class="sub-item"><span class="label">🎴 Combo 150mil (000-04):</span><span class="amount">${s.combo150.toLocaleString()} veces</span></div>
+        </div>
+        
         <div class="sub-section"><div class="sub-label">🔴 Error:</div>
         <div class="item"><span class="label">Fichas:</span><span class="amount">${s.error.toLocaleString()}</span></div></div>
         <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
@@ -466,7 +507,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function renderizarTablaVentas(ventas) {
-    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
+    const html = `<tr><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventas.slice(0, 300).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
         return `<tr>
