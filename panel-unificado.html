@@ -28,7 +28,7 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .stat-card.fichas .value { color:#e65100; }
 .stat-card.ventas .value { color:#6a1b9a; }
 
-/* Ventas por sucursal - más detallado */
+/* Ventas por sucursal */
 .sucursales-ventas { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; margin-bottom:30px; }
 @media (max-width:900px) { .sucursales-ventas { grid-template-columns:repeat(2, 1fr); } }
 @media (max-width:500px) { .sucursales-ventas { grid-template-columns:1fr; } }
@@ -161,7 +161,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     <div class="stat-card ventas"><div class="label">🛒 Total Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
   </div>
 
-  <!-- Ventas por sucursal (con toda la información) -->
+  <!-- Ventas por sucursal -->
   <div class="sucursales-ventas" id="ventasPorSucursal"></div>
 
   <!-- Tabs -->
@@ -251,20 +251,23 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
             <div class="img-placeholder" style="background: ${colores[colorIndex]}; display: none;">${code.replace('-', ' ')}</div>`;
   }
 
-  // Función para clasificar un producto según su código y fecha
-  function clasificarProducto(code, fechaTimestamp) {
-    const esAntesDelCambio = fechaTimestamp < FECHA_CAMBIO_CODIGOS;
+  // Función para clasificar un producto según su código y la fecha de ELIMINACIÓN
+  function clasificarProducto(code, fechaEliminacionTimestamp) {
+    // 000-07 y 000-08 siempre son pulseras y billar (nuevos códigos a partir del 4/4)
+    if (code === '000-07') return 'pulseras';
+    if (code === '000-08') return 'billar';
     
+    // 000-05 y 000-06 dependen de la fecha de ELIMINACIÓN
     if (code === '000-05') {
-      if (esAntesDelCambio) return 'pulseras';
+      // Si se eliminó antes del 4/4 de 2026, era pulsera
+      if (fechaEliminacionTimestamp < FECHA_CAMBIO_CODIGOS) return 'pulseras';
       else return 'error';
     }
     if (code === '000-06') {
-      if (esAntesDelCambio) return 'billar';
+      // Si se eliminó antes del 4/4 de 2026, era billar
+      if (fechaEliminacionTimestamp < FECHA_CAMBIO_CODIGOS) return 'billar';
       else return 'error';
     }
-    if (code === '000-07') return 'pulseras';
-    if (code === '000-08') return 'billar';
     return 'normal';
   }
 
@@ -349,10 +352,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
           const historial = await obtenerHistorialSucursal(db);
           historial.forEach(h => {
             if (h.ventas && Array.isArray(h.ventas)) {
+              const fechaEliminacion = h.timestamp || new Date(h.fechaEliminacion).getTime();
               h.ventas.forEach(v => {
                 todoHistorial.push({
                   ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
-                  timestamp: h.timestamp || new Date(h.fechaEliminacion).getTime(),
+                  timestampEliminacion: fechaEliminacion,
                   esHistorial: true
                 });
               });
@@ -360,7 +364,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
           });
         }
       }
-      todoHistorial.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+      todoHistorial.sort((a,b) => (b.timestampEliminacion || 0) - (a.timestampEliminacion || 0));
       if (tabActual === 'ventas' && (fechaDesde || fechaHasta)) aplicarFiltroFechas();
     } catch (error) { console.error(error); }
   }
@@ -377,7 +381,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     const totalDineroCierre = totalEfectivo + totalTarjeta;
     const totalPuntos = ventas.reduce((sum, v) => sum + (v.points || 0), 0);
     
-    const fichasConPrecio = ventas.filter(v => !v.esFichaGratis && v.fichaConsumption > 0 && v.code !== '000-05' && v.code !== '000-06' && v.code !== '000-07' && v.code !== '000-08');
+    const fichasConPrecio = ventasNormales.filter(v => !v.esFichaGratis && v.fichaConsumption > 0);
     const totalFichasVendidas = fichasConPrecio.reduce((sum, v) => sum + Math.abs(v.fichaConsumption || 0), 0);
     const totalMontoFichas = fichasConPrecio.reduce((sum, v) => sum + (v.money || 0), 0);
     const totalOperaciones = ventas.length;
@@ -412,26 +416,26 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       const totalJuguetesMonto = juguetes.reduce((s, v) => s + (v.money || 0), 0);
       
       // Fichas (cantidad y monto)
-      const fichasSuc = ventasNormalesSuc.filter(v => !v.esFichaGratis && v.fichaConsumption > 0 && v.code !== '000-05' && v.code !== '000-06' && v.code !== '000-07' && v.code !== '000-08');
+      const fichasSuc = ventasNormalesSuc.filter(v => !v.esFichaGratis && v.fichaConsumption > 0);
       const fichasCantidad = fichasSuc.reduce((s, v) => s + Math.abs(v.fichaConsumption || 0), 0);
       const fichasMonto = fichasSuc.reduce((s, v) => s + (v.money || 0), 0);
       
-      // Pulseras y Billar (solo para Los Laureles, con lógica de fechas)
+      // Pulseras y Billar (usando la clasificación por fecha de eliminación)
       let pulserasMonto = 0;
       let billarMonto = 0;
       
-      if (suc.clave === 'laureles') {
-        for (const v of ventasNormalesSuc) {
-          const clasif = clasificarProducto(v.code, v.timestamp);
-          if (clasif === 'pulseras') pulserasMonto += (v.money || 0);
-          if (clasif === 'billar') billarMonto += (v.money || 0);
-        }
+      for (const v of ventasNormalesSuc) {
+        const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
+        const clasif = clasificarProducto(v.code, fechaEliminacion);
+        if (clasif === 'pulseras') pulserasMonto += (v.money || 0);
+        if (clasif === 'billar') billarMonto += (v.money || 0);
       }
       
-      // Fichas por error (000-05 y 000-06 después del 4 de abril, o si tienen esFichaGratis)
+      // Fichas por error
       const fichasError = ventasSuc.filter(v => {
         if (v.esFichaGratis) return true;
-        const clasif = clasificarProducto(v.code, v.timestamp);
+        const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
+        const clasif = clasificarProducto(v.code, fechaEliminacion);
         return clasif === 'error';
       });
       const fichasErrorCantidad = fichasError.reduce((s, v) => s + Math.abs(v.fichaConsumption || 0), 0);
@@ -487,14 +491,20 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 
   function renderizarTablaVentas(ventas) {
     const ventasMostrar = ventas || (fechaDesde || fechaHasta ? ventasFiltradas : todasLasVentas);
-    const html = `<tr><thead>麣<th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Tipo</th><th>Fecha/Hora</th></thead><tbody>${
+    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Tipo</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventasMostrar.slice(0, 500).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
         let tipo = '';
-        if (v.esFichaGratis) tipo = '🔴 Ficha Error';
+        const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
+        const clasif = clasificarProducto(v.code, fechaEliminacion);
+        
+        if (v.esFichaGratis || clasif === 'error') tipo = '🔴 Ficha Error';
         else if (v.esCierre) tipo = '💰 Cierre';
         else if (v.fichaConsumption > 0) tipo = '🎴 Ficha';
+        else if (clasif === 'pulseras') tipo = '💫 Pulsera';
+        else if (clasif === 'billar') tipo = '🎱 Billar';
         else tipo = '🎁 Juguete';
+        
         return `<tr>
           <td style="color:${suc?.color || '#333'}">${v.sucursal}</td>
           <td>${v.name || v.code}</td>
@@ -502,8 +512,8 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
           <td>Gs. ${(v.money || 0).toLocaleString()}</td>
           <td>${(v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-')}</td>
           <td style="font-size:0.7rem;">${tipo}</td>
-          <td style="font-size:0.7rem;">${v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha + ' ' + v.hora)}</td>
-        </tr>`;
+          <td style="font-size:0.7rem;">${v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleDateString() : (v.fecha + ' ' + v.hora)}</td>
+        </table>`;
       }).join('')}${ventasMostrar.length === 0 ? '<tr><td colspan="7">📭 No hay ventas en este período</td>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
@@ -518,13 +528,13 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     let todas = [...todasLasVentas, ...todoHistorial];
     
     ventasFiltradas = todas.filter(v => {
-      const ts = v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
+      const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
       if (fechaDesde && ts < fechaDesde) return false;
       if (fechaHasta && ts > fechaHasta) return false;
       return true;
     });
     
-    ventasFiltradas.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+    ventasFiltradas.sort((a,b) => (b.timestampEliminacion || b.timestamp || 0) - (a.timestampEliminacion || a.timestamp || 0));
     
     actualizarEstadisticasConVentas(ventasFiltradas);
     renderizarTablaVentas(ventasFiltradas);
