@@ -16,7 +16,6 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .badges { display:flex; justify-content:center; gap:15px; flex-wrap:wrap; margin-top:15px; }
 .badge { background:#e8f4fd; padding:8px 16px; border-radius:25px; font-size:0.85rem; font-weight:600; color:#1976D2; }
 
-/* Tarjetas principales */
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:30px; }
 .stat-card { background:white; border-radius:16px; padding:15px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:transform 0.2s; }
 .stat-card:hover { transform:translateY(-2px); }
@@ -28,7 +27,6 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .stat-card.fichas .value { color:#e65100; }
 .stat-card.ventas .value { color:#6a1b9a; }
 
-/* Ventas por sucursal */
 .sucursales-ventas { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; margin-bottom:30px; }
 @media (max-width:900px) { .sucursales-ventas { grid-template-columns:repeat(2, 1fr); } }
 @media (max-width:500px) { .sucursales-ventas { grid-template-columns:1fr; } }
@@ -44,7 +42,6 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .suc-card .sub-section { margin-top: 10px; padding-top: 8px; border-top: 2px solid #ddd; }
 .suc-card .sub-label { font-size: 0.7rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
 
-/* Filtro de fechas */
 .filtro-fechas {
   background: white;
   border-radius: 16px;
@@ -141,7 +138,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     </div>
   </div>
 
-  <!-- Filtro de fechas -->
   <div class="filtro-fechas" id="filtroFechas">
     <label>📅 Desde: <input type="date" id="fechaDesde"></label>
     <label>📅 Hasta: <input type="date" id="fechaHasta"></label>
@@ -149,7 +145,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     <button class="limpiar-btn" onclick="limpiarFiltroFechas()">🗑️ Limpiar filtros</button>
   </div>
 
-  <!-- Estadísticas principales -->
   <div class="stats-grid" id="statsVentas">
     <div class="stat-card dinero"><div class="label">💰 Ventas Registradas</div><div class="value" id="totalVentasDinero">-</div><div class="unit">Gs.</div></div>
     <div class="stat-card dinero"><div class="label">💵 Efectivo (Cierre)</div><div class="value" id="totalEfectivo">-</div><div class="unit">Gs.</div></div>
@@ -161,16 +156,13 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     <div class="stat-card ventas"><div class="label">🛒 Total Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
   </div>
 
-  <!-- Ventas por sucursal -->
   <div class="sucursales-ventas" id="ventasPorSucursal"></div>
 
-  <!-- Tabs -->
   <div class="tabs">
     <button class="tab-btn active" onclick="mostrarTab('stock')">📦 Stock Unificado</button>
     <button class="tab-btn" onclick="mostrarTab('ventas')">🛒 Historial de Ventas</button>
   </div>
 
-  <!-- Búsqueda -->
   <div class="search-container" id="searchContainer">
     <input type="text" id="busqueda" placeholder="🔍 Buscar por código..." autocomplete="off">
   </div>
@@ -209,8 +201,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 
   const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
   
-  // Fecha límite para el cambio de significado de códigos (4 de abril de 2026)
-  const FECHA_CAMBIO_CODIGOS = new Date(2026, 3, 4).getTime(); // 4 de abril de 2026
+  const FECHA_CAMBIO_CODIGOS = new Date(2026, 3, 4).getTime();
 
   function getProductStock(stockData, code) {
     if (fichasConsumo[code]) {
@@ -251,22 +242,21 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
             <div class="img-placeholder" style="background: ${colores[colorIndex]}; display: none;">${code.replace('-', ' ')}</div>`;
   }
 
-  // Función para clasificar un producto según su código y la fecha de ELIMINACIÓN
+  // CLASIFICACIÓN ACTUALIZADA
   function clasificarProducto(code, fechaEliminacionTimestamp) {
-    // 000-07 y 000-08 siempre son pulseras y billar (nuevos códigos a partir del 4/4)
+    // Nuevos códigos (a partir del 4/4)
     if (code === '000-07') return 'pulseras';
     if (code === '000-08') return 'billar';
     
-    // 000-05 y 000-06 dependen de la fecha de ELIMINACIÓN
+    // 000-05: antes del 4/4 era pulsera, después es ERROR
     if (code === '000-05') {
-      // Si se eliminó antes del 4/4 de 2026, era pulsera
       if (fechaEliminacionTimestamp < FECHA_CAMBIO_CODIGOS) return 'pulseras';
       else return 'error';
     }
+    // 000-06: antes del 4/4 era billar, después es FICHAS PARA CÁPSULAS
     if (code === '000-06') {
-      // Si se eliminó antes del 4/4 de 2026, era billar
       if (fechaEliminacionTimestamp < FECHA_CAMBIO_CODIGOS) return 'billar';
-      else return 'error';
+      else return 'capsulas';
     }
     return 'normal';
   }
@@ -370,7 +360,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   }
 
   function actualizarEstadisticasConVentas(ventas) {
-    // Separar ventas normales de cierres
     const ventasNormales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
     const cierresEfectivo = ventas.filter(v => v.code === '000-09' || (v.esCierre && v.name?.includes('Efectivo')));
     const cierresTarjeta = ventas.filter(v => v.code === '000-10' || (v.esCierre && v.name?.includes('Tarjeta')));
@@ -386,7 +375,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     const totalMontoFichas = fichasConPrecio.reduce((sum, v) => sum + (v.money || 0), 0);
     const totalOperaciones = ventas.length;
     
-    // Actualizar DOM principal
     document.getElementById('totalVentasDinero').textContent = totalVentasDinero.toLocaleString();
     document.getElementById('totalEfectivo').textContent = totalEfectivo.toLocaleString();
     document.getElementById('totalTarjeta').textContent = totalTarjeta.toLocaleString();
@@ -396,7 +384,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     document.getElementById('totalMontoFichas').textContent = totalMontoFichas.toLocaleString();
     document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
     
-    // Estadísticas por sucursal
     const sucursalStats = {};
     for (const suc of sucursales) {
       const ventasSuc = ventas.filter(v => v.sucursalClave === suc.clave);
@@ -404,7 +391,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       const cierresEfectivoSuc = ventasSuc.filter(v => v.code === '000-09' || (v.esCierre && v.name?.includes('Efectivo')));
       const cierresTarjetaSuc = ventasSuc.filter(v => v.code === '000-10' || (v.esCierre && v.name?.includes('Tarjeta')));
       
-      // Juguetes (códigos 005 en adelante, excluyendo códigos especiales)
       const juguetes = ventasNormalesSuc.filter(v => {
         const match = v.code?.match(/^(\d+)-/);
         if (match) {
@@ -415,23 +401,22 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       });
       const totalJuguetesMonto = juguetes.reduce((s, v) => s + (v.money || 0), 0);
       
-      // Fichas (cantidad y monto)
       const fichasSuc = ventasNormalesSuc.filter(v => !v.esFichaGratis && v.fichaConsumption > 0);
       const fichasCantidad = fichasSuc.reduce((s, v) => s + Math.abs(v.fichaConsumption || 0), 0);
       const fichasMonto = fichasSuc.reduce((s, v) => s + (v.money || 0), 0);
       
-      // Pulseras y Billar (usando la clasificación por fecha de eliminación)
       let pulserasMonto = 0;
       let billarMonto = 0;
+      let capsulasCantidad = 0;
       
       for (const v of ventasNormalesSuc) {
         const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
         const clasif = clasificarProducto(v.code, fechaEliminacion);
         if (clasif === 'pulseras') pulserasMonto += (v.money || 0);
         if (clasif === 'billar') billarMonto += (v.money || 0);
+        if (clasif === 'capsulas') capsulasCantidad += Math.abs(v.fichaConsumption || 0);
       }
       
-      // Fichas por error
       const fichasError = ventasSuc.filter(v => {
         if (v.esFichaGratis) return true;
         const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
@@ -439,7 +424,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         return clasif === 'error';
       });
       const fichasErrorCantidad = fichasError.reduce((s, v) => s + Math.abs(v.fichaConsumption || 0), 0);
-      const fichasErrorMonto = fichasError.reduce((s, v) => s + (v.money || 0), 0);
       
       sucursalStats[suc.clave] = {
         nombre: suc.nombre, color: suc.color,
@@ -453,12 +437,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         fichasCantidad: fichasCantidad,
         pulserasMonto: pulserasMonto,
         billarMonto: billarMonto,
-        fichasErrorCantidad: fichasErrorCantidad,
-        fichasErrorMonto: fichasErrorMonto
+        capsulasCantidad: capsulasCantidad,
+        fichasErrorCantidad: fichasErrorCantidad
       };
     }
     
-    // Renderizar tarjetas de sucursales
     const sucHtml = sucursales.map(suc => {
       const s = sucursalStats[suc.clave];
       let adicionalHtml = '';
@@ -480,9 +463,12 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         <div class="venta-item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. ${s.fichasMonto.toLocaleString()}</span></div>
         <div class="venta-item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">${s.fichasCantidad.toLocaleString()}</span></div>
         <div class="sub-section">
-          <div class="sub-label">🔴 Fichas por Error:</div>
-          <div class="venta-item"><span class="label">Cantidad:</span><span class="amount">${s.fichasErrorCantidad.toLocaleString()}</span></div>
-          <div class="venta-item"><span class="label">Monto:</span><span class="amount">Gs. ${s.fichasErrorMonto.toLocaleString()}</span></div>
+          <div class="sub-label">🔴 Error (000-05):</div>
+          <div class="venta-item"><span class="label">Cantidad de fichas:</span><span class="amount">${s.fichasErrorCantidad.toLocaleString()}</span></div>
+        </div>
+        <div class="sub-section">
+          <div class="sub-label">🎴 Fichas para Cápsulas (000-06):</div>
+          <div class="venta-item"><span class="label">Cantidad de fichas:</span><span class="amount">${s.capsulasCantidad.toLocaleString()}</span></div>
         </div>
       </div>`;
     }).join('');
@@ -494,12 +480,12 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Tipo</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventasMostrar.slice(0, 500).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
-        let tipo = '';
         const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
         const clasif = clasificarProducto(v.code, fechaEliminacion);
-        
-        if (v.esFichaGratis || clasif === 'error') tipo = '🔴 Ficha Error';
+        let tipo = '';
+        if (v.esFichaGratis || clasif === 'error') tipo = '🔴 Error';
         else if (v.esCierre) tipo = '💰 Cierre';
+        else if (v.fichaConsumption > 0 && clasif === 'capsulas') tipo = '🎴 Ficha Cápsula';
         else if (v.fichaConsumption > 0) tipo = '🎴 Ficha';
         else if (clasif === 'pulseras') tipo = '💫 Pulsera';
         else if (clasif === 'billar') tipo = '🎱 Billar';
@@ -513,7 +499,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
           <td>${(v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-')}</td>
           <td style="font-size:0.7rem;">${tipo}</td>
           <td style="font-size:0.7rem;">${v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleDateString() : (v.fecha + ' ' + v.hora)}</td>
-        </table>`;
+        </tr>`;
       }).join('')}${ventasMostrar.length === 0 ? '<tr><td colspan="7">📭 No hay ventas en este período</td>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
