@@ -9,7 +9,6 @@
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 20px; }
 .container { max-width: 1400px; margin: 0 auto; }
 
-/* Header */
 .header { text-align: center; margin-bottom: 30px; }
 .header h1 { font-size: 1.8rem; margin-bottom: 5px; color: #1a1a2e; }
 .header .subtitle { color: #666; font-size: 0.9rem; }
@@ -20,7 +19,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .badge.lambare { border-left: 4px solid #ff9800; }
 .badge.morra { border-left: 4px solid #4caf50; }
 
-/* Filtro de fechas */
 .filtro-fechas {
   background: white;
   border-radius: 12px;
@@ -38,9 +36,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .filtro-fechas button { padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 .filtro-fechas button:hover { background: #1976D2; }
 .filtro-fechas .limpiar-btn { background: #ff9800; }
-.filtro-fechas .limpiar-btn:hover { background: #f57c00; }
 
-/* Tarjetas de estadísticas */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 30px; }
 .stat-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .stat-card .label { font-size: 0.7rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
@@ -49,7 +45,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .stat-card.puntos .value { color: #1565c0; }
 .stat-card.fichas .value { color: #e65100; }
 
-/* Ventas por sucursal */
 .sucursales-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
 @media (max-width: 900px) { .sucursales-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 500px) { .sucursales-grid { grid-template-columns: 1fr; } }
@@ -65,12 +60,14 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .suc-card .sub-section { margin-top: 10px; padding-top: 8px; border-top: 2px solid #ddd; }
 .suc-card .sub-label { font-size: 0.7rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
 
-/* Tabs */
 .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
 .tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
 .tab-btn.active { background: #2196F3; color: white; }
 
-/* Stock grid - 3 columnas en móvil como en catálogos */
+.search-container { text-align: center; margin-bottom: 20px; }
+.search-container input { width: 90%; max-width: 400px; padding: 10px 16px; font-size: 0.9rem; border-radius: 50px; border: 1px solid #ddd; outline: none; }
+.search-container input:focus { border-color: #2196F3; }
+
 .stock-grid { display: grid; gap: 12px; margin-top: 10px; }
 @media (min-width: 1200px) { .stock-grid { grid-template-columns: repeat(5, 1fr); } }
 @media (min-width: 768px) and (max-width: 1199px) { .stock-grid { grid-template-columns: repeat(4, 1fr); } }
@@ -118,7 +115,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .stock-sucursales .lambare { background: #fff3e0; color: #ff9800; }
 .stock-sucursales .morra { background: #e8f5e9; color: #4caf50; }
 
-/* Tabla de ventas (historial) */
 .ventas-table { background: white; border-radius: 12px; overflow-x: auto; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .ventas-table table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
 .ventas-table th, .ventas-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #eee; }
@@ -128,10 +124,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .update-info { text-align: center; margin-top: 20px; font-size: 0.7rem; color: #999; }
 .refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; }
 footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-size: 0.7rem; border-top: 1px solid #ddd; }
-
-.search-container { text-align: center; margin-bottom: 20px; }
-.search-container input { width: 90%; max-width: 400px; padding: 10px 16px; font-size: 0.9rem; border-radius: 50px; border: 1px solid #ddd; outline: none; }
-.search-container input:focus { border-color: #2196F3; }
 
 @media (max-width: 600px) {
   body { padding: 10px; }
@@ -154,11 +146,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     </div>
   </div>
 
+  <!-- Filtro de fechas - siempre visible pero no obligatorio -->
   <div class="filtro-fechas" id="filtroFechas">
-    <label>📅 Desde: <input type="date" id="fechaDesde"></label>
-    <label>📅 Hasta: <input type="date" id="fechaHasta"></label>
-    <button onclick="aplicarFiltro()">🔍 Filtrar</button>
-    <button class="limpiar-btn" onclick="limpiarFiltro()">🗑️ Limpiar</button>
+    <label>📅 Desde: <input type="date" id="fechaDesde" value=""></label>
+    <label>📅 Hasta: <input type="date" id="fechaHasta" value=""></label>
+    <button onclick="aplicarFiltro()">🔍 Filtrar por fechas</button>
+    <button class="limpiar-btn" onclick="limpiarFiltro()">🗑️ Mostrar carritos actuales</button>
   </div>
 
   <div class="stats-grid" id="statsVentas">
@@ -167,7 +160,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     <div class="stat-card dinero"><div class="label">💳 Tarjeta</div><div class="value" id="totalTarjeta">-</div></div>
     <div class="stat-card puntos"><div class="label">🎯 Puntos</div><div class="value" id="totalPuntos">-</div></div>
     <div class="stat-card fichas"><div class="label">🎴 Fichas</div><div class="value" id="totalFichas">-</div></div>
-    <div class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
+    <class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
   </div>
 
   <div class="sucursales-grid" id="sucursalesGrid"></div>
@@ -216,6 +209,45 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
   const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
 
+  // TODOS LOS CÓDIGOS QUE DEBEN APARECER EN STOCK
+  const CODIGOS_COMPLETOS = [
+    '000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06', '000-07', '000-08', '000-09', '000-10',
+    '005-00', '020-00', '020-01', '020-02', '020-03', '020-04', '020-05', '020-06', '020-07', '020-08', '020-09',
+    '020-10', '020-11', '020-12', '020-13', '020-14', '020-15', '020-16', '020-17', '020-18', '020-19', '020-20',
+    '020-21', '020-22', '020-23', '020-24', '020-25', '020-26', '020-27', '020-28', '020-29', '020-30', '020-31',
+    '020-32', '020-33', '020-34', '020-35', '020-36', '020-37', '020-38', '020-39', '020-40', '020-41', '020-42',
+    '020-43', '020-44', '020-45', '020-46', '020-47', '020-48', '020-49', '020-50', '020-51', '020-52', '020-53',
+    '020-54', '020-55', '020-56', '020-57', '020-58', '020-59', '020-60', '020-61', '020-62', '020-63', '020-64',
+    '020-65', '020-66', '020-67', '035-00', '035-01', '035-02', '035-03', '035-04', '035-05', '035-06', '035-07',
+    '035-08', '035-09', '035-10', '035-11', '035-12', '035-13', '035-14', '035-15', '035-16', '035-17', '035-18',
+    '035-19', '035-20', '035-21', '035-22', '035-23', '035-24', '035-25', '035-26', '035-27', '035-28', '035-29',
+    '035-30', '035-31', '035-32', '035-33', '035-34', '035-35', '035-36', '035-37', '035-38', '035-39', '035-40',
+    '035-41', '035-42', '035-43', '035-44', '035-45', '035-46', '035-47', '035-48', '035-49', '035-50', '035-51',
+    '035-52', '035-53', '035-54', '035-55', '035-56', '035-57', '035-58', '035-59', '035-60', '035-61', '035-62',
+    '035-63', '035-64', '035-65', '035-66', '035-67', '035-68', '035-69', '035-70', '035-71', '050-00', '050-01',
+    '050-02', '050-03', '050-04', '050-05', '050-06', '050-07', '050-08', '050-09', '050-10', '050-11', '050-12',
+    '050-13', '050-14', '050-15', '050-16', '050-17', '050-18', '050-19', '050-20', '050-21', '050-22', '050-23',
+    '050-24', '050-25', '050-26', '050-27', '050-28', '050-29', '050-30', '050-31', '050-32', '050-33', '050-34',
+    '050-35', '050-36', '050-37', '050-38', '050-39', '050-40', '050-41', '050-42', '050-43', '050-44', '050-45',
+    '050-46', '050-47', '050-48', '050-49', '050-50', '050-51', '050-52', '050-53', '075-00', '075-01', '075-02',
+    '075-03', '075-04', '075-05', '075-06', '075-07', '075-08', '075-09', '075-10', '075-11', '075-12', '075-13',
+    '075-14', '075-15', '075-16', '075-17', '075-18', '075-19', '075-20', '075-21', '075-22', '075-23', '075-24',
+    '075-25', '075-26', '075-27', '075-28', '075-29', '075-30', '075-31', '075-32', '075-33', '075-34', '075-35',
+    '075-36', '075-37', '075-38', '075-39', '075-40', '075-41', '075-42', '075-43', '075-44', '075-45', '075-46',
+    '075-47', '075-48', '075-49', '075-50', '075-51', '100-00', '100-01', '100-02', '100-03', '100-04', '100-05',
+    '100-06', '100-07', '100-08', '100-09', '100-10', '100-11', '100-12', '100-13', '100-14', '100-15', '100-16',
+    '100-17', '100-18', '100-19', '100-20', '100-21', '100-22', '100-23', '100-24', '100-25', '100-26', '100-27',
+    '100-28', '100-29', '150-00', '150-01', '150-02', '150-03', '150-04', '150-05', '150-06', '150-07', '150-08',
+    '150-09', '150-10', '150-11', '150-12', '150-13', '150-14', '150-15', '150-16', '150-17', '150-18', '150-19',
+    '150-20', '150-21', '150-22', '150-23', '150-24', '150-25', '150-26', '150-27', '150-28', '150-29', '150-30',
+    '150-31', '150-32', '150-33', '150-34', '150-35', '150-36', '150-37', '150-38', '150-39', '180-00', '200-00',
+    '200-01', '200-02', '200-03', '200-04', '200-05', '200-06', '200-07', '200-08', '200-09', '200-10', '200-11',
+    '200-12', '200-13', '200-14', '200-15', '200-16', '200-17', '200-18', '200-19', '200-20', '200-21', '200-22',
+    '200-23', '200-24', '200-25', '200-26', '200-27', '200-28', '200-29', '200-30', '200-31', '200-32', '200-33',
+    '200-34', '200-35', '200-36', '200-37', '220-00', '220-01', '220-02', '220-03', '220-04', '220-05', '220-06',
+    '220-07', '250-00', '250-01', '250-02', '250-03', '350-00', '420-00', '420-01', '420-02'
+  ];
+
   function getProductStock(stockData, code) {
     if (fichasConsumo[code]) {
       const fichaStock = stockData['000-00'] ?? 0;
@@ -229,8 +261,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function obtenerHistorial(db) { try { const data = (await get(ref(db, 'historial_ventas'))).val(); return data ? Object.values(data) : []; } catch { return []; } }
 
   let todosLosProductos = [];
-  let todasLasVentas = [];      // Ventas actuales de carritos
-  let todoHistorial = [];       // Ventas del historial
+  let todasLasVentas = [];
+  let todoHistorial = [];
   let ventasFiltradas = [];
   let tabActual = 'stock';
   let fechaDesde = null, fechaHasta = null;
@@ -252,24 +284,26 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
     if (tabActual === 'stock') renderizarStock();
-    else if (tabActual === 'ventas') aplicarFiltro();
+    else if (tabActual === 'ventas') mostrarVentasSegunEstado();
   }
 
   async function cargarStock() {
     try {
       const stocks = {};
       for (const suc of sucursales) stocks[suc.clave] = await obtenerStock(dbs[suc.clave]);
-      const codigosSet = new Set();
-      for (const suc of sucursales) Object.keys(stocks[suc.clave]).forEach(c => codigosSet.add(c));
-      ['000-00','000-01','000-02','000-03','000-04','000-05','000-06','000-07','000-08','000-09','000-10'].forEach(c => codigosSet.add(c));
+      
       todosLosProductos = [];
-      for (const code of Array.from(codigosSet).sort()) {
-        let total = 0; const stocksObj = {};
+      for (const code of CODIGOS_COMPLETOS) {
+        let total = 0;
+        const stocksObj = {};
         for (const suc of sucursales) {
           const cant = getProductStock(stocks[suc.clave], code);
-          stocksObj[suc.clave] = cant; total += cant;
+          stocksObj[suc.clave] = cant;
+          total += cant;
         }
-        if (total > 0 || code.startsWith('000-')) todosLosProductos.push({ code, stocks: stocksObj, total });
+        if (total > 0 || code.startsWith('000-') || code.startsWith('005-')) {
+          todosLosProductos.push({ code, stocks: stocksObj, total });
+        }
       }
       todosLosProductos.sort((a,b) => a.code.localeCompare(b.code));
       if (tabActual === 'stock') renderizarStock();
@@ -308,13 +342,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
       hayVentasEnCarrito = todasLasVentas.length > 0;
-      if (tabActual === 'ventas' && !fechaDesde && !fechaHasta && hayVentasEnCarrito) {
-        actualizarEstadisticas(todasLasVentas);
-        renderizarTablaVentas(todasLasVentas);
-      } else if (tabActual === 'ventas' && !hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
-        document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Seleccione un rango de fechas en el historial.</div>`;
-        document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Seleccione un rango de fechas para ver el historial</div>';
-      }
+      if (tabActual === 'ventas') mostrarVentasSegunEstado();
     } catch(e) { console.error(e); }
   }
 
@@ -337,8 +365,26 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         });
       }
       todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
-      if (tabActual === 'ventas' && (fechaDesde || fechaHasta)) aplicarFiltro();
+      if (tabActual === 'ventas') mostrarVentasSegunEstado();
     } catch(e) { console.error(e); }
+  }
+
+  function mostrarVentasSegunEstado() {
+    // Si hay ventas en carrito, mostrar las actuales sin filtro
+    if (hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
+      actualizarEstadisticas(todasLasVentas);
+      renderizarTablaVentas(todasLasVentas);
+    } 
+    // Si hay un filtro activo, mostrar el filtro
+    else if (fechaDesde || fechaHasta) {
+      aplicarFiltro();
+    }
+    // Si no hay ventas en carrito y no hay filtro, mostrar mensaje
+    else if (!hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
+      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Use el filtro de fechas para ver el historial.</div>`;
+      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Use el filtro de fechas para ver el historial de ventas</div>';
+      document.getElementById('sucursalesGrid').innerHTML = '<div class="loading" style="grid-column:1/-1;">📭 Use el filtro de fechas para ver estadísticas</div>';
+    }
   }
 
   function actualizarEstadisticas(ventas) {
@@ -421,7 +467,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <td>${v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-'}</td>
           <td style="font-size:0.7rem;">${v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora)}</td>
         </tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
@@ -431,10 +477,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
     fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
     
-    let todas = [...todasLasVentas];
-    if (!hayVentasEnCarrito || fechaDesde || fechaHasta) {
-      todas = [...todasLasVentas, ...todoHistorial];
-    }
+    let todas = [...todasLasVentas, ...todoHistorial];
     
     ventasFiltradas = todas.filter(v => {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
@@ -443,12 +486,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       return true;
     });
     ventasFiltradas.sort((a,b) => (b.timestampEliminacion||b.timestamp||0) - (a.timestampEliminacion||a.timestamp||0));
-    
-    if (ventasFiltradas.length === 0 && !hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
-      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas. Seleccione un rango de fechas en el historial.</div>`;
-      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Seleccione un rango de fechas para ver el historial</div>';
-      return;
-    }
     
     actualizarEstadisticas(ventasFiltradas);
     renderizarTablaVentas(ventasFiltradas);
@@ -459,13 +496,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('fechaHasta').value = '';
     fechaDesde = null;
     fechaHasta = null;
-    if (hayVentasEnCarrito) {
-      actualizarEstadisticas(todasLasVentas);
-      renderizarTablaVentas(todasLasVentas);
-    } else {
-      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Seleccione un rango de fechas en el historial.</div>`;
-      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Seleccione un rango de fechas para ver el historial</div>';
-    }
+    mostrarVentasSegunEstado();
   }
 
   window.mostrarTab = function(tab) {
@@ -482,15 +513,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       document.getElementById('tabStock').style.display = 'none';
       document.getElementById('tabVentas').style.display = 'block';
       document.getElementById('searchContainer').style.display = 'none';
-      if (hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
-        actualizarEstadisticas(todasLasVentas);
-        renderizarTablaVentas(todasLasVentas);
-      } else if (fechaDesde || fechaHasta) {
-        aplicarFiltro();
-      } else {
-        document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Seleccione un rango de fechas en el historial.</div>`;
-        document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Seleccione un rango de fechas para ver el historial</div>';
-      }
+      mostrarVentasSegunEstado();
     }
   };
 
@@ -499,11 +522,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   window.cargarTodo = cargarTodo;
   document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarStock(); });
 
-  const hoy = new Date();
-  const hace30Dias = new Date();
-  hace30Dias.setDate(hoy.getDate() - 30);
-  document.getElementById('fechaDesde').value = hace30Dias.toISOString().split('T')[0];
-  document.getElementById('fechaHasta').value = hoy.toISOString().split('T')[0];
+  // Inicializar con fechas vacías
+  document.getElementById('fechaDesde').value = '';
+  document.getElementById('fechaHasta').value = '';
 
   await cargarTodo();
   setInterval(() => cargarTodo(), 15000);
