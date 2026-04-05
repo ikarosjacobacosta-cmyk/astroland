@@ -3,56 +3,35 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>ASTROLAND - Panel Unificado (Estadísticas Completas)</title>
+<title>ASTROLAND - Panel Unificado</title>
 <style>
-:root { color-scheme: light; }
-* { box-sizing: border-box; }
-html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', Inter, Arial, sans-serif; color:#1a1a2e; }
-.container { max-width:1400px; margin:0 auto; padding:20px; }
+* { margin:0; padding:0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 20px; }
+.container { max-width: 1400px; margin: 0 auto; }
 
-.header { text-align:center; margin-bottom:30px; }
-.header h1 { margin:0 0 5px; font-size:1.8rem; color:#1a1a2e; }
-.header .subtitle { color:#666; font-size:0.9rem; margin-bottom:15px; }
-.badges { display:flex; justify-content:center; gap:15px; flex-wrap:wrap; margin-top:15px; }
-.badge { background:#e8f4fd; padding:8px 16px; border-radius:25px; font-size:0.85rem; font-weight:600; color:#1976D2; }
+/* Header */
+.header { text-align: center; margin-bottom: 30px; }
+.header h1 { font-size: 1.8rem; margin-bottom: 5px; color: #1a1a2e; }
+.header .subtitle { color: #666; font-size: 0.9rem; }
+.badges { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 15px; }
+.badge { background: white; padding: 6px 14px; border-radius: 25px; font-size: 0.8rem; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.badge.laureles { border-left: 4px solid #2196F3; }
+.badge.elisa { border-left: 4px solid #9c27b0; }
+.badge.lambare { border-left: 4px solid #ff9800; }
+.badge.morra { border-left: 4px solid #4caf50; }
 
-.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:30px; }
-.stat-card { background:white; border-radius:16px; padding:15px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:transform 0.2s; }
-.stat-card:hover { transform:translateY(-2px); }
-.stat-card .label { font-size:0.7rem; color:#666; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px; }
-.stat-card .value { font-size:1.4rem; font-weight:bold; }
-.stat-card .unit { font-size:0.7rem; color:#999; }
-.stat-card.dinero .value { color:#2e7d32; }
-.stat-card.puntos .value { color:#1565c0; }
-.stat-card.fichas .value { color:#e65100; }
-.stat-card.ventas .value { color:#6a1b9a; }
-
-.sucursales-ventas { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; margin-bottom:30px; }
-@media (max-width:900px) { .sucursales-ventas { grid-template-columns:repeat(2, 1fr); } }
-@media (max-width:500px) { .sucursales-ventas { grid-template-columns:1fr; } }
-.suc-card { background:white; border-radius:14px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid; }
-.suc-card.laureles { border-top-color:#2196F3; }
-.suc-card.elisa { border-top-color:#9c27b0; }
-.suc-card.lambare { border-top-color:#ff9800; }
-.suc-card.morra { border-top-color:#4caf50; }
-.suc-card h4 { margin:0 0 12px 0; font-size:1rem; display:flex; align-items:center; gap:8px; }
-.suc-card .venta-item { display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.75rem; padding:4px 0; border-bottom:1px dashed #eee; }
-.suc-card .venta-item .label { color:#666; }
-.suc-card .venta-item .amount { font-weight:bold; }
-.suc-card .sub-section { margin-top: 10px; padding-top: 8px; border-top: 2px solid #ddd; }
-.suc-card .sub-label { font-size: 0.7rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
-
+/* Filtro de fechas */
 .filtro-fechas {
   background: white;
-  border-radius: 16px;
-  padding: 15px;
+  border-radius: 12px;
+  padding: 15px 20px;
   margin-bottom: 20px;
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
   align-items: flex-end;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 .filtro-fechas label { font-size: 0.8rem; color: #666; }
 .filtro-fechas input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
@@ -61,67 +40,104 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .filtro-fechas .limpiar-btn { background: #ff9800; }
 .filtro-fechas .limpiar-btn:hover { background: #f57c00; }
 
-.tabs { display:flex; justify-content:center; gap:10px; margin-bottom:20px; }
-.tab-btn { padding:10px 25px; border:none; background:#e0e0e0; border-radius:30px; cursor:pointer; font-size:0.9rem; font-weight:600; transition:all 0.2s; }
-.tab-btn.active { background:#2196F3; color:white; }
-.tab-btn:hover:not(.active) { background:#ccc; }
+/* Tarjetas de estadísticas */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 30px; }
+.stat-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.stat-card .label { font-size: 0.7rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
+.stat-card .value { font-size: 1.3rem; font-weight: bold; }
+.stat-card.dinero .value { color: #2e7d32; }
+.stat-card.puntos .value { color: #1565c0; }
+.stat-card.fichas .value { color: #e65100; }
 
-.search-container { margin-bottom:25px; text-align:center; }
-.search-container input {
-  width: 90%;
-  max-width: 400px;
-  padding: 12px 20px;
-  font-size: 1rem;
-  border-radius: 50px;
-  border: 1px solid #ddd;
-  background: white;
-  outline: none;
-}
-.search-container input:focus { border-color:#2196F3; box-shadow:0 0 0 2px rgba(33,150,243,0.2); }
+/* Ventas por sucursal */
+.sucursales-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+@media (max-width: 900px) { .sucursales-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .sucursales-grid { grid-template-columns: 1fr; } }
+.suc-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 4px solid; }
+.suc-card.laureles { border-top-color: #2196F3; }
+.suc-card.elisa { border-top-color: #9c27b0; }
+.suc-card.lambare { border-top-color: #ff9800; }
+.suc-card.morra { border-top-color: #4caf50; }
+.suc-card h4 { font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.suc-card .item { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.75rem; padding: 4px 0; border-bottom: 1px dashed #eee; }
+.suc-card .item .label { color: #666; }
+.suc-card .item .amount { font-weight: bold; }
+.suc-card .sub-section { margin-top: 10px; padding-top: 8px; border-top: 2px solid #ddd; }
+.suc-card .sub-label { font-size: 0.7rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
 
-.productos-grid { display: grid; gap: 12px; margin-top: 10px; }
-@media (min-width: 1200px) { .productos-grid { grid-template-columns: repeat(5, 1fr); } }
-@media (min-width: 768px) and (max-width: 1199px) { .productos-grid { grid-template-columns: repeat(4, 1fr); } }
-@media (max-width: 767px) { .productos-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; } }
+/* Tabs */
+.tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+.tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+.tab-btn.active { background: #2196F3; color: white; }
 
-.producto-card {
+/* Stock grid - 3 columnas en móvil como en catálogos */
+.stock-grid { display: grid; gap: 12px; margin-top: 10px; }
+@media (min-width: 1200px) { .stock-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 768px) and (max-width: 1199px) { .stock-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 767px) { .stock-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+
+.stock-card {
   background: white;
   border-radius: 12px;
-  padding: 8px;
+  padding: 10px;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   transition: transform 0.2s;
 }
-.producto-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
-.producto-card img { width: 100%; aspect-ratio: 1/1; object-fit: contain; margin: 0 auto 8px; background: #f9f9f9; border-radius: 8px; }
-.producto-card .img-placeholder { width: 100%; aspect-ratio: 1/1; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 0.75rem; font-weight: bold; border-radius: 8px; }
-.producto-card .codigo { font-weight: 700; font-size: 0.75rem; color: #1976D2; margin-bottom: 4px; }
-.producto-card .stock-total { font-weight: 800; font-size: 0.85rem; display: inline-block; padding: 2px 8px; border-radius: 20px; margin: 5px 0; }
-.producto-card .stock-bajo { background:#ffebee; color:#f44336; }
-.producto-card .stock-medio { background:#fff3e0; color:#ff9800; }
-.producto-card .stock-normal { background:#e8f5e9; color:#2e7d32; }
-.sucursales-tabla { margin-top: 8px; width: 100%; border-collapse: collapse; font-size: 0.6rem; }
-.sucursales-tabla td { padding: 3px 2px; }
-.sucursal-nombre { font-weight: 600; text-align: left !important; font-size: 0.55rem; }
-.sucursal-cantidad { font-weight: bold; text-align: right !important; }
+.stock-card:hover { transform: translateY(-2px); }
+.stock-card img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: contain;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.stock-card .img-placeholder {
+  width: 100%;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.stock-card .codigo { font-weight: 700; font-size: 0.75rem; color: #1976D2; margin-bottom: 5px; }
+.stock-card .stock-total { font-weight: 800; font-size: 0.85rem; display: inline-block; padding: 2px 10px; border-radius: 20px; margin: 5px 0; }
+.stock-card .stock-bajo { background: #ffebee; color: #f44336; }
+.stock-card .stock-medio { background: #fff3e0; color: #ff9800; }
+.stock-card .stock-normal { background: #e8f5e9; color: #2e7d32; }
+.stock-sucursales { margin-top: 8px; font-size: 0.6rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.stock-sucursales span { display: inline-block; padding: 2px 6px; border-radius: 12px; }
+.stock-sucursales .laureles { background: #e3f2fd; color: #1976D2; }
+.stock-sucursales .elisa { background: #f3e5f5; color: #9c27b0; }
+.stock-sucursales .lambare { background: #fff3e0; color: #ff9800; }
+.stock-sucursales .morra { background: #e8f5e9; color: #4caf50; }
 
-.loading { text-align:center; padding:50px; color:#666; }
-.update-info { text-align:center; margin-top:20px; font-size:0.75rem; color:#999; }
-.refresh-btn { background:#2196F3; color:white; border:none; border-radius:20px; padding:5px 15px; margin-left:10px; cursor:pointer; }
+/* Tabla de ventas (historial) */
+.ventas-table { background: white; border-radius: 12px; overflow-x: auto; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.ventas-table table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.ventas-table th, .ventas-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #eee; }
+.ventas-table th { background: #1a1a2e; color: white; position: sticky; top: 0; }
 
-.ventas-table { background:white; border-radius:16px; overflow-x:auto; margin-top:10px; }
-.ventas-table table { width:100%; border-collapse:collapse; font-size:0.75rem; }
-.ventas-table th, .ventas-table td { padding:8px 6px; text-align:center; border-bottom:1px solid #eee; }
-.ventas-table th { background:#1a1a2e; color:white; position:sticky; top:0; }
+.loading { text-align: center; padding: 40px; color: #666; }
+.update-info { text-align: center; margin-top: 20px; font-size: 0.7rem; color: #999; }
+.refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; }
+footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-size: 0.7rem; border-top: 1px solid #ddd; }
 
-footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size:0.8rem; border-top:1px solid #ddd; }
+.search-container { text-align: center; margin-bottom: 20px; }
+.search-container input { width: 90%; max-width: 400px; padding: 10px 16px; font-size: 0.9rem; border-radius: 50px; border: 1px solid #ddd; outline: none; }
+.search-container input:focus { border-color: #2196F3; }
 
-@media (max-width: 480px) {
-  .container { padding: 10px; }
-  .header h1 { font-size: 1.3rem; }
-  .stat-card .value { font-size: 1.1rem; }
+@media (max-width: 600px) {
+  body { padding: 10px; }
+  .stat-card .value { font-size: 1rem; }
   .tab-btn { padding: 6px 15px; font-size: 0.75rem; }
-  .ventas-table th, .ventas-table td { font-size: 0.65rem; padding: 4px 2px; }
+  .ventas-table th, .ventas-table td { font-size: 0.65rem; padding: 6px 3px; }
 }
 </style>
 </head>
@@ -129,59 +145,57 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 <div class="container">
   <div class="header">
     <h1>📊 ASTROLAND - Panel Unificado</h1>
-    <p class="subtitle">Estadísticas completas de ventas | 4 sucursales</p>
+    <p class="subtitle">Stock + Estadísticas de ventas | 4 sucursales</p>
     <div class="badges">
-      <div class="badge" style="background:#e3f2fd; color:#1976D2;">🏢 Los Laureles</div>
-      <div class="badge" style="background:#f3e5f5; color:#9c27b0;">🏢 Villa Elisa</div>
-      <div class="badge" style="background:#fff3e0; color:#ff9800;">🏢 Lambare</div>
-      <div class="badge" style="background:#e8f5e9; color:#4caf50;">🏢 Villa Morra</div>
+      <div class="badge laureles">🏢 Los Laureles</div>
+      <div class="badge elisa">🏢 Villa Elisa</div>
+      <div class="badge lambare">🏢 Lambare</div>
+      <div class="badge morra">🏢 Villa Morra</div>
     </div>
   </div>
 
   <div class="filtro-fechas" id="filtroFechas">
     <label>📅 Desde: <input type="date" id="fechaDesde"></label>
     <label>📅 Hasta: <input type="date" id="fechaHasta"></label>
-    <button onclick="aplicarFiltroFechas()">🔍 Filtrar</button>
-    <button class="limpiar-btn" onclick="limpiarFiltroFechas()">🗑️ Limpiar filtros</button>
+    <button onclick="aplicarFiltro()">🔍 Filtrar</button>
+    <button class="limpiar-btn" onclick="limpiarFiltro()">🗑️ Limpiar</button>
   </div>
 
   <div class="stats-grid" id="statsVentas">
-    <div class="stat-card dinero"><div class="label">💰 Ventas Registradas</div><div class="value" id="totalVentasDinero">-</div><div class="unit">Gs.</div></div>
-    <div class="stat-card dinero"><div class="label">💵 Efectivo (Cierre)</div><div class="value" id="totalEfectivo">-</div><div class="unit">Gs.</div></div>
-    <div class="stat-card dinero"><div class="label">💳 Tarjeta (Cierre)</div><div class="value" id="totalTarjeta">-</div><div class="unit">Gs.</div></div>
-    <div class="stat-card dinero"><div class="label">💰 Dinero Total Cierre</div><div class="value" id="totalDineroCierre">-</div><div class="unit">Gs.</div></div>
-    <div class="stat-card puntos"><div class="label">🎯 Puntos Canjeados</div><div class="value" id="totalPuntos">-</div></div>
-    <div class="stat-card fichas"><div class="label">🎴 Fichas Vendidas</div><div class="value" id="totalFichasVendidas">-</div></div>
-    <div class="stat-card fichas"><div class="label">💰 Monto Fichas</div><div class="value" id="totalMontoFichas">-</div><div class="unit">Gs.</div></div>
-    <div class="stat-card ventas"><div class="label">🛒 Total Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
+    <div class="stat-card dinero"><div class="label">💰 Ventas</div><div class="value" id="totalVentas">-</div></div>
+    <div class="stat-card dinero"><div class="label">💵 Efectivo</div><div class="value" id="totalEfectivo">-</div></div>
+    <div class="stat-card dinero"><div class="label">💳 Tarjeta</div><div class="value" id="totalTarjeta">-</div></div>
+    <div class="stat-card puntos"><div class="label">🎯 Puntos</div><div class="value" id="totalPuntos">-</div></div>
+    <div class="stat-card fichas"><div class="label">🎴 Fichas</div><div class="value" id="totalFichas">-</div></div>
+    <div class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
   </div>
 
-  <div class="sucursales-ventas" id="ventasPorSucursal"></div>
+  <div class="sucursales-grid" id="sucursalesGrid"></div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="mostrarTab('stock')">📦 Stock Unificado</button>
-    <button class="tab-btn" onclick="mostrarTab('ventas')">🛒 Historial de Ventas</button>
+    <button class="tab-btn active" onclick="mostrarTab('stock')">📦 Stock</button>
+    <button class="tab-btn" onclick="mostrarTab('ventas')">🛒 Historial</button>
   </div>
 
   <div class="search-container" id="searchContainer">
-    <input type="text" id="busqueda" placeholder="🔍 Buscar por código..." autocomplete="off">
+    <input type="text" id="busqueda" placeholder="🔍 Buscar código...">
   </div>
 
   <div id="tabStock" class="tab-content">
-    <div id="productosGrid" class="productos-grid"><div class="loading">🔄 Cargando stock...</div></div>
+    <div id="stockGrid" class="stock-grid"><div class="loading">🔄 Cargando stock...</div></div>
   </div>
 
   <div id="tabVentas" class="tab-content" style="display:none;">
-    <div class="ventas-table"><div class="loading">🔄 Cargando historial de ventas...</div></div>
+    <div class="ventas-table"><div class="loading">🔄 Cargando historial...</div></div>
   </div>
 
   <div class="update-info">
     <span>🔄 Actualización automática cada 15 segundos</span>
-    <span class="time" id="lastUpdate">-</span>
-    <button class="refresh-btn" onclick="recargarTodo()">⟳ Actualizar ahora</button>
+    <span id="lastUpdate"></span>
+    <button class="refresh-btn" onclick="cargarTodo()">⟳ Actualizar</button>
   </div>
 </div>
-<footer>© 2026 ASTROLAND - Panel Unificado | Datos en tiempo real desde las 4 sucursales</footer>
+<footer>© 2026 ASTROLAND - Panel Unificado</footer>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
@@ -200,8 +214,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   });
 
   const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
-  
-  const FECHA_CAMBIO_CODIGOS = new Date(2026, 3, 4).getTime();
+  const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
 
   function getProductStock(stockData, code) {
     if (fichasConsumo[code]) {
@@ -211,307 +224,217 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     return stockData[code] ?? 0;
   }
 
-  async function obtenerStockSucursal(db) {
-    try { const snap = await get(ref(db, 'stock')); return snap.val() || {}; } catch { return {}; }
-  }
+  async function obtenerStock(db) { try { return (await get(ref(db, 'stock'))).val() || {}; } catch { return {}; } }
+  async function obtenerCarrito(db) { try { const data = (await get(ref(db, 'carrito'))).val(); return data ? Object.values(data) : []; } catch { return []; } }
+  async function obtenerHistorial(db) { try { const data = (await get(ref(db, 'historial_ventas'))).val(); return data ? Object.values(data) : []; } catch { return []; } }
 
-  async function obtenerCarritoSucursal(db) {
-    try { const snap = await get(ref(db, 'carrito')); return snap.val() ? Object.values(snap.val()) : []; } catch { return []; }
-  }
-
-  async function obtenerHistorialSucursal(db) {
-    try { const snap = await get(ref(db, 'historial_ventas')); return snap.val() ? Object.values(snap.val()) : []; } catch { return []; }
-  }
-
-  let todosLosProductos = [], productosVisibles = [];
-  let todasLasVentas = [];
-  let todoHistorial = [];
+  let todosLosProductos = [];
+  let todasLasVentas = [];      // Ventas actuales de carritos
+  let todoHistorial = [];       // Ventas del historial
   let ventasFiltradas = [];
   let tabActual = 'stock';
   let fechaDesde = null, fechaHasta = null;
+  let hayVentasEnCarrito = false;
 
-  const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
-  
-  function getColorIndex(code) {
-    return code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
-  }
+  const colores = ['linear-gradient(135deg, #667eea, #764ba2)', 'linear-gradient(135deg, #f093fb, #f5576c)', 'linear-gradient(135deg, #4facfe, #00f2fe)', 'linear-gradient(135deg, #43e97b, #38f9d7)', 'linear-gradient(135deg, #fa709a, #fee140)'];
+  function getColorIndex(code) { return code.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colores.length; }
+  function getImagenHtml(code) { const idx = getColorIndex(code); return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="img-placeholder" style="background:${colores[idx]}; display:none;">${code.replace('-', ' ')}</div>`; }
 
-  function getImagenHtml(code) {
-    const colorIndex = getColorIndex(code);
-    return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" loading="lazy">
-            <div class="img-placeholder" style="background: ${colores[colorIndex]}; display: none;">${code.replace('-', ' ')}</div>`;
-  }
-
-  // CLASIFICACIÓN ACTUALIZADA
-  function clasificarProducto(code, fechaEliminacionTimestamp) {
-    // Nuevos códigos (a partir del 4/4)
+  function clasificar(code, fechaEliminacion) {
     if (code === '000-07') return 'pulseras';
     if (code === '000-08') return 'billar';
-    
-    // 000-05: antes del 4/4 era pulsera, después es ERROR
-    if (code === '000-05') {
-      if (fechaEliminacionTimestamp < FECHA_CAMBIO_CODIGOS) return 'pulseras';
-      else return 'error';
-    }
-    // 000-06: antes del 4/4 era billar, después es FICHAS PARA CÁPSULAS
-    if (code === '000-06') {
-      if (fechaEliminacionTimestamp < FECHA_CAMBIO_CODIGOS) return 'billar';
-      else return 'capsulas';
-    }
+    if (code === '000-05') return fechaEliminacion < FECHA_CAMBIO ? 'pulseras' : 'error';
+    if (code === '000-06') return fechaEliminacion < FECHA_CAMBIO ? 'billar' : 'capsulas';
     return 'normal';
   }
 
   async function cargarTodo() {
-    await Promise.all([cargarStockUnificado(), cargarVentasUnificadas(), cargarHistorialUnificado()]);
+    await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
+    if (tabActual === 'stock') renderizarStock();
+    else if (tabActual === 'ventas') aplicarFiltro();
   }
 
-  async function cargarStockUnificado() {
+  async function cargarStock() {
     try {
-      const stocksPorSucursal = {};
-      for (const suc of sucursales) {
-        const db = dbs[suc.clave];
-        stocksPorSucursal[suc.clave] = db ? await obtenerStockSucursal(db) : {};
-      }
-      const todosLosCodigos = new Set();
-      for (const suc of sucursales) {
-        Object.keys(stocksPorSucursal[suc.clave] || {}).forEach(c => todosLosCodigos.add(c));
-      }
-      const codigosBase = ['000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06', '000-07', '000-08', '000-09', '000-10'];
-      codigosBase.forEach(c => todosLosCodigos.add(c));
-      
+      const stocks = {};
+      for (const suc of sucursales) stocks[suc.clave] = await obtenerStock(dbs[suc.clave]);
+      const codigosSet = new Set();
+      for (const suc of sucursales) Object.keys(stocks[suc.clave]).forEach(c => codigosSet.add(c));
+      ['000-00','000-01','000-02','000-03','000-04','000-05','000-06','000-07','000-08','000-09','000-10'].forEach(c => codigosSet.add(c));
       todosLosProductos = [];
-      for (const code of Array.from(todosLosCodigos).sort()) {
-        let total = 0;
-        const stocks = {};
+      for (const code of Array.from(codigosSet).sort()) {
+        let total = 0; const stocksObj = {};
         for (const suc of sucursales) {
-          const cantidad = getProductStock(stocksPorSucursal[suc.clave] || {}, code);
-          stocks[suc.clave] = cantidad;
-          total += cantidad;
+          const cant = getProductStock(stocks[suc.clave], code);
+          stocksObj[suc.clave] = cant; total += cant;
         }
-        todosLosProductos.push({ code, stocks, total });
+        if (total > 0 || code.startsWith('000-')) todosLosProductos.push({ code, stocks: stocksObj, total });
       }
-      productosVisibles = todosLosProductos.filter(p => p.total > 0);
-      productosVisibles.sort((a,b) => a.code.localeCompare(b.code));
-      if (tabActual === 'stock') renderizarGridStock();
-    } catch (error) { console.error(error); }
+      todosLosProductos.sort((a,b) => a.code.localeCompare(b.code));
+      if (tabActual === 'stock') renderizarStock();
+    } catch(e) { console.error(e); }
   }
 
-  function renderizarGridStock() {
+  function renderizarStock() {
     const termino = document.getElementById('busqueda')?.value.toLowerCase() || '';
-    let filtrados = productosVisibles.filter(p => p.code.toLowerCase().includes(termino));
+    const filtrados = todosLosProductos.filter(p => p.code.toLowerCase().includes(termino));
     const html = filtrados.map(p => {
       let stockClass = 'stock-normal';
       if (p.total < 5) stockClass = 'stock-bajo';
       else if (p.total < 20) stockClass = 'stock-medio';
-      const sucursalesHtml = sucursales.map(suc => {
-        const cantidad = p.stocks[suc.clave] || 0;
-        return `<tr><td class="sucursal-nombre" style="color: ${suc.color};">🏢 ${suc.nombre}</td><td class="sucursal-cantidad" style="color: ${cantidad === 0 ? '#999' : suc.color};">${cantidad}</td></tr>`;
-      }).join('');
-      return `<div class="producto-card"><div>${getImagenHtml(p.code)}</div><div class="codigo">${p.code}</div><div class="stock-total ${stockClass}">📦 ${p.total}</div><table class="sucursales-tabla">${sucursalesHtml}追赶</div>`;
+      const sucHtml = sucursales.map(suc => `<span class="${suc.clave}">${p.stocks[suc.clave] || 0}</span>`).join('');
+      return `<div class="stock-card">
+        <div>${getImagenHtml(p.code)}</div>
+        <div class="codigo">${p.code}</div>
+        <div class="stock-total ${stockClass}">📦 ${p.total}</div>
+        <div class="stock-sucursales">${sucHtml}</div>
+      </div>`;
     }).join('');
-    document.getElementById('productosGrid').innerHTML = filtrados.length > 0 ? html : '<div class="loading" style="grid-column:1/-1;">✨ Todos los productos tienen stock 0</div>';
+    document.getElementById('stockGrid').innerHTML = filtrados.length ? html : '<div class="loading">📦 No hay productos con stock</div>';
   }
 
-  async function cargarVentasUnificadas() {
+  async function cargarVentasCarrito() {
     try {
       todasLasVentas = [];
       for (const suc of sucursales) {
-        const db = dbs[suc.clave];
-        if (db) {
-          const ventas = await obtenerCarritoSucursal(db);
-          ventas.forEach(v => {
-            todasLasVentas.push({
-              ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
-              timestamp: v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime() || Date.now()
-            });
+        const ventas = await obtenerCarrito(dbs[suc.clave]);
+        ventas.forEach(v => {
+          todasLasVentas.push({
+            ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
+            timestamp: v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime()
           });
-        }
+        });
       }
-      todasLasVentas.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
-      if (tabActual === 'ventas' && !fechaDesde && !fechaHasta) actualizarEstadisticasConVentas(todasLasVentas);
-    } catch (error) { console.error(error); }
+      todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
+      hayVentasEnCarrito = todasLasVentas.length > 0;
+      if (tabActual === 'ventas' && !fechaDesde && !fechaHasta && hayVentasEnCarrito) {
+        actualizarEstadisticas(todasLasVentas);
+        renderizarTablaVentas(todasLasVentas);
+      } else if (tabActual === 'ventas' && !hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
+        document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Seleccione un rango de fechas en el historial.</div>`;
+        document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Seleccione un rango de fechas para ver el historial</div>';
+      }
+    } catch(e) { console.error(e); }
   }
 
-  async function cargarHistorialUnificado() {
+  async function cargarHistorial() {
     try {
       todoHistorial = [];
       for (const suc of sucursales) {
-        const db = dbs[suc.clave];
-        if (db) {
-          const historial = await obtenerHistorialSucursal(db);
-          historial.forEach(h => {
-            if (h.ventas && Array.isArray(h.ventas)) {
-              const fechaEliminacion = h.timestamp || new Date(h.fechaEliminacion).getTime();
-              h.ventas.forEach(v => {
-                todoHistorial.push({
-                  ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
-                  timestampEliminacion: fechaEliminacion,
-                  esHistorial: true
-                });
+        const historial = await obtenerHistorial(dbs[suc.clave]);
+        historial.forEach(h => {
+          if (h.ventas && Array.isArray(h.ventas)) {
+            const fechaElim = h.timestamp || new Date(h.fechaEliminacion).getTime();
+            h.ventas.forEach(v => {
+              todoHistorial.push({
+                ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
+                timestampEliminacion: fechaElim,
+                esHistorial: true
               });
-            }
-          });
-        }
+            });
+          }
+        });
       }
-      todoHistorial.sort((a,b) => (b.timestampEliminacion || 0) - (a.timestampEliminacion || 0));
-      if (tabActual === 'ventas' && (fechaDesde || fechaHasta)) aplicarFiltroFechas();
-    } catch (error) { console.error(error); }
+      todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
+      if (tabActual === 'ventas' && (fechaDesde || fechaHasta)) aplicarFiltro();
+    } catch(e) { console.error(e); }
   }
 
-  function actualizarEstadisticasConVentas(ventas) {
-    const ventasNormales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
-    const cierresEfectivo = ventas.filter(v => v.code === '000-09' || (v.esCierre && v.name?.includes('Efectivo')));
-    const cierresTarjeta = ventas.filter(v => v.code === '000-10' || (v.esCierre && v.name?.includes('Tarjeta')));
+  function actualizarEstadisticas(ventas) {
+    const normales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
+    const cierresEfectivo = ventas.filter(v => v.code === '000-09');
+    const cierresTarjeta = ventas.filter(v => v.code === '000-10');
     
-    const totalVentasDinero = ventasNormales.reduce((sum, v) => sum + (v.money || 0), 0);
-    const totalEfectivo = cierresEfectivo.reduce((sum, v) => sum + (v.money || 0), 0);
-    const totalTarjeta = cierresTarjeta.reduce((sum, v) => sum + (v.money || 0), 0);
-    const totalDineroCierre = totalEfectivo + totalTarjeta;
-    const totalPuntos = ventas.reduce((sum, v) => sum + (v.points || 0), 0);
-    
-    const fichasConPrecio = ventasNormales.filter(v => !v.esFichaGratis && v.fichaConsumption > 0);
-    const totalFichasVendidas = fichasConPrecio.reduce((sum, v) => sum + Math.abs(v.fichaConsumption || 0), 0);
-    const totalMontoFichas = fichasConPrecio.reduce((sum, v) => sum + (v.money || 0), 0);
-    const totalOperaciones = ventas.length;
-    
-    document.getElementById('totalVentasDinero').textContent = totalVentasDinero.toLocaleString();
-    document.getElementById('totalEfectivo').textContent = totalEfectivo.toLocaleString();
-    document.getElementById('totalTarjeta').textContent = totalTarjeta.toLocaleString();
-    document.getElementById('totalDineroCierre').textContent = totalDineroCierre.toLocaleString();
-    document.getElementById('totalPuntos').textContent = totalPuntos.toLocaleString();
-    document.getElementById('totalFichasVendidas').textContent = totalFichasVendidas.toLocaleString();
-    document.getElementById('totalMontoFichas').textContent = totalMontoFichas.toLocaleString();
-    document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
-    
-    const sucursalStats = {};
+    document.getElementById('totalVentas').textContent = normales.reduce((s,v)=>s+(v.money||0),0).toLocaleString();
+    document.getElementById('totalEfectivo').textContent = cierresEfectivo.reduce((s,v)=>s+(v.money||0),0).toLocaleString();
+    document.getElementById('totalTarjeta').textContent = cierresTarjeta.reduce((s,v)=>s+(v.money||0),0).toLocaleString();
+    document.getElementById('totalPuntos').textContent = ventas.reduce((s,v)=>s+(v.points||0),0).toLocaleString();
+    document.getElementById('totalFichas').textContent = normales.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0).toLocaleString();
+    document.getElementById('totalOperaciones').textContent = ventas.length.toLocaleString();
+
+    // Estadísticas por sucursal
+    const sucStats = {};
     for (const suc of sucursales) {
-      const ventasSuc = ventas.filter(v => v.sucursalClave === suc.clave);
-      const ventasNormalesSuc = ventasSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
-      const cierresEfectivoSuc = ventasSuc.filter(v => v.code === '000-09' || (v.esCierre && v.name?.includes('Efectivo')));
-      const cierresTarjetaSuc = ventasSuc.filter(v => v.code === '000-10' || (v.esCierre && v.name?.includes('Tarjeta')));
+      const vSuc = ventas.filter(v => v.sucursalClave === suc.clave);
+      const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
+      const cEfectivo = vSuc.filter(v => v.code === '000-09');
+      const cTarjeta = vSuc.filter(v => v.code === '000-10');
       
-      const juguetes = ventasNormalesSuc.filter(v => {
-        const match = v.code?.match(/^(\d+)-/);
-        if (match) {
-          const num = parseInt(match[1]);
-          return num >= 5 && num !== 0 && !v.esFichaGratis && v.code !== '000-05' && v.code !== '000-06' && v.code !== '000-07' && v.code !== '000-08' && v.code !== '000-09' && v.code !== '000-10';
-        }
-        return false;
-      });
-      const totalJuguetesMonto = juguetes.reduce((s, v) => s + (v.money || 0), 0);
-      
-      const fichasSuc = ventasNormalesSuc.filter(v => !v.esFichaGratis && v.fichaConsumption > 0);
-      const fichasCantidad = fichasSuc.reduce((s, v) => s + Math.abs(v.fichaConsumption || 0), 0);
-      const fichasMonto = fichasSuc.reduce((s, v) => s + (v.money || 0), 0);
-      
-      let pulserasMonto = 0;
-      let billarMonto = 0;
-      let capsulasCantidad = 0;
-      
-      for (const v of ventasNormalesSuc) {
-        const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
-        const clasif = clasificarProducto(v.code, fechaEliminacion);
-        if (clasif === 'pulseras') pulserasMonto += (v.money || 0);
-        if (clasif === 'billar') billarMonto += (v.money || 0);
-        if (clasif === 'capsulas') capsulasCantidad += Math.abs(v.fichaConsumption || 0);
+      let pulseras=0, billar=0, capsulas=0, error=0;
+      for (const v of vNorm) {
+        const fecha = v.timestampEliminacion || v.timestamp || Date.now();
+        const tipo = clasificar(v.code, fecha);
+        if (tipo === 'pulseras') pulseras += v.money || 0;
+        if (tipo === 'billar') billar += v.money || 0;
+        if (tipo === 'capsulas') capsulas += Math.abs(v.fichaConsumption || 0);
+        if (tipo === 'error') error += Math.abs(v.fichaConsumption || 0);
       }
       
-      const fichasError = ventasSuc.filter(v => {
-        if (v.esFichaGratis) return true;
-        const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
-        const clasif = clasificarProducto(v.code, fechaEliminacion);
-        return clasif === 'error';
-      });
-      const fichasErrorCantidad = fichasError.reduce((s, v) => s + Math.abs(v.fichaConsumption || 0), 0);
-      
-      sucursalStats[suc.clave] = {
-        nombre: suc.nombre, color: suc.color,
-        operaciones: ventasSuc.length,
-        ventasMonto: ventasNormalesSuc.reduce((s, v) => s + (v.money || 0), 0),
-        efectivo: cierresEfectivoSuc.reduce((s, v) => s + (v.money || 0), 0),
-        tarjeta: cierresTarjetaSuc.reduce((s, v) => s + (v.money || 0), 0),
-        juguetesMonto: totalJuguetesMonto,
-        puntos: ventasSuc.reduce((s, v) => s + (v.points || 0), 0),
-        fichasMonto: fichasMonto,
-        fichasCantidad: fichasCantidad,
-        pulserasMonto: pulserasMonto,
-        billarMonto: billarMonto,
-        capsulasCantidad: capsulasCantidad,
-        fichasErrorCantidad: fichasErrorCantidad
+      sucStats[suc.clave] = {
+        operaciones: vSuc.length,
+        ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
+        efectivo: cEfectivo.reduce((s,v)=>s+(v.money||0),0),
+        tarjeta: cTarjeta.reduce((s,v)=>s+(v.money||0),0),
+        puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
+        fichasMonto: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+(v.money||0),0),
+        fichasCantidad: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
+        pulseras, billar, capsulas, error
       };
     }
     
     const sucHtml = sucursales.map(suc => {
-      const s = sucursalStats[suc.clave];
-      let adicionalHtml = '';
+      const s = sucStats[suc.clave];
+      let extras = '';
       if (suc.clave === 'laureles') {
-        adicionalHtml = `
-          <div class="venta-item"><span class="label">💫 Pulseras:</span><span class="amount">Gs. ${(s.pulserasMonto || 0).toLocaleString()}</span></div>
-          <div class="venta-item"><span class="label">🎱 Billar:</span><span class="amount">Gs. ${(s.billarMonto || 0).toLocaleString()}</span></div>
-        `;
+        extras = `<div class="item"><span class="label">💫 Pulseras:</span><span class="amount">Gs. ${(s.pulseras||0).toLocaleString()}</span></div>
+                  <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. ${(s.billar||0).toLocaleString()}</span></div>`;
       }
-      return `<div class="suc-card ${suc.clave}" style="border-top-color: ${suc.color}; background: ${suc.bg}20;">
-        <h4><span style="color:${suc.color}">🏢</span> ${s.nombre}</h4>
-        <div class="venta-item"><span class="label">📋 Operaciones:</span><span class="amount">${s.operaciones}</span></div>
-        <div class="venta-item"><span class="label">💰 Ventas:</span><span class="amount">Gs. ${s.ventasMonto.toLocaleString()}</span></div>
-        <div class="venta-item"><span class="label">💵 Efectivo (Cierre):</span><span class="amount">Gs. ${s.efectivo.toLocaleString()}</span></div>
-        <div class="venta-item"><span class="label">💳 Tarjeta (Cierre):</span><span class="amount">Gs. ${s.tarjeta.toLocaleString()}</span></div>
-        <div class="venta-item"><span class="label">🎁 Juguetes:</span><span class="amount">Gs. ${s.juguetesMonto.toLocaleString()}</span></div>
-        ${adicionalHtml}
-        <div class="venta-item"><span class="label">🎯 Puntos:</span><span class="amount">${s.puntos.toLocaleString()}</span></div>
-        <div class="venta-item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. ${s.fichasMonto.toLocaleString()}</span></div>
-        <div class="venta-item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">${s.fichasCantidad.toLocaleString()}</span></div>
-        <div class="sub-section">
-          <div class="sub-label">🔴 Error (000-05):</div>
-          <div class="venta-item"><span class="label">Cantidad de fichas:</span><span class="amount">${s.fichasErrorCantidad.toLocaleString()}</span></div>
-        </div>
-        <div class="sub-section">
-          <div class="sub-label">🎴 Fichas para Cápsulas (000-06):</div>
-          <div class="venta-item"><span class="label">Cantidad de fichas:</span><span class="amount">${s.capsulasCantidad.toLocaleString()}</span></div>
-        </div>
+      return `<div class="suc-card ${suc.clave}">
+        <h4><span style="color:${suc.color}">🏢</span> ${suc.nombre}</h4>
+        <div class="item"><span class="label">📋 Operaciones:</span><span class="amount">${s.operaciones}</span></div>
+        <div class="item"><span class="label">💰 Ventas:</span><span class="amount">Gs. ${s.ventas.toLocaleString()}</span></div>
+        <div class="item"><span class="label">💵 Efectivo:</span><span class="amount">Gs. ${s.efectivo.toLocaleString()}</span></div>
+        <div class="item"><span class="label">💳 Tarjeta:</span><span class="amount">Gs. ${s.tarjeta.toLocaleString()}</span></div>
+        <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">${s.puntos.toLocaleString()}</span></div>
+        <div class="item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. ${s.fichasMonto.toLocaleString()}</span></div>
+        <div class="item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">${s.fichasCantidad.toLocaleString()}</span></div>
+        ${extras}
+        <div class="sub-section"><div class="sub-label">🔴 Error:</div>
+        <div class="item"><span class="label">Fichas:</span><span class="amount">${s.error.toLocaleString()}</span></div></div>
+        <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
+        <div class="item"><span class="label">Fichas:</span><span class="amount">${s.capsulas.toLocaleString()}</span></div></div>
       </div>`;
     }).join('');
-    document.getElementById('ventasPorSucursal').innerHTML = sucHtml;
+    document.getElementById('sucursalesGrid').innerHTML = sucHtml;
   }
 
   function renderizarTablaVentas(ventas) {
-    const ventasMostrar = ventas || (fechaDesde || fechaHasta ? ventasFiltradas : todasLasVentas);
-    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Tipo</th><th>Fecha/Hora</th></tr></thead><tbody>${
-      ventasMostrar.slice(0, 500).map(v => {
+    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
+      ventas.slice(0, 300).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
-        const fechaEliminacion = v.timestampEliminacion || v.timestamp || Date.now();
-        const clasif = clasificarProducto(v.code, fechaEliminacion);
-        let tipo = '';
-        if (v.esFichaGratis || clasif === 'error') tipo = '🔴 Error';
-        else if (v.esCierre) tipo = '💰 Cierre';
-        else if (v.fichaConsumption > 0 && clasif === 'capsulas') tipo = '🎴 Ficha Cápsula';
-        else if (v.fichaConsumption > 0) tipo = '🎴 Ficha';
-        else if (clasif === 'pulseras') tipo = '💫 Pulsera';
-        else if (clasif === 'billar') tipo = '🎱 Billar';
-        else tipo = '🎁 Juguete';
-        
         return `<tr>
-          <td style="color:${suc?.color || '#333'}">${v.sucursal}</td>
+          <td style="color:${suc?.color||'#333'}">${v.sucursal}</td>
           <td>${v.name || v.code}</td>
-          <td>${(v.points || 0).toLocaleString()}</td>
-          <td>Gs. ${(v.money || 0).toLocaleString()}</td>
-          <td>${(v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-')}</td>
-          <td style="font-size:0.7rem;">${tipo}</td>
-          <td style="font-size:0.7rem;">${v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleDateString() : (v.fecha + ' ' + v.hora)}</td>
+          <td>${(v.points||0).toLocaleString()}</td>
+          <td>Gs. ${(v.money||0).toLocaleString()}</td>
+          <td>${v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-'}</td>
+          <td style="font-size:0.7rem;">${v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora)}</td>
         </tr>`;
-      }).join('')}${ventasMostrar.length === 0 ? '<tr><td colspan="7">📭 No hay ventas en este período</td>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
-  function aplicarFiltroFechas() {
-    const desdeInput = document.getElementById('fechaDesde').value;
-    const hastaInput = document.getElementById('fechaHasta').value;
+  function aplicarFiltro() {
+    const desde = document.getElementById('fechaDesde').value;
+    const hasta = document.getElementById('fechaHasta').value;
+    fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
+    fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
     
-    fechaDesde = desdeInput ? new Date(desdeInput).setHours(0,0,0,0) : null;
-    fechaHasta = hastaInput ? new Date(hastaInput).setHours(23,59,59,999) : null;
-    
-    let todas = [...todasLasVentas, ...todoHistorial];
+    let todas = [...todasLasVentas];
+    if (!hayVentasEnCarrito || fechaDesde || fechaHasta) {
+      todas = [...todasLasVentas, ...todoHistorial];
+    }
     
     ventasFiltradas = todas.filter(v => {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
@@ -519,51 +442,62 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       if (fechaHasta && ts > fechaHasta) return false;
       return true;
     });
+    ventasFiltradas.sort((a,b) => (b.timestampEliminacion||b.timestamp||0) - (a.timestampEliminacion||a.timestamp||0));
     
-    ventasFiltradas.sort((a,b) => (b.timestampEliminacion || b.timestamp || 0) - (a.timestampEliminacion || a.timestamp || 0));
+    if (ventasFiltradas.length === 0 && !hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
+      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas. Seleccione un rango de fechas en el historial.</div>`;
+      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Seleccione un rango de fechas para ver el historial</div>';
+      return;
+    }
     
-    actualizarEstadisticasConVentas(ventasFiltradas);
+    actualizarEstadisticas(ventasFiltradas);
     renderizarTablaVentas(ventasFiltradas);
   }
 
-  function limpiarFiltroFechas() {
+  function limpiarFiltro() {
     document.getElementById('fechaDesde').value = '';
     document.getElementById('fechaHasta').value = '';
     fechaDesde = null;
     fechaHasta = null;
-    ventasFiltradas = [];
-    actualizarEstadisticasConVentas(todasLasVentas);
-    renderizarTablaVentas(todasLasVentas);
+    if (hayVentasEnCarrito) {
+      actualizarEstadisticas(todasLasVentas);
+      renderizarTablaVentas(todasLasVentas);
+    } else {
+      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Seleccione un rango de fechas en el historial.</div>`;
+      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Seleccione un rango de fechas para ver el historial</div>';
+    }
   }
-
-  window.aplicarFiltroFechas = aplicarFiltroFechas;
-  window.limpiarFiltroFechas = limpiarFiltroFechas;
 
   window.mostrarTab = function(tab) {
     tabActual = tab;
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     if (tab === 'stock') {
       document.querySelector('.tab-btn:first-child').classList.add('active');
       document.getElementById('tabStock').style.display = 'block';
       document.getElementById('tabVentas').style.display = 'none';
       document.getElementById('searchContainer').style.display = 'block';
-      renderizarGridStock();
+      renderizarStock();
     } else {
       document.querySelector('.tab-btn:last-child').classList.add('active');
       document.getElementById('tabStock').style.display = 'none';
       document.getElementById('tabVentas').style.display = 'block';
       document.getElementById('searchContainer').style.display = 'none';
-      if (fechaDesde || fechaHasta) {
-        aplicarFiltroFechas();
-      } else {
-        actualizarEstadisticasConVentas(todasLasVentas);
+      if (hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
+        actualizarEstadisticas(todasLasVentas);
         renderizarTablaVentas(todasLasVentas);
+      } else if (fechaDesde || fechaHasta) {
+        aplicarFiltro();
+      } else {
+        document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Seleccione un rango de fechas en el historial.</div>`;
+        document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Seleccione un rango de fechas para ver el historial</div>';
       }
     }
   };
 
-  window.recargarTodo = () => cargarTodo();
-  document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarGridStock(); });
+  window.aplicarFiltro = aplicarFiltro;
+  window.limpiarFiltro = limpiarFiltro;
+  window.cargarTodo = cargarTodo;
+  document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarStock(); });
 
   const hoy = new Date();
   const hace30Dias = new Date();
