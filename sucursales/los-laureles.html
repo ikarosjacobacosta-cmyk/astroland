@@ -301,17 +301,17 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .cart-item { 
   display: grid; 
-  grid-template-columns: 2fr 0.8fr 1fr 1fr 1.2fr 0.8fr; 
+  grid-template-columns: 2fr 0.8fr 1fr 1fr 1fr 1.2fr 0.8fr; 
   padding: 12px; 
   border-bottom: 1px solid #eee; 
   align-items: center; 
   gap: 5px; 
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 @media (max-width:600px) {
   .cart-item { 
-    grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr 1fr 0.6fr;
-    font-size: 0.7rem;
+    grid-template-columns: 1.5fr 0.6fr 0.7fr 0.7fr 0.7fr 1fr 0.6fr;
+    font-size: 0.65rem;
     gap: 3px;
   }
 }
@@ -575,7 +575,7 @@ body { padding-top: 80px; }
       <h3>🛒 Carrito de Compras</h3>
       <div id="cartItems" class="cart-items">
         <div class="cart-item cart-header">
-          <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>📅 Fecha/Hora</span><span>🗑️</span>
+          <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span>
         </div>
       </div>
       <div class="cart-actions">
@@ -678,7 +678,7 @@ body { padding-top: 80px; }
         { codigo: "000-08", precio: 15000 }, { codigo: "000-09", precio: 0 },
         { codigo: "000-10", precio: 0 }
       ]},
-      { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 14 } },
+      { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 0 } },
       { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 67 } },
       { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 71 } },
       { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 53 } },
@@ -904,7 +904,7 @@ body { padding-top: 80px; }
     const ahora = new Date();
     const fecha = ahora.toLocaleDateString('es-PY');
     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const nombreProducto = code === '000-05' ? '000-05 (Ficha 1)' : '000-06 (Ficha 7)';
+    const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
     await push(cartRef, { 
       code, name: nombreProducto, points: 0, money: 0, 
       totalPrice: 0, fecha, hora, 
@@ -912,7 +912,7 @@ body { padding-top: 80px; }
       fichaConsumption: fichasAConsumir, esFichaGratis: true, unidades: 1
     });
     
-    alert(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code}`);
+    alert(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code} (sin costo)`);
     resetSearch();
   }
 
@@ -939,7 +939,7 @@ body { padding-top: 80px; }
     const fecha = ahora.toLocaleDateString('es-PY');
     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     const code = tipo === 'Efectivo' ? '000-09' : '000-10';
-    const name = tipo === 'Efectivo' ? 'Cierre Efectivo' : 'Cierre Tarjeta';
+    const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
     
     await push(cartRef, { 
       code, name, points: 0, money: montoNum, 
@@ -1100,12 +1100,13 @@ body { padding-top: 80px; }
       ventas: ventasAEliminar.map(item => ({
         code: item.code, name: item.name, points: item.points, money: item.money,
         fichaConsumption: item.fichaConsumption || 0, unidades: item.unidades || 1,
-        fecha: item.fecha, hora: item.hora
+        fecha: item.fecha, hora: item.hora, esFichaGratis: item.esFichaGratis || false
       })),
       totalVentas: ventasAEliminar.length,
       totalDinero: ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0),
       totalPuntos: ventasAEliminar.reduce((s, v) => s + (v.points || 0), 0),
-      totalFichas: ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0)
+      totalFichas: ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0),
+      totalFichasRegaladas: ventasAEliminar.reduce((s, v) => s + (v.esFichaGratis ? Math.abs(v.fichaConsumption) || 0 : 0), 0)
     };
     try { await push(historialRef, registro); } catch(e) { console.error(e); }
   }
@@ -1160,20 +1161,22 @@ body { padding-top: 80px; }
     const totalDinero = filtrados.reduce((s, h) => s + (h.totalDinero || 0), 0);
     const totalPuntos = filtrados.reduce((s, h) => s + (h.totalPuntos || 0), 0);
     const totalFichas = filtrados.reduce((s, h) => s + (h.totalFichas || 0), 0);
+    const totalFichasRegaladas = filtrados.reduce((s, h) => s + (h.totalFichasRegaladas || 0), 0);
     const totalVentas = filtrados.reduce((s, h) => s + (h.totalVentas || 0), 0);
     
     document.getElementById('historialStats').innerHTML = `
       <strong>📊 Resumen del período:</strong><br>
       💰 Dinero total: Gs. ${totalDinero.toLocaleString()} | 
       🎯 Puntos: ${totalPuntos.toLocaleString()} | 
-      🎴 Fichas: ${totalFichas.toLocaleString()} | 
+      🎴 Fichas Consumidas: ${totalFichas.toLocaleString()} | 
+      🎁 Fichas Regaladas: ${totalFichasRegaladas.toLocaleString()} | 
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th></tr></thead><tbody>`;
+    let html = `<td><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Regaladas</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = new Date(h.timestamp).toLocaleDateString('es-PY');
-      html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td style="text-align:center;">${h.totalVentas || 0}</td><td style="text-align:center;">Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td></tr>`;
+      html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td style="text-align:center;">${h.totalVentas || 0}</td><td style="text-align:center;">Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td></tr>`;
     });
     html += `</tbody></table>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
@@ -1188,12 +1191,17 @@ body { padding-top: 80px; }
     const hastaTime = new Date(hasta).setHours(23,59,59,999);
     const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
     
-    const data = [['Fecha Eliminación', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Totales']];
+    const data = [['Fecha Eliminación', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas']];
     filtrados.forEach(h => {
-      data.push([new Date(h.timestamp).toLocaleDateString('es-PY'), h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0]);
+      data.push([new Date(h.timestamp).toLocaleDateString('es-PY'), h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0]);
     });
-    data.push([], ['RESUMEN TOTAL', '', '', '', '']);
-    data.push(['Total General', filtrados.reduce((s,h)=>s+(h.totalVentas||0),0), filtrados.reduce((s,h)=>s+(h.totalDinero||0),0), filtrados.reduce((s,h)=>s+(h.totalPuntos||0),0), filtrados.reduce((s,h)=>s+(h.totalFichas||0),0)]);
+    data.push([], ['RESUMEN TOTAL', '', '', '', '', '']);
+    data.push(['Total General', 
+      filtrados.reduce((s,h)=>s+(h.totalVentas||0),0), 
+      filtrados.reduce((s,h)=>s+(h.totalDinero||0),0), 
+      filtrados.reduce((s,h)=>s+(h.totalPuntos||0),0), 
+      filtrados.reduce((s,h)=>s+(h.totalFichas||0),0),
+      filtrados.reduce((s,h)=>s+(h.totalFichasRegaladas||0),0)]);
     
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
@@ -1203,7 +1211,7 @@ body { padding-top: 80px; }
 
   function renderCart() {
     const div = document.getElementById('cartItems');
-    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
+    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
     cart.forEach(item => {
       if (!item) return;
       const d = document.createElement('div');
@@ -1226,15 +1234,19 @@ body { padding-top: 80px; }
         maquinaTexto = '-';
       }
       
-      d.innerHTML = `<span>${item.name}${item.fichaConsumption ? ` (${Math.abs(item.fichaConsumption)} f)` : ''}</span>
+      const fichasTexto = item.fichaConsumption ? `${Math.abs(item.fichaConsumption)}` : '-';
+      const fichasClase = item.esFichaGratis ? 'unidades-negativo' : '';
+      
+      d.innerHTML = `<span>${item.name}</span>
         <span>${(item.points || 0).toLocaleString()}</span>
         <span>G.${(item.money || 0).toLocaleString()}</span>
         <span class="unidades-maquina ${maquinaClase}">${maquinaTexto}</span>
+        <span class="${fichasClase}">${fichasTexto}</span>
         <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
         <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">🗑️</button></span>`;
       div.appendChild(d);
     });
-    if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="6" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
+    if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
   }
 
   window.showDeletePrompt = function(firebaseKey) {
@@ -1396,11 +1408,14 @@ body { padding-top: 80px; }
     if (cart.length === 0) { alert('Carrito vacío'); return; }
     const totalP = cart.reduce((s,i) => s + (i.points||0), 0);
     const totalM = cart.reduce((s,i) => s + (i.money||0), 0);
-    const totalF = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption)||0), 0);
+    const totalFichas = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption)||0), 0);
+    const totalFichasRegaladas = cart.reduce((s,i) => s + (i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0), 0);
+    const totalFichasVendidas = totalFichas - totalFichasRegaladas;
+    
     const data = [['ASTROLAND - Los Laureles'], ['IN GOD WE TRUST'], [],
-      ['Producto','Puntos','Dinero','Unidades Máquina','Fichas','Fecha','Hora'],
-      ...cart.map(i => [i.name, i.points||0, i.money||0, i.unidades || (i.esMaquina ? '1' : '-'), Math.abs(i.fichaConsumption)||0, i.fecha, i.hora]),
-      [], ['TOTALES', totalP, totalM, '', totalF, '', '']];
+      ['Producto','Puntos','Dinero','Unidades Máquina','Fichas Consumidas','Fichas Regaladas','Fichas Vendidas','Fecha','Hora'],
+      ...cart.map(i => [i.name, i.points||0, i.money||0, i.unidades || (i.esMaquina ? '1' : '-'), Math.abs(i.fichaConsumption)||0, i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, !i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, i.fecha, i.hora]),
+      [], ['TOTALES', totalP, totalM, '', totalFichas, totalFichasRegaladas, totalFichasVendidas, '', '']];
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, 'Carrito');
