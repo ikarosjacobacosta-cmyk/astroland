@@ -146,7 +146,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     </div>
   </div>
 
-  <!-- Filtro de fechas - siempre visible pero no obligatorio -->
   <div class="filtro-fechas" id="filtroFechas">
     <label>📅 Desde: <input type="date" id="fechaDesde" value=""></label>
     <label>📅 Hasta: <input type="date" id="fechaHasta" value=""></label>
@@ -160,7 +159,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     <div class="stat-card dinero"><div class="label">💳 Tarjeta</div><div class="value" id="totalTarjeta">-</div></div>
     <div class="stat-card puntos"><div class="label">🎯 Puntos</div><div class="value" id="totalPuntos">-</div></div>
     <div class="stat-card fichas"><div class="label">🎴 Fichas</div><div class="value" id="totalFichas">-</div></div>
-    <class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
+    <div class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
   </div>
 
   <div class="sucursales-grid" id="sucursalesGrid"></div>
@@ -209,7 +208,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
   const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
 
-  // TODOS LOS CÓDIGOS QUE DEBEN APARECER EN STOCK
   const CODIGOS_COMPLETOS = [
     '000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06', '000-07', '000-08', '000-09', '000-10',
     '005-00', '020-00', '020-01', '020-02', '020-03', '020-04', '020-05', '020-06', '020-07', '020-08', '020-09',
@@ -278,6 +276,17 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     if (code === '000-05') return fechaEliminacion < FECHA_CAMBIO ? 'pulseras' : 'error';
     if (code === '000-06') return fechaEliminacion < FECHA_CAMBIO ? 'billar' : 'capsulas';
     return 'normal';
+  }
+
+  function esJuguete(code) {
+    if (!code) return false;
+    const match = code.match(/^(\d+)-/);
+    if (!match) return false;
+    const num = parseInt(match[1]);
+    // Excluir códigos especiales
+    const especiales = ['000-05', '000-06', '000-07', '000-08', '000-09', '000-10'];
+    if (especiales.includes(code)) return false;
+    return num >= 5 && num !== 0;
   }
 
   async function cargarTodo() {
@@ -370,16 +379,13 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function mostrarVentasSegunEstado() {
-    // Si hay ventas en carrito, mostrar las actuales sin filtro
     if (hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
       actualizarEstadisticas(todasLasVentas);
       renderizarTablaVentas(todasLasVentas);
     } 
-    // Si hay un filtro activo, mostrar el filtro
     else if (fechaDesde || fechaHasta) {
       aplicarFiltro();
     }
-    // Si no hay ventas en carrito y no hay filtro, mostrar mensaje
     else if (!hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
       document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Use el filtro de fechas para ver el historial.</div>`;
       document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Use el filtro de fechas para ver el historial de ventas</div>';
@@ -399,7 +405,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('totalFichas').textContent = normales.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0).toLocaleString();
     document.getElementById('totalOperaciones').textContent = ventas.length.toLocaleString();
 
-    // Estadísticas por sucursal
     const sucStats = {};
     for (const suc of sucursales) {
       const vSuc = ventas.filter(v => v.sucursalClave === suc.clave);
@@ -408,6 +413,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       const cTarjeta = vSuc.filter(v => v.code === '000-10');
       
       let pulseras=0, billar=0, capsulas=0, error=0;
+      let juguetesMonto = 0;
+      
       for (const v of vNorm) {
         const fecha = v.timestampEliminacion || v.timestamp || Date.now();
         const tipo = clasificar(v.code, fecha);
@@ -415,6 +422,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         if (tipo === 'billar') billar += v.money || 0;
         if (tipo === 'capsulas') capsulas += Math.abs(v.fichaConsumption || 0);
         if (tipo === 'error') error += Math.abs(v.fichaConsumption || 0);
+        if (esJuguete(v.code)) juguetesMonto += v.money || 0;
       }
       
       sucStats[suc.clave] = {
@@ -422,6 +430,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
         efectivo: cEfectivo.reduce((s,v)=>s+(v.money||0),0),
         tarjeta: cTarjeta.reduce((s,v)=>s+(v.money||0),0),
+        juguetesMonto: juguetesMonto,
         puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
         fichasMonto: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+(v.money||0),0),
         fichasCantidad: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
@@ -442,10 +451,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         <div class="item"><span class="label">💰 Ventas:</span><span class="amount">Gs. ${s.ventas.toLocaleString()}</span></div>
         <div class="item"><span class="label">💵 Efectivo:</span><span class="amount">Gs. ${s.efectivo.toLocaleString()}</span></div>
         <div class="item"><span class="label">💳 Tarjeta:</span><span class="amount">Gs. ${s.tarjeta.toLocaleString()}</span></div>
+        <div class="item"><span class="label">🎁 Juguetes:</span><span class="amount">Gs. ${s.juguetesMonto.toLocaleString()}</span></div>
+        ${extras}
         <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">${s.puntos.toLocaleString()}</span></div>
         <div class="item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. ${s.fichasMonto.toLocaleString()}</span></div>
         <div class="item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">${s.fichasCantidad.toLocaleString()}</span></div>
-        ${extras}
         <div class="sub-section"><div class="sub-label">🔴 Error:</div>
         <div class="item"><span class="label">Fichas:</span><span class="amount">${s.error.toLocaleString()}</span></div></div>
         <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
@@ -522,7 +532,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   window.cargarTodo = cargarTodo;
   document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarStock(); });
 
-  // Inicializar con fechas vacías
   document.getElementById('fechaDesde').value = '';
   document.getElementById('fechaHasta').value = '';
 
