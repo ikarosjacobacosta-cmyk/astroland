@@ -37,13 +37,14 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .filtro-fechas button:hover { background: #1976D2; }
 .filtro-fechas .limpiar-btn { background: #ff9800; }
 
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 30px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 30px; }
 .stat-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .stat-card .label { font-size: 0.7rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
 .stat-card .value { font-size: 1.3rem; font-weight: bold; }
 .stat-card.dinero .value { color: #2e7d32; }
 .stat-card.puntos .value { color: #1565c0; }
 .stat-card.fichas .value { color: #e65100; }
+.stat-card.cierre .value { color: #6a1b9a; }
 
 .sucursales-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
 @media (max-width: 900px) { .sucursales-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -161,6 +162,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     <div class="stat-card dinero"><div class="label">💰 Ventas</div><div class="value" id="totalVentas">-</div></div>
     <div class="stat-card dinero"><div class="label">💵 Efectivo</div><div class="value" id="totalEfectivo">-</div></div>
     <div class="stat-card dinero"><div class="label">💳 Tarjeta</div><div class="value" id="totalTarjeta">-</div></div>
+    <div class="stat-card cierre"><div class="label">💰 Total Cierre</div><div class="value" id="totalCierre">-</div></div>
     <div class="stat-card puntos"><div class="label">🎯 Puntos</div><div class="value" id="totalPuntos">-</div></div>
     <div class="stat-card fichas"><div class="label">🎴 Fichas</div><div class="value" id="totalFichas">-</div></div>
     <div class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
@@ -292,14 +294,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     return num >= 5 && num !== 0;
   }
 
-  // Función para obtener estadísticas detalladas de fichas por sucursal
-  // Unitarias = código 000-00 (1 ficha por 10.000 Gs.)
   function getFichasStats(ventas) {
-    let unitarias = 0;      // Cantidad de veces que se vendió 000-00
-    let combo30 = 0;        // Cantidad de veces que se vendió 000-01
-    let combo50 = 0;        // Cantidad de veces que se vendió 000-02
-    let combo100 = 0;       // Cantidad de veces que se vendió 000-03
-    let combo150 = 0;       // Cantidad de veces que se vendió 000-04
+    let unitarias = 0;
+    let combo30 = 0;
+    let combo50 = 0;
+    let combo100 = 0;
+    let combo150 = 0;
     
     for (const v of ventas) {
       if (v.esFichaGratis) continue;
@@ -422,12 +422,21 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const cierresEfectivo = ventas.filter(v => v.code === '000-09');
     const cierresTarjeta = ventas.filter(v => v.code === '000-10');
     
-    document.getElementById('totalVentas').textContent = normales.reduce((s,v)=>s+(v.money||0),0).toLocaleString();
-    document.getElementById('totalEfectivo').textContent = cierresEfectivo.reduce((s,v)=>s+(v.money||0),0).toLocaleString();
-    document.getElementById('totalTarjeta').textContent = cierresTarjeta.reduce((s,v)=>s+(v.money||0),0).toLocaleString();
-    document.getElementById('totalPuntos').textContent = ventas.reduce((s,v)=>s+(v.points||0),0).toLocaleString();
-    document.getElementById('totalFichas').textContent = normales.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0).toLocaleString();
-    document.getElementById('totalOperaciones').textContent = ventas.length.toLocaleString();
+    const totalVentas = normales.reduce((s,v)=>s+(v.money||0),0);
+    const totalEfectivo = cierresEfectivo.reduce((s,v)=>s+(v.money||0),0);
+    const totalTarjeta = cierresTarjeta.reduce((s,v)=>s+(v.money||0),0);
+    const totalCierre = totalEfectivo + totalTarjeta;
+    const totalPuntos = ventas.reduce((s,v)=>s+(v.points||0),0);
+    const totalFichas = normales.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0);
+    const totalOperaciones = ventas.length;
+    
+    document.getElementById('totalVentas').textContent = totalVentas.toLocaleString();
+    document.getElementById('totalEfectivo').textContent = totalEfectivo.toLocaleString();
+    document.getElementById('totalTarjeta').textContent = totalTarjeta.toLocaleString();
+    document.getElementById('totalCierre').textContent = totalCierre.toLocaleString();
+    document.getElementById('totalPuntos').textContent = totalPuntos.toLocaleString();
+    document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
+    document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
 
     const sucStats = {};
     for (const suc of sucursales) {
@@ -456,6 +465,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
         efectivo: cEfectivo.reduce((s,v)=>s+(v.money||0),0),
         tarjeta: cTarjeta.reduce((s,v)=>s+(v.money||0),0),
+        cierre: cEfectivo.reduce((s,v)=>s+(v.money||0),0) + cTarjeta.reduce((s,v)=>s+(v.money||0),0),
         juguetesMonto: juguetesMonto,
         puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
         fichasMonto: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+(v.money||0),0),
@@ -482,6 +492,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         <div class="item"><span class="label">💰 Ventas:</span><span class="amount">Gs. ${s.ventas.toLocaleString()}</span></div>
         <div class="item"><span class="label">💵 Efectivo:</span><span class="amount">Gs. ${s.efectivo.toLocaleString()}</span></div>
         <div class="item"><span class="label">💳 Tarjeta:</span><span class="amount">Gs. ${s.tarjeta.toLocaleString()}</span></div>
+        <div class="item"><span class="label">💰 Total Cierre:</span><span class="amount">Gs. ${s.cierre.toLocaleString()}</span></div>
         <div class="item"><span class="label">🎁 Juguetes:</span><span class="amount">Gs. ${s.juguetesMonto.toLocaleString()}</span></div>
         ${extras}
         <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">${s.puntos.toLocaleString()}</span></div>
@@ -507,7 +518,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function renderizarTablaVentas(ventas) {
-    const html = `<tr><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
+    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventas.slice(0, 300).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
         return `<tr>
