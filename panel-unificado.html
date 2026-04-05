@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>ASTROLAND - Panel Unificado (Stock + Ventas + Imágenes)</title>
+<title>ASTROLAND - Panel Unificado (Estadísticas Completas)</title>
 <style>
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
@@ -17,17 +17,86 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .badges { display:flex; justify-content:center; gap:15px; flex-wrap:wrap; margin-top:15px; }
 .badge { background:#e8f4fd; padding:8px 16px; border-radius:25px; font-size:0.85rem; font-weight:600; color:#1976D2; }
 
-/* Tarjetas de estadísticas */
-.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:30px; }
+/* Tarjetas de estadísticas principales */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:30px; }
 .stat-card { background:white; border-radius:16px; padding:18px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:transform 0.2s; }
 .stat-card:hover { transform:translateY(-2px); }
-.stat-card .label { font-size:0.8rem; color:#666; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; }
-.stat-card .value { font-size:1.8rem; font-weight:bold; }
-.stat-card .unit { font-size:0.8rem; color:#999; margin-left:3px; }
+.stat-card .label { font-size:0.75rem; color:#666; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; }
+.stat-card .value { font-size:1.6rem; font-weight:bold; }
+.stat-card .unit { font-size:0.7rem; color:#999; margin-left:3px; }
 .stat-card.dinero .value { color:#2e7d32; }
 .stat-card.puntos .value { color:#1565c0; }
 .stat-card.fichas .value { color:#e65100; }
 .stat-card.ventas .value { color:#6a1b9a; }
+
+/* Sección de ventas detalladas */
+.detalle-section {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.detalle-section h3 {
+  margin: 0 0 15px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #2196F3;
+  color: #1a1a2e;
+  font-size: 1.2rem;
+}
+.detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+.detalle-item {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.detalle-item .detalle-label {
+  font-size: 0.7rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+.detalle-item .detalle-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+.detalle-item .detalle-sub {
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: 3px;
+}
+.combos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+.combo-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+.combo-card .combo-nombre {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #e65100;
+  margin-bottom: 8px;
+}
+.combo-card .combo-stats {
+  font-size: 0.8rem;
+}
+.combo-card .combo-cantidad {
+  font-weight: bold;
+  color: #1565c0;
+}
+.combo-card .combo-monto {
+  color: #2e7d32;
+}
 
 /* Ventas por sucursal */
 .sucursales-ventas { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; margin-bottom:30px; }
@@ -39,7 +108,7 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .suc-card.lambare { border-top-color:#ff9800; }
 .suc-card.morra { border-top-color:#4caf50; }
 .suc-card h4 { margin:0 0 12px 0; font-size:1rem; display:flex; align-items:center; gap:8px; }
-.suc-card .venta-item { display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem; padding:5px 0; border-bottom:1px dashed #eee; }
+.suc-card .venta-item { display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.8rem; padding:5px 0; border-bottom:1px dashed #eee; }
 .suc-card .venta-item .label { color:#666; }
 .suc-card .venta-item .amount { font-weight:bold; }
 
@@ -64,38 +133,12 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .tab-btn.active { background:#2196F3; color:white; }
 .tab-btn:hover:not(.active) { background:#ccc; }
 
-/* Grid de productos - FUERZA 3 COLUMNAS EN MÓVILES */
-.productos-grid { 
-  display: grid; 
-  gap: 12px; 
-  margin-top: 10px;
-}
-
-/* Desktop: 5 columnas */
-@media (min-width: 1200px) {
-  .productos-grid { grid-template-columns: repeat(5, 1fr); }
-}
-
-/* Tablet: 4 columnas */
-@media (min-width: 768px) and (max-width: 1199px) {
-  .productos-grid { grid-template-columns: repeat(4, 1fr); }
-}
-
-/* MÓVILES: FUERZA EXACTAMENTE 3 COLUMNAS */
-@media (max-width: 767px) {
-  .productos-grid { 
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 8px;
-  }
-}
-
-/* Pantallas muy pequeñas (menos de 400px) también 3 columnas */
-@media (max-width: 480px) {
-  .productos-grid { 
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 6px;
-  }
-}
+/* Grid de productos */
+.productos-grid { display: grid; gap: 12px; margin-top: 10px; }
+@media (min-width: 1200px) { .productos-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 768px) and (max-width: 1199px) { .productos-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 767px) { .productos-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; } }
+@media (max-width: 480px) { .productos-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px; } }
 
 .producto-card {
   background: white;
@@ -149,45 +192,24 @@ html, body { margin:0; padding:0; background:#f0f2f5; font-family: 'Segoe UI', I
 .producto-card .stock-bajo { background:#ffebee; color:#f44336; }
 .producto-card .stock-medio { background:#fff3e0; color:#ff9800; }
 .producto-card .stock-normal { background:#e8f5e9; color:#2e7d32; }
-
-/* Tabla de stock por sucursal - Compacta para móviles */
-.sucursales-tabla {
-  margin-top: 8px;
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.6rem;
-}
-.sucursales-tabla td {
-  padding: 3px 2px;
-  text-align: center;
-}
-.sucursal-nombre {
-  font-weight: 600;
-  text-align: left !important;
-  font-size: 0.55rem;
-}
-.sucursal-cantidad {
-  font-weight: bold;
-  text-align: right !important;
-}
+.sucursales-tabla { margin-top: 8px; width: 100%; border-collapse: collapse; font-size: 0.6rem; }
+.sucursales-tabla td { padding: 3px 2px; text-align: center; }
+.sucursal-nombre { font-weight: 600; text-align: left !important; font-size: 0.55rem; }
+.sucursal-cantidad { font-weight: bold; text-align: right !important; }
 .cantidad-cero { opacity: 0.5; }
 
-/* Loading y actualización */
 .loading { text-align:center; padding:50px; color:#666; }
 .update-info { text-align:center; margin-top:20px; font-size:0.75rem; color:#999; }
 .update-info .time { font-weight:600; color:#2196F3; }
 .refresh-btn { background:#2196F3; color:white; border:none; border-radius:20px; padding:5px 15px; margin-left:10px; cursor:pointer; font-size:0.7rem; }
 
-/* Tabla de ventas */
 .ventas-table { background:white; border-radius:16px; overflow-x:auto; margin-top:10px; }
 .ventas-table table { width:100%; border-collapse:collapse; font-size:0.8rem; }
 .ventas-table th, .ventas-table td { padding:10px 8px; text-align:center; border-bottom:1px solid #eee; }
 .ventas-table th { background:#1a1a2e; color:white; }
 
-/* Footer */
 footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size:0.8rem; border-top:1px solid #ddd; }
 
-/* Ajustes adicionales para móviles */
 @media (max-width: 480px) {
   .container { padding: 10px; }
   .header h1 { font-size: 1.3rem; }
@@ -196,9 +218,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   .stat-card .label { font-size: 0.65rem; }
   .tab-btn { padding: 6px 15px; font-size: 0.75rem; }
   .suc-card .venta-item { font-size: 0.7rem; }
-  .producto-card .codigo { font-size: 0.65rem; }
-  .sucursal-nombre { font-size: 0.5rem; }
-  .sucursal-cantidad { font-size: 0.5rem; }
+  .detalle-item .detalle-value { font-size: 0.9rem; }
 }
 </style>
 </head>
@@ -206,7 +226,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 <div class="container">
   <div class="header">
     <h1>📊 ASTROLAND - Panel Unificado</h1>
-    <p class="subtitle">Stock + Ventas en tiempo real | 4 sucursales</p>
+    <p class="subtitle">Estadísticas completas de ventas | 4 sucursales</p>
     <div class="badges">
       <div class="badge" style="background:#e3f2fd; color:#1976D2;">🏢 Los Laureles</div>
       <div class="badge" style="background:#f3e5f5; color:#9c27b0;">🏢 Villa Elisa</div>
@@ -215,12 +235,40 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     </div>
   </div>
 
-  <!-- Estadísticas generales de ventas -->
+  <!-- Estadísticas principales -->
   <div class="stats-grid" id="statsVentas">
-    <div class="stat-card dinero"><div class="label">💰 Dinero Total</div><div class="value" id="totalDinero">-</div><div class="unit">Gs.</div></div>
+    <div class="stat-card dinero"><div class="label">💰 Ventas (sin cierre)</div><div class="value" id="totalVentasDinero">-</div><div class="unit">Gs.</div></div>
+    <div class="stat-card dinero"><div class="label">💵 Efectivo (Cierre)</div><div class="value" id="totalEfectivo">-</div><div class="unit">Gs.</div></div>
+    <div class="stat-card dinero"><div class="label">💳 Tarjeta (Cierre)</div><div class="value" id="totalTarjeta">-</div><div class="unit">Gs.</div></div>
+    <div class="stat-card dinero"><div class="label">💰 Dinero Total (Cierre)</div><div class="value" id="totalDineroCierre">-</div><div class="unit">Gs.</div></div>
     <div class="stat-card puntos"><div class="label">🎯 Puntos Canjeados</div><div class="value" id="totalPuntos">-</div></div>
-    <div class="stat-card fichas"><div class="label">🎴 Fichas Consumidas</div><div class="value" id="totalFichas">-</div></div>
-    <div class="stat-card ventas"><div class="label">🛒 Ventas Totales</div><div class="value" id="totalVentas">-</div></div>
+    <div class="stat-card fichas"><div class="label">🎴 Fichas Vendidas</div><div class="value" id="totalFichasVendidas">-</div></div>
+    <div class="stat-card fichas"><div class="label">💰 Monto Fichas</div><div class="value" id="totalMontoFichas">-</div><div class="unit">Gs.</div></div>
+    <div class="stat-card ventas"><div class="label">🛒 Total Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
+  </div>
+
+  <!-- Detalle de Combos y Juguetes -->
+  <div class="detalle-section">
+    <h3>🎴 Ventas de Fichas por Tipo</h3>
+    <div class="combos-grid" id="combosGrid">
+      <!-- Se llena dinámicamente -->
+    </div>
+  </div>
+
+  <div class="detalle-section">
+    <h3>🎁 Ventas de Juguetes (Códigos 005 en adelante)</h3>
+    <div class="detalle-grid">
+      <div class="detalle-item"><div class="detalle-label">📦 Cantidad de Juguetes</div><div class="detalle-value" id="totalJuguetesCantidad">-</div></div>
+      <div class="detalle-item"><div class="detalle-label">💰 Monto Total Juguetes</div><div class="detalle-value" id="totalJuguetesMonto">-</div><div class="detalle-sub">Gs.</div></div>
+    </div>
+  </div>
+
+  <div class="detalle-section">
+    <h3>🔴 Fichas por Error (000-05 y 000-06)</h3>
+    <div class="detalle-grid">
+      <div class="detalle-item"><div class="detalle-label">🎴 Cantidad de Fichas por Error</div><div class="detalle-value" id="totalFichasError">-</div></div>
+      <div class="detalle-item"><div class="detalle-label">💰 Monto Total Fichas por Error</div><div class="detalle-value" id="totalMontoFichasError">-</div><div class="detalle-sub">Gs.</div></div>
+    </div>
   </div>
 
   <!-- Ventas por sucursal -->
@@ -237,7 +285,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     <input type="text" id="busqueda" placeholder="🔍 Buscar por código (ej: 010, 000-01)..." autocomplete="off">
   </div>
 
-  <!-- Contenedor de productos (grid con imágenes) -->
+  <!-- Contenedor de productos -->
   <div id="tabStock" class="tab-content">
     <div id="productosGrid" class="productos-grid">
       <div class="loading">🔄 Cargando stock de las 4 sucursales...</div>
@@ -264,7 +312,6 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // CONFIGURACIONES DE FIREBASE - 4 SUCURSALES
   const sucursales = [
     { nombre: "Los Laureles", clave: "laureles", color: "#2196F3", bg: "#e3f2fd", config: { apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w", authDomain: "los-laureles-49117.firebaseapp.com", projectId: "los-laureles-49117", storageBucket: "los-laureles-49117.firebasestorage.app", messagingSenderId: "523096933391", appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a" } },
     { nombre: "Villa Elisa", clave: "elisa", color: "#9c27b0", bg: "#f3e5f5", config: { apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ", authDomain: "villa-elisa-3adbe.firebaseapp.com", projectId: "villa-elisa-3adbe", storageBucket: "villa-elisa-3adbe.firebasestorage.app", messagingSenderId: "147294403718", appId: "1:147294403718:web:96d8289e6d3d3c7ce72507" } },
@@ -274,10 +321,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
 
   const dbs = {};
   sucursales.forEach(suc => {
-    try {
-      const app = initializeApp(suc.config, suc.clave);
-      dbs[suc.clave] = getDatabase(app);
-    } catch(e) { console.warn(`Error inicializando ${suc.nombre}:`, e); }
+    try { const app = initializeApp(suc.config, suc.clave); dbs[suc.clave] = getDatabase(app); } catch(e) { console.warn(e); }
   });
 
   const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
@@ -298,9 +342,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
     try { const snap = await get(ref(db, 'carrito')); const data = snap.val(); return data ? Object.values(data) : []; } catch { return []; }
   }
 
-  let todosLosProductos = [];
-  let productosVisibles = [];
-  let todasLasVentas = [];
+  let todosLosProductos = [], productosVisibles = [], todasLasVentas = [];
   let tabActual = 'stock';
 
   const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
@@ -327,12 +369,10 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         const db = dbs[suc.clave];
         stocksPorSucursal[suc.clave] = db ? await obtenerStockSucursal(db) : {};
       }
-      
       const todosLosCodigos = new Set();
       for (const suc of sucursales) {
         Object.keys(stocksPorSucursal[suc.clave] || {}).forEach(c => todosLosCodigos.add(c));
       }
-      
       const codigosBase = ['000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06'];
       codigosBase.forEach(c => todosLosCodigos.add(c));
       
@@ -347,55 +387,26 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
         }
         todosLosProductos.push({ code, stocks, total });
       }
-      
       productosVisibles = todosLosProductos.filter(p => p.total > 0);
       productosVisibles.sort((a,b) => a.code.localeCompare(b.code));
-      
       if (tabActual === 'stock') renderizarGridStock();
-    } catch (error) {
-      console.error('Error cargando stock:', error);
-    }
+    } catch (error) { console.error(error); }
   }
 
   function renderizarGridStock() {
     const termino = document.getElementById('busqueda')?.value.toLowerCase() || '';
     let filtrados = productosVisibles.filter(p => p.code.toLowerCase().includes(termino));
-    
     const html = filtrados.map(p => {
       let stockClass = 'stock-normal';
       if (p.total < 5) stockClass = 'stock-bajo';
       else if (p.total < 20) stockClass = 'stock-medio';
-      
       const sucursalesHtml = sucursales.map(suc => {
         const cantidad = p.stocks[suc.clave] || 0;
-        const cantidadClass = cantidad === 0 ? 'cantidad-cero' : '';
-        return `
-          <tr>
-            <td class="sucursal-nombre" style="color: ${suc.color};">🏢 ${suc.nombre}</td>
-            <td class="sucursal-cantidad ${cantidadClass}" style="color: ${cantidad === 0 ? '#999' : suc.color};">${cantidad}</td>
-          </tr>
-        `;
+        return `<tr><td class="sucursal-nombre" style="color: ${suc.color};">🏢 ${suc.nombre}</td><td class="sucursal-cantidad" style="color: ${cantidad === 0 ? '#999' : suc.color};">${cantidad}</td></tr>`;
       }).join('');
-      
-      return `
-        <div class="producto-card">
-          <div style="position: relative;">
-            ${getImagenHtml(p.code)}
-          </div>
-          <div class="codigo">${p.code}</div>
-          <div class="stock-total ${stockClass}">📦 ${p.total}</div>
-          <table class="sucursales-tabla">
-            ${sucursalesHtml}
-          </table>
-        </div>
-      `;
+      return `<div class="producto-card"><div>${getImagenHtml(p.code)}</div><div class="codigo">${p.code}</div><div class="stock-total ${stockClass}">📦 ${p.total}</div><table class="sucursales-tabla">${sucursalesHtml}</table></div>`;
     }).join('');
-    
-    const mensajeVacio = termino !== '' && filtrados.length === 0 
-      ? '<div class="loading" style="grid-column:1/-1;">🔍 No se encontraron productos con ese código</div>'
-      : '<div class="loading" style="grid-column:1/-1;">✨ Todos los productos tienen stock 0. ¡Vuelven a aparecer cuando alguna sucursal tenga stock!</div>';
-    
-    document.getElementById('productosGrid').innerHTML = filtrados.length > 0 ? html : mensajeVacio;
+    document.getElementById('productosGrid').innerHTML = filtrados.length > 0 ? html : '<div class="loading" style="grid-column:1/-1;">✨ Todos los productos tienen stock 0</div>';
   }
 
   async function cargarVentasUnificadas() {
@@ -419,24 +430,112 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
       
       todasLasVentas.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
       
-      const totalDinero = todasLasVentas.reduce((sum, v) => sum + (v.money || 0), 0);
+      // ========== ESTADÍSTICAS DETALLADAS ==========
+      
+      // Separar ventas normales de cierres
+      const ventasNormales = todasLasVentas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
+      const cierresEfectivo = todasLasVentas.filter(v => v.code === '000-09' || (v.esCierre && v.name?.includes('Efectivo')));
+      const cierresTarjeta = todasLasVentas.filter(v => v.code === '000-10' || (v.esCierre && v.name?.includes('Tarjeta')));
+      
+      // Ventas (sin cierre) - total dinero
+      const totalVentasDinero = ventasNormales.reduce((sum, v) => sum + (v.money || 0), 0);
+      
+      // Efectivo y Tarjeta (cierres)
+      const totalEfectivo = cierresEfectivo.reduce((sum, v) => sum + (v.money || 0), 0);
+      const totalTarjeta = cierresTarjeta.reduce((sum, v) => sum + (v.money || 0), 0);
+      const totalDineroCierre = totalEfectivo + totalTarjeta;
+      
+      // Puntos canjeados
       const totalPuntos = todasLasVentas.reduce((sum, v) => sum + (v.points || 0), 0);
-      const totalFichas = todasLasVentas.reduce((sum, v) => sum + (v.fichaConsumption || 0), 0);
       
-      document.getElementById('totalDinero').textContent = totalDinero.toLocaleString();
+      // Fichas vendidas (solo las que tienen precio, excluyendo errores 000-05 y 000-06)
+      const fichasConPrecio = todasLasVentas.filter(v => !v.esFichaGratis && v.fichaConsumption > 0);
+      const totalFichasVendidas = fichasConPrecio.reduce((sum, v) => sum + Math.abs(v.fichaConsumption || 0), 0);
+      const totalMontoFichas = fichasConPrecio.reduce((sum, v) => sum + (v.money || 0), 0);
+      
+      // Total operaciones
+      const totalOperaciones = todasLasVentas.length;
+      
+      // Combos por tipo (fichas unitarias, combo 3, combo 9, combo 20, combo 30)
+      const comboMapping = {
+        '000-01': { nombre: 'Combo de 3', fichas: 3 },
+        '000-02': { nombre: 'Combo de 9', fichas: 9 },
+        '000-03': { nombre: 'Combo de 20', fichas: 20 },
+        '000-04': { nombre: 'Combo de 30', fichas: 30 }
+      };
+      
+      const combosStats = {};
+      for (const [code, info] of Object.entries(comboMapping)) {
+        const ventasCombo = ventasNormales.filter(v => v.code === code);
+        combosStats[code] = {
+          nombre: info.nombre,
+          cantidad: ventasCombo.length,
+          monto: ventasCombo.reduce((sum, v) => sum + (v.money || 0), 0),
+          fichas: info.fichas
+        };
+      }
+      
+      // Fichas unitarias (códigos que no son combo, con fichaConsumption = 1 y no son error)
+      const fichasUnitarias = ventasNormales.filter(v => v.fichaConsumption === 1 && v.code !== '000-05' && v.code !== '000-00');
+      const unitariasCantidad = fichasUnitarias.length;
+      const unitariasMonto = fichasUnitarias.reduce((sum, v) => sum + (v.money || 0), 0);
+      
+      // Juguetes (códigos 005 en adelante, que no sean fichas)
+      const juguetes = ventasNormales.filter(v => {
+        const match = v.code?.match(/^(\d+)-/);
+        if (match) {
+          const num = parseInt(match[1]);
+          return num >= 5 && num !== 0 && !v.esFichaGratis;
+        }
+        return false;
+      });
+      const totalJuguetesCantidad = juguetes.length;
+      const totalJuguetesMonto = juguetes.reduce((sum, v) => sum + (v.money || 0), 0);
+      
+      // Fichas por error (000-05 y 000-06)
+      const fichasError = todasLasVentas.filter(v => v.esFichaGratis === true || v.code === '000-05' || v.code === '000-06');
+      const totalFichasError = fichasError.reduce((sum, v) => sum + Math.abs(v.fichaConsumption || 0), 0);
+      const totalMontoFichasError = fichasError.reduce((sum, v) => sum + (v.money || 0), 0);
+      
+      // Actualizar DOM
+      document.getElementById('totalVentasDinero').textContent = totalVentasDinero.toLocaleString();
+      document.getElementById('totalEfectivo').textContent = totalEfectivo.toLocaleString();
+      document.getElementById('totalTarjeta').textContent = totalTarjeta.toLocaleString();
+      document.getElementById('totalDineroCierre').textContent = totalDineroCierre.toLocaleString();
       document.getElementById('totalPuntos').textContent = totalPuntos.toLocaleString();
-      document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
-      document.getElementById('totalVentas').textContent = todasLasVentas.length.toLocaleString();
+      document.getElementById('totalFichasVendidas').textContent = totalFichasVendidas.toLocaleString();
+      document.getElementById('totalMontoFichas').textContent = totalMontoFichas.toLocaleString();
+      document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
+      document.getElementById('totalJuguetesCantidad').textContent = totalJuguetesCantidad.toLocaleString();
+      document.getElementById('totalJuguetesMonto').textContent = totalJuguetesMonto.toLocaleString();
+      document.getElementById('totalFichasError').textContent = totalFichasError.toLocaleString();
+      document.getElementById('totalMontoFichasError').textContent = totalMontoFichasError.toLocaleString();
       
+      // Renderizar combos
+      const combosHtml = `
+        <div class="combo-card"><div class="combo-nombre">🎴 Unitarias</div><div class="combo-stats"><span class="combo-cantidad">${unitariasCantidad}</span> veces<br>💰 <span class="combo-monto">Gs. ${unitariasMonto.toLocaleString()}</span></div></div>
+        <div class="combo-card"><div class="combo-nombre">🎴 ${combosStats['000-01']?.nombre || 'Combo 3'}</div><div class="combo-stats"><span class="combo-cantidad">${combosStats['000-01']?.cantidad || 0}</span> veces<br>💰 <span class="combo-monto">Gs. ${(combosStats['000-01']?.monto || 0).toLocaleString()}</span></div></div>
+        <div class="combo-card"><div class="combo-nombre">🎴 ${combosStats['000-02']?.nombre || 'Combo 9'}</div><div class="combo-stats"><span class="combo-cantidad">${combosStats['000-02']?.cantidad || 0}</span> veces<br>💰 <span class="combo-monto">Gs. ${(combosStats['000-02']?.monto || 0).toLocaleString()}</span></div></div>
+        <div class="combo-card"><div class="combo-nombre">🎴 ${combosStats['000-03']?.nombre || 'Combo 20'}</div><div class="combo-stats"><span class="combo-cantidad">${combosStats['000-03']?.cantidad || 0}</span> veces<br>💰 <span class="combo-monto">Gs. ${(combosStats['000-03']?.monto || 0).toLocaleString()}</span></div></div>
+        <div class="combo-card"><div class="combo-nombre">🎴 ${combosStats['000-04']?.nombre || 'Combo 30'}</div><div class="combo-stats"><span class="combo-cantidad">${combosStats['000-04']?.cantidad || 0}</span> veces<br>💰 <span class="combo-monto">Gs. ${(combosStats['000-04']?.monto || 0).toLocaleString()}</span></div></div>
+      `;
+      document.getElementById('combosGrid').innerHTML = combosHtml;
+      
+      // Ventas por sucursal
       const sucursalStats = {};
       for (const suc of sucursales) {
         const ventasSuc = ventasPorSucursal[suc.clave] || [];
+        const ventasNormalesSuc = ventasSuc.filter(v => !v.esCierre);
+        const cierresEfectivoSuc = ventasSuc.filter(v => v.code === '000-09' || (v.esCierre && v.name?.includes('Efectivo')));
+        const cierresTarjetaSuc = ventasSuc.filter(v => v.code === '000-10' || (v.esCierre && v.name?.includes('Tarjeta')));
         sucursalStats[suc.clave] = {
           nombre: suc.nombre, color: suc.color, bg: suc.bg,
           totalVentas: ventasSuc.length,
-          totalDinero: ventasSuc.reduce((s, v) => s + (v.money || 0), 0),
+          totalDineroVentas: ventasNormalesSuc.reduce((s, v) => s + (v.money || 0), 0),
+          efectivo: cierresEfectivoSuc.reduce((s, v) => s + (v.money || 0), 0),
+          tarjeta: cierresTarjetaSuc.reduce((s, v) => s + (v.money || 0), 0),
           totalPuntos: ventasSuc.reduce((s, v) => s + (v.points || 0), 0),
-          totalFichas: ventasSuc.reduce((s, v) => s + (v.fichaConsumption || 0), 0)
+          totalFichas: ventasSuc.filter(v => !v.esFichaGratis && v.fichaConsumption > 0).reduce((s, v) => s + Math.abs(v.fichaConsumption || 0), 0)
         };
       }
       
@@ -446,9 +545,11 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
           <div class="suc-card ${suc.clave}" style="border-top-color: ${suc.color}; background: ${suc.bg}20;">
             <h4><span style="color:${suc.color}">🏢</span> ${stats.nombre}</h4>
             <div class="venta-item"><span class="label">🛒 Ventas:</span><span class="amount">${stats.totalVentas}</span></div>
-            <div class="venta-item"><span class="label">💰 Dinero:</span><span class="amount">Gs. ${stats.totalDinero.toLocaleString()}</span></div>
+            <div class="venta-item"><span class="label">💰 Ventas (sin cierre):</span><span class="amount">Gs. ${stats.totalDineroVentas.toLocaleString()}</span></div>
+            <div class="venta-item"><span class="label">💵 Efectivo (Cierre):</span><span class="amount">Gs. ${stats.efectivo.toLocaleString()}</span></div>
+            <div class="venta-item"><span class="label">💳 Tarjeta (Cierre):</span><span class="amount">Gs. ${stats.tarjeta.toLocaleString()}</span></div>
             <div class="venta-item"><span class="label">🎯 Puntos:</span><span class="amount">${stats.totalPuntos.toLocaleString()}</span></div>
-            <div class="venta-item"><span class="label">🎴 Fichas:</span><span class="amount">${stats.totalFichas.toLocaleString()}</span></div>
+            <div class="venta-item"><span class="label">🎴 Fichas Vendidas:</span><span class="amount">${stats.totalFichas.toLocaleString()}</span></div>
           </div>
         `;
       }).join('');
@@ -461,27 +562,24 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   }
 
   function renderizarTablaVentas() {
-    const html = `
-      <table>
-        <thead>
-          <tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr>
-        </thead>
-        <tbody>
-          ${todasLasVentas.slice(0, 200).map(v => {
-            const suc = sucursales.find(s=>s.nombre===v.sucursal);
-            return `<tr>
-              <td style="font-weight:600; color:${suc?.color || '#333'}">${v.sucursal}</td>
-              <td>${v.name || v.code}</td>
-              <td>${(v.points || 0).toLocaleString()}</td>
-              <td>Gs. ${(v.money || 0).toLocaleString()}</td>
-              <td>${(v.fichaConsumption || 0)}</td>
-              <td style="font-size:0.75rem;">${v.timestamp || (v.fecha + ' ' + v.hora)}</td>
-            </tr>`;
-          }).join('')}
-          ${todasLasVentas.length === 0 ? '<tr><td colspan="6" style="text-align:center; padding:40px;">📭 No hay ventas registradas</td></tr>' : ''}
-        </tbody>
-      </table>
-    `;
+    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Tipo</th><th>Fecha/Hora</th></tr></thead><tbody>${
+      todasLasVentas.slice(0, 200).map(v => {
+        const suc = sucursales.find(s=>s.nombre===v.sucursal);
+        let tipo = '';
+        if (v.esFichaGratis) tipo = '🔴 Ficha Error';
+        else if (v.esCierre) tipo = '💰 Cierre';
+        else if (v.fichaConsumption > 0) tipo = '🎴 Ficha';
+        else tipo = '🎁 Juguete';
+        return `<tr>
+          <td style="color:${suc?.color || '#333'}">${v.sucursal}</td>
+          <td>${v.name || v.code}</td>
+          <td>${(v.points || 0).toLocaleString()}</td>
+          <td>Gs. ${(v.money || 0).toLocaleString()}</td>
+          <td>${(v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-')}</td>
+          <td style="font-size:0.7rem;">${tipo}</td>
+          <td style="font-size:0.7rem;">${v.timestamp || (v.fecha + ' ' + v.hora)}</td>
+        </tr>`;
+      }).join('')}${todasLasVentas.length === 0 ? '<tr><td colspan="7">📭 No hay ventas</td>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
@@ -504,10 +602,7 @@ footer { text-align:center; padding:20px; margin-top:30px; color:#999; font-size
   };
 
   window.recargarTodo = () => cargarTodo();
-
-  document.getElementById('busqueda')?.addEventListener('input', () => {
-    if (tabActual === 'stock') renderizarGridStock();
-  });
+  document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarGridStock(); });
 
   await cargarTodo();
   setInterval(() => cargarTodo(), 15000);
