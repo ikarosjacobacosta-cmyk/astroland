@@ -301,17 +301,17 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .cart-item { 
   display: grid; 
-  grid-template-columns: 2fr 0.8fr 1fr 1fr 1.2fr 0.8fr; 
+  grid-template-columns: 2fr 0.8fr 1fr 1fr 1fr 1.2fr 0.8fr; 
   padding: 12px; 
   border-bottom: 1px solid #eee; 
   align-items: center; 
   gap: 5px; 
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 @media (max-width:600px) {
   .cart-item { 
-    grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr 1fr 0.6fr;
-    font-size: 0.7rem;
+    grid-template-columns: 1.5fr 0.6fr 0.7fr 0.7fr 0.7fr 1fr 0.6fr;
+    font-size: 0.65rem;
     gap: 3px;
   }
 }
@@ -642,7 +642,8 @@ body { padding-top: 80px; }
   let cart = [];
   let stock = {};
   let historialVentas = [];
-  const PASSWORD = "mili";
+  const PASSWORD_STOCK = "mili";
+  const PASSWORD_GENERAL = "mili";
   const STOCK_INICIAL = 100;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
@@ -677,18 +678,18 @@ body { padding-top: 80px; }
         { codigo: "000-08", precio: 15000 }, { codigo: "000-09", precio: 0 },
         { codigo: "000-10", precio: 0 }
       ]},
-      { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 0 } },
-      { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 67 } },
+      { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 18 } },
+      { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 68 } },
       { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 71 } },
-      { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 53 } },
-      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 51 } },
-      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 29 } },
-      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 39 } },
-      { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 0 } },
-      { nombre: "200 puntos", categoria: "200", puntos: 200, rango: { desde: 0, hasta: 37 }, precioUnificado: 96000 },
-      { nombre: "220 puntos", categoria: "220", puntos: 220, rango: { desde: 0, hasta: 7 }, precioUnificado: 120000 },
-      { nombre: "250 puntos", categoria: "250", puntos: 250, rango: { desde: 0, hasta: 3 }, precioUnificado: 150000 },
-      { nombre: "350 puntos", categoria: "350", puntos: 350, rango: { desde: 0, hasta: 1 }, precioUnificado: 170000 },
+      { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 58 } },
+      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 57 } },
+      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 34 } },
+      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 48 } },
+      { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 8 } },
+      { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 36 } },
+      { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
+      { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 3 } },
+      { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 2 } },
       { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
         { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
       ]}
@@ -732,7 +733,7 @@ body { padding-top: 80px; }
       
       if (cat.rango) {
         for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
-          const precio = cat.precioUnificado ? cat.precioUnificado : cat.precioBase;
+          const precio = cat.precioBase;
           galeria.appendChild(crearItem(`${cat.categoria}-${i.toString().padStart(2,'0')}`, precio));
         }
       } else if (cat.productosEspeciales) {
@@ -1112,7 +1113,7 @@ body { padding-top: 80px; }
 
   window.verifyAndClearCart = async function() {
     const pwd = document.getElementById('clearPassword').value;
-    if (pwd !== PASSWORD) { alert('Contraseña incorrecta'); return; }
+    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
     if (cart.length > 0) { await guardarEnHistorial(cart); }
     await remove(cartRef);
     hideClearPrompt();
@@ -1133,7 +1134,7 @@ body { padding-top: 80px; }
   };
 
   window.verifyHistorialPassword = async function() {
-    if (document.getElementById('historialPassword').value === PASSWORD) {
+    if (document.getElementById('historialPassword').value === PASSWORD_GENERAL) {
       document.getElementById('historialPasswordPrompt').style.display = 'none';
       document.getElementById('historialContent').style.display = 'block';
       await loadHistorial();
@@ -1250,7 +1251,7 @@ body { padding-top: 80px; }
 
   window.showDeletePrompt = function(firebaseKey) {
     const pwd = prompt('🔐 Contraseña para eliminar:');
-    if (pwd !== PASSWORD) { alert('Contraseña incorrecta'); return; }
+    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
     const item = cart.find(i => i.firebaseKey === firebaseKey);
     if (!item) { alert('Item no encontrado'); return; }
     const consumo = item.fichaConsumption || 0;
@@ -1283,7 +1284,7 @@ body { padding-top: 80px; }
   };
 
   window.verifyStockPassword = function() {
-    if (document.getElementById('stockPassword').value === PASSWORD) {
+    if (document.getElementById('stockPassword').value === PASSWORD_STOCK) {
       document.getElementById('stockPasswordPrompt').style.display = 'none';
       document.getElementById('stockManagementContent').style.display = 'block';
       loadAllStockItems();
@@ -1401,7 +1402,7 @@ body { padding-top: 80px; }
   window.hideExportPrompt = () => { document.getElementById('exportPasswordPrompt').style.display = 'none'; document.getElementById('exportPassword').value = ''; };
   window.showClearPasswordPrompt = () => document.getElementById('clearPasswordPrompt').style.display = 'block';
   window.hideClearPrompt = () => { document.getElementById('clearPasswordPrompt').style.display = 'none'; document.getElementById('clearPassword').value = ''; };
-  window.verifyAndExport = function() { if (document.getElementById('exportPassword').value === PASSWORD) { exportToExcel(); hideExportPrompt(); } else alert('Contraseña incorrecta'); };
+  window.verifyAndExport = function() { if (document.getElementById('exportPassword').value === PASSWORD_GENERAL) { exportToExcel(); hideExportPrompt(); } else alert('Contraseña incorrecta'); };
 
   function exportToExcel() {
     if (cart.length === 0) { alert('Carrito vacío'); return; }
