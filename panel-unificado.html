@@ -335,6 +335,25 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     return { unitarias, combo30, combo50, combo100, combo150 };
   }
 
+  // Función para obtener la fecha en formato YYYY-MM-DD
+  function getFechaFromTimestamp(ts) {
+    const date = new Date(ts);
+    return date.toISOString().split('T')[0];
+  }
+
+  // Función para obtener todas las fechas en un rango
+  function getFechasEnRango(desde, hasta) {
+    const fechas = [];
+    let current = new Date(desde);
+    const end = new Date(hasta);
+    
+    while (current <= end) {
+      fechas.push(new Date(current).toISOString().split('T')[0]);
+      current.setDate(current.getDate() + 1);
+    }
+    return fechas;
+  }
+
   async function cargarTodo() {
     await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
@@ -586,7 +605,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     if (hastaInput) sessionStorage.setItem('filtroHasta', hastaInput);
     else sessionStorage.removeItem('filtroHasta');
     
-    // Aplicar filtro directamente sin recargar
     fechaDesde = desdeInput ? new Date(desdeInput).setHours(0,0,0,0) : null;
     fechaHasta = hastaInput ? new Date(hastaInput).setHours(23,59,59,999) : null;
     aplicarFiltroConValores(fechaDesde, fechaHasta);
@@ -602,7 +620,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     fechaDesde = null;
     fechaHasta = null;
     
-    // Mostrar carritos actuales directamente sin recargar
     if (hayVentasEnCarrito) {
       actualizarEstadisticas(todasLasVentas);
       renderizarTablaVentas(todasLasVentas);
@@ -640,6 +657,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       rangoFechas = 'Todos los registros';
     }
     
+    // Estadísticas generales por sucursal
     const sucStats = {};
     let totalEfectivoGeneral = 0;
     let totalTarjetaGeneral = 0;
@@ -692,8 +710,58 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       totalJuguetes += juguetesMonto;
     }
     
+    // Estadísticas por día
+    const statsPorDia = {};
+    
+    // Determinar rango de fechas para el reporte diario
+    let fechaInicio, fechaFin;
+    
+    if (desdeInput && hastaInput) {
+      fechaInicio = new Date(desdeInput);
+      fechaFin = new Date(hastaInput);
+    } else if (ventasParaReporte.length > 0) {
+      const fechas = ventasParaReporte.map(v => new Date(v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime()));
+      fechaInicio = new Date(Math.min(...fechas));
+      fechaFin = new Date(Math.max(...fechas));
+    } else {
+      fechaInicio = new Date();
+      fechaFin = new Date();
+    }
+    
+    const fechasRango = getFechasEnRango(fechaInicio, fechaFin);
+    
+    // Inicializar estadísticas por día para cada sucursal
+    for (const fecha of fechasRango) {
+      statsPorDia[fecha] = {};
+      for (const suc of sucursales) {
+        statsPorDia[fecha][suc.clave] = {
+          efectivo: 0,
+          tarjeta: 0,
+          total: 0
+        };
+      }
+    }
+    
+    // Llenar estadísticas por día
+    for (const v of ventasParaReporte) {
+      const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
+      const fecha = getFechaFromTimestamp(ts);
+      
+      if (statsPorDia[fecha] && statsPorDia[fecha][v.sucursalClave]) {
+        if (v.code === '000-09') {
+          statsPorDia[fecha][v.sucursalClave].efectivo += v.money || 0;
+          statsPorDia[fecha][v.sucursalClave].total += v.money || 0;
+        } else if (v.code === '000-10') {
+          statsPorDia[fecha][v.sucursalClave].tarjeta += v.money || 0;
+          statsPorDia[fecha][v.sucursalClave].total += v.money || 0;
+        }
+      }
+    }
+    
+    // Crear PDF
     const doc = new jsPDF();
     
+    // Membrete
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(33, 150, 243);
@@ -711,6 +779,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setTextColor(120, 120, 120);
     doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
     
+    // Tabla resumen por sucursal
     const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
     
@@ -741,6 +810,87 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       footStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
     });
     
+    let currentY = doc.lastAutoTable.finalY + 15;
+    
+    // Tabla detallada por día
+    if (fechasRango.length > 0) {
+      // Verificar si hay espacio, si no, agregar nueva página
+      if (currentY + 50 > doc.internal.pageSize.height) {
+        doc.addPage();
+        currentY = 20;
+      }
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text('DETALLE DIARIO POR SUCURSAL', 105, currentY, { align: 'center' });
+      currentY += 10;
+      
+      // Crear tabla detallada por día
+      const dailyHeaders = [['Fecha']];
+      for (const suc of sucursales) {
+        dailyHeaders[0].push(`${suc.nombre} Efectivo`);
+        dailyHeaders[0].push(`${suc.nombre} Tarjeta`);
+        dailyHeaders[0].push(`${suc.nombre} Total`);
+      }
+      dailyHeaders[0].push('Total Día');
+      
+      const dailyRows = [];
+      let totalGeneralEfectivo = 0;
+      let totalGeneralTarjeta = 0;
+      let totalGeneralTotal = 0;
+      
+      for (const fecha of fechasRango) {
+        const row = [fecha.split('-').reverse().join('/')];
+        let totalDia = 0;
+        let totalDiaEfectivo = 0;
+        let totalDiaTarjeta = 0;
+        
+        for (const suc of sucursales) {
+          const stats = statsPorDia[fecha][suc.clave];
+          row.push(stats.efectivo.toLocaleString());
+          row.push(stats.tarjeta.toLocaleString());
+          row.push(stats.total.toLocaleString());
+          
+          totalDiaEfectivo += stats.efectivo;
+          totalDiaTarjeta += stats.tarjeta;
+          totalDia += stats.total;
+        }
+        
+        row.push(totalDia.toLocaleString());
+        dailyRows.push(row);
+        
+        totalGeneralEfectivo += totalDiaEfectivo;
+        totalGeneralTarjeta += totalDiaTarjeta;
+        totalGeneralTotal += totalDia;
+      }
+      
+      // Agregar fila de totales
+      const totalRow = ['TOTAL GENERAL'];
+      for (const suc of sucursales) {
+        const stats = sucStats[suc.clave];
+        totalRow.push(stats.efectivo.toLocaleString());
+        totalRow.push(stats.tarjeta.toLocaleString());
+        totalRow.push(stats.total.toLocaleString());
+      }
+      totalRow.push((totalEfectivoGeneral + totalTarjetaGeneral).toLocaleString());
+      dailyRows.push(totalRow);
+      
+      doc.autoTable({
+        head: dailyHeaders,
+        body: dailyRows,
+        startY: currentY,
+        theme: 'striped',
+        styles: { fontSize: 7, cellPadding: 2 },
+        headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: 'bold', fontSize: 6 },
+        columnStyles: {
+          0: { cellWidth: 25, fontStyle: 'bold' }
+        }
+      });
+      
+      currentY = doc.lastAutoTable.finalY + 15;
+    }
+    
+    // Generar gráfico circular
     const canvas = document.getElementById('reportCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -782,21 +932,18 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
     
-    const finalY = (doc.lastAutoTable?.finalY || 65) + 10;
-    
-    if (finalY + 120 > pageHeight) {
+    // Verificar si hay espacio para el gráfico
+    if (currentY + 120 > pageHeight) {
       doc.addPage();
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, 20, { align: 'center' });
-      doc.addImage(chartImage, 'PNG', 30, 30, 150, 120);
-    } else {
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, finalY, { align: 'center' });
-      doc.addImage(chartImage, 'PNG', 30, finalY + 10, 150, 120);
+      currentY = 20;
     }
     
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, currentY, { align: 'center' });
+    doc.addImage(chartImage, 'PNG', 30, currentY + 10, 150, 120);
+    
+    // Pie de página en todas las páginas
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
