@@ -4,6 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ASTROLAND - Panel Unificado</title>
+<!-- Librerías para PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing: border-box; }
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 20px; }
@@ -36,6 +40,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .filtro-fechas button { padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 .filtro-fechas button:hover { background: #1976D2; }
 .filtro-fechas .limpiar-btn { background: #ff9800; }
+.filtro-fechas .reporte-btn { background: #9c27b0; }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 30px; }
 .stat-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -129,6 +134,10 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; }
 footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-size: 0.7rem; border-top: 1px solid #ddd; }
 
+/* Canvas oculto para gráficos */
+#chartContainer { display: none; }
+#reportCanvas { width: 400px; height: 400px; }
+
 @media (max-width: 600px) {
   body { padding: 10px; }
   .stat-card .value { font-size: 1rem; }
@@ -156,6 +165,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     <label>📅 Hasta: <input type="date" id="fechaHasta" value=""></label>
     <button onclick="aplicarFiltro()">🔍 Filtrar por fechas</button>
     <button class="limpiar-btn" onclick="limpiarFiltro()">🗑️ Mostrar carritos actuales</button>
+    <button class="reporte-btn" onclick="generarReportePDF()">📄 Generar Reporte PDF</button>
   </div>
 
   <div class="stats-grid" id="statsVentas">
@@ -193,6 +203,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     <button class="refresh-btn" onclick="cargarTodo()">⟳ Actualizar</button>
   </div>
 </div>
+
+<!-- Canvas oculto para generar gráficos -->
+<div id="chartContainer">
+  <canvas id="reportCanvas" width="400" height="400"></canvas>
+</div>
+
 <footer>© 2026 ASTROLAND - Panel Unificado</footer>
 
 <script type="module">
@@ -280,6 +296,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   let todasLasVentas = [];
   let todoHistorial = [];
   let ventasFiltradas = [];
+  let ventasActualesParaReporte = [];
   let tabActual = 'stock';
   let fechaDesde = null, fechaHasta = null;
   let hayVentasEnCarrito = false;
@@ -427,10 +444,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     } else if (hayVentasEnCarrito) {
       actualizarEstadisticas(todasLasVentas);
       renderizarTablaVentas(todasLasVentas);
+      ventasActualesParaReporte = todasLasVentas;
     } else {
       document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Use el filtro de fechas para ver el historial.</div>`;
       document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Use el filtro de fechas para ver el historial de ventas</div>';
       document.getElementById('sucursalesGrid').innerHTML = '<div class="loading" style="grid-column:1/-1;">📭 Use el filtro de fechas para ver estadísticas</div>';
+      ventasActualesParaReporte = [];
     }
   }
 
@@ -561,6 +580,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     });
     ventasFiltradas.sort((a,b) => (b.timestampEliminacion||b.timestamp||0) - (a.timestampEliminacion||a.timestamp||0));
     
+    ventasActualesParaReporte = ventasFiltradas;
     actualizarEstadisticas(ventasFiltradas);
     renderizarTablaVentas(ventasFiltradas);
   }
@@ -589,6 +609,229 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     // Recargar la página
     window.location.reload();
   }
+
+  // Función para generar el reporte PDF
+  window.generarReportePDF = async function() {
+    const { jsPDF } = window.jspdf;
+    
+    // Obtener las ventas a usar para el reporte
+    let ventasParaReporte = ventasActualesParaReporte;
+    
+    // Si no hay ventas filtradas, usar todas las ventas disponibles
+    if (!ventasParaReporte || ventasParaReporte.length === 0) {
+      let todas = [...todasLasVentas, ...todoHistorial];
+      ventasParaReporte = todas;
+    }
+    
+    // Obtener rango de fechas para el título
+    const desdeInput = document.getElementById('fechaDesde').value;
+    const hastaInput = document.getElementById('fechaHasta').value;
+    let rangoFechas = '';
+    
+    if (desdeInput && hastaInput) {
+      rangoFechas = `${desdeInput.split('-').reverse().join('/')} al ${hastaInput.split('-').reverse().join('/')}`;
+    } else if (desdeInput) {
+      rangoFechas = `Desde ${desdeInput.split('-').reverse().join('/')}`;
+    } else if (hastaInput) {
+      rangoFechas = `Hasta ${hastaInput.split('-').reverse().join('/')}`;
+    } else {
+      rangoFechas = 'Todos los registros';
+    }
+    
+    // Calcular estadísticas por sucursal
+    const sucStats = {};
+    let totalEfectivoGeneral = 0;
+    let totalTarjetaGeneral = 0;
+    let totalCombo30 = 0;
+    let totalCombo50 = 0;
+    let totalCombo100 = 0;
+    let totalCombo150 = 0;
+    let totalJuguetes = 0;
+    
+    for (const suc of sucursales) {
+      const vSuc = ventasParaReporte.filter(v => v.sucursalClave === suc.clave);
+      const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
+      const cEfectivo = vSuc.filter(v => v.code === '000-09');
+      const cTarjeta = vSuc.filter(v => v.code === '000-10');
+      
+      const efectivo = cEfectivo.reduce((s,v)=>s+(v.money||0),0);
+      const tarjeta = cTarjeta.reduce((s,v)=>s+(v.money||0),0);
+      
+      let juguetesMonto = 0;
+      let combo30 = 0, combo50 = 0, combo100 = 0, combo150 = 0;
+      
+      for (const v of vNorm) {
+        if (!v.esFichaGratis) {
+          if (v.code === '000-01') combo30++;
+          else if (v.code === '000-02') combo50++;
+          else if (v.code === '000-03') combo100++;
+          else if (v.code === '000-04') combo150++;
+        }
+        if (esJuguete(v.code)) juguetesMonto += v.money || 0;
+      }
+      
+      sucStats[suc.clave] = {
+        nombre: suc.nombre,
+        efectivo,
+        tarjeta,
+        total: efectivo + tarjeta,
+        combo30,
+        combo50,
+        combo100,
+        combo150,
+        juguetes: juguetesMonto
+      };
+      
+      totalEfectivoGeneral += efectivo;
+      totalTarjetaGeneral += tarjeta;
+      totalCombo30 += combo30;
+      totalCombo50 += combo50;
+      totalCombo100 += combo100;
+      totalCombo150 += combo150;
+      totalJuguetes += juguetesMonto;
+    }
+    
+    // Crear PDF
+    const doc = new jsPDF();
+    
+    // Membrete ASTROLAND IN GOD WE TRUST
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(33, 150, 243);
+    doc.text('ASTROLAND', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text('IN GOD WE TRUST', 105, 30, { align: 'center' });
+    
+    // Título con rango de fechas
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`REPORTE DE CIERRES - ${rangoFechas}`, 105, 45, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
+    
+    // Tabla de cierres por sucursal
+    const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
+    const tableRows = [];
+    
+    for (const suc of sucursales) {
+      const stats = sucStats[suc.clave];
+      tableRows.push([
+        stats.nombre,
+        stats.efectivo.toLocaleString(),
+        stats.tarjeta.toLocaleString(),
+        stats.total.toLocaleString()
+      ]);
+    }
+    
+    // Fila de totales
+    tableRows.push([
+      'TOTAL GENERAL',
+      totalEfectivoGeneral.toLocaleString(),
+      totalTarjetaGeneral.toLocaleString(),
+      (totalEfectivoGeneral + totalTarjetaGeneral).toLocaleString()
+    ]);
+    
+    doc.autoTable({
+      head: tableHeaders,
+      body: tableRows,
+      startY: 65,
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: 'bold' },
+      footStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
+    });
+    
+    // Generar gráfico circular
+    const canvas = document.getElementById('reportCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfico anterior si existe
+    let chartStatus = Chart.getChart('reportCanvas');
+    if (chartStatus) chartStatus.destroy();
+    
+    // Datos para el gráfico
+    const totalVentasCategorias = totalCombo30 * 30000 + totalCombo50 * 50000 + totalCombo100 * 100000 + totalCombo150 * 150000 + totalJuguetes;
+    
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: [
+          `Combo 30mil (${totalCombo30})`,
+          `Combo 50mil (${totalCombo50})`,
+          `Combo 100mil (${totalCombo100})`,
+          `Combo 150mil (${totalCombo150})`,
+          `Juguetes`
+        ],
+        datasets: [{
+          data: [
+            totalCombo30 * 30000,
+            totalCombo50 * 50000,
+            totalCombo100 * 100000,
+            totalCombo150 * 150000,
+            totalJuguetes
+          ],
+          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 10 } } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.raw;
+                const percentage = ((value / totalVentasCategorias) * 100).toFixed(1);
+                return `${context.label}: Gs. ${value.toLocaleString()} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Esperar a que el gráfico se renderice
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Agregar gráfico al PDF
+    const chartImage = canvas.toDataURL('image/png');
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Verificar si hay espacio para el gráfico, si no, agregar nueva página
+    const finalY = (doc.lastAutoTable?.finalY || 65) + 10;
+    
+    if (finalY + 120 > pageHeight) {
+      doc.addPage();
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, 20, { align: 'center' });
+      doc.addImage(chartImage, 'PNG', 30, 30, 150, 120);
+    } else {
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, finalY, { align: 'center' });
+      doc.addImage(chartImage, 'PNG', 30, finalY + 10, 150, 120);
+    }
+    
+    // Pie de página en todas las páginas
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150, 150, 150);
+      doc.text('GRACIAS DIOS NUESTRO', 105, pageHeight - 10, { align: 'center' });
+      doc.text(`Página ${i} de ${pageCount}`, pageWidth - 20, pageHeight - 10);
+    }
+    
+    // Guardar PDF
+    const fileName = `ASTROLAND_Reporte_${rangoFechas.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    doc.save(fileName);
+  };
 
   window.mostrarTab = function(tab) {
     tabActual = tab;
