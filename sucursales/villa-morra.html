@@ -440,6 +440,54 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 1rem; }
 .password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
 
+/* Modal de selección de fecha */
+.fecha-modal {
+  display: none;
+  position: fixed;
+  z-index: 4000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+.fecha-modal-content {
+  background-color: #fff;
+  margin: 20% auto;
+  padding: 30px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+}
+.fecha-modal-content h4 {
+  margin-top: 0;
+  text-align: center;
+  font-size: 1.3rem;
+}
+.fecha-modal-content input {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  margin: 15px 0;
+}
+.fecha-modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.fecha-modal-buttons button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
@@ -589,8 +637,21 @@ body { padding-top: 80px; }
       </div>
       <div id="clearPasswordPrompt" class="password-input">
         <input type="password" id="clearPassword" placeholder="Contraseña">
-        <button onclick="verifyAndClearCart()" style="background:#2196F3; color:white;">Confirmar</button>
+        <button onclick="verifyClearPasswordAndShowDate()" style="background:#2196F3; color:white;">Confirmar</button>
         <button onclick="hideClearPrompt()" style="background:#f44336;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para seleccionar fecha al vaciar carrito -->
+  <div id="fechaModal" class="fecha-modal">
+    <div class="fecha-modal-content">
+      <h4>📅 Seleccionar fecha para historial</h4>
+      <p style="text-align:center; color:#666;">¿Qué fecha quieres asignar a este registro?</p>
+      <input type="date" id="fechaHistorialInput">
+      <div class="fecha-modal-buttons">
+        <button onclick="confirmarVaciarConFecha()" style="background:#4CAF50; color:white;">✅ Vaciar Carrito</button>
+        <button onclick="closeFechaModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
     </div>
   </div>
@@ -656,10 +717,10 @@ body { padding-top: 80px; }
 
   // Funciones para bloquear/desbloquear scroll del body
   function blockBodyScroll() {
-    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
   }
   function unblockBodyScroll() {
-    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
   }
 
   function generarTodosLosProductos() {
@@ -1089,14 +1150,16 @@ body { padding-top: 80px; }
     else procesar();
   };
 
-  async function guardarEnHistorial(ventasAEliminar) {
+  async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
     if (!ventasAEliminar || ventasAEliminar.length === 0) return;
-    const ayer = new Date();
-    ayer.setDate(ayer.getDate() - 1);
+    
+    const fechaObj = new Date(fechaSeleccionada);
+    fechaObj.setHours(12, 0, 0, 0); // Mediodía para evitar problemas de zona horaria
+    
     const registro = {
       sucursal: "Villa Morra",
-      fechaEliminacion: ayer.toLocaleDateString('es-PY'),
-      timestamp: ayer.getTime(),
+      fechaEliminacion: fechaSeleccionada,
+      timestamp: fechaObj.getTime(),
       ventas: ventasAEliminar.map(item => ({
         code: item.code, name: item.name, points: item.points, money: item.money,
         fichaConsumption: item.fichaConsumption || 0, unidades: item.unidades || 1,
@@ -1111,13 +1174,51 @@ body { padding-top: 80px; }
     try { await push(historialRef, registro); } catch(e) { console.error(e); }
   }
 
-  window.verifyAndClearCart = async function() {
+  // Nuevas funciones para el modal de fecha
+  window.verifyClearPasswordAndShowDate = function() {
     const pwd = document.getElementById('clearPassword').value;
-    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
-    if (cart.length > 0) { await guardarEnHistorial(cart); }
-    await remove(cartRef);
+    if (pwd !== PASSWORD_GENERAL) { 
+      alert('Contraseña incorrecta'); 
+      return; 
+    }
+    if (cart.length === 0) {
+      alert('El carrito está vacío');
+      return;
+    }
+    
+    // Cerrar el prompt de contraseña
     hideClearPrompt();
-    alert('✅ Carrito vaciado. Las ventas se guardaron en el historial con fecha del día anterior.');
+    // Cerrar el modal del carrito
+    document.getElementById('cartModal').style.display = 'none';
+    unblockBodyScroll();
+    
+    // Mostrar el modal de selección de fecha
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+    
+    document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
+    document.getElementById('fechaModal').style.display = 'block';
+  };
+
+  window.closeFechaModal = function() {
+    document.getElementById('fechaModal').style.display = 'none';
+  };
+
+  window.confirmarVaciarConFecha = async function() {
+    const fechaInput = document.getElementById('fechaHistorialInput').value;
+    if (!fechaInput) {
+      alert('Debes seleccionar una fecha');
+      return;
+    }
+    
+    if (cart.length > 0) { 
+      await guardarEnHistorial(cart, fechaInput); 
+    }
+    await remove(cartRef);
+    
+    closeFechaModal();
+    alert(`✅ Carrito vaciado. Las ventas se guardaron en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}`);
   };
 
   window.showHistorialModal = function() {
@@ -1175,7 +1276,7 @@ body { padding-top: 80px; }
     
     let html = `<table><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Regaladas</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
-      const fechaMostrar = new Date(h.timestamp).toLocaleDateString('es-PY');
+      const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td style="text-align:center;">${h.totalVentas || 0}</td><td style="text-align:center;">Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td></tr>`;
     });
     html += `</tbody></table>`;
@@ -1193,7 +1294,8 @@ body { padding-top: 80px; }
     
     const data = [['Fecha Eliminación', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas']];
     filtrados.forEach(h => {
-      data.push([new Date(h.timestamp).toLocaleDateString('es-PY'), h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0]);
+      const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
+      data.push([fechaMostrar, h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0]);
     });
     data.push([], ['RESUMEN TOTAL', '', '', '', '', '']);
     data.push(['Total General', 
