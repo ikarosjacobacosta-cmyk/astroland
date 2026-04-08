@@ -335,13 +335,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     return { unitarias, combo30, combo50, combo100, combo150 };
   }
 
-  // Función para obtener la fecha en formato YYYY-MM-DD
   function getFechaFromTimestamp(ts) {
     const date = new Date(ts);
     return date.toISOString().split('T')[0];
   }
 
-  // Función para obtener todas las fechas en un rango
   function getFechasEnRango(desde, hasta) {
     const fechas = [];
     let current = new Date(desde);
@@ -451,14 +449,64 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
       fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
       aplicarFiltroConValores(fechaDesde, fechaHasta);
-    } else if (hayVentasEnCarrito) {
+    } else {
+      // Mostrar carritos actuales
+      mostrarCarritosActuales();
+    }
+  }
+
+  function mostrarCarritosActuales() {
+    if (hayVentasEnCarrito) {
       actualizarEstadisticas(todasLasVentas);
       renderizarTablaVentas(todasLasVentas);
       ventasActualesParaReporte = todasLasVentas;
     } else {
-      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Use el filtro de fechas para ver el historial.</div>`;
-      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Use el filtro de fechas para ver el historial de ventas</div>';
-      document.getElementById('sucursalesGrid').innerHTML = '<div class="loading" style="grid-column:1/-1;">📭 Use el filtro de fechas para ver estadísticas</div>';
+      // Mostrar mensaje cuando no hay ventas
+      document.getElementById('statsVentas').innerHTML = `
+        <div class="stat-card dinero"><div class="label">💰 Ventas</div><div class="value">0</div></div>
+        <div class="stat-card dinero"><div class="label">💵 Efectivo</div><div class="value">0</div></div>
+        <div class="stat-card dinero"><div class="label">💳 Tarjeta</div><div class="value">0</div></div>
+        <div class="stat-card cierre"><div class="label">💰 Total Cierre</div><div class="value">0</div></div>
+        <div class="stat-card puntos"><div class="label">🎯 Puntos</div><div class="value">0</div></div>
+        <div class="stat-card fichas"><div class="label">🎴 Fichas</div><div class="value">0</div></div>
+        <div class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value">0</div></div>
+      `;
+      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 No hay ventas en los carritos actuales</div>';
+      
+      // Mostrar cards de sucursales con valores en cero
+      const sucHtml = sucursales.map(suc => {
+        let extras = '';
+        if (suc.clave === 'laureles') {
+          extras = `<div class="item"><span class="label">💫 Pulseras:</span><span class="amount">Gs. 0</span></div>
+                    <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. 0</span></div>`;
+        }
+        return `<div class="suc-card ${suc.clave}">
+          <h4><span style="color:${suc.color}">🏢</span> ${suc.nombre}</h4>
+          <div class="item"><span class="label">📋 Operaciones:</span><span class="amount">0</span></div>
+          <div class="item"><span class="label">💰 Ventas:</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">💵 Efectivo:</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">💳 Tarjeta:</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">💰 Total Cierre:</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">🎁 Juguetes:</span><span class="amount">Gs. 0</span></div>
+          ${extras}
+          <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">0</span></div>
+          <div class="item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">0</span></div>
+          <div class="sub-section">
+            <div class="sub-label">📊 Detalle de Fichas:</div>
+            <div class="sub-item"><span class="label">🎴 Unitarias (000-00):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 30mil (000-01):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 50mil (000-02):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 100mil (000-03):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 150mil (000-04):</span><span class="amount">0 veces</span></div>
+          </div>
+          <div class="sub-section"><div class="sub-label">🔴 Error:</div>
+          <div class="item"><span class="label">Fichas:</span><span class="amount">0</span></div></div>
+          <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
+          <div class="item"><span class="label">Fichas:</span><span class="amount">0</span></div></div>
+        </div>`;
+      }).join('');
+      document.getElementById('sucursalesGrid').innerHTML = sucHtml;
       ventasActualesParaReporte = [];
     }
   }
@@ -611,28 +659,25 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function limpiarFiltro() {
+    // Limpiar sessionStorage
     sessionStorage.removeItem('filtroDesde');
     sessionStorage.removeItem('filtroHasta');
     
+    // Limpiar inputs
     document.getElementById('fechaDesde').value = '';
     document.getElementById('fechaHasta').value = '';
     
+    // Resetear variables
     fechaDesde = null;
     fechaHasta = null;
     
-    if (hayVentasEnCarrito) {
-      actualizarEstadisticas(todasLasVentas);
-      renderizarTablaVentas(todasLasVentas);
-      ventasActualesParaReporte = todasLasVentas;
-    } else {
-      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Use el filtro de fechas para ver el historial.</div>`;
-      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Use el filtro de fechas para ver el historial de ventas</div>';
-      document.getElementById('sucursalesGrid').innerHTML = '<div class="loading" style="grid-column:1/-1;">📭 Use el filtro de fechas para ver estadísticas</div>';
-      ventasActualesParaReporte = [];
-    }
+    // Recargar carritos para asegurar datos frescos
+    cargarVentasCarrito().then(() => {
+      mostrarCarritosActuales();
+    });
   }
 
-  // Función para generar el reporte PDF
+  // Función para generar el reporte PDF (se mantiene igual)
   async function generarReportePDF() {
     const { jsPDF } = window.jspdf;
     
@@ -657,7 +702,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       rangoFechas = 'Todos los registros';
     }
     
-    // Estadísticas generales por sucursal
     const sucStats = {};
     let totalEfectivoGeneral = 0;
     let totalTarjetaGeneral = 0;
@@ -710,10 +754,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       totalJuguetes += juguetesMonto;
     }
     
-    // Estadísticas por día
     const statsPorDia = {};
-    
-    // Determinar rango de fechas para el reporte diario
     let fechaInicio, fechaFin;
     
     if (desdeInput && hastaInput) {
@@ -730,7 +771,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     const fechasRango = getFechasEnRango(fechaInicio, fechaFin);
     
-    // Inicializar estadísticas por día para cada sucursal
     for (const fecha of fechasRango) {
       statsPorDia[fecha] = {};
       for (const suc of sucursales) {
@@ -742,7 +782,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
-    // Llenar estadísticas por día
     for (const v of ventasParaReporte) {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
       const fecha = getFechaFromTimestamp(ts);
@@ -758,10 +797,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
-    // Crear PDF
     const doc = new jsPDF();
     
-    // Membrete
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(33, 150, 243);
@@ -779,7 +816,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setTextColor(120, 120, 120);
     doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
     
-    // Tabla resumen por sucursal
     const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
     
@@ -812,9 +848,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     let currentY = doc.lastAutoTable.finalY + 15;
     
-    // Tabla detallada por día
     if (fechasRango.length > 0) {
-      // Verificar si hay espacio, si no, agregar nueva página
       if (currentY + 50 > doc.internal.pageSize.height) {
         doc.addPage();
         currentY = 20;
@@ -825,7 +859,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       doc.text('DETALLE DIARIO POR SUCURSAL', 105, currentY, { align: 'center' });
       currentY += 10;
       
-      // Crear tabla detallada por día
       const dailyHeaders = [['Fecha']];
       for (const suc of sucursales) {
         dailyHeaders[0].push(`${suc.nombre} Efectivo`);
@@ -835,36 +868,23 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       dailyHeaders[0].push('Total Día');
       
       const dailyRows = [];
-      let totalGeneralEfectivo = 0;
-      let totalGeneralTarjeta = 0;
-      let totalGeneralTotal = 0;
       
       for (const fecha of fechasRango) {
         const row = [fecha.split('-').reverse().join('/')];
         let totalDia = 0;
-        let totalDiaEfectivo = 0;
-        let totalDiaTarjeta = 0;
         
         for (const suc of sucursales) {
           const stats = statsPorDia[fecha][suc.clave];
           row.push(stats.efectivo.toLocaleString());
           row.push(stats.tarjeta.toLocaleString());
           row.push(stats.total.toLocaleString());
-          
-          totalDiaEfectivo += stats.efectivo;
-          totalDiaTarjeta += stats.tarjeta;
           totalDia += stats.total;
         }
         
         row.push(totalDia.toLocaleString());
         dailyRows.push(row);
-        
-        totalGeneralEfectivo += totalDiaEfectivo;
-        totalGeneralTarjeta += totalDiaTarjeta;
-        totalGeneralTotal += totalDia;
       }
       
-      // Agregar fila de totales
       const totalRow = ['TOTAL GENERAL'];
       for (const suc of sucursales) {
         const stats = sucStats[suc.clave];
@@ -890,7 +910,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       currentY = doc.lastAutoTable.finalY + 15;
     }
     
-    // Generar gráfico circular
     const canvas = document.getElementById('reportCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -932,7 +951,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
     
-    // Verificar si hay espacio para el gráfico
     if (currentY + 120 > pageHeight) {
       doc.addPage();
       currentY = 20;
@@ -943,7 +961,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, currentY, { align: 'center' });
     doc.addImage(chartImage, 'PNG', 30, currentY + 10, 150, 120);
     
-    // Pie de página en todas las páginas
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
