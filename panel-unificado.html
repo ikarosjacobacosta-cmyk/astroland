@@ -450,7 +450,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
       aplicarFiltroConValores(fechaDesde, fechaHasta);
     } else {
-      // Mostrar carritos actuales
       mostrarCarritosActuales();
     }
   }
@@ -461,7 +460,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       renderizarTablaVentas(todasLasVentas);
       ventasActualesParaReporte = todasLasVentas;
     } else {
-      // Mostrar mensaje cuando no hay ventas
       document.getElementById('statsVentas').innerHTML = `
         <div class="stat-card dinero"><div class="label">💰 Ventas</div><div class="value">0</div></div>
         <div class="stat-card dinero"><div class="label">💵 Efectivo</div><div class="value">0</div></div>
@@ -473,7 +471,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       `;
       document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 No hay ventas en los carritos actuales</div>';
       
-      // Mostrar cards de sucursales con valores en cero
       const sucHtml = sucursales.map(suc => {
         let extras = '';
         if (suc.clave === 'laureles') {
@@ -659,25 +656,21 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function limpiarFiltro() {
-    // Limpiar sessionStorage
     sessionStorage.removeItem('filtroDesde');
     sessionStorage.removeItem('filtroHasta');
     
-    // Limpiar inputs
     document.getElementById('fechaDesde').value = '';
     document.getElementById('fechaHasta').value = '';
     
-    // Resetear variables
     fechaDesde = null;
     fechaHasta = null;
     
-    // Recargar carritos para asegurar datos frescos
     cargarVentasCarrito().then(() => {
       mostrarCarritosActuales();
     });
   }
 
-  // Función para generar el reporte PDF (se mantiene igual)
+  // Función para generar el reporte PDF con todos los días (incluso con 0)
   async function generarReportePDF() {
     const { jsPDF } = window.jspdf;
     
@@ -702,6 +695,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       rangoFechas = 'Todos los registros';
     }
     
+    // Estadísticas generales por sucursal
     const sucStats = {};
     let totalEfectivoGeneral = 0;
     let totalTarjetaGeneral = 0;
@@ -754,6 +748,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       totalJuguetes += juguetesMonto;
     }
     
+    // Estadísticas por día y sucursal
     const statsPorDia = {};
     let fechaInicio, fechaFin;
     
@@ -771,6 +766,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     const fechasRango = getFechasEnRango(fechaInicio, fechaFin);
     
+    // Inicializar todos los días con 0
     for (const fecha of fechasRango) {
       statsPorDia[fecha] = {};
       for (const suc of sucursales) {
@@ -782,6 +778,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
+    // Llenar con datos reales
     for (const v of ventasParaReporte) {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
       const fecha = getFechaFromTimestamp(ts);
@@ -797,8 +794,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
+    // Crear PDF
     const doc = new jsPDF();
     
+    // Membrete
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(33, 150, 243);
@@ -816,6 +815,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setTextColor(120, 120, 120);
     doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
     
+    // Tabla resumen por sucursal
     const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
     
@@ -848,6 +848,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     let currentY = doc.lastAutoTable.finalY + 15;
     
+    // Tabla detallada por día (mostrando TODOS los días, incluso con 0)
     if (fechasRango.length > 0) {
       if (currentY + 50 > doc.internal.pageSize.height) {
         doc.addPage();
@@ -859,41 +860,61 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       doc.text('DETALLE DIARIO POR SUCURSAL', 105, currentY, { align: 'center' });
       currentY += 10;
       
-      const dailyHeaders = [['Fecha']];
-      for (const suc of sucursales) {
-        dailyHeaders[0].push(`${suc.nombre} Efectivo`);
-        dailyHeaders[0].push(`${suc.nombre} Tarjeta`);
-        dailyHeaders[0].push(`${suc.nombre} Total`);
-      }
-      dailyHeaders[0].push('Total Día');
-      
+      const dailyHeaders = [['Fecha', 'Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
       const dailyRows = [];
       
+      const totalesPorSucursal = {};
+      for (const suc of sucursales) {
+        totalesPorSucursal[suc.clave] = {
+          efectivo: 0,
+          tarjeta: 0,
+          total: 0
+        };
+      }
+      
+      // Mostrar TODOS los días, incluso con 0
       for (const fecha of fechasRango) {
-        const row = [fecha.split('-').reverse().join('/')];
-        let totalDia = 0;
+        const fechaFormateada = fecha.split('-').reverse().join('/');
         
         for (const suc of sucursales) {
           const stats = statsPorDia[fecha][suc.clave];
-          row.push(stats.efectivo.toLocaleString());
-          row.push(stats.tarjeta.toLocaleString());
-          row.push(stats.total.toLocaleString());
-          totalDia += stats.total;
+          
+          // Siempre agregar la fila, aunque sea 0
+          dailyRows.push([
+            fechaFormateada,
+            suc.nombre,
+            stats.efectivo.toLocaleString(),
+            stats.tarjeta.toLocaleString(),
+            stats.total.toLocaleString()
+          ]);
+          
+          // Acumular totales por sucursal
+          totalesPorSucursal[suc.clave].efectivo += stats.efectivo;
+          totalesPorSucursal[suc.clave].tarjeta += stats.tarjeta;
+          totalesPorSucursal[suc.clave].total += stats.total;
         }
-        
-        row.push(totalDia.toLocaleString());
-        dailyRows.push(row);
       }
       
-      const totalRow = ['TOTAL GENERAL'];
+      // Agregar filas de totales por sucursal
       for (const suc of sucursales) {
-        const stats = sucStats[suc.clave];
-        totalRow.push(stats.efectivo.toLocaleString());
-        totalRow.push(stats.tarjeta.toLocaleString());
-        totalRow.push(stats.total.toLocaleString());
+        const totalSuc = totalesPorSucursal[suc.clave];
+        dailyRows.push([
+          'TOTAL',
+          suc.nombre,
+          totalSuc.efectivo.toLocaleString(),
+          totalSuc.tarjeta.toLocaleString(),
+          totalSuc.total.toLocaleString()
+        ]);
       }
-      totalRow.push((totalEfectivoGeneral + totalTarjetaGeneral).toLocaleString());
-      dailyRows.push(totalRow);
+      
+      // Agregar fila de TOTAL GENERAL
+      dailyRows.push([
+        'TOTAL GENERAL',
+        'TODAS LAS SUCURSALES',
+        totalEfectivoGeneral.toLocaleString(),
+        totalTarjetaGeneral.toLocaleString(),
+        (totalEfectivoGeneral + totalTarjetaGeneral).toLocaleString()
+      ]);
       
       doc.autoTable({
         head: dailyHeaders,
@@ -901,15 +922,32 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         startY: currentY,
         theme: 'striped',
         styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: 'bold', fontSize: 6 },
+        headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: 'bold', fontSize: 7 },
         columnStyles: {
-          0: { cellWidth: 25, fontStyle: 'bold' }
+          0: { cellWidth: 25, fontStyle: 'bold' },
+          1: { cellWidth: 35 },
+          2: { cellWidth: 30, halign: 'right' },
+          3: { cellWidth: 30, halign: 'right' },
+          4: { cellWidth: 30, halign: 'right', fontStyle: 'bold' }
+        },
+        didParseCell: function(data) {
+          if (data.row.raw && (data.row.raw[0] === 'TOTAL' || data.row.raw[0] === 'TOTAL GENERAL')) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fillColor = data.row.raw[0] === 'TOTAL GENERAL' ? [200, 230, 255] : [240, 240, 240];
+          }
+          // Poner en gris claro las filas con valor 0 para destacar que no hubo ventas
+          if (data.row.raw && data.row.raw[0] !== 'TOTAL' && data.row.raw[0] !== 'TOTAL GENERAL') {
+            if (data.row.raw[4] === '0') {
+              data.cell.styles.textColor = [150, 150, 150];
+            }
+          }
         }
       });
       
       currentY = doc.lastAutoTable.finalY + 15;
     }
     
+    // Generar gráfico circular
     const canvas = document.getElementById('reportCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -940,7 +978,17 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       options: {
         responsive: false,
         plugins: {
-          legend: { position: 'bottom', labels: { font: { size: 10 } } }
+          legend: { position: 'bottom', labels: { font: { size: 10 } } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.raw;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `${context.label}: Gs. ${value.toLocaleString()} (${percentage}%)`;
+              }
+            }
+          }
         }
       }
     });
@@ -961,6 +1009,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, currentY, { align: 'center' });
     doc.addImage(chartImage, 'PNG', 30, currentY + 10, 150, 120);
     
+    // Pie de página
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
