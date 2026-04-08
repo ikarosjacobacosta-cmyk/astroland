@@ -251,6 +251,18 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     '220-07', '250-00', '250-01', '250-02', '250-03', '350-00', '420-00', '420-01', '420-02'
   ];
 
+  // Variables para persistir el estado del filtro entre recargas
+  let filtroDesde = null;
+  let filtroHasta = null;
+  
+  // Recuperar filtros de sessionStorage al cargar
+  if (sessionStorage.getItem('filtroDesde')) {
+    document.getElementById('fechaDesde').value = sessionStorage.getItem('filtroDesde');
+  }
+  if (sessionStorage.getItem('filtroHasta')) {
+    document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
+  }
+
   function getProductStock(stockData, code) {
     const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
     if (fichasConsumo[code]) {
@@ -403,14 +415,19 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function mostrarVentasSegunEstado() {
-    if (hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
+    // Verificar si hay filtros guardados en sessionStorage
+    const desde = sessionStorage.getItem('filtroDesde');
+    const hasta = sessionStorage.getItem('filtroHasta');
+    
+    if (desde || hasta) {
+      // Hay filtros guardados, aplicar filtro con los valores guardados
+      fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
+      fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
+      aplicarFiltroConValores(fechaDesde, fechaHasta);
+    } else if (hayVentasEnCarrito) {
       actualizarEstadisticas(todasLasVentas);
       renderizarTablaVentas(todasLasVentas);
-    } 
-    else if (fechaDesde || fechaHasta) {
-      aplicarFiltro();
-    }
-    else if (!hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
+    } else {
       document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Use el filtro de fechas para ver el historial.</div>`;
       document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Use el filtro de fechas para ver el historial de ventas</div>';
       document.getElementById('sucursalesGrid').innerHTML = '<div class="loading" style="grid-column:1/-1;">📭 Use el filtro de fechas para ver estadísticas</div>';
@@ -533,18 +550,13 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
-  function aplicarFiltro() {
-    const desde = document.getElementById('fechaDesde').value;
-    const hasta = document.getElementById('fechaHasta').value;
-    fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
-    fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
-    
+  function aplicarFiltroConValores(desde, hasta) {
     let todas = [...todasLasVentas, ...todoHistorial];
     
     ventasFiltradas = todas.filter(v => {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
-      if (fechaDesde && ts < fechaDesde) return false;
-      if (fechaHasta && ts > fechaHasta) return false;
+      if (desde && ts < desde) return false;
+      if (hasta && ts > hasta) return false;
       return true;
     });
     ventasFiltradas.sort((a,b) => (b.timestampEliminacion||b.timestamp||0) - (a.timestampEliminacion||a.timestamp||0));
@@ -553,12 +565,29 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     renderizarTablaVentas(ventasFiltradas);
   }
 
+  function aplicarFiltro() {
+    // Guardar los valores del filtro en sessionStorage
+    const desdeInput = document.getElementById('fechaDesde').value;
+    const hastaInput = document.getElementById('fechaHasta').value;
+    
+    if (desdeInput) sessionStorage.setItem('filtroDesde', desdeInput);
+    if (hastaInput) sessionStorage.setItem('filtroHasta', hastaInput);
+    
+    // Recargar la página
+    window.location.reload();
+  }
+
   function limpiarFiltro() {
+    // Limpiar los valores de sessionStorage
+    sessionStorage.removeItem('filtroDesde');
+    sessionStorage.removeItem('filtroHasta');
+    
+    // Limpiar los inputs
     document.getElementById('fechaDesde').value = '';
     document.getElementById('fechaHasta').value = '';
-    fechaDesde = null;
-    fechaHasta = null;
-    mostrarVentasSegunEstado();
+    
+    // Recargar la página
+    window.location.reload();
   }
 
   window.mostrarTab = function(tab) {
@@ -584,8 +613,13 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   window.cargarTodo = cargarTodo;
   document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarStock(); });
 
-  document.getElementById('fechaDesde').value = '';
-  document.getElementById('fechaHasta').value = '';
+  // Inicializar fechas desde sessionStorage si existen
+  if (sessionStorage.getItem('filtroDesde')) {
+    document.getElementById('fechaDesde').value = sessionStorage.getItem('filtroDesde');
+  }
+  if (sessionStorage.getItem('filtroHasta')) {
+    document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
+  }
 
   await cargarTodo();
   setInterval(() => cargarTodo(), 15000);
