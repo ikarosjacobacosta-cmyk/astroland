@@ -37,10 +37,12 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 }
 .filtro-fechas label { font-size: 0.8rem; color: #666; }
 .filtro-fechas input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
-.filtro-fechas button { padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.filtro-fechas button { padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; min-height: 44px; }
 .filtro-fechas button:hover { background: #1976D2; }
 .filtro-fechas .limpiar-btn { background: #ff9800; }
+.filtro-fechas .limpiar-btn:hover { background: #e68900; }
 .filtro-fechas .reporte-btn { background: #9c27b0; }
+.filtro-fechas .reporte-btn:hover { background: #7b1fa2; }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 30px; }
 .stat-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -70,7 +72,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .suc-card .sub-item .amount { font-weight: bold; }
 
 .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-.tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+.tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; min-height: 44px; }
 .tab-btn.active { background: #2196F3; color: white; }
 
 .search-container { text-align: center; margin-bottom: 20px; }
@@ -131,10 +133,9 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 
 .loading { text-align: center; padding: 40px; color: #666; }
 .update-info { text-align: center; margin-top: 20px; font-size: 0.7rem; color: #999; }
-.refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; }
+.refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; min-height: 44px; }
 footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-size: 0.7rem; border-top: 1px solid #ddd; }
 
-/* Canvas oculto para gráficos */
 #chartContainer { display: none; }
 #reportCanvas { width: 400px; height: 400px; }
 
@@ -144,6 +145,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   .tab-btn { padding: 6px 15px; font-size: 0.75rem; }
   .ventas-table th, .ventas-table td { font-size: 0.65rem; padding: 6px 3px; }
   .sub-item .label { font-size: 0.65rem; }
+  .filtro-fechas { flex-direction: column; align-items: stretch; }
+  .filtro-fechas label { display: flex; flex-direction: column; gap: 5px; }
+  .filtro-fechas input { width: 100%; }
+  .stock-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 </style>
 </head>
@@ -163,9 +169,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="filtro-fechas" id="filtroFechas">
     <label>📅 Desde: <input type="date" id="fechaDesde" value=""></label>
     <label>📅 Hasta: <input type="date" id="fechaHasta" value=""></label>
-    <button onclick="aplicarFiltro()">🔍 Filtrar por fechas</button>
-    <button class="limpiar-btn" onclick="limpiarFiltro()">🗑️ Mostrar carritos actuales</button>
-    <button class="reporte-btn" onclick="generarReportePDF()">📄 Generar Reporte PDF</button>
+    <button id="btnFiltrar">🔍 Filtrar por fechas</button>
+    <button class="limpiar-btn" id="btnLimpiar">🗑️ Mostrar carritos actuales</button>
+    <button class="reporte-btn" id="btnReporte">📄 Generar Reporte PDF</button>
   </div>
 
   <div class="stats-grid" id="statsVentas">
@@ -181,8 +187,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="sucursales-grid" id="sucursalesGrid"></div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="mostrarTab('stock')">📦 Stock</button>
-    <button class="tab-btn" onclick="mostrarTab('ventas')">🛒 Historial</button>
+    <button class="tab-btn active" id="tabStockBtn">📦 Stock</button>
+    <button class="tab-btn" id="tabVentasBtn">🛒 Historial</button>
   </div>
 
   <div class="search-container" id="searchContainer">
@@ -200,11 +206,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="update-info">
     <span>🔄 Actualización automática cada 15 segundos</span>
     <span id="lastUpdate"></span>
-    <button class="refresh-btn" onclick="cargarTodo()">⟳ Actualizar</button>
+    <button class="refresh-btn" id="btnActualizar">⟳ Actualizar</button>
   </div>
 </div>
 
-<!-- Canvas oculto para generar gráficos -->
 <div id="chartContainer">
   <canvas id="reportCanvas" width="400" height="400"></canvas>
 </div>
@@ -267,18 +272,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     '220-07', '250-00', '250-01', '250-02', '250-03', '350-00', '420-00', '420-01', '420-02'
   ];
 
-  // Variables para persistir el estado del filtro entre recargas
-  let filtroDesde = null;
-  let filtroHasta = null;
-  
-  // Recuperar filtros de sessionStorage al cargar
-  if (sessionStorage.getItem('filtroDesde')) {
-    document.getElementById('fechaDesde').value = sessionStorage.getItem('filtroDesde');
-  }
-  if (sessionStorage.getItem('filtroHasta')) {
-    document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
-  }
-
   function getProductStock(stockData, code) {
     const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
     if (fichasConsumo[code]) {
@@ -295,11 +288,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   let todosLosProductos = [];
   let todasLasVentas = [];
   let todoHistorial = [];
-  let ventasFiltradas = [];
   let ventasActualesParaReporte = [];
   let tabActual = 'stock';
-  let fechaDesde = null, fechaHasta = null;
   let hayVentasEnCarrito = false;
+  let fechaDesde = null;
+  let fechaHasta = null;
 
   const colores = ['linear-gradient(135deg, #667eea, #764ba2)', 'linear-gradient(135deg, #f093fb, #f5576c)', 'linear-gradient(135deg, #4facfe, #00f2fe)', 'linear-gradient(135deg, #43e97b, #38f9d7)', 'linear-gradient(135deg, #fa709a, #fee140)'];
   function getColorIndex(code) { return code.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colores.length; }
@@ -432,12 +425,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function mostrarVentasSegunEstado() {
-    // Verificar si hay filtros guardados en sessionStorage
     const desde = sessionStorage.getItem('filtroDesde');
     const hasta = sessionStorage.getItem('filtroHasta');
     
     if (desde || hasta) {
-      // Hay filtros guardados, aplicar filtro con los valores guardados
       fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
       fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
       aplicarFiltroConValores(fechaDesde, fechaHasta);
@@ -572,7 +563,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function aplicarFiltroConValores(desde, hasta) {
     let todas = [...todasLasVentas, ...todoHistorial];
     
-    ventasFiltradas = todas.filter(v => {
+    const ventasFiltradas = todas.filter(v => {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
       if (desde && ts < desde) return false;
       if (hasta && ts > hasta) return false;
@@ -586,44 +577,55 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function aplicarFiltro() {
-    // Guardar los valores del filtro en sessionStorage
     const desdeInput = document.getElementById('fechaDesde').value;
     const hastaInput = document.getElementById('fechaHasta').value;
     
     if (desdeInput) sessionStorage.setItem('filtroDesde', desdeInput);
-    if (hastaInput) sessionStorage.setItem('filtroHasta', hastaInput);
+    else sessionStorage.removeItem('filtroDesde');
     
-    // Recargar la página
-    window.location.reload();
+    if (hastaInput) sessionStorage.setItem('filtroHasta', hastaInput);
+    else sessionStorage.removeItem('filtroHasta');
+    
+    // Aplicar filtro directamente sin recargar
+    fechaDesde = desdeInput ? new Date(desdeInput).setHours(0,0,0,0) : null;
+    fechaHasta = hastaInput ? new Date(hastaInput).setHours(23,59,59,999) : null;
+    aplicarFiltroConValores(fechaDesde, fechaHasta);
   }
 
   function limpiarFiltro() {
-    // Limpiar los valores de sessionStorage
     sessionStorage.removeItem('filtroDesde');
     sessionStorage.removeItem('filtroHasta');
     
-    // Limpiar los inputs
     document.getElementById('fechaDesde').value = '';
     document.getElementById('fechaHasta').value = '';
     
-    // Recargar la página
-    window.location.reload();
+    fechaDesde = null;
+    fechaHasta = null;
+    
+    // Mostrar carritos actuales directamente sin recargar
+    if (hayVentasEnCarrito) {
+      actualizarEstadisticas(todasLasVentas);
+      renderizarTablaVentas(todasLasVentas);
+      ventasActualesParaReporte = todasLasVentas;
+    } else {
+      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Use el filtro de fechas para ver el historial.</div>`;
+      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Use el filtro de fechas para ver el historial de ventas</div>';
+      document.getElementById('sucursalesGrid').innerHTML = '<div class="loading" style="grid-column:1/-1;">📭 Use el filtro de fechas para ver estadísticas</div>';
+      ventasActualesParaReporte = [];
+    }
   }
 
   // Función para generar el reporte PDF
-  window.generarReportePDF = async function() {
+  async function generarReportePDF() {
     const { jsPDF } = window.jspdf;
     
-    // Obtener las ventas a usar para el reporte
     let ventasParaReporte = ventasActualesParaReporte;
     
-    // Si no hay ventas filtradas, usar todas las ventas disponibles
     if (!ventasParaReporte || ventasParaReporte.length === 0) {
       let todas = [...todasLasVentas, ...todoHistorial];
       ventasParaReporte = todas;
     }
     
-    // Obtener rango de fechas para el título
     const desdeInput = document.getElementById('fechaDesde').value;
     const hastaInput = document.getElementById('fechaHasta').value;
     let rangoFechas = '';
@@ -638,7 +640,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       rangoFechas = 'Todos los registros';
     }
     
-    // Calcular estadísticas por sucursal
     const sucStats = {};
     let totalEfectivoGeneral = 0;
     let totalTarjetaGeneral = 0;
@@ -691,10 +692,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       totalJuguetes += juguetesMonto;
     }
     
-    // Crear PDF
     const doc = new jsPDF();
     
-    // Membrete ASTROLAND IN GOD WE TRUST
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(33, 150, 243);
@@ -704,7 +703,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setTextColor(100, 100, 100);
     doc.text('IN GOD WE TRUST', 105, 30, { align: 'center' });
     
-    // Título con rango de fechas
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
     doc.text(`REPORTE DE CIERRES - ${rangoFechas}`, 105, 45, { align: 'center' });
@@ -713,7 +711,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setTextColor(120, 120, 120);
     doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
     
-    // Tabla de cierres por sucursal
     const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
     
@@ -727,7 +724,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       ]);
     }
     
-    // Fila de totales
     tableRows.push([
       'TOTAL GENERAL',
       totalEfectivoGeneral.toLocaleString(),
@@ -745,16 +741,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       footStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
     });
     
-    // Generar gráfico circular
     const canvas = document.getElementById('reportCanvas');
     const ctx = canvas.getContext('2d');
     
-    // Destruir gráfico anterior si existe
     let chartStatus = Chart.getChart('reportCanvas');
     if (chartStatus) chartStatus.destroy();
-    
-    // Datos para el gráfico
-    const totalVentasCategorias = totalCombo30 * 30000 + totalCombo50 * 50000 + totalCombo100 * 100000 + totalCombo150 * 150000 + totalJuguetes;
     
     new Chart(ctx, {
       type: 'pie',
@@ -780,29 +771,17 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       options: {
         responsive: false,
         plugins: {
-          legend: { position: 'bottom', labels: { font: { size: 10 } } },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const value = context.raw;
-                const percentage = ((value / totalVentasCategorias) * 100).toFixed(1);
-                return `${context.label}: Gs. ${value.toLocaleString()} (${percentage}%)`;
-              }
-            }
-          }
+          legend: { position: 'bottom', labels: { font: { size: 10 } } }
         }
       }
     });
     
-    // Esperar a que el gráfico se renderice
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Agregar gráfico al PDF
     const chartImage = canvas.toDataURL('image/png');
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
     
-    // Verificar si hay espacio para el gráfico, si no, agregar nueva página
     const finalY = (doc.lastAutoTable?.finalY || 65) + 10;
     
     if (finalY + 120 > pageHeight) {
@@ -818,7 +797,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       doc.addImage(chartImage, 'PNG', 30, finalY + 10, 150, 120);
     }
     
-    // Pie de página en todas las páginas
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -828,32 +806,35 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       doc.text(`Página ${i} de ${pageCount}`, pageWidth - 20, pageHeight - 10);
     }
     
-    // Guardar PDF
     const fileName = `ASTROLAND_Reporte_${rangoFechas.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
     doc.save(fileName);
-  };
+  }
 
-  window.mostrarTab = function(tab) {
+  function mostrarTab(tab) {
     tabActual = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     if (tab === 'stock') {
-      document.querySelector('.tab-btn:first-child').classList.add('active');
+      document.getElementById('tabStockBtn').classList.add('active');
       document.getElementById('tabStock').style.display = 'block';
       document.getElementById('tabVentas').style.display = 'none';
       document.getElementById('searchContainer').style.display = 'block';
       renderizarStock();
     } else {
-      document.querySelector('.tab-btn:last-child').classList.add('active');
+      document.getElementById('tabVentasBtn').classList.add('active');
       document.getElementById('tabStock').style.display = 'none';
       document.getElementById('tabVentas').style.display = 'block';
       document.getElementById('searchContainer').style.display = 'none';
       mostrarVentasSegunEstado();
     }
-  };
+  }
 
-  window.aplicarFiltro = aplicarFiltro;
-  window.limpiarFiltro = limpiarFiltro;
-  window.cargarTodo = cargarTodo;
+  // Event Listeners
+  document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
+  document.getElementById('btnLimpiar').addEventListener('click', limpiarFiltro);
+  document.getElementById('btnReporte').addEventListener('click', generarReportePDF);
+  document.getElementById('btnActualizar').addEventListener('click', cargarTodo);
+  document.getElementById('tabStockBtn').addEventListener('click', () => mostrarTab('stock'));
+  document.getElementById('tabVentasBtn').addEventListener('click', () => mostrarTab('ventas'));
   document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarStock(); });
 
   // Inicializar fechas desde sessionStorage si existen
