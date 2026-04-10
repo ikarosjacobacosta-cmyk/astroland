@@ -227,7 +227,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     { nombre: "Villa Morra", clave: "morra", color: "#4caf50", bg: "#e8f5e9", config: { apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", authDomain: "villa-morra.firebaseapp.com", projectId: "villa-morra", storageBucket: "villa-morra.firebasestorage.app", messagingSenderId: "184849063287", appId: "1:184849063287:web:15f360231ade1b85ab5572" } }
   ];
 
-  // Almacenar apps para evitar reinicialización duplicada
   const apps = {};
   const dbs = {};
 
@@ -298,11 +297,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     try { 
       const data = (await get(ref(db, 'carrito'))).val(); 
       if (!data) return [];
-      
       const items = Object.values(data);
       const uniqueItems = [];
       const seenIds = new Set();
-      
       for (const item of items) {
         if (item.id && !seenIds.has(item.id)) {
           seenIds.add(item.id);
@@ -316,7 +313,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           }
         }
       }
-      
       return uniqueItems;
     } catch { 
       return []; 
@@ -384,7 +380,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const fechas = [];
     let current = new Date(desde);
     const end = new Date(hasta);
-    
     while (current <= end) {
       fechas.push(new Date(current).toISOString().split('T')[0]);
       current.setDate(current.getDate() + 1);
@@ -395,7 +390,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function cargarTodo() {
     todasLasVentas = [];
     todoHistorial = [];
-    
     await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
     if (tabActual === 'stock') renderizarStock();
@@ -406,7 +400,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     try {
       const stocks = {};
       for (const suc of sucursales) stocks[suc.clave] = await obtenerStock(dbs[suc.clave]);
-      
       todosLosProductos = [];
       for (const code of CODIGOS_COMPLETOS) {
         let total = 0;
@@ -446,15 +439,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function cargarVentasCarrito() {
     try {
       const ventasMap = new Map();
-      
       for (const suc of sucursales) {
         const ventas = await obtenerCarrito(dbs[suc.clave]);
         console.log(`📦 ${suc.nombre}: ${ventas.length} ventas en carrito`);
-        
         ventas.forEach(v => {
           const timestampKey = v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime();
           const uniqueKey = `${suc.clave}_${v.code}_${timestampKey}_${v.id || ''}`;
-          
           if (!ventasMap.has(uniqueKey)) {
             ventasMap.set(uniqueKey, {
               ...v, 
@@ -462,38 +452,28 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
               sucursalClave: suc.clave,
               timestamp: timestampKey
             });
-          } else {
-            console.warn(`⚠️ Duplicado detectado en ${suc.nombre}: ${v.code}`);
           }
         });
       }
-      
       todasLasVentas = Array.from(ventasMap.values());
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
-      
       console.log(`✅ Total ventas únicas en carritos: ${todasLasVentas.length}`);
       hayVentasEnCarrito = todasLasVentas.length > 0;
-      
       if (tabActual === 'ventas') mostrarVentasSegunEstado();
-    } catch(e) { 
-      console.error('Error al cargar ventas del carrito:', e); 
-    }
+    } catch(e) { console.error('Error al cargar ventas del carrito:', e); }
   }
 
   async function cargarHistorial() {
     try {
       const historialMap = new Map();
-      
       for (const suc of sucursales) {
         const historial = await obtenerHistorial(dbs[suc.clave]);
         console.log(`📜 ${suc.nombre}: ${historial.length} registros en historial`);
-        
         historial.forEach(h => {
           if (h.ventas && Array.isArray(h.ventas)) {
             const fechaElim = h.timestamp || new Date(h.fechaEliminacion).getTime();
             h.ventas.forEach(v => {
               const uniqueKey = `${suc.clave}_${v.code}_${fechaElim}_${v.id || ''}`;
-              
               if (!historialMap.has(uniqueKey)) {
                 historialMap.set(uniqueKey, {
                   ...v, 
@@ -507,12 +487,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           }
         });
       }
-      
       todoHistorial = Array.from(historialMap.values());
       todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
-      
       console.log(`✅ Total registros únicos en historial: ${todoHistorial.length}`);
-      
       if (tabActual === 'ventas') mostrarVentasSegunEstado();
     } catch(e) { console.error(e); }
   }
@@ -520,7 +497,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function mostrarVentasSegunEstado() {
     const desde = sessionStorage.getItem('filtroDesde');
     const hasta = sessionStorage.getItem('filtroHasta');
-    
     if (desde || hasta) {
       fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
       fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
@@ -534,8 +510,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     if (hayVentasEnCarrito) {
       actualizarEstadisticas(todasLasVentas);
       renderizarTablaVentas(todasLasVentas);
-      ventasActualesParaReporte = todasLasVentas;
+      ventasActualesParaReporte = [...todasLasVentas];
     } else {
+      // código existente...
       document.getElementById('statsVentas').innerHTML = `
         <div class="stat-card dinero"><div class="label">💰 Ventas</div><div class="value">0</div></div>
         <div class="stat-card dinero"><div class="label">💵 Efectivo</div><div class="value">0</div></div>
@@ -696,7 +673,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <td>${v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-'}</td>
           <td style="font-size:0.7rem;">${v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora)}</td>
         </tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
@@ -711,7 +688,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     });
     ventasFiltradas.sort((a,b) => (b.timestampEliminacion||b.timestamp||0) - (a.timestampEliminacion||a.timestamp||0));
     
-    ventasActualesParaReporte = ventasFiltradas;
+    ventasActualesParaReporte = [...ventasFiltradas];
     actualizarEstadisticas(ventasFiltradas);
     renderizarTablaVentas(ventasFiltradas);
   }
@@ -749,11 +726,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function generarReportePDF() {
     const { jsPDF } = window.jspdf;
     
+    // Usar las ventas filtradas actuales
     let ventasParaReporte = ventasActualesParaReporte;
     
+    // Si no hay ventas filtradas, usar todas
     if (!ventasParaReporte || ventasParaReporte.length === 0) {
-      let todas = [...todasLasVentas, ...todoHistorial];
-      ventasParaReporte = todas;
+      ventasParaReporte = [...todasLasVentas, ...todoHistorial];
     }
     
     const desdeInput = document.getElementById('fechaDesde').value;
@@ -770,53 +748,26 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       rangoFechas = 'Todos los registros';
     }
     
-    // Estadísticas generales por sucursal
+    // Filtrar SOLO las ventas de cierre (códigos 000-09 y 000-10) para la tabla de cierres
+    const ventasCierre = ventasParaReporte.filter(v => v.code === '000-09' || v.code === '000-10');
+    
+    console.log("Ventas para reporte (total):", ventasParaReporte.length);
+    console.log("Ventas de cierre:", ventasCierre.length);
+    console.log("Rango fechas:", rangoFechas);
+    
+    // Estadísticas generales por sucursal (solo cierres)
     const sucStats = {};
     let totalEfectivoGeneral = 0;
     let totalTarjetaGeneral = 0;
     let totalCierreGeneral = 0;
     
-    // Variables para el gráfico - TODAS LAS CATEGORÍAS
-    let totalCombo30 = 0;
-    let totalCombo50 = 0;
-    let totalCombo100 = 0;
-    let totalCombo150 = 0;
-    let totalJuguetes = 0;
-    let totalBillar = 0;
-    let totalPulseras = 0;
-    let totalUnitarias = 0;
-    
     for (const suc of sucursales) {
-      const vSuc = ventasParaReporte.filter(v => v.sucursalClave === suc.clave);
-      const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
+      const vSuc = ventasCierre.filter(v => v.sucursalClave === suc.clave);
       const cEfectivo = vSuc.filter(v => v.code === '000-09');
       const cTarjeta = vSuc.filter(v => v.code === '000-10');
       
       const efectivo = cEfectivo.reduce((s,v)=>s+(v.money||0),0);
       const tarjeta = cTarjeta.reduce((s,v)=>s+(v.money||0),0);
-      
-      let juguetesMonto = 0;
-      let combo30 = 0, combo50 = 0, combo100 = 0, combo150 = 0;
-      let unitarias = 0;
-      let billarMonto = 0;
-      let pulserasMonto = 0;
-      
-      for (const v of vNorm) {
-        const fecha = v.timestampEliminacion || v.timestamp || Date.now();
-        const tipo = clasificar(v.code, fecha);
-        
-        if (!v.esFichaGratis) {
-          if (v.code === '000-00') unitarias += v.money || 0;
-          else if (v.code === '000-01') combo30++;
-          else if (v.code === '000-02') combo50++;
-          else if (v.code === '000-03') combo100++;
-          else if (v.code === '000-04') combo150++;
-        }
-        
-        if (tipo === 'billar') billarMonto += v.money || 0;
-        if (tipo === 'pulseras') pulserasMonto += v.money || 0;
-        if (esJuguete(v.code)) juguetesMonto += v.money || 0;
-      }
       
       sucStats[suc.clave] = {
         nombre: suc.nombre,
@@ -828,25 +779,40 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       totalEfectivoGeneral += efectivo;
       totalTarjetaGeneral += tarjeta;
       totalCierreGeneral += (efectivo + tarjeta);
-      totalCombo30 += combo30 * 30000;
-      totalCombo50 += combo50 * 50000;
-      totalCombo100 += combo100 * 100000;
-      totalCombo150 += combo150 * 150000;
-      totalJuguetes += juguetesMonto;
-      totalBillar += billarMonto;
-      totalPulseras += pulserasMonto;
-      totalUnitarias += unitarias;
     }
     
-    // Estadísticas por día y sucursal
+    // Estadísticas de FICHAS (cantidad de veces) para el gráfico
+    // Solo contar fichas que NO son gratis y son de los combos
+    const ventasFichas = ventasParaReporte.filter(v => 
+      !v.esFichaGratis && 
+      (v.code === '000-00' || v.code === '000-01' || v.code === '000-02' || v.code === '000-03' || v.code === '000-04')
+    );
+    
+    let totalUnitarias = 0;
+    let totalCombo30 = 0;
+    let totalCombo50 = 0;
+    let totalCombo100 = 0;
+    let totalCombo150 = 0;
+    
+    for (const v of ventasFichas) {
+      if (v.code === '000-00') totalUnitarias++;
+      else if (v.code === '000-01') totalCombo30++;
+      else if (v.code === '000-02') totalCombo50++;
+      else if (v.code === '000-03') totalCombo100++;
+      else if (v.code === '000-04') totalCombo150++;
+    }
+    
+    console.log("Fichas - Unitarias:", totalUnitarias, "Combo30:", totalCombo30, "Combo50:", totalCombo50, "Combo100:", totalCombo100, "Combo150:", totalCombo150);
+    
+    // Estadísticas por día y sucursal (solo cierres)
     const statsPorDia = {};
     let fechaInicio, fechaFin;
     
     if (desdeInput && hastaInput) {
       fechaInicio = new Date(desdeInput);
       fechaFin = new Date(hastaInput);
-    } else if (ventasParaReporte.length > 0) {
-      const fechas = ventasParaReporte.map(v => new Date(v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime()));
+    } else if (ventasCierre.length > 0) {
+      const fechas = ventasCierre.map(v => new Date(v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime()));
       fechaInicio = new Date(Math.min(...fechas));
       fechaFin = new Date(Math.max(...fechas));
     } else {
@@ -868,8 +834,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
-    // Llenar con datos reales
-    for (const v of ventasParaReporte) {
+    // Llenar con datos reales (solo cierres)
+    for (const v of ventasCierre) {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
       const fecha = getFechaFromTimestamp(ts);
       
@@ -938,7 +904,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     let currentY = doc.lastAutoTable.finalY + 15;
     
-    // Tabla detallada por día - Ordenada por sucursal (4 columnas: Fecha, Sucursal, Efectivo, Tarjeta, Total)
+    // Tabla detallada por día
     if (fechasRango.length > 0) {
       if (currentY + 50 > doc.internal.pageSize.height) {
         doc.addPage();
@@ -962,13 +928,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         };
       }
       
-      // Ordenar las fechas de más antigua a más reciente
       const fechasOrdenadas = [...fechasRango].sort();
       
       for (const fecha of fechasOrdenadas) {
         const fechaFormateada = fecha.split('-').reverse().join('/');
-        
-        // Ordenar las sucursales por nombre
         const sucursalesOrdenadas = [...sucursales].sort((a, b) => a.nombre.localeCompare(b.nombre));
         
         for (const suc of sucursalesOrdenadas) {
@@ -988,7 +951,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         }
       }
       
-      // Agregar filas de totales por sucursal
       const sucursalesOrdenadas = [...sucursales].sort((a, b) => a.nombre.localeCompare(b.nombre));
       for (const suc of sucursalesOrdenadas) {
         const totalSuc = totalesPorSucursal[suc.clave];
@@ -1001,7 +963,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         ]);
       }
       
-      // Agregar fila de TOTAL GENERAL
       dailyRows.push([
         'TOTAL GENERAL',
         'TODAS LAS SUCURSALES',
@@ -1040,32 +1001,28 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       currentY = doc.lastAutoTable.finalY + 15;
     }
     
-    // Generar gráfico circular con TODAS las categorías
+    // Gráfico de distribución de FICHAS (por cantidad de veces)
     const canvas = document.getElementById('reportCanvas');
     const ctx = canvas.getContext('2d');
     
     let chartStatus = Chart.getChart('reportCanvas');
     if (chartStatus) chartStatus.destroy();
     
-    // Filtrar categorías que tienen valor > 0 para no mostrar elementos vacíos
     const labels = [];
     const dataValues = [];
     const backgroundColors = [];
     
-    const categories = [
+    const fichasCategories = [
       { name: 'Unitarias', value: totalUnitarias, color: '#FF6B6B' },
       { name: 'Combo 30mil', value: totalCombo30, color: '#4ECDC4' },
       { name: 'Combo 50mil', value: totalCombo50, color: '#45B7D1' },
       { name: 'Combo 100mil', value: totalCombo100, color: '#96CEB4' },
-      { name: 'Combo 150mil', value: totalCombo150, color: '#FFEAA7' },
-      { name: 'Juguetes', value: totalJuguetes, color: '#DDA0DD' },
-      { name: 'Billar', value: totalBillar, color: '#98D8C8' },
-      { name: 'Pulseras', value: totalPulseras, color: '#F7C59F' }
+      { name: 'Combo 150mil', value: totalCombo150, color: '#FFEAA7' }
     ];
     
-    for (const cat of categories) {
+    for (const cat of fichasCategories) {
       if (cat.value > 0) {
-        labels.push(`${cat.name} (Gs. ${cat.value.toLocaleString()})`);
+        labels.push(`${cat.name} (${cat.value} veces)`);
         dataValues.push(cat.value);
         backgroundColors.push(cat.color);
       }
@@ -1073,7 +1030,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     // Si no hay datos, mostrar mensaje
     if (dataValues.length === 0) {
-      labels.push('Sin datos');
+      labels.push('Sin ventas de fichas');
       dataValues.push(1);
       backgroundColors.push('#CCCCCC');
     }
@@ -1098,7 +1055,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
                 const value = context.raw;
                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                return `${context.label.split('(')[0].trim()}: Gs. ${value.toLocaleString()} (${percentage}%)`;
+                return `${context.label.split('(')[0].trim()}: ${value} veces (${percentage}%)`;
               }
             }
           }
@@ -1119,10 +1076,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, currentY, { align: 'center' });
+    doc.text('DISTRIBUCIÓN DE VENTAS DE FICHAS', 105, currentY, { align: 'center' });
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Total de Cierres: Gs. ${totalCierreGeneral.toLocaleString()}`, 105, currentY + 8, { align: 'center' });
+    const totalFichasVendidas = totalUnitarias + totalCombo30 + totalCombo50 + totalCombo100 + totalCombo150;
+    doc.text(`Total de fichas vendidas: ${totalFichasVendidas} unidades`, 105, currentY + 8, { align: 'center' });
     doc.addImage(chartImage, 'PNG', 40, currentY + 15, 130, 130);
     
     // Pie de página
