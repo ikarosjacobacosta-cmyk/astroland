@@ -233,7 +233,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   sucursales.forEach(suc => {
     try {
-      // Verificar si ya existe una app con este nombre
       if (!apps[suc.clave]) {
         apps[suc.clave] = initializeApp(suc.config, suc.clave);
         dbs[suc.clave] = getDatabase(apps[suc.clave]);
@@ -300,18 +299,15 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       const data = (await get(ref(db, 'carrito'))).val(); 
       if (!data) return [];
       
-      // Convertir a array y eliminar duplicados por ID si existe
       const items = Object.values(data);
       const uniqueItems = [];
       const seenIds = new Set();
       
       for (const item of items) {
-        // Si tienen un ID único
         if (item.id && !seenIds.has(item.id)) {
           seenIds.add(item.id);
           uniqueItems.push(item);
         } 
-        // Si no tienen ID, usar combinación de campos
         else if (!item.id) {
           const key = `${item.code}_${item.timestampCompleto || item.fecha}_${item.hora}`;
           if (!seenIds.has(key)) {
@@ -397,7 +393,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   async function cargarTodo() {
-    // Limpiar arrays globales antes de cargar nuevos datos
     todasLasVentas = [];
     todoHistorial = [];
     
@@ -450,18 +445,16 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   async function cargarVentasCarrito() {
     try {
-      const ventasMap = new Map(); // Usar Map para evitar duplicados
+      const ventasMap = new Map();
       
       for (const suc of sucursales) {
         const ventas = await obtenerCarrito(dbs[suc.clave]);
         console.log(`📦 ${suc.nombre}: ${ventas.length} ventas en carrito`);
         
         ventas.forEach(v => {
-          // Crear una clave única usando timestamp + código + sucursal
           const timestampKey = v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime();
           const uniqueKey = `${suc.clave}_${v.code}_${timestampKey}_${v.id || ''}`;
           
-          // Solo agregar si no existe ya
           if (!ventasMap.has(uniqueKey)) {
             ventasMap.set(uniqueKey, {
               ...v, 
@@ -475,7 +468,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         });
       }
       
-      // Convertir Map a array y ordenar
       todasLasVentas = Array.from(ventasMap.values());
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
       
@@ -490,7 +482,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   async function cargarHistorial() {
     try {
-      const historialMap = new Map(); // Usar Map para evitar duplicados en historial
+      const historialMap = new Map();
       
       for (const suc of sucursales) {
         const historial = await obtenerHistorial(dbs[suc.clave]);
@@ -778,14 +770,21 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       rangoFechas = 'Todos los registros';
     }
     
+    // Estadísticas generales por sucursal
     const sucStats = {};
     let totalEfectivoGeneral = 0;
     let totalTarjetaGeneral = 0;
+    let totalCierreGeneral = 0;
+    
+    // Variables para el gráfico - TODAS LAS CATEGORÍAS
     let totalCombo30 = 0;
     let totalCombo50 = 0;
     let totalCombo100 = 0;
     let totalCombo150 = 0;
     let totalJuguetes = 0;
+    let totalBillar = 0;
+    let totalPulseras = 0;
+    let totalUnitarias = 0;
     
     for (const suc of sucursales) {
       const vSuc = ventasParaReporte.filter(v => v.sucursalClave === suc.clave);
@@ -798,14 +797,24 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       
       let juguetesMonto = 0;
       let combo30 = 0, combo50 = 0, combo100 = 0, combo150 = 0;
+      let unitarias = 0;
+      let billarMonto = 0;
+      let pulserasMonto = 0;
       
       for (const v of vNorm) {
+        const fecha = v.timestampEliminacion || v.timestamp || Date.now();
+        const tipo = clasificar(v.code, fecha);
+        
         if (!v.esFichaGratis) {
-          if (v.code === '000-01') combo30++;
+          if (v.code === '000-00') unitarias += v.money || 0;
+          else if (v.code === '000-01') combo30++;
           else if (v.code === '000-02') combo50++;
           else if (v.code === '000-03') combo100++;
           else if (v.code === '000-04') combo150++;
         }
+        
+        if (tipo === 'billar') billarMonto += v.money || 0;
+        if (tipo === 'pulseras') pulserasMonto += v.money || 0;
         if (esJuguete(v.code)) juguetesMonto += v.money || 0;
       }
       
@@ -813,23 +822,23 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         nombre: suc.nombre,
         efectivo,
         tarjeta,
-        total: efectivo + tarjeta,
-        combo30,
-        combo50,
-        combo100,
-        combo150,
-        juguetes: juguetesMonto
+        total: efectivo + tarjeta
       };
       
       totalEfectivoGeneral += efectivo;
       totalTarjetaGeneral += tarjeta;
-      totalCombo30 += combo30;
-      totalCombo50 += combo50;
-      totalCombo100 += combo100;
-      totalCombo150 += combo150;
+      totalCierreGeneral += (efectivo + tarjeta);
+      totalCombo30 += combo30 * 30000;
+      totalCombo50 += combo50 * 50000;
+      totalCombo100 += combo100 * 100000;
+      totalCombo150 += combo150 * 150000;
       totalJuguetes += juguetesMonto;
+      totalBillar += billarMonto;
+      totalPulseras += pulserasMonto;
+      totalUnitarias += unitarias;
     }
     
+    // Estadísticas por día y sucursal
     const statsPorDia = {};
     let fechaInicio, fechaFin;
     
@@ -847,6 +856,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     const fechasRango = getFechasEnRango(fechaInicio, fechaFin);
     
+    // Inicializar todos los días con 0
     for (const fecha of fechasRango) {
       statsPorDia[fecha] = {};
       for (const suc of sucursales) {
@@ -858,6 +868,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
+    // Llenar con datos reales
     for (const v of ventasParaReporte) {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
       const fecha = getFechaFromTimestamp(ts);
@@ -873,8 +884,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
+    // Crear PDF
     const doc = new jsPDF();
     
+    // Membrete
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(33, 150, 243);
@@ -892,6 +905,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setTextColor(120, 120, 120);
     doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
     
+    // Tabla resumen por sucursal
     const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
     
@@ -909,7 +923,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       'TOTAL GENERAL',
       totalEfectivoGeneral.toLocaleString(),
       totalTarjetaGeneral.toLocaleString(),
-      (totalEfectivoGeneral + totalTarjetaGeneral).toLocaleString()
+      totalCierreGeneral.toLocaleString()
     ]);
     
     doc.autoTable({
@@ -924,6 +938,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     let currentY = doc.lastAutoTable.finalY + 15;
     
+    // Tabla detallada por día - Ordenada por sucursal (4 columnas: Fecha, Sucursal, Efectivo, Tarjeta, Total)
     if (fechasRango.length > 0) {
       if (currentY + 50 > doc.internal.pageSize.height) {
         doc.addPage();
@@ -947,10 +962,16 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         };
       }
       
-      for (const fecha of fechasRango) {
+      // Ordenar las fechas de más antigua a más reciente
+      const fechasOrdenadas = [...fechasRango].sort();
+      
+      for (const fecha of fechasOrdenadas) {
         const fechaFormateada = fecha.split('-').reverse().join('/');
         
-        for (const suc of sucursales) {
+        // Ordenar las sucursales por nombre
+        const sucursalesOrdenadas = [...sucursales].sort((a, b) => a.nombre.localeCompare(b.nombre));
+        
+        for (const suc of sucursalesOrdenadas) {
           const stats = statsPorDia[fecha][suc.clave];
           
           dailyRows.push([
@@ -967,7 +988,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         }
       }
       
-      for (const suc of sucursales) {
+      // Agregar filas de totales por sucursal
+      const sucursalesOrdenadas = [...sucursales].sort((a, b) => a.nombre.localeCompare(b.nombre));
+      for (const suc of sucursalesOrdenadas) {
         const totalSuc = totalesPorSucursal[suc.clave];
         dailyRows.push([
           'TOTAL',
@@ -978,12 +1001,13 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         ]);
       }
       
+      // Agregar fila de TOTAL GENERAL
       dailyRows.push([
         'TOTAL GENERAL',
         'TODAS LAS SUCURSALES',
         totalEfectivoGeneral.toLocaleString(),
         totalTarjetaGeneral.toLocaleString(),
-        (totalEfectivoGeneral + totalTarjetaGeneral).toLocaleString()
+        totalCierreGeneral.toLocaleString()
       ]);
       
       doc.autoTable({
@@ -1016,44 +1040,65 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       currentY = doc.lastAutoTable.finalY + 15;
     }
     
+    // Generar gráfico circular con TODAS las categorías
     const canvas = document.getElementById('reportCanvas');
     const ctx = canvas.getContext('2d');
     
     let chartStatus = Chart.getChart('reportCanvas');
     if (chartStatus) chartStatus.destroy();
     
+    // Filtrar categorías que tienen valor > 0 para no mostrar elementos vacíos
+    const labels = [];
+    const dataValues = [];
+    const backgroundColors = [];
+    
+    const categories = [
+      { name: 'Unitarias', value: totalUnitarias, color: '#FF6B6B' },
+      { name: 'Combo 30mil', value: totalCombo30, color: '#4ECDC4' },
+      { name: 'Combo 50mil', value: totalCombo50, color: '#45B7D1' },
+      { name: 'Combo 100mil', value: totalCombo100, color: '#96CEB4' },
+      { name: 'Combo 150mil', value: totalCombo150, color: '#FFEAA7' },
+      { name: 'Juguetes', value: totalJuguetes, color: '#DDA0DD' },
+      { name: 'Billar', value: totalBillar, color: '#98D8C8' },
+      { name: 'Pulseras', value: totalPulseras, color: '#F7C59F' }
+    ];
+    
+    for (const cat of categories) {
+      if (cat.value > 0) {
+        labels.push(`${cat.name} (Gs. ${cat.value.toLocaleString()})`);
+        dataValues.push(cat.value);
+        backgroundColors.push(cat.color);
+      }
+    }
+    
+    // Si no hay datos, mostrar mensaje
+    if (dataValues.length === 0) {
+      labels.push('Sin datos');
+      dataValues.push(1);
+      backgroundColors.push('#CCCCCC');
+    }
+    
     new Chart(ctx, {
       type: 'pie',
       data: {
-        labels: [
-          `Combo 30mil (${totalCombo30})`,
-          `Combo 50mil (${totalCombo50})`,
-          `Combo 100mil (${totalCombo100})`,
-          `Combo 150mil (${totalCombo150})`,
-          `Juguetes`
-        ],
+        labels: labels,
         datasets: [{
-          data: [
-            totalCombo30 * 30000,
-            totalCombo50 * 50000,
-            totalCombo100 * 100000,
-            totalCombo150 * 150000,
-            totalJuguetes
-          ],
-          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+          data: dataValues,
+          backgroundColor: backgroundColors,
+          borderWidth: 1
         }]
       },
       options: {
         responsive: false,
         plugins: {
-          legend: { position: 'bottom', labels: { font: { size: 10 } } },
+          legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10 } },
           tooltip: {
             callbacks: {
               label: function(context) {
                 const value = context.raw;
                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                return `${context.label}: Gs. ${value.toLocaleString()} (${percentage}%)`;
+                return `${context.label.split('(')[0].trim()}: Gs. ${value.toLocaleString()} (${percentage}%)`;
               }
             }
           }
@@ -1067,7 +1112,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
     
-    if (currentY + 120 > pageHeight) {
+    if (currentY + 140 > pageHeight) {
       doc.addPage();
       currentY = 20;
     }
@@ -1075,8 +1120,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
     doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, currentY, { align: 'center' });
-    doc.addImage(chartImage, 'PNG', 30, currentY + 10, 150, 120);
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Total de Cierres: Gs. ${totalCierreGeneral.toLocaleString()}`, 105, currentY + 8, { align: 'center' });
+    doc.addImage(chartImage, 'PNG', 40, currentY + 15, 130, 130);
     
+    // Pie de página
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
