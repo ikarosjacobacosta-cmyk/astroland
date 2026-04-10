@@ -227,9 +227,21 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     { nombre: "Villa Morra", clave: "morra", color: "#4caf50", bg: "#e8f5e9", config: { apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", authDomain: "villa-morra.firebaseapp.com", projectId: "villa-morra", storageBucket: "villa-morra.firebasestorage.app", messagingSenderId: "184849063287", appId: "1:184849063287:web:15f360231ade1b85ab5572" } }
   ];
 
+  // Almacenar apps para evitar reinicialización duplicada
+  const apps = {};
   const dbs = {};
+
   sucursales.forEach(suc => {
-    try { const app = initializeApp(suc.config, suc.clave); dbs[suc.clave] = getDatabase(app); } catch(e) { console.warn(e); }
+    try {
+      // Verificar si ya existe una app con este nombre
+      if (!apps[suc.clave]) {
+        apps[suc.clave] = initializeApp(suc.config, suc.clave);
+        dbs[suc.clave] = getDatabase(apps[suc.clave]);
+        console.log(`✅ Inicializada: ${suc.nombre}`);
+      }
+    } catch(e) { 
+      console.warn(`Error inicializando ${suc.nombre}:`, e);
+    }
   });
 
   const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
@@ -282,7 +294,39 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   async function obtenerStock(db) { try { return (await get(ref(db, 'stock'))).val() || {}; } catch { return {}; } }
-  async function obtenerCarrito(db) { try { const data = (await get(ref(db, 'carrito'))).val(); return data ? Object.values(data) : []; } catch { return []; } }
+  
+  async function obtenerCarrito(db) { 
+    try { 
+      const data = (await get(ref(db, 'carrito'))).val(); 
+      if (!data) return [];
+      
+      // Convertir a array y eliminar duplicados por ID si existe
+      const items = Object.values(data);
+      const uniqueItems = [];
+      const seenIds = new Set();
+      
+      for (const item of items) {
+        // Si tienen un ID único
+        if (item.id && !seenIds.has(item.id)) {
+          seenIds.add(item.id);
+          uniqueItems.push(item);
+        } 
+        // Si no tienen ID, usar combinación de campos
+        else if (!item.id) {
+          const key = `${item.code}_${item.timestampCompleto || item.fecha}_${item.hora}`;
+          if (!seenIds.has(key)) {
+            seenIds.add(key);
+            uniqueItems.push(item);
+          }
+        }
+      }
+      
+      return uniqueItems;
+    } catch { 
+      return []; 
+    }
+  }
+  
   async function obtenerHistorial(db) { try { const data = (await get(ref(db, 'historial_ventas'))).val(); return data ? Object.values(data) : []; } catch { return []; } }
 
   let todosLosProductos = [];
@@ -353,6 +397,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   async function cargarTodo() {
+    // Limpiar arrays globales antes de cargar nuevos datos
+    todasLasVentas = [];
+    todoHistorial = [];
+    
     await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
     if (tabActual === 'stock') renderizarStock();
@@ -402,41 +450,77 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   async function cargarVentasCarrito() {
     try {
-      todasLasVentas = [];
+      const ventasMap = new Map(); // Usar Map para evitar duplicados
+      
       for (const suc of sucursales) {
         const ventas = await obtenerCarrito(dbs[suc.clave]);
+        console.log(`📦 ${suc.nombre}: ${ventas.length} ventas en carrito`);
+        
         ventas.forEach(v => {
-          todasLasVentas.push({
-            ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
-            timestamp: v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime()
-          });
+          // Crear una clave única usando timestamp + código + sucursal
+          const timestampKey = v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime();
+          const uniqueKey = `${suc.clave}_${v.code}_${timestampKey}_${v.id || ''}`;
+          
+          // Solo agregar si no existe ya
+          if (!ventasMap.has(uniqueKey)) {
+            ventasMap.set(uniqueKey, {
+              ...v, 
+              sucursal: suc.nombre, 
+              sucursalClave: suc.clave,
+              timestamp: timestampKey
+            });
+          } else {
+            console.warn(`⚠️ Duplicado detectado en ${suc.nombre}: ${v.code}`);
+          }
         });
       }
+      
+      // Convertir Map a array y ordenar
+      todasLasVentas = Array.from(ventasMap.values());
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
+      
+      console.log(`✅ Total ventas únicas en carritos: ${todasLasVentas.length}`);
       hayVentasEnCarrito = todasLasVentas.length > 0;
+      
       if (tabActual === 'ventas') mostrarVentasSegunEstado();
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+      console.error('Error al cargar ventas del carrito:', e); 
+    }
   }
 
   async function cargarHistorial() {
     try {
-      todoHistorial = [];
+      const historialMap = new Map(); // Usar Map para evitar duplicados en historial
+      
       for (const suc of sucursales) {
         const historial = await obtenerHistorial(dbs[suc.clave]);
+        console.log(`📜 ${suc.nombre}: ${historial.length} registros en historial`);
+        
         historial.forEach(h => {
           if (h.ventas && Array.isArray(h.ventas)) {
             const fechaElim = h.timestamp || new Date(h.fechaEliminacion).getTime();
             h.ventas.forEach(v => {
-              todoHistorial.push({
-                ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
-                timestampEliminacion: fechaElim,
-                esHistorial: true
-              });
+              const uniqueKey = `${suc.clave}_${v.code}_${fechaElim}_${v.id || ''}`;
+              
+              if (!historialMap.has(uniqueKey)) {
+                historialMap.set(uniqueKey, {
+                  ...v, 
+                  sucursal: suc.nombre, 
+                  sucursalClave: suc.clave,
+                  timestampEliminacion: fechaElim,
+                  esHistorial: true
+                });
+              }
             });
           }
         });
       }
+      
+      todoHistorial = Array.from(historialMap.values());
       todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
+      
+      console.log(`✅ Total registros únicos en historial: ${todoHistorial.length}`);
+      
       if (tabActual === 'ventas') mostrarVentasSegunEstado();
     } catch(e) { console.error(e); }
   }
@@ -620,7 +704,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <td>${v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-'}</td>
           <td style="font-size:0.7rem;">${v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora)}</td>
         </tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
@@ -670,7 +754,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     });
   }
 
-  // Función para generar el reporte PDF con todos los días (incluso con 0)
   async function generarReportePDF() {
     const { jsPDF } = window.jspdf;
     
@@ -695,7 +778,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       rangoFechas = 'Todos los registros';
     }
     
-    // Estadísticas generales por sucursal
     const sucStats = {};
     let totalEfectivoGeneral = 0;
     let totalTarjetaGeneral = 0;
@@ -748,7 +830,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       totalJuguetes += juguetesMonto;
     }
     
-    // Estadísticas por día y sucursal
     const statsPorDia = {};
     let fechaInicio, fechaFin;
     
@@ -766,7 +847,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     const fechasRango = getFechasEnRango(fechaInicio, fechaFin);
     
-    // Inicializar todos los días con 0
     for (const fecha of fechasRango) {
       statsPorDia[fecha] = {};
       for (const suc of sucursales) {
@@ -778,7 +858,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
-    // Llenar con datos reales
     for (const v of ventasParaReporte) {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
       const fecha = getFechaFromTimestamp(ts);
@@ -794,10 +873,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     }
     
-    // Crear PDF
     const doc = new jsPDF();
     
-    // Membrete
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(33, 150, 243);
@@ -815,7 +892,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setTextColor(120, 120, 120);
     doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
     
-    // Tabla resumen por sucursal
     const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
     
@@ -848,7 +924,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     let currentY = doc.lastAutoTable.finalY + 15;
     
-    // Tabla detallada por día (mostrando TODOS los días, incluso con 0)
     if (fechasRango.length > 0) {
       if (currentY + 50 > doc.internal.pageSize.height) {
         doc.addPage();
@@ -872,14 +947,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         };
       }
       
-      // Mostrar TODOS los días, incluso con 0
       for (const fecha of fechasRango) {
         const fechaFormateada = fecha.split('-').reverse().join('/');
         
         for (const suc of sucursales) {
           const stats = statsPorDia[fecha][suc.clave];
           
-          // Siempre agregar la fila, aunque sea 0
           dailyRows.push([
             fechaFormateada,
             suc.nombre,
@@ -888,14 +961,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             stats.total.toLocaleString()
           ]);
           
-          // Acumular totales por sucursal
           totalesPorSucursal[suc.clave].efectivo += stats.efectivo;
           totalesPorSucursal[suc.clave].tarjeta += stats.tarjeta;
           totalesPorSucursal[suc.clave].total += stats.total;
         }
       }
       
-      // Agregar filas de totales por sucursal
       for (const suc of sucursales) {
         const totalSuc = totalesPorSucursal[suc.clave];
         dailyRows.push([
@@ -907,7 +978,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         ]);
       }
       
-      // Agregar fila de TOTAL GENERAL
       dailyRows.push([
         'TOTAL GENERAL',
         'TODAS LAS SUCURSALES',
@@ -935,7 +1005,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = data.row.raw[0] === 'TOTAL GENERAL' ? [200, 230, 255] : [240, 240, 240];
           }
-          // Poner en gris claro las filas con valor 0 para destacar que no hubo ventas
           if (data.row.raw && data.row.raw[0] !== 'TOTAL' && data.row.raw[0] !== 'TOTAL GENERAL') {
             if (data.row.raw[4] === '0') {
               data.cell.styles.textColor = [150, 150, 150];
@@ -947,7 +1016,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       currentY = doc.lastAutoTable.finalY + 15;
     }
     
-    // Generar gráfico circular
     const canvas = document.getElementById('reportCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -1009,7 +1077,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.text('DISTRIBUCIÓN DE VENTAS POR CATEGORÍA', 105, currentY, { align: 'center' });
     doc.addImage(chartImage, 'PNG', 30, currentY + 10, 150, 120);
     
-    // Pie de página
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -1050,7 +1117,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   document.getElementById('tabVentasBtn').addEventListener('click', () => mostrarTab('ventas'));
   document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarStock(); });
 
-  // Inicializar fechas desde sessionStorage si existen
   if (sessionStorage.getItem('filtroDesde')) {
     document.getElementById('fechaDesde').value = sessionStorage.getItem('filtroDesde');
   }
