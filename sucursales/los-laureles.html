@@ -387,6 +387,30 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .historial-modal th { background: #1a1a2e; color: white; }
 
+.historial-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+.btn-editar-fecha {
+  background: #FF9800;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+.btn-eliminar-historial {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
 /* Botones flotantes */
 .cart-button, .stock-button, .historial-btn {
   position: fixed;
@@ -439,6 +463,54 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .password-input { display: none; margin-top: 10px; text-align: center; }
 .password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 1rem; }
 .password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+
+/* Modal de selección de fecha */
+.fecha-modal {
+  display: none;
+  position: fixed;
+  z-index: 4000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+.fecha-modal-content {
+  background-color: #fff;
+  margin: 20% auto;
+  padding: 30px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+}
+.fecha-modal-content h4 {
+  margin-top: 0;
+  text-align: center;
+  font-size: 1.3rem;
+}
+.fecha-modal-content input {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  margin: 15px 0;
+}
+.fecha-modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.fecha-modal-buttons button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+}
 
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
@@ -589,8 +661,21 @@ body { padding-top: 80px; }
       </div>
       <div id="clearPasswordPrompt" class="password-input">
         <input type="password" id="clearPassword" placeholder="Contraseña">
-        <button onclick="verifyAndClearCart()" style="background:#2196F3; color:white;">Confirmar</button>
+        <button onclick="verifyClearPasswordAndShowDate()" style="background:#2196F3; color:white;">Confirmar</button>
         <button onclick="hideClearPrompt()" style="background:#f44336;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para seleccionar fecha al vaciar carrito -->
+  <div id="fechaModal" class="fecha-modal">
+    <div class="fecha-modal-content">
+      <h4 id="fechaModalTitulo">📅 Seleccionar fecha para historial</h4>
+      <p id="fechaModalDescripcion" style="text-align:center; color:#666;">¿Qué fecha quieres asignar a este registro?</p>
+      <input type="date" id="fechaHistorialInput">
+      <div class="fecha-modal-buttons">
+        <button id="fechaModalConfirmar" style="background:#4CAF50; color:white;" onclick="confirmarAccionFecha()">✅ Confirmar</button>
+        <button onclick="closeFechaModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
     </div>
   </div>
@@ -620,7 +705,7 @@ body { padding-top: 80px; }
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+  import { getDatabase, ref, set, push, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
@@ -642,6 +727,8 @@ body { padding-top: 80px; }
   let cart = [];
   let stock = {};
   let historialVentas = [];
+  let modoEdicionFecha = null; // 'vaciar' o { tipo: 'editar', firebaseKey: '...' }
+  
   const PASSWORD_STOCK = "deisy";
   const PASSWORD_GENERAL = "mili";
   const STOCK_INICIAL = 100;
@@ -656,10 +743,10 @@ body { padding-top: 80px; }
 
   // Funciones para bloquear/desbloquear scroll del body
   function blockBodyScroll() {
-    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
   }
   function unblockBodyScroll() {
-    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
   }
 
   function generarTodosLosProductos() {
@@ -678,18 +765,18 @@ body { padding-top: 80px; }
         { codigo: "000-08", precio: 15000 }, { codigo: "000-09", precio: 0 },
         { codigo: "000-10", precio: 0 }
       ]},
-      { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 0 } },
-      { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 67 } },
+      { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 18 } },
+      { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 68 } },
       { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 71 } },
-      { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 53 } },
-      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 51 } },
-      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 29 } },
-      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 39 } },
-      { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 0 } },
-      { nombre: "200 puntos", categoria: "200", puntos: 200, rango: { desde: 0, hasta: 37 }, precioUnificado: 96000 },
-      { nombre: "220 puntos", categoria: "220", puntos: 220, rango: { desde: 0, hasta: 7 }, precioUnificado: 120000 },
-      { nombre: "250 puntos", categoria: "250", puntos: 250, rango: { desde: 0, hasta: 3 }, precioUnificado: 150000 },
-      { nombre: "350 puntos", categoria: "350", puntos: 350, rango: { desde: 0, hasta: 1 }, precioUnificado: 170000 },
+      { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 58 } },
+      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 57 } },
+      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 34 } },
+      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 48 } },
+      { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 8 } },
+      { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 36 } },
+      { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
+      { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 3 } },
+      { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 2 } },
       { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
         { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
       ]}
@@ -733,7 +820,7 @@ body { padding-top: 80px; }
       
       if (cat.rango) {
         for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
-          const precio = cat.precioUnificado ? cat.precioUnificado : cat.precioBase;
+          const precio = cat.precioBase;
           galeria.appendChild(crearItem(`${cat.categoria}-${i.toString().padStart(2,'0')}`, precio));
         }
       } else if (cat.productosEspeciales) {
@@ -1089,14 +1176,16 @@ body { padding-top: 80px; }
     else procesar();
   };
 
-  async function guardarEnHistorial(ventasAEliminar) {
+  async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
     if (!ventasAEliminar || ventasAEliminar.length === 0) return;
-    const ayer = new Date();
-    ayer.setDate(ayer.getDate() - 1);
+    
+    const fechaObj = new Date(fechaSeleccionada);
+    fechaObj.setHours(12, 0, 0, 0);
+    
     const registro = {
       sucursal: "Los Laureles",
-      fechaEliminacion: ayer.toLocaleDateString('es-PY'),
-      timestamp: ayer.getTime(),
+      fechaEliminacion: fechaSeleccionada,
+      timestamp: fechaObj.getTime(),
       ventas: ventasAEliminar.map(item => ({
         code: item.code, name: item.name, points: item.points, money: item.money,
         fichaConsumption: item.fichaConsumption || 0, unidades: item.unidades || 1,
@@ -1111,13 +1200,101 @@ body { padding-top: 80px; }
     try { await push(historialRef, registro); } catch(e) { console.error(e); }
   }
 
-  window.verifyAndClearCart = async function() {
+  // FUNCIONES PARA EL MODAL DE FECHA
+  window.verifyClearPasswordAndShowDate = function() {
     const pwd = document.getElementById('clearPassword').value;
-    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
-    if (cart.length > 0) { await guardarEnHistorial(cart); }
-    await remove(cartRef);
+    if (pwd !== PASSWORD_GENERAL) { 
+      alert('Contraseña incorrecta'); 
+      return; 
+    }
+    if (cart.length === 0) {
+      alert('El carrito está vacío');
+      return;
+    }
+    
     hideClearPrompt();
-    alert('✅ Carrito vaciado. Las ventas se guardaron en el historial con fecha del día anterior.');
+    document.getElementById('cartModal').style.display = 'none';
+    unblockBodyScroll();
+    
+    modoEdicionFecha = 'vaciar';
+    
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+    
+    document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para historial';
+    document.getElementById('fechaModalDescripcion').textContent = '¿Qué fecha quieres asignar a este registro?';
+    document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
+    document.getElementById('fechaModal').style.display = 'block';
+  };
+
+  window.mostrarModalEditarFecha = function(firebaseKey, fechaActual) {
+    modoEdicionFecha = { tipo: 'editar', firebaseKey: firebaseKey };
+    
+    document.getElementById('fechaModalTitulo').textContent = '✏️ Editar fecha del historial';
+    document.getElementById('fechaModalDescripcion').textContent = 'Selecciona la nueva fecha para este registro:';
+    document.getElementById('fechaHistorialInput').value = fechaActual;
+    document.getElementById('fechaModal').style.display = 'block';
+  };
+
+  window.closeFechaModal = function() {
+    document.getElementById('fechaModal').style.display = 'none';
+    modoEdicionFecha = null;
+  };
+
+  window.confirmarAccionFecha = async function() {
+    const fechaInput = document.getElementById('fechaHistorialInput').value;
+    if (!fechaInput) {
+      alert('Debes seleccionar una fecha');
+      return;
+    }
+    
+    if (modoEdicionFecha === 'vaciar') {
+      if (cart.length > 0) { 
+        await guardarEnHistorial(cart, fechaInput); 
+      }
+      await remove(cartRef);
+      closeFechaModal();
+      alert(`✅ Carrito vaciado. Las ventas se guardaron en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}`);
+    } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
+      const firebaseKey = modoEdicionFecha.firebaseKey;
+      const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
+      if (registro) {
+        const fechaObj = new Date(fechaInput);
+        fechaObj.setHours(12, 0, 0, 0);
+        
+        await update(ref(database, `historial_ventas/${firebaseKey}`), {
+          fechaEliminacion: fechaInput,
+          timestamp: fechaObj.getTime()
+        });
+        
+        closeFechaModal();
+        alert(`✅ Fecha actualizada a: ${fechaInput.split('-').reverse().join('/')}`);
+        filtrarHistorial();
+      }
+    }
+    
+    modoEdicionFecha = null;
+  };
+
+  window.eliminarRegistroHistorial = async function(firebaseKey) {
+    if (!confirm('¿Estás seguro de eliminar este registro del historial? Esta acción no se puede deshacer.')) return;
+    
+    const pwd = prompt('🔐 Contraseña para eliminar:');
+    if (pwd !== PASSWORD_GENERAL) {
+      alert('Contraseña incorrecta');
+      return;
+    }
+    
+    try {
+      await remove(ref(database, `historial_ventas/${firebaseKey}`));
+      alert('✅ Registro eliminado del historial');
+      await loadHistorial();
+      filtrarHistorial();
+    } catch (e) {
+      alert('❌ Error al eliminar');
+      console.error(e);
+    }
   };
 
   window.showHistorialModal = function() {
@@ -1173,10 +1350,23 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<td><thead><tr><th>Fecha Eliminación</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Regaladas</th></tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
-      const fechaMostrar = new Date(h.timestamp).toLocaleDateString('es-PY');
-      html += `<tr><td style="white-space:nowrap;">${fechaMostrar}</td><td style="text-align:center;">${h.totalVentas || 0}</td><td style="text-align:center;">Gs. ${(h.totalDinero || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td><td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td></tr>`;
+      const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
+      html += `<tr>
+        <td style="white-space:nowrap;">${fechaMostrar}</td>
+        <td style="text-align:center;">${h.totalVentas || 0}</td>
+        <td style="text-align:center;">Gs. ${(h.totalDinero || 0).toLocaleString()}</td>
+        <td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td>
+        <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
+        <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
+        <td>
+          <div class="historial-actions">
+            <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
+            <button class="btn-eliminar-historial" onclick="eliminarRegistroHistorial('${h.firebaseKey}')">🗑️ Eliminar</button>
+          </div>
+        </td>
+      </tr>`;
     });
     html += `</tbody></table>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
@@ -1191,9 +1381,10 @@ body { padding-top: 80px; }
     const hastaTime = new Date(hasta).setHours(23,59,59,999);
     const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
     
-    const data = [['Fecha Eliminación', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas']];
+    const data = [['Fecha', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas']];
     filtrados.forEach(h => {
-      data.push([new Date(h.timestamp).toLocaleDateString('es-PY'), h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0]);
+      const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
+      data.push([fechaMostrar, h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0]);
     });
     data.push([], ['RESUMEN TOTAL', '', '', '', '', '']);
     data.push(['Total General', 
@@ -1256,7 +1447,7 @@ body { padding-top: 80px; }
     if (!item) { alert('Item no encontrado'); return; }
     const consumo = item.fichaConsumption || 0;
     const unidades = item.unidades || 1;
-    // Revertir la operación: si fue agregar (unidades > 0), sumamos al stock; si fue quitar (unidades < 0), restamos del stock
+    
     if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
       const actual = stock['000-00'] ?? STOCK_INICIAL;
       set(ref(database, `stock/000-00`), actual + Math.abs(consumo));

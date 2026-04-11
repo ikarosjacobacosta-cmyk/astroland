@@ -4,6 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ASTROLAND - Panel Unificado</title>
+<!-- Librerías para PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing: border-box; }
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 20px; }
@@ -33,9 +37,12 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 }
 .filtro-fechas label { font-size: 0.8rem; color: #666; }
 .filtro-fechas input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
-.filtro-fechas button { padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.filtro-fechas button { padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; min-height: 44px; }
 .filtro-fechas button:hover { background: #1976D2; }
 .filtro-fechas .limpiar-btn { background: #ff9800; }
+.filtro-fechas .limpiar-btn:hover { background: #e68900; }
+.filtro-fechas .reporte-btn { background: #9c27b0; }
+.filtro-fechas .reporte-btn:hover { background: #7b1fa2; }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 30px; }
 .stat-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -65,7 +72,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .suc-card .sub-item .amount { font-weight: bold; }
 
 .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-.tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+.tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; min-height: 44px; }
 .tab-btn.active { background: #2196F3; color: white; }
 
 .search-container { text-align: center; margin-bottom: 20px; }
@@ -126,8 +133,11 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 
 .loading { text-align: center; padding: 40px; color: #666; }
 .update-info { text-align: center; margin-top: 20px; font-size: 0.7rem; color: #999; }
-.refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; }
+.refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; min-height: 44px; }
 footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-size: 0.7rem; border-top: 1px solid #ddd; }
+
+#chartContainer { display: none; }
+#reportCanvas { width: 400px; height: 400px; }
 
 @media (max-width: 600px) {
   body { padding: 10px; }
@@ -135,6 +145,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   .tab-btn { padding: 6px 15px; font-size: 0.75rem; }
   .ventas-table th, .ventas-table td { font-size: 0.65rem; padding: 6px 3px; }
   .sub-item .label { font-size: 0.65rem; }
+  .filtro-fechas { flex-direction: column; align-items: stretch; }
+  .filtro-fechas label { display: flex; flex-direction: column; gap: 5px; }
+  .filtro-fechas input { width: 100%; }
+  .stock-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 </style>
 </head>
@@ -154,8 +169,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="filtro-fechas" id="filtroFechas">
     <label>📅 Desde: <input type="date" id="fechaDesde" value=""></label>
     <label>📅 Hasta: <input type="date" id="fechaHasta" value=""></label>
-    <button onclick="aplicarFiltro()">🔍 Filtrar por fechas</button>
-    <button class="limpiar-btn" onclick="limpiarFiltro()">🗑️ Mostrar carritos actuales</button>
+    <button id="btnFiltrar">🔍 Filtrar por fechas</button>
+    <button class="limpiar-btn" id="btnLimpiar">🗑️ Mostrar carritos actuales</button>
+    <button class="reporte-btn" id="btnReporte">📄 Generar Reporte PDF</button>
   </div>
 
   <div class="stats-grid" id="statsVentas">
@@ -171,8 +187,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="sucursales-grid" id="sucursalesGrid"></div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="mostrarTab('stock')">📦 Stock</button>
-    <button class="tab-btn" onclick="mostrarTab('ventas')">🛒 Historial</button>
+    <button class="tab-btn active" id="tabStockBtn">📦 Stock</button>
+    <button class="tab-btn" id="tabVentasBtn">🛒 Historial</button>
   </div>
 
   <div class="search-container" id="searchContainer">
@@ -190,9 +206,14 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="update-info">
     <span>🔄 Actualización automática cada 15 segundos</span>
     <span id="lastUpdate"></span>
-    <button class="refresh-btn" onclick="cargarTodo()">⟳ Actualizar</button>
+    <button class="refresh-btn" id="btnActualizar">⟳ Actualizar</button>
   </div>
 </div>
+
+<div id="chartContainer">
+  <canvas id="reportCanvas" width="400" height="400"></canvas>
+</div>
+
 <footer>© 2026 ASTROLAND - Panel Unificado</footer>
 
 <script type="module">
@@ -206,9 +227,19 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     { nombre: "Villa Morra", clave: "morra", color: "#4caf50", bg: "#e8f5e9", config: { apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", authDomain: "villa-morra.firebaseapp.com", projectId: "villa-morra", storageBucket: "villa-morra.firebasestorage.app", messagingSenderId: "184849063287", appId: "1:184849063287:web:15f360231ade1b85ab5572" } }
   ];
 
+  const apps = {};
   const dbs = {};
+
   sucursales.forEach(suc => {
-    try { const app = initializeApp(suc.config, suc.clave); dbs[suc.clave] = getDatabase(app); } catch(e) { console.warn(e); }
+    try {
+      if (!apps[suc.clave]) {
+        apps[suc.clave] = initializeApp(suc.config, suc.clave);
+        dbs[suc.clave] = getDatabase(apps[suc.clave]);
+        console.log(`✅ Inicializada: ${suc.nombre}`);
+      }
+    } catch(e) { 
+      console.warn(`Error inicializando ${suc.nombre}:`, e);
+    }
   });
 
   const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
@@ -261,16 +292,54 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   async function obtenerStock(db) { try { return (await get(ref(db, 'stock'))).val() || {}; } catch { return {}; } }
-  async function obtenerCarrito(db) { try { const data = (await get(ref(db, 'carrito'))).val(); return data ? Object.values(data) : []; } catch { return []; } }
-  async function obtenerHistorial(db) { try { const data = (await get(ref(db, 'historial_ventas'))).val(); return data ? Object.values(data) : []; } catch { return []; } }
+  
+  async function obtenerCarrito(db) { 
+    try { 
+      const data = (await get(ref(db, 'carrito'))).val(); 
+      if (!data) return [];
+      return Object.values(data);
+    } catch { 
+      return []; 
+    }
+  }
+  
+  async function obtenerHistorial(db) { 
+    try { 
+      const data = (await get(ref(db, 'historial_ventas'))).val(); 
+      if (!data) return [];
+      
+      // Convertir objeto a array y extraer todas las ventas
+      const historialArray = Object.values(data);
+      const todasLasVentas = [];
+      
+      for (const registro of historialArray) {
+        if (registro.ventas && Array.isArray(registro.ventas)) {
+          const fechaEliminacion = registro.timestamp || new Date(registro.fechaEliminacion).getTime();
+          for (const venta of registro.ventas) {
+            todasLasVentas.push({
+              ...venta,
+              timestampEliminacion: fechaEliminacion,
+              esHistorial: true
+            });
+          }
+        }
+      }
+      
+      return todasLasVentas;
+    } catch(e) { 
+      console.error("Error en obtenerHistorial:", e);
+      return []; 
+    }
+  }
 
   let todosLosProductos = [];
   let todasLasVentas = [];
   let todoHistorial = [];
-  let ventasFiltradas = [];
+  let ventasActualesParaReporte = [];
   let tabActual = 'stock';
-  let fechaDesde = null, fechaHasta = null;
   let hayVentasEnCarrito = false;
+  let fechaDesde = null;
+  let fechaHasta = null;
 
   const colores = ['linear-gradient(135deg, #667eea, #764ba2)', 'linear-gradient(135deg, #f093fb, #f5576c)', 'linear-gradient(135deg, #4facfe, #00f2fe)', 'linear-gradient(135deg, #43e97b, #38f9d7)', 'linear-gradient(135deg, #fa709a, #fee140)'];
   function getColorIndex(code) { return code.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colores.length; }
@@ -313,7 +382,14 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     return { unitarias, combo30, combo50, combo100, combo150 };
   }
 
+  function getFechaFromTimestamp(ts) {
+    const date = new Date(ts);
+    return date.toISOString().split('T')[0];
+  }
+
   async function cargarTodo() {
+    todasLasVentas = [];
+    todoHistorial = [];
     await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
     if (tabActual === 'stock') renderizarStock();
@@ -363,57 +439,114 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   async function cargarVentasCarrito() {
     try {
-      todasLasVentas = [];
+      const ventasTemp = [];
       for (const suc of sucursales) {
         const ventas = await obtenerCarrito(dbs[suc.clave]);
+        console.log(`📦 ${suc.nombre}: ${ventas.length} ventas en carrito`);
         ventas.forEach(v => {
-          todasLasVentas.push({
-            ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
-            timestamp: v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime()
+          const timestamp = v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime();
+          ventasTemp.push({
+            ...v, 
+            sucursal: suc.nombre, 
+            sucursalClave: suc.clave,
+            timestamp: timestamp
           });
         });
       }
+      todasLasVentas = ventasTemp;
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
+      console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
       hayVentasEnCarrito = todasLasVentas.length > 0;
       if (tabActual === 'ventas') mostrarVentasSegunEstado();
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error('Error al cargar ventas del carrito:', e); }
   }
 
   async function cargarHistorial() {
     try {
-      todoHistorial = [];
+      const historialTemp = [];
       for (const suc of sucursales) {
         const historial = await obtenerHistorial(dbs[suc.clave]);
-        historial.forEach(h => {
-          if (h.ventas && Array.isArray(h.ventas)) {
-            const fechaElim = h.timestamp || new Date(h.fechaEliminacion).getTime();
-            h.ventas.forEach(v => {
-              todoHistorial.push({
-                ...v, sucursal: suc.nombre, sucursalClave: suc.clave,
-                timestampEliminacion: fechaElim,
-                esHistorial: true
-              });
-            });
-          }
+        console.log(`📜 ${suc.nombre}: ${historial.length} ventas en historial`);
+        historial.forEach(v => {
+          historialTemp.push({
+            ...v, 
+            sucursal: suc.nombre, 
+            sucursalClave: suc.clave,
+            esHistorial: true
+          });
         });
       }
+      todoHistorial = historialTemp;
       todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
+      console.log(`✅ Total ventas en historial: ${todoHistorial.length}`);
       if (tabActual === 'ventas') mostrarVentasSegunEstado();
     } catch(e) { console.error(e); }
   }
 
   function mostrarVentasSegunEstado() {
-    if (hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
+    const desde = sessionStorage.getItem('filtroDesde');
+    const hasta = sessionStorage.getItem('filtroHasta');
+    if (desde || hasta) {
+      fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
+      fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
+      aplicarFiltroConValores(fechaDesde, fechaHasta);
+    } else {
+      mostrarCarritosActuales();
+    }
+  }
+
+  function mostrarCarritosActuales() {
+    if (hayVentasEnCarrito) {
       actualizarEstadisticas(todasLasVentas);
       renderizarTablaVentas(todasLasVentas);
-    } 
-    else if (fechaDesde || fechaHasta) {
-      aplicarFiltro();
-    }
-    else if (!hayVentasEnCarrito && !fechaDesde && !fechaHasta) {
-      document.getElementById('statsVentas').innerHTML = `<div class="loading" style="grid-column:1/-1;">📭 No hay ventas actuales. Use el filtro de fechas para ver el historial.</div>`;
-      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 Use el filtro de fechas para ver el historial de ventas</div>';
-      document.getElementById('sucursalesGrid').innerHTML = '<div class="loading" style="grid-column:1/-1;">📭 Use el filtro de fechas para ver estadísticas</div>';
+      ventasActualesParaReporte = [...todasLasVentas];
+    } else {
+      // Mostrar valores en cero
+      document.getElementById('statsVentas').innerHTML = `
+        <div class="stat-card dinero"><div class="label">💰 Ventas</div><div class="value">0</div></div>
+        <div class="stat-card dinero"><div class="label">💵 Efectivo</div><div class="value">0</div></div>
+        <div class="stat-card dinero"><div class="label">💳 Tarjeta</div><div class="value">0</div></div>
+        <div class="stat-card cierre"><div class="label">💰 Total Cierre</div><div class="value">0</div></div>
+        <div class="stat-card puntos"><div class="label">🎯 Puntos</div><div class="value">0</div></div>
+        <div class="stat-card fichas"><div class="label">🎴 Fichas</div><div class="value">0</div></div>
+        <div class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value">0</div></div>
+      `;
+      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 No hay ventas en los carritos actuales</div>';
+      
+      const sucHtml = sucursales.map(suc => {
+        let extras = '';
+        if (suc.clave === 'laureles') {
+          extras = `<div class="item"><span class="label">💫 Pulseras:</span><span class="amount">Gs. 0</span></div>
+                    <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. 0</span></div>`;
+        }
+        return `<div class="suc-card ${suc.clave}">
+          <h4><span style="color:${suc.color}">🏢</span> ${suc.nombre}</h4>
+          <div class="item"><span class="label">📋 Operaciones:</span><span class="amount">0</span></div>
+          <div class="item"><span class="label">💰 Ventas:</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">💵 Efectivo:</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">💳 Tarjeta:</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">💰 Total Cierre:</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">🎁 Juguetes:</span><span class="amount">Gs. 0</span></div>
+          ${extras}
+          <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">0</span></div>
+          <div class="item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. 0</span></div>
+          <div class="item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">0</span></div>
+          <div class="sub-section">
+            <div class="sub-label">📊 Detalle de Fichas:</div>
+            <div class="sub-item"><span class="label">🎴 Unitarias (000-00):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 30mil (000-01):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 50mil (000-02):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 100mil (000-03):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 150mil (000-04):</span><span class="amount">0 veces</span></div>
+          </div>
+          <div class="sub-section"><div class="sub-label">🔴 Error:</div>
+          <div class="item"><span class="label">Fichas:</span><span class="amount">0</span></div></div>
+          <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
+          <div class="item"><span class="label">Fichas:</span><span class="amount">0</span></div></div>
+        </div>`;
+      }).join('');
+      document.getElementById('sucursalesGrid').innerHTML = sucHtml;
+      ventasActualesParaReporte = [];
     }
   }
 
@@ -521,71 +654,233 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventas.slice(0, 300).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
+        const fechaStr = v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleString() : 
+                         (v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora));
         return `<tr>
           <td style="color:${suc?.color||'#333'}">${v.sucursal}</td>
           <td>${v.name || v.code}</td>
           <td>${(v.points||0).toLocaleString()}</td>
           <td>Gs. ${(v.money||0).toLocaleString()}</td>
           <td>${v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-'}</td>
-          <td style="font-size:0.7rem;">${v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora)}</td>
+          <td style="font-size:0.7rem;">${fechaStr}</td>
         </tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
-  function aplicarFiltro() {
-    const desde = document.getElementById('fechaDesde').value;
-    const hasta = document.getElementById('fechaHasta').value;
-    fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
-    fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
-    
+  function aplicarFiltroConValores(desde, hasta) {
+    // Combinar carritos actuales e historial
     let todas = [...todasLasVentas, ...todoHistorial];
     
-    ventasFiltradas = todas.filter(v => {
+    const ventasFiltradas = todas.filter(v => {
       const ts = v.timestampEliminacion || v.timestamp || new Date(v.fecha + ' ' + v.hora).getTime();
-      if (fechaDesde && ts < fechaDesde) return false;
-      if (fechaHasta && ts > fechaHasta) return false;
+      if (desde && ts < desde) return false;
+      if (hasta && ts > hasta) return false;
       return true;
     });
     ventasFiltradas.sort((a,b) => (b.timestampEliminacion||b.timestamp||0) - (a.timestampEliminacion||a.timestamp||0));
     
+    console.log(`📊 Ventas filtradas: ${ventasFiltradas.length} (desde: ${desde ? new Date(desde).toLocaleDateString() : 'ninguno'}, hasta: ${hasta ? new Date(hasta).toLocaleDateString() : 'ninguno'})`);
+    
+    ventasActualesParaReporte = [...ventasFiltradas];
     actualizarEstadisticas(ventasFiltradas);
     renderizarTablaVentas(ventasFiltradas);
   }
 
-  function limpiarFiltro() {
-    document.getElementById('fechaDesde').value = '';
-    document.getElementById('fechaHasta').value = '';
-    fechaDesde = null;
-    fechaHasta = null;
-    mostrarVentasSegunEstado();
+  function aplicarFiltro() {
+    const desdeInput = document.getElementById('fechaDesde').value;
+    const hastaInput = document.getElementById('fechaHasta').value;
+    
+    if (desdeInput) sessionStorage.setItem('filtroDesde', desdeInput);
+    else sessionStorage.removeItem('filtroDesde');
+    
+    if (hastaInput) sessionStorage.setItem('filtroHasta', hastaInput);
+    else sessionStorage.removeItem('filtroHasta');
+    
+    fechaDesde = desdeInput ? new Date(desdeInput).setHours(0,0,0,0) : null;
+    fechaHasta = hastaInput ? new Date(hastaInput).setHours(23,59,59,999) : null;
+    aplicarFiltroConValores(fechaDesde, fechaHasta);
   }
 
-  window.mostrarTab = function(tab) {
+  function limpiarFiltro() {
+    sessionStorage.removeItem('filtroDesde');
+    sessionStorage.removeItem('filtroHasta');
+    
+    document.getElementById('fechaDesde').value = '';
+    document.getElementById('fechaHasta').value = '';
+    
+    fechaDesde = null;
+    fechaHasta = null;
+    
+    cargarVentasCarrito().then(() => {
+      mostrarCarritosActuales();
+    });
+  }
+
+  async function generarReportePDF() {
+    const { jsPDF } = window.jspdf;
+    
+    // Usar las ventas filtradas actuales
+    let ventasParaReporte = ventasActualesParaReporte;
+    
+    // Si no hay ventas filtradas, usar todas
+    if (!ventasParaReporte || ventasParaReporte.length === 0) {
+      ventasParaReporte = [...todasLasVentas, ...todoHistorial];
+    }
+    
+    const desdeInput = document.getElementById('fechaDesde').value;
+    const hastaInput = document.getElementById('fechaHasta').value;
+    let rangoFechas = '';
+    
+    if (desdeInput && hastaInput) {
+      rangoFechas = `${desdeInput.split('-').reverse().join('/')} al ${hastaInput.split('-').reverse().join('/')}`;
+    } else if (desdeInput) {
+      rangoFechas = `Desde ${desdeInput.split('-').reverse().join('/')}`;
+    } else if (hastaInput) {
+      rangoFechas = `Hasta ${hastaInput.split('-').reverse().join('/')}`;
+    } else {
+      rangoFechas = 'Todos los registros';
+    }
+    
+    // Filtrar SOLO las ventas de cierre (códigos 000-09 y 000-10)
+    const ventasCierre = ventasParaReporte.filter(v => v.code === '000-09' || v.code === '000-10');
+    
+    console.log("📄 Generando PDF - Ventas totales:", ventasParaReporte.length);
+    console.log("📄 Ventas de cierre:", ventasCierre.length);
+    ventasCierre.forEach(v => {
+      console.log(`   - ${v.sucursal}: ${v.code} = ${v.money} Gs. (${v.fecha || new Date(v.timestamp).toLocaleDateString()})`);
+    });
+    
+    // Calcular estadísticas por sucursal
+    const sucStats = {};
+    let totalEfectivoGeneral = 0;
+    let totalTarjetaGeneral = 0;
+    let totalCierreGeneral = 0;
+    
+    for (const suc of sucursales) {
+      const vSuc = ventasCierre.filter(v => v.sucursalClave === suc.clave);
+      const cEfectivo = vSuc.filter(v => v.code === '000-09');
+      const cTarjeta = vSuc.filter(v => v.code === '000-10');
+      
+      const efectivo = cEfectivo.reduce((s,v)=>s+(v.money||0),0);
+      const tarjeta = cTarjeta.reduce((s,v)=>s+(v.money||0),0);
+      
+      sucStats[suc.clave] = {
+        nombre: suc.nombre,
+        efectivo,
+        tarjeta,
+        total: efectivo + tarjeta
+      };
+      
+      totalEfectivoGeneral += efectivo;
+      totalTarjetaGeneral += tarjeta;
+      totalCierreGeneral += (efectivo + tarjeta);
+    }
+    
+    // Crear PDF
+    const doc = new jsPDF();
+    
+    // Membrete
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(33, 150, 243);
+    doc.text('ASTROLAND', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text('IN GOD WE TRUST', 105, 30, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`REPORTE DE CIERRES - ${rangoFechas}`, 105, 45, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
+    
+    // Tabla resumen por sucursal
+    const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
+    const tableRows = [];
+    
+    for (const suc of sucursales) {
+      const stats = sucStats[suc.clave];
+      tableRows.push([
+        stats.nombre,
+        stats.efectivo.toLocaleString(),
+        stats.tarjeta.toLocaleString(),
+        stats.total.toLocaleString()
+      ]);
+    }
+    
+    tableRows.push([
+      'TOTAL GENERAL',
+      totalEfectivoGeneral.toLocaleString(),
+      totalTarjetaGeneral.toLocaleString(),
+      totalCierreGeneral.toLocaleString()
+    ]);
+    
+    doc.autoTable({
+      head: tableHeaders,
+      body: tableRows,
+      startY: 65,
+      theme: 'grid',
+      styles: { fontSize: 10, cellPadding: 4 },
+      headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: 'bold' },
+      footStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
+    });
+    
+    // Pie de página
+    const pageCount = doc.internal.getNumberOfPages();
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150, 150, 150);
+      doc.text('GRACIAS DIOS NUESTRO', 105, pageHeight - 10, { align: 'center' });
+      doc.text(`Página ${i} de ${pageCount}`, pageWidth - 20, pageHeight - 10);
+    }
+    
+    const fileName = `ASTROLAND_Reporte_Cierres_${rangoFechas.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    doc.save(fileName);
+    
+    console.log("✅ PDF generado correctamente");
+  }
+
+  function mostrarTab(tab) {
     tabActual = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     if (tab === 'stock') {
-      document.querySelector('.tab-btn:first-child').classList.add('active');
+      document.getElementById('tabStockBtn').classList.add('active');
       document.getElementById('tabStock').style.display = 'block';
       document.getElementById('tabVentas').style.display = 'none';
       document.getElementById('searchContainer').style.display = 'block';
       renderizarStock();
     } else {
-      document.querySelector('.tab-btn:last-child').classList.add('active');
+      document.getElementById('tabVentasBtn').classList.add('active');
       document.getElementById('tabStock').style.display = 'none';
       document.getElementById('tabVentas').style.display = 'block';
       document.getElementById('searchContainer').style.display = 'none';
       mostrarVentasSegunEstado();
     }
-  };
+  }
 
-  window.aplicarFiltro = aplicarFiltro;
-  window.limpiarFiltro = limpiarFiltro;
-  window.cargarTodo = cargarTodo;
+  // Event Listeners
+  document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
+  document.getElementById('btnLimpiar').addEventListener('click', limpiarFiltro);
+  document.getElementById('btnReporte').addEventListener('click', generarReportePDF);
+  document.getElementById('btnActualizar').addEventListener('click', cargarTodo);
+  document.getElementById('tabStockBtn').addEventListener('click', () => mostrarTab('stock'));
+  document.getElementById('tabVentasBtn').addEventListener('click', () => mostrarTab('ventas'));
   document.getElementById('busqueda')?.addEventListener('input', () => { if (tabActual === 'stock') renderizarStock(); });
 
-  document.getElementById('fechaDesde').value = '';
-  document.getElementById('fechaHasta').value = '';
+  if (sessionStorage.getItem('filtroDesde')) {
+    document.getElementById('fechaDesde').value = sessionStorage.getItem('filtroDesde');
+  }
+  if (sessionStorage.getItem('filtroHasta')) {
+    document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
+  }
 
   await cargarTodo();
   setInterval(() => cargarTodo(), 15000);
