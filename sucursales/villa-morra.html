@@ -568,7 +568,7 @@ body { padding-top: 80px; }
       
       <div class="tabs-compras">
         <button class="tab-btn-compras active" data-tab="compra">🛒 Compra</button>
-        <button class="tab-btn-compras" data-tab="maquina">🎰 Máquina</button>
+        <button class="tab-btn-compras" data-tab="movimientos">🔄 Movimientos</button>
       </div>
       
       <div id="tabCompra" class="tab-pane-compras active">
@@ -591,12 +591,12 @@ body { padding-top: 80px; }
         </div>
       </div>
       
-      <div id="tabMaquina" class="tab-pane-compras">
-        <div id="maquinaProductInfo" class="product-info"></div>
+      <div id="tabMovimientos" class="tab-pane-compras">
+        <div id="movimientosProductInfo" class="product-info"></div>
         <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades">
         <div class="maquina-buttons">
-          <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
-          <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
+          <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar (Suma al stock)</button>
+          <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar (Resta del stock)</button>
           <button class="btn-cancelar" onclick="closeModal()">❌ Cancelar</button>
         </div>
       </div>
@@ -647,7 +647,7 @@ body { padding-top: 80px; }
       <h3>🛒 Carrito de Compras</h3>
       <div id="cartItems" class="cart-items">
         <div class="cart-item cart-header">
-          <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span>
+          <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span>
         </div>
       </div>
       <div class="cart-actions">
@@ -723,11 +723,11 @@ body { padding-top: 80px; }
   const historialRef = ref(database, 'historial_ventas');
 
   let currentProduct = null;
-  let currentMaquinaProduct = null;
+  let currentMovimientosProduct = null;
   let cart = [];
   let stock = {};
   let historialVentas = [];
-  let modoEdicionFecha = null; // 'vaciar' o { tipo: 'editar', firebaseKey: '...' }
+  let modoEdicionFecha = null;
   
   const PASSWORD_STOCK = "mili";
   const PASSWORD_GENERAL = "mili";
@@ -738,16 +738,22 @@ body { padding-top: 80px; }
     '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30,
     '000-05': 1, '000-06': 7
   };
-  const NON_FICHA_CODES = ['000-07', '000-08', '000-09', '000-10'];
+  const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
   const CIERRE_CODES = ['000-09', '000-10'];
 
-  // Funciones para bloquear/desbloquear scroll del body
-  function blockBodyScroll() {
-    document.body.style.overflow = 'hidden';
+  // Función para verificar si un código debe mostrar la pestaña de movimientos
+  function shouldShowMovimientosTab(code) {
+    const prefix = code.substring(0, 3);
+    // Códigos específicos que muestran movimientos
+    if (code === '000-00' || code === '000-07' || code === '000-08') return true;
+    // Todos los códigos que comienzan con 005 en adelante
+    const numPrefix = parseInt(prefix);
+    if (!isNaN(numPrefix) && numPrefix >= 5) return true;
+    return false;
   }
-  function unblockBodyScroll() {
-    document.body.style.overflow = '';
-  }
+
+  function blockBodyScroll() { document.body.style.overflow = 'hidden'; }
+  function unblockBodyScroll() { document.body.style.overflow = ''; }
 
   function generarTodosLosProductos() {
     const container = document.querySelector('.container');
@@ -769,16 +775,19 @@ body { padding-top: 80px; }
       { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 68 } },
       { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 71 } },
       { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 58 } },
-      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 57 } },
+      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 58 } },
       { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 34 } },
       { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 48 } },
-      { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 8 } },
+      { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 9 } },
       { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 36 } },
       { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
       { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 3 } },
       { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 2 } },
       { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
         { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
+      ]},
+      { nombre: "800 puntos", categoria: "800", puntos: 800, productos: [
+        { codigo: "800-00", precio: 250000 }, { codigo: "800-01", precio: 250000 }
       ]}
     ];
     
@@ -908,11 +917,13 @@ body { padding-top: 80px; }
   function resetSearch() {
     const inp = document.getElementById('busqueda');
     if (inp) { inp.value = ''; filterProducts(''); }
+    // Scroll al inicio del catálogo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
 
-  // Pestañas - SIN CONTRASEÑA
+  // Pestañas - mostrar/ocultar según el producto
   document.querySelectorAll('.tab-btn-compras').forEach(btn => {
     btn.addEventListener('click', function() {
       const tabId = this.getAttribute('data-tab');
@@ -922,7 +933,7 @@ body { padding-top: 80px; }
       if (tabId === 'compra') {
         document.getElementById('tabCompra').classList.add('active');
       } else {
-        document.getElementById('tabMaquina').classList.add('active');
+        document.getElementById('tabMovimientos').classList.add('active');
       }
     });
   });
@@ -957,7 +968,19 @@ body { padding-top: 80px; }
       const name = this.querySelector('p').textContent;
       
       currentProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
-      currentMaquinaProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
+      currentMovimientosProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
+      
+      // Mostrar u ocultar pestaña de movimientos según el código
+      const movimientosTab = document.querySelector('.tab-btn-compras[data-tab="movimientos"]');
+      if (shouldShowMovimientosTab(code)) {
+        movimientosTab.style.display = 'block';
+      } else {
+        movimientosTab.style.display = 'none';
+        // Si estaba activa la de movimientos, cambiar a compra
+        if (document.querySelector('.tab-btn-compras.active').getAttribute('data-tab') === 'movimientos') {
+          document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
+        }
+      }
       
       document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
       
@@ -969,7 +992,7 @@ body { padding-top: 80px; }
       document.getElementById('totalPrice').textContent = currentProduct.price.toLocaleString();
       document.getElementById('addToCart').disabled = (stockVal <= 0);
       
-      document.getElementById('maquinaProductInfo').innerHTML = `<strong>${currentMaquinaProduct.name}</strong><br>📦 Stock: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}`;
+      document.getElementById('movimientosProductInfo').innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock | ➖ Quitar: resta del stock</small>`;
       document.getElementById('unidadesInput').value = 1;
       
       document.getElementById('purchaseModal').style.display = 'block';
@@ -1045,22 +1068,62 @@ body { padding-top: 80px; }
   };
 
   window.agregarUnidades = async function() {
-    if (!currentMaquinaProduct) return;
+    if (!currentMovimientosProduct) return;
     const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
     if (cantidad <= 0) { alert('Cantidad inválida'); return; }
     
-    const code = currentMaquinaProduct.code;
-    const consumo = currentMaquinaProduct.fichaConsumption || 0;
+    const code = currentMovimientosProduct.code;
+    const consumo = currentMovimientosProduct.fichaConsumption || 0;
     let currentStock;
     
     if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
       currentStock = stock['000-00'] ?? STOCK_INICIAL;
-      if (currentStock < consumo * cantidad) { alert(`No hay suficientes fichas. Necesitas ${consumo * cantidad} fichas`); return; }
+    } else {
+      currentStock = stock[code] ?? STOCK_INICIAL;
+    }
+    
+    // AGREGAR: suma al stock
+    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+      const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
+      await set(ref(database, `stock/000-00`), nuevo);
+    } else {
+      await set(ref(database, `stock/${code}`), currentStock + cantidad);
+    }
+    
+    const ahora = new Date();
+    const fecha = ahora.toLocaleDateString('es-PY');
+    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    await push(cartRef, { 
+      code, name: currentMovimientosProduct.name, points: 0, money: 0, 
+      unidades: cantidad, esMovimiento: true, tipoMovimiento: 'agregar',
+      totalPrice: currentMovimientosProduct.price, fecha, hora, 
+      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
+      fichaConsumption: consumo * cantidad 
+    });
+    
+    closeModal();
+    alert(`✅ Agregado +${cantidad} unidad(es) de ${currentMovimientosProduct.name} (stock aumentado)`);
+    resetSearch();
+  };
+
+  window.quitarUnidades = async function() {
+    if (!currentMovimientosProduct) return;
+    const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+    if (cantidad <= 0) { alert('Cantidad inválida'); return; }
+    
+    const code = currentMovimientosProduct.code;
+    const consumo = currentMovimientosProduct.fichaConsumption || 0;
+    let currentStock;
+    
+    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+      currentStock = stock['000-00'] ?? STOCK_INICIAL;
+      if (currentStock < consumo * cantidad) { alert(`No hay suficientes fichas. Stock actual: ${currentStock}`); return; }
     } else {
       currentStock = stock[code] ?? STOCK_INICIAL;
       if (currentStock < cantidad) { alert(`No hay suficiente stock. Stock actual: ${currentStock}`); return; }
     }
     
+    // QUITAR: resta del stock
     if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
       const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * cantidad);
       await set(ref(database, `stock/000-00`), nuevo);
@@ -1072,46 +1135,16 @@ body { padding-top: 80px; }
     const fecha = ahora.toLocaleDateString('es-PY');
     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     await push(cartRef, { 
-      code, name: currentMaquinaProduct.name, points: 0, money: 0, 
-      unidades: cantidad, esMaquina: true,
-      totalPrice: currentMaquinaProduct.price, fecha, hora, 
+      code, name: currentMovimientosProduct.name, points: 0, money: 0, 
+      unidades: cantidad, esMovimiento: true, tipoMovimiento: 'quitar',
+      totalPrice: currentMovimientosProduct.price, fecha, hora, 
       timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
       fichaConsumption: consumo * cantidad 
     });
     
     closeModal();
-    alert(`✅ Agregado ${cantidad} unidad(es) de ${currentMaquinaProduct.name}`);
-  };
-
-  window.quitarUnidades = async function() {
-    if (!currentMaquinaProduct) return;
-    const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
-    if (cantidad <= 0) { alert('Cantidad inválida'); return; }
-    
-    const code = currentMaquinaProduct.code;
-    const consumo = currentMaquinaProduct.fichaConsumption || 0;
-    
-    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-      const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
-      await set(ref(database, `stock/000-00`), nuevo);
-    } else {
-      const actual = stock[code] ?? STOCK_INICIAL;
-      await set(ref(database, `stock/${code}`), actual + cantidad);
-    }
-    
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    await push(cartRef, { 
-      code, name: currentMaquinaProduct.name, points: 0, money: 0, 
-      unidades: -cantidad, esMaquina: true, esQuitar: true,
-      totalPrice: currentMaquinaProduct.price, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: -(consumo * cantidad) 
-    });
-    
-    closeModal();
-    alert(`✅ Quitado ${cantidad} unidad(es) de ${currentMaquinaProduct.name}`);
+    alert(`✅ Quitado -${cantidad} unidad(es) de ${currentMovimientosProduct.name} (stock reducido)`);
+    resetSearch();
   };
 
   window.closeModal = function() {
@@ -1189,7 +1222,8 @@ body { padding-top: 80px; }
       ventas: ventasAEliminar.map(item => ({
         code: item.code, name: item.name, points: item.points, money: item.money,
         fichaConsumption: item.fichaConsumption || 0, unidades: item.unidades || 1,
-        fecha: item.fecha, hora: item.hora, esFichaGratis: item.esFichaGratis || false
+        fecha: item.fecha, hora: item.hora, esFichaGratis: item.esFichaGratis || false,
+        esMovimiento: item.esMovimiento || false, tipoMovimiento: item.tipoMovimiento
       })),
       totalVentas: ventasAEliminar.length,
       totalDinero: ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0),
@@ -1200,7 +1234,6 @@ body { padding-top: 80px; }
     try { await push(historialRef, registro); } catch(e) { console.error(e); }
   }
 
-  // FUNCIONES PARA EL MODAL DE FECHA (usado tanto para vaciar como para editar)
   window.verifyClearPasswordAndShowDate = function() {
     const pwd = document.getElementById('clearPassword').value;
     if (pwd !== PASSWORD_GENERAL) { 
@@ -1277,7 +1310,6 @@ body { padding-top: 80px; }
     modoEdicionFecha = null;
   };
 
-  // Asignar el evento al botón confirmar del modal de fecha
   document.addEventListener('DOMContentLoaded', function() {
     const btnConfirmar = document.querySelector('#fechaModal .fecha-modal-buttons button:first-child');
     if (btnConfirmar) {
@@ -1410,27 +1442,24 @@ body { padding-top: 80px; }
 
   function renderCart() {
     const div = document.getElementById('cartItems');
-    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🎰 Máq</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
+    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
     cart.forEach(item => {
       if (!item) return;
       const d = document.createElement('div');
       d.className = 'cart-item';
       
-      let maquinaTexto = '';
-      let maquinaClase = '';
-      if (item.esMaquina) {
-        const unidades = item.unidades || 0;
-        if (unidades > 0) {
-          maquinaTexto = `+${unidades}`;
-          maquinaClase = 'unidades-positivo';
-        } else if (unidades < 0) {
-          maquinaTexto = `${unidades}`;
-          maquinaClase = 'unidades-negativo';
-        } else {
-          maquinaTexto = '1';
+      let movimientoTexto = '';
+      let movimientoClase = '';
+      if (item.esMovimiento) {
+        if (item.tipoMovimiento === 'agregar') {
+          movimientoTexto = `+${item.unidades || 1}`;
+          movimientoClase = 'unidades-positivo';
+        } else if (item.tipoMovimiento === 'quitar') {
+          movimientoTexto = `-${item.unidades || 1}`;
+          movimientoClase = 'unidades-negativo';
         }
       } else {
-        maquinaTexto = '-';
+        movimientoTexto = '-';
       }
       
       const fichasTexto = item.fichaConsumption ? `${Math.abs(item.fichaConsumption)}` : '-';
@@ -1439,7 +1468,7 @@ body { padding-top: 80px; }
       d.innerHTML = `<span>${item.name}</span>
         <span>${(item.points || 0).toLocaleString()}</span>
         <span>G.${(item.money || 0).toLocaleString()}</span>
-        <span class="unidades-maquina ${maquinaClase}">${maquinaTexto}</span>
+        <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
         <span class="${fichasClase}">${fichasTexto}</span>
         <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
         <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">🗑️</button></span>`;
@@ -1456,13 +1485,38 @@ body { padding-top: 80px; }
     const consumo = item.fichaConsumption || 0;
     const unidades = item.unidades || 1;
     
-    if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
-      const actual = stock['000-00'] ?? STOCK_INICIAL;
-      set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
-    } else if (item.code && !CIERRE_CODES.includes(item.code)) {
-      const actual = stock[item.code] ?? STOCK_INICIAL;
-      set(ref(database, `stock/${item.code}`), actual - unidades);
+    // Si es movimiento, hacer la operación inversa
+    if (item.esMovimiento) {
+      if (item.tipoMovimiento === 'agregar') {
+        // Si era agregar (sumó al stock), al eliminar RESTAMOS del stock
+        if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
+          const actual = stock['000-00'] ?? STOCK_INICIAL;
+          set(ref(database, `stock/000-00`), actual - Math.abs(consumo));
+        } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+          const actual = stock[item.code] ?? STOCK_INICIAL;
+          set(ref(database, `stock/${item.code}`), actual - unidades);
+        }
+      } else if (item.tipoMovimiento === 'quitar') {
+        // Si era quitar (restó del stock), al eliminar SUMAMOS al stock
+        if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
+          const actual = stock['000-00'] ?? STOCK_INICIAL;
+          set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
+        } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+          const actual = stock[item.code] ?? STOCK_INICIAL;
+          set(ref(database, `stock/${item.code}`), actual + unidades);
+        }
+      }
+    } else {
+      // Para compras normales, restaurar stock
+      if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
+        const actual = stock['000-00'] ?? STOCK_INICIAL;
+        set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
+      } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+        const actual = stock[item.code] ?? STOCK_INICIAL;
+        set(ref(database, `stock/${item.code}`), actual + unidades);
+      }
     }
+    
     remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
   };
 
@@ -1491,7 +1545,7 @@ body { padding-top: 80px; }
   };
 
   function getCategoryName(code) {
-    const names = { '000':'000 puntos','005':'005 puntos','020':'20 puntos','035':'35 puntos','050':'50 puntos','075':'75 puntos','100':'100 puntos','150':'150 puntos','180':'180 puntos','200':'200 puntos','220':'220 puntos','250':'250 puntos','350':'350 puntos','420':'420 puntos' };
+    const names = { '000':'000 puntos','005':'005 puntos','020':'20 puntos','035':'35 puntos','050':'50 puntos','075':'75 puntos','100':'100 puntos','150':'150 puntos','180':'180 puntos','200':'200 puntos','220':'220 puntos','250':'250 puntos','350':'350 puntos','420':'420 puntos','800':'800 puntos' };
     return names[code] || code + ' puntos';
   }
 
@@ -1612,8 +1666,11 @@ body { padding-top: 80px; }
     const totalFichasVendidas = totalFichas - totalFichasRegaladas;
     
     const data = [['ASTROLAND - Villa Morra'], ['IN GOD WE TRUST'], [],
-      ['Producto','Puntos','Dinero','Unidades Máquina','Fichas Consumidas','Fichas Regaladas','Fichas Vendidas','Fecha','Hora'],
-      ...cart.map(i => [i.name, i.points||0, i.money||0, i.unidades || (i.esMaquina ? '1' : '-'), Math.abs(i.fichaConsumption)||0, i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, !i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, i.fecha, i.hora]),
+      ['Producto','Puntos','Dinero','Movimientos','Fichas Consumidas','Fichas Regaladas','Fichas Vendidas','Fecha','Hora'],
+      ...cart.map(i => [i.name, i.points||0, i.money||0, 
+        i.esMovimiento ? (i.tipoMovimiento === 'agregar' ? `+${i.unidades}` : `-${i.unidades}`) : '-', 
+        Math.abs(i.fichaConsumption)||0, i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, 
+        !i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, i.fecha, i.hora]),
       [], ['TOTALES', totalP, totalM, '', totalFichas, totalFichasRegaladas, totalFichasVendidas, '', '']];
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
