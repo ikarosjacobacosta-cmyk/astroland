@@ -308,7 +308,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       const data = (await get(ref(db, 'historial_ventas'))).val(); 
       if (!data) return [];
       
-      // Convertir objeto a array y extraer todas las ventas
       const historialArray = Object.values(data);
       const todasLasVentas = [];
       
@@ -501,7 +500,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       renderizarTablaVentas(todasLasVentas);
       ventasActualesParaReporte = [...todasLasVentas];
     } else {
-      // Mostrar valores en cero
       document.getElementById('statsVentas').innerHTML = `
         <div class="stat-card dinero"><div class="label">💰 Ventas</div><div class="value">0</div></div>
         <div class="stat-card dinero"><div class="label">💵 Efectivo</div><div class="value">0</div></div>
@@ -669,7 +667,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function aplicarFiltroConValores(desde, hasta) {
-    // Combinar carritos actuales e historial
     let todas = [...todasLasVentas, ...todoHistorial];
     
     const ventasFiltradas = todas.filter(v => {
@@ -680,7 +677,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     });
     ventasFiltradas.sort((a,b) => (b.timestampEliminacion||b.timestamp||0) - (a.timestampEliminacion||a.timestamp||0));
     
-    console.log(`📊 Ventas filtradas: ${ventasFiltradas.length} (desde: ${desde ? new Date(desde).toLocaleDateString() : 'ninguno'}, hasta: ${hasta ? new Date(hasta).toLocaleDateString() : 'ninguno'})`);
+    console.log(`📊 Ventas filtradas: ${ventasFiltradas.length}`);
     
     ventasActualesParaReporte = [...ventasFiltradas];
     actualizarEstadisticas(ventasFiltradas);
@@ -720,10 +717,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function generarReportePDF() {
     const { jsPDF } = window.jspdf;
     
-    // Usar las ventas filtradas actuales
     let ventasParaReporte = ventasActualesParaReporte;
     
-    // Si no hay ventas filtradas, usar todas
     if (!ventasParaReporte || ventasParaReporte.length === 0) {
       ventasParaReporte = [...todasLasVentas, ...todoHistorial];
     }
@@ -742,16 +737,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       rangoFechas = 'Todos los registros';
     }
     
-    // Filtrar SOLO las ventas de cierre (códigos 000-09 y 000-10)
     const ventasCierre = ventasParaReporte.filter(v => v.code === '000-09' || v.code === '000-10');
     
     console.log("📄 Generando PDF - Ventas totales:", ventasParaReporte.length);
     console.log("📄 Ventas de cierre:", ventasCierre.length);
-    ventasCierre.forEach(v => {
-      console.log(`   - ${v.sucursal}: ${v.code} = ${v.money} Gs. (${v.fecha || new Date(v.timestamp).toLocaleDateString()})`);
-    });
     
-    // Calcular estadísticas por sucursal
     const sucStats = {};
     let totalEfectivoGeneral = 0;
     let totalTarjetaGeneral = 0;
@@ -777,28 +767,30 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       totalCierreGeneral += (efectivo + tarjeta);
     }
     
-    // Crear PDF
     const doc = new jsPDF();
     
-    // Membrete
+    // Membrete con colores más oscuros y legibles
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(33, 150, 243);
+    doc.setTextColor(0, 0, 0);
     doc.text('ASTROLAND', 105, 20, { align: 'center' });
     
     doc.setFontSize(12);
-    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(60, 60, 60);
     doc.text('IN GOD WE TRUST', 105, 30, { align: 'center' });
     
     doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
     doc.text(`REPORTE DE CIERRES - ${rangoFechas}`, 105, 45, { align: 'center' });
     
     doc.setFontSize(10);
-    doc.setTextColor(120, 120, 120);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
     doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
     
-    // Tabla resumen por sucursal
+    // Tabla resumen por sucursal con estilos más oscuros y legibles
     const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
     
@@ -824,9 +816,38 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       body: tableRows,
       startY: 65,
       theme: 'grid',
-      styles: { fontSize: 10, cellPadding: 4 },
-      headStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: 'bold' },
-      footStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
+      styles: { 
+        fontSize: 10, 
+        cellPadding: 5,
+        textColor: [0, 0, 0],
+        lineColor: [0, 0, 0],
+        lineWidth: 0.3
+      },
+      headStyles: { 
+        fillColor: [33, 33, 33], 
+        textColor: [255, 255, 255], 
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0],
+        halign: 'right'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      footStyles: { 
+        fillColor: [200, 200, 200], 
+        textColor: [0, 0, 0], 
+        fontStyle: 'bold',
+        halign: 'right'
+      },
+      columnStyles: {
+        0: { halign: 'left', cellWidth: 50 },
+        1: { halign: 'right', cellWidth: 45 },
+        2: { halign: 'right', cellWidth: 45 },
+        3: { halign: 'right', cellWidth: 45 }
+      }
     });
     
     // Pie de página
@@ -837,9 +858,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(10);
-      doc.setTextColor(150, 150, 150);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 100, 100);
       doc.text('GRACIAS DIOS NUESTRO', 105, pageHeight - 10, { align: 'center' });
-      doc.text(`Página ${i} de ${pageCount}`, pageWidth - 20, pageHeight - 10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Página ${i} de ${pageCount}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
     }
     
     const fileName = `ASTROLAND_Reporte_Cierres_${rangoFechas.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
