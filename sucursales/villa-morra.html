@@ -685,7 +685,7 @@ body { padding-top: 80px; }
       <p id="fechaModalDescripcion" style="text-align:center; color:#666;">¿Qué fecha quieres asignar a este registro?</p>
       <input type="date" id="fechaHistorialInput">
       <div class="fecha-modal-buttons">
-        <button id="fechaModalConfirmar" style="background:#4CAF50; color:white;">✅ Confirmar</button>
+        <button id="fechaModalConfirmar" style="background:#4CAF50; color:white;" onclick="confirmarAccionFecha()">✅ Confirmar</button>
         <button onclick="closeFechaModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
       </div>
     </div>
@@ -744,11 +744,17 @@ body { padding-top: 80px; }
   const STOCK_INICIAL = 100;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+  // SOLO estos códigos consumen fichas del stock 000-00
   const FICHA_CONSUMPTION = { 
     '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30,
     '000-05': 1, '000-06': 7
   };
+  
+  // Códigos que son INDEPENDIENTES y NO consumen fichas
+  // 000-07, 000-08, 000-09 tienen su propio stock individual
   const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
+  
+  // Códigos de cierre (también independientes)
   const CIERRE_CODES = ['000-09', '000-10'];
 
   // Locks para evitar múltiples ejecuciones en iOS
@@ -758,7 +764,9 @@ body { padding-top: 80px; }
 
   function shouldShowMovimientosTab(code) {
     const prefix = code.substring(0, 3);
+    // Códigos específicos que muestran movimientos
     if (code === '000-00' || code === '000-07' || code === '000-08') return true;
+    // Todos los códigos que comienzan con 005 en adelante
     const numPrefix = parseInt(prefix);
     if (!isNaN(numPrefix) && numPrefix >= 5) return true;
     return false;
@@ -766,6 +774,21 @@ body { padding-top: 80px; }
 
   function blockBodyScroll() { document.body.style.overflow = 'hidden'; }
   function unblockBodyScroll() { document.body.style.overflow = ''; }
+
+  // IMPORTANTE: getProductStock ahora maneja correctamente los códigos independientes
+  function getProductStock(code) {
+    // Si es código independiente (000-07, 000-08, 000-09), usar su propio stock
+    if (NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code)) {
+      return stock[code] ?? STOCK_INICIAL;
+    }
+    // Si es código que consume fichas
+    if (FICHA_CONSUMPTION[code]) {
+      const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
+      return Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
+    }
+    // Resto de productos (005, 020, etc.)
+    return stock[code] ?? STOCK_INICIAL;
+  }
 
   function generarTodosLosProductos() {
     const container = document.querySelector('.container');
@@ -868,14 +891,6 @@ body { padding-top: 80px; }
 
   async function loadHistorial() {
     try { const snap = await get(historialRef); const data = snap.val(); historialVentas = data ? Object.entries(data).map(([k, v]) => ({ ...v, firebaseKey: k })) : []; } catch { historialVentas = []; }
-  }
-
-  function getProductStock(code) {
-    if (FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && !CIERRE_CODES.includes(code)) {
-      const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-      return Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
-    }
-    return stock[code] ?? STOCK_INICIAL;
   }
 
   function updateAllStockIndicators() {
@@ -1110,14 +1125,16 @@ body { padding-top: 80px; }
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
     let currentStock;
     
-    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+    const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+    
+    if (consumo > 0 && !isIndependentCode) {
       currentStock = stock['000-00'] ?? STOCK_INICIAL;
     } else {
       currentStock = stock[code] ?? STOCK_INICIAL;
     }
     
     try {
-      if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+      if (consumo > 0 && !isIndependentCode) {
         const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
         await set(ref(database, `stock/000-00`), nuevo);
       } else {
@@ -1175,7 +1192,9 @@ body { padding-top: 80px; }
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
     let currentStock;
     
-    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+    const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+    
+    if (consumo > 0 && !isIndependentCode) {
       currentStock = stock['000-00'] ?? STOCK_INICIAL;
       if (currentStock < consumo * cantidad) { 
         alert(`No hay suficientes fichas. Stock actual: ${currentStock}`); 
@@ -1192,7 +1211,7 @@ body { padding-top: 80px; }
     }
     
     try {
-      if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+      if (consumo > 0 && !isIndependentCode) {
         const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * cantidad);
         await set(ref(database, `stock/000-00`), nuevo);
       } else {
@@ -1279,7 +1298,9 @@ body { padding-top: 80px; }
         const consumo = currentProduct.fichaConsumption || 0;
         let currentStock;
         
-        if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+        const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+        
+        if (consumo > 0 && !isIndependentCode) {
           currentStock = stock['000-00'] ?? STOCK_INICIAL;
           if (currentStock < consumo) { 
             alert('No hay suficientes fichas'); 
@@ -1319,7 +1340,7 @@ body { padding-top: 80px; }
           return; 
         }
         
-        if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+        if (consumo > 0 && !isIndependentCode) {
           const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - consumo;
           set(ref(database, `stock/000-00`), nuevo);
         } else {
@@ -1468,13 +1489,6 @@ body { padding-top: 80px; }
     modoEdicionFecha = null;
   };
 
-  document.addEventListener('DOMContentLoaded', function() {
-    const btnConfirmar = document.querySelector('#fechaModal .fecha-modal-buttons button:first-child');
-    if (btnConfirmar) {
-      btnConfirmar.onclick = confirmarAccionFecha;
-    }
-  });
-
   window.eliminarRegistroHistorial = async function(firebaseKey) {
     if (!confirm('¿Estás seguro de eliminar este registro del historial? Esta acción no se puede deshacer.')) return;
     
@@ -1548,7 +1562,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
+    let html = `<tr><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr>
@@ -1643,9 +1657,12 @@ body { padding-top: 80px; }
     const consumo = item.fichaConsumption || 0;
     const unidades = item.unidades || 1;
     
+    const isIndependentCode = NON_FICHA_CODES.includes(item.code) || CIERRE_CODES.includes(item.code);
+    
     if (item.esMovimiento) {
       if (item.tipoMovimiento === 'agregar') {
-        if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
+        // Invertir agregar: restar del stock
+        if (consumo > 0 && !isIndependentCode) {
           const actual = stock['000-00'] ?? STOCK_INICIAL;
           set(ref(database, `stock/000-00`), actual - Math.abs(consumo));
         } else if (item.code && !CIERRE_CODES.includes(item.code)) {
@@ -1653,7 +1670,8 @@ body { padding-top: 80px; }
           set(ref(database, `stock/${item.code}`), actual - unidades);
         }
       } else if (item.tipoMovimiento === 'quitar') {
-        if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
+        // Invertir quitar: sumar al stock
+        if (consumo > 0 && !isIndependentCode) {
           const actual = stock['000-00'] ?? STOCK_INICIAL;
           set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
         } else if (item.code && !CIERRE_CODES.includes(item.code)) {
@@ -1662,7 +1680,8 @@ body { padding-top: 80px; }
         }
       }
     } else {
-      if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
+      // Compra normal: restaurar stock
+      if (consumo > 0 && !isIndependentCode) {
         const actual = stock['000-00'] ?? STOCK_INICIAL;
         set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
       } else if (item.code && !CIERRE_CODES.includes(item.code)) {
@@ -1715,7 +1734,8 @@ body { padding-top: 80px; }
       let display = getProductStock(code);
       const isFichaBase = code === '000-00';
       const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
-      categories[cat].push({ code, name, img, currentStock: display, isFichaBase, isFichaProduct });
+      const isIndependent = NON_FICHA_CODES.includes(code);
+      categories[cat].push({ code, name, img, currentStock: display, isFichaBase, isFichaProduct, isIndependent });
     });
     const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a)-parseInt(b));
     let html = '';
@@ -1724,12 +1744,14 @@ body { padding-top: 80px; }
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
         html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
+        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09 (stock propio)</p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
       sortedProds.forEach(p => {
         html += `<div class="stock-item" data-code="${p.code}">${p.img}<p>${p.name}</p><div class="stock-control">`;
-        if (p.isFichaBase || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
+        // Los códigos independientes (000-07, 000-08, 000-09) también son editables
+        if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
           html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
         } else {
           html += `<input type="number" value="${p.currentStock}" readonly disabled><span>🎴 Stock de fichas</span>`;
