@@ -2,13 +2,15 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes, maximum-scale=1" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>ASTROLAND - Villa Morra</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root { color-scheme: light; }
-* { box-sizing: border-box; }
-html, body { margin:0; padding:0; background:#fff !important; font-family: 'Segoe UI', Inter, Arial, sans-serif; color:#222; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; background:#fff !important; font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#222; }
 .container { max-width:1200px; margin:0 auto; padding:20px; }
 header { text-align:center; margin-bottom:10px; }
 h1 { margin:10px 0 20px; font-size:1.8rem; }
@@ -34,14 +36,23 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   width: 90%;
   max-width: 480px;
   padding: 12px 16px;
-  font-size: 1rem;
+  font-size: 16px;
   border-radius: 10px;
   border: 1px solid #ccc;
-  inputmode: numeric;
-  pattern: \d*;
+  background: #fff;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.floating-search-container #busqueda:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 3px rgba(33,150,243,0.1);
 }
 @media (max-width:600px) {
-  .floating-search-container #busqueda { inputmode: numeric; pattern: \d*; -webkit-appearance: none; appearance: none; font-size: 1rem; padding: 10px 12px; }
+  .floating-search-container #busqueda { 
+    font-size: 16px;
+    padding: 10px 12px;
+  }
   body { padding-top: 70px; }
   .floating-search-container { padding: 10px 0; }
 }
@@ -86,6 +97,9 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   transition:transform 0.2s;
   position: relative;
   width: 100%;
+  -webkit-touch-callout: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 .imagen-item:hover { transform:scale(1.02); box-shadow:0 4px 8px rgba(0,0,0,0.1); }
 .imagen-item.out-of-stock { display: none; }
@@ -134,7 +148,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border: 1px solid #e0e0e0;
 }
 
-/* MODALES A PANTALLA COMPLETA */
 .modal, .maquina-modal, .cierre-modal, .cart-modal {
   display: none;
   position: fixed;
@@ -186,7 +199,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   text-align: center;
 }
 
-/* PESTAÑAS */
 .tabs-compras {
   display: flex;
   gap: 5px;
@@ -203,6 +215,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   font-size: 1.2rem;
   font-weight: bold;
   transition: all 0.3s;
+  touch-action: manipulation;
 }
 .tab-btn-compras.active {
   background: #2196F3;
@@ -226,22 +239,23 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .payment-options { margin: 20px 0; }
 .payment-option { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 10px; background: #fafafa; }
 .payment-option label { font-weight: bold; display: block; margin-bottom: 10px; font-size: 1.1rem; }
-.payment-option input { width: 100%; padding: 14px; font-size: 1.3rem; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
+.payment-option input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; text-align: center; -webkit-appearance: none; appearance: none; }
 .auto-calc { font-size: 1rem; margin-top: 8px; color: #666; }
 .modal-buttons { display: flex; gap: 15px; margin-top: 20px; }
-.modal-buttons button { flex: 1; padding: 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
+.modal-buttons button { flex: 1; padding: 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem; touch-action: manipulation; }
 #addToCart { background: #4CAF50; color: white; }
 #cancelModal { background: #f44336; color: white; }
 
-/* Máquina dentro del modal */
 .maquina-input {
   width: 100%;
   padding: 18px;
-  font-size: 1.5rem;
+  font-size: 16px;
   text-align: center;
   margin: 15px 0;
   border: 2px solid #ccc;
   border-radius: 10px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .maquina-buttons {
   display: flex;
@@ -257,20 +271,22 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   cursor: pointer;
   font-size: 1.1rem;
   font-weight: bold;
+  touch-action: manipulation;
 }
 .btn-agregar { background: #4CAF50; color: white; }
 .btn-quitar { background: #f44336; color: white; }
 .btn-cancelar { background: #666; color: white; }
 
-/* Cierre modal */
 .cierre-modal input {
   width: 100%;
   padding: 18px;
-  font-size: 1.5rem;
+  font-size: 16px;
   text-align: center;
   margin: 15px 0;
   border: 2px solid #ccc;
   border-radius: 10px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .cierre-modal button {
   padding: 14px 20px;
@@ -280,9 +296,9 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   cursor: pointer;
   font-size: 1.1rem;
   font-weight: bold;
+  touch-action: manipulation;
 }
 
-/* CARRITO */
 .cart-content {
   background-color: #fff;
   margin: 0;
@@ -339,6 +355,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   cursor: pointer; 
   font-weight: bold;
   font-size: 1rem;
+  touch-action: manipulation;
 }
 .unidades-maquina {
   font-weight: bold;
@@ -346,7 +363,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .unidades-positivo { color: #4CAF50; }
 .unidades-negativo { color: #f44336; }
 
-/* Historial modal */
 .historial-modal {
   display: none;
   position: fixed;
@@ -411,7 +427,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   font-size: 0.75rem;
 }
 
-/* Botones flotantes */
 .cart-button, .stock-button, .historial-btn {
   position: fixed;
   bottom: 20px;
@@ -426,12 +441,12 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   align-items: center;
   gap: 8px;
   font-size: 1rem;
+  touch-action: manipulation;
 }
 .cart-button { right: 20px; background: #2196F3; color: white; }
 .stock-button { left: 20px; background: #FF9800; color: white; }
 .historial-btn { left: 180px; background: #9C27B0; color: white; }
 
-/* GESTIÓN DE STOCK - PANTALLA COMPLETA */
 .stock-fullscreen {
   background-color: #fff;
   margin: 0;
@@ -440,7 +455,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   min-height: 100%;
 }
 .stock-search-container { text-align: center; margin: 20px 0; }
-.stock-search-container input { padding: 12px; font-size: 1rem; width: 80%; max-width: 400px; border-radius: 10px; border: 1px solid #ccc; }
+.stock-search-container input { padding: 12px; font-size: 16px; width: 80%; max-width: 400px; border-radius: 10px; border: 1px solid #ccc; -webkit-appearance: none; appearance: none; }
 .stock-category { margin-top: 20px; }
 .stock-category h4 { margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid #FF9800; font-size: 1.2rem; }
 .stock-gallery { 
@@ -456,15 +471,14 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .stock-item img { width: 100%; aspect-ratio: 1/1; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 120px; }
 .stock-item p { margin: 8px 0; font-size: 0.8rem; text-align: center; font-weight: 500; }
 .stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; justify-content: center; width: 100%; }
-.stock-item .stock-control input { width: 70px; padding: 8px; text-align: center; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 6px; }
+.stock-item .stock-control input { width: 70px; padding: 8px; text-align: center; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; -webkit-appearance: none; appearance: none; }
 .stock-item .stock-control input:focus { outline: none; border-color: #4CAF50; }
 .stock-item .stock-control span { background: #999; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; white-space: nowrap; }
 
 .password-input { display: none; margin-top: 10px; text-align: center; }
-.password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 1rem; }
-.password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+.password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 16px; -webkit-appearance: none; appearance: none; }
+.password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; touch-action: manipulation; }
 
-/* Modal de selección de fecha */
 .fecha-modal {
   display: none;
   position: fixed;
@@ -493,10 +507,12 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .fecha-modal-content input {
   width: 100%;
   padding: 14px;
-  font-size: 1.1rem;
+  font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 10px;
   margin: 15px 0;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .fecha-modal-buttons {
   display: flex;
@@ -510,12 +526,12 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   cursor: pointer;
   font-weight: bold;
   font-size: 1rem;
+  touch-action: manipulation;
 }
 
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
-/* 3 COLUMNAS EN CELULAR */
 @media (min-width: 1200px) { 
   .galeria { grid-template-columns: repeat(5, 1fr); }
   .imagen-item p { font-size: 0.9rem; }
@@ -560,7 +576,6 @@ body { padding-top: 80px; }
   <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
   <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
 
-  <!-- Modal de compra normal CON PESTAÑAS -->
   <div id="purchaseModal" class="modal">
     <div class="modal-content">
       <button class="close" onclick="closeModal()">&times;</button>
@@ -603,7 +618,6 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal para cierre de caja -->
   <div id="cierreModal" class="cierre-modal">
     <div class="modal-content">
       <button class="close" onclick="closeCierreModal()">&times;</button>
@@ -617,7 +631,6 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal de gestión de stock - PANTALLA COMPLETA -->
   <div id="stockModal" class="modal">
     <div class="stock-fullscreen">
       <button class="close" onclick="closeStockModal()">&times;</button>
@@ -640,7 +653,6 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal del carrito -->
   <div id="cartModal" class="cart-modal">
     <div class="cart-content">
       <button class="close" onclick="closeCartModal()">&times;</button>
@@ -667,7 +679,6 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal para seleccionar fecha al vaciar carrito -->
   <div id="fechaModal" class="fecha-modal">
     <div class="fecha-modal-content">
       <h4 id="fechaModalTitulo">📅 Seleccionar fecha para historial</h4>
@@ -680,7 +691,6 @@ body { padding-top: 80px; }
     </div>
   </div>
 
-  <!-- Modal de historial -->
   <div id="historialModal" class="historial-modal">
     <div class="modal-content">
       <button class="close" onclick="closeHistorialModal()">&times;</button>
@@ -741,12 +751,14 @@ body { padding-top: 80px; }
   const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
   const CIERRE_CODES = ['000-09', '000-10'];
 
-  // Función para verificar si un código debe mostrar la pestaña de movimientos
+  // Locks para evitar múltiples ejecuciones en iOS
+  window.addToCartLock = false;
+  window.agregarUnidadesLock = false;
+  window.quitarUnidadesLock = false;
+
   function shouldShowMovimientosTab(code) {
     const prefix = code.substring(0, 3);
-    // Códigos específicos que muestran movimientos
     if (code === '000-00' || code === '000-07' || code === '000-08') return true;
-    // Todos los códigos que comienzan con 005 en adelante
     const numPrefix = parseInt(prefix);
     if (!isNaN(numPrefix) && numPrefix >= 5) return true;
     return false;
@@ -917,13 +929,11 @@ body { padding-top: 80px; }
   function resetSearch() {
     const inp = document.getElementById('busqueda');
     if (inp) { inp.value = ''; filterProducts(''); }
-    // Scroll al inicio del catálogo
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
 
-  // Pestañas - mostrar/ocultar según el producto
   document.querySelectorAll('.tab-btn-compras').forEach(btn => {
     btn.addEventListener('click', function() {
       const tabId = this.getAttribute('data-tab');
@@ -938,67 +948,80 @@ body { padding-top: 80px; }
     });
   });
 
+  // Evento para los items con protección contra múltiples clics en iOS
   document.querySelectorAll('.imagen-item').forEach(item => {
-    item.addEventListener('click', function(e) {
-      const code = this.getAttribute('data-code');
-      const points = parseInt(this.getAttribute('data-points'));
+    let clickTimeout = null;
+    
+    const handleClick = function(e) {
+      if (clickTimeout) return;
       
-      if (code === '000-09') {
-        abrirModalCierre('Efectivo', 'Registrar monto de cierre en EFECTIVO');
-        return;
-      }
-      if (code === '000-10') {
-        abrirModalCierre('Tarjeta', 'Registrar monto de cierre por TARJETA');
-        return;
-      }
-      
-      if (code === '000-05') {
-        procesarFichaGratis(code, 1);
-        return;
-      }
-      if (code === '000-06') {
-        procesarFichaGratis(code, 7);
-        return;
-      }
-      
-      let stockVal = getProductStock(code);
-      if (stockVal <= 0) { alert('Sin stock'); return; }
-      const price = parseFloat(this.getAttribute('data-price'));
-      const consumo = FICHA_CONSUMPTION[code] || 0;
-      const name = this.querySelector('p').textContent;
-      
-      currentProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
-      currentMovimientosProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
-      
-      // Mostrar u ocultar pestaña de movimientos según el código
-      const movimientosTab = document.querySelector('.tab-btn-compras[data-tab="movimientos"]');
-      if (shouldShowMovimientosTab(code)) {
-        movimientosTab.style.display = 'block';
-      } else {
-        movimientosTab.style.display = 'none';
-        // Si estaba activa la de movimientos, cambiar a compra
-        if (document.querySelector('.tab-btn-compras.active').getAttribute('data-tab') === 'movimientos') {
-          document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
+      clickTimeout = setTimeout(() => {
+        const code = this.getAttribute('data-code');
+        const points = parseInt(this.getAttribute('data-points'));
+        
+        if (code === '000-09') {
+          abrirModalCierre('Efectivo', 'Registrar monto de cierre en EFECTIVO');
+          clickTimeout = null;
+          return;
         }
-      }
-      
-      document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
-      
-      document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>🎯 Puntos base: ${currentProduct.points}<br>💰 Precio total: G.${currentProduct.price.toLocaleString()}`;
-      document.getElementById('modalStockInfo').innerHTML = `📦 Stock disponible: <strong>${stockVal} unidades</strong>`;
-      document.getElementById('pointsInput').value = '';
-      document.getElementById('pointsInput').max = currentProduct.points || 999999;
-      document.getElementById('moneyInput').value = currentProduct.price;
-      document.getElementById('totalPrice').textContent = currentProduct.price.toLocaleString();
-      document.getElementById('addToCart').disabled = (stockVal <= 0);
-      
-      document.getElementById('movimientosProductInfo').innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock | ➖ Quitar: resta del stock</small>`;
-      document.getElementById('unidadesInput').value = 1;
-      
-      document.getElementById('purchaseModal').style.display = 'block';
-      blockBodyScroll();
-      history.pushState({modal: 'purchase'}, null, location.href);
-    });
+        if (code === '000-10') {
+          abrirModalCierre('Tarjeta', 'Registrar monto de cierre por TARJETA');
+          clickTimeout = null;
+          return;
+        }
+        
+        if (code === '000-05') {
+          procesarFichaGratis(code, 1);
+          clickTimeout = null;
+          return;
+        }
+        if (code === '000-06') {
+          procesarFichaGratis(code, 7);
+          clickTimeout = null;
+          return;
+        }
+        
+        let stockVal = getProductStock(code);
+        if (stockVal <= 0) { alert('Sin stock'); clickTimeout = null; return; }
+        const price = parseFloat(this.getAttribute('data-price'));
+        const consumo = FICHA_CONSUMPTION[code] || 0;
+        const name = this.querySelector('p').textContent;
+        
+        currentProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
+        currentMovimientosProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
+        
+        const movimientosTab = document.querySelector('.tab-btn-compras[data-tab="movimientos"]');
+        if (shouldShowMovimientosTab(code)) {
+          movimientosTab.style.display = 'block';
+        } else {
+          movimientosTab.style.display = 'none';
+          if (document.querySelector('.tab-btn-compras.active').getAttribute('data-tab') === 'movimientos') {
+            document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
+          }
+        }
+        
+        document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
+        
+        document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>🎯 Puntos base: ${currentProduct.points}<br>💰 Precio total: G.${currentProduct.price.toLocaleString()}`;
+        document.getElementById('modalStockInfo').innerHTML = `📦 Stock disponible: <strong>${stockVal} unidades</strong>`;
+        document.getElementById('pointsInput').value = '';
+        document.getElementById('pointsInput').max = currentProduct.points || 999999;
+        document.getElementById('moneyInput').value = currentProduct.price;
+        document.getElementById('totalPrice').textContent = currentProduct.price.toLocaleString();
+        document.getElementById('addToCart').disabled = (stockVal <= 0);
+        
+        document.getElementById('movimientosProductInfo').innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock | ➖ Quitar: resta del stock</small>`;
+        document.getElementById('unidadesInput').value = 1;
+        
+        document.getElementById('purchaseModal').style.display = 'block';
+        blockBodyScroll();
+        
+        clickTimeout = null;
+      }, 50);
+    };
+    
+    item.addEventListener('pointerup', handleClick);
+    item.addEventListener('click', handleClick);
   });
 
   async function procesarFichaGratis(code, fichasAConsumir) {
@@ -1068,9 +1091,20 @@ body { padding-top: 80px; }
   };
 
   window.agregarUnidades = async function() {
-    if (!currentMovimientosProduct) return;
+    if (window.agregarUnidadesLock) return;
+    window.agregarUnidadesLock = true;
+    
+    if (!currentMovimientosProduct) {
+      window.agregarUnidadesLock = false;
+      return;
+    }
+    
     const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
-    if (cantidad <= 0) { alert('Cantidad inválida'); return; }
+    if (cantidad <= 0) { 
+      alert('Cantidad inválida'); 
+      window.agregarUnidadesLock = false;
+      return; 
+    }
     
     const code = currentMovimientosProduct.code;
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
@@ -1082,34 +1116,60 @@ body { padding-top: 80px; }
       currentStock = stock[code] ?? STOCK_INICIAL;
     }
     
-    // AGREGAR: suma al stock
-    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-      const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
-      await set(ref(database, `stock/000-00`), nuevo);
-    } else {
-      await set(ref(database, `stock/${code}`), currentStock + cantidad);
+    try {
+      if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+        const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
+        await set(ref(database, `stock/000-00`), nuevo);
+      } else {
+        await set(ref(database, `stock/${code}`), currentStock + cantidad);
+      }
+      
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      
+      await push(cartRef, { 
+        code, 
+        name: currentMovimientosProduct.name, 
+        points: 0, 
+        money: 0, 
+        unidades: cantidad, 
+        esMovimiento: true, 
+        tipoMovimiento: 'agregar',
+        totalPrice: currentMovimientosProduct.price, 
+        fecha, 
+        hora, 
+        timestamp: fecha + ' ' + hora, 
+        timestampCompleto: ahora.getTime(), 
+        fichaConsumption: consumo * cantidad 
+      });
+      
+      closeModal();
+      alert(`✅ Agregado +${cantidad} unidad(es) de ${currentMovimientosProduct.name}`);
+      resetSearch();
+    } catch (error) {
+      console.error('Error:', error);
+      alert('❌ Error al agregar');
+    } finally {
+      window.agregarUnidadesLock = false;
     }
-    
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    await push(cartRef, { 
-      code, name: currentMovimientosProduct.name, points: 0, money: 0, 
-      unidades: cantidad, esMovimiento: true, tipoMovimiento: 'agregar',
-      totalPrice: currentMovimientosProduct.price, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: consumo * cantidad 
-    });
-    
-    closeModal();
-    alert(`✅ Agregado +${cantidad} unidad(es) de ${currentMovimientosProduct.name} (stock aumentado)`);
-    resetSearch();
   };
 
   window.quitarUnidades = async function() {
-    if (!currentMovimientosProduct) return;
+    if (window.quitarUnidadesLock) return;
+    window.quitarUnidadesLock = true;
+    
+    if (!currentMovimientosProduct) {
+      window.quitarUnidadesLock = false;
+      return;
+    }
+    
     const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
-    if (cantidad <= 0) { alert('Cantidad inválida'); return; }
+    if (cantidad <= 0) { 
+      alert('Cantidad inválida'); 
+      window.quitarUnidadesLock = false;
+      return; 
+    }
     
     const code = currentMovimientosProduct.code;
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
@@ -1117,34 +1177,57 @@ body { padding-top: 80px; }
     
     if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
       currentStock = stock['000-00'] ?? STOCK_INICIAL;
-      if (currentStock < consumo * cantidad) { alert(`No hay suficientes fichas. Stock actual: ${currentStock}`); return; }
+      if (currentStock < consumo * cantidad) { 
+        alert(`No hay suficientes fichas. Stock actual: ${currentStock}`); 
+        window.quitarUnidadesLock = false;
+        return; 
+      }
     } else {
       currentStock = stock[code] ?? STOCK_INICIAL;
-      if (currentStock < cantidad) { alert(`No hay suficiente stock. Stock actual: ${currentStock}`); return; }
+      if (currentStock < cantidad) { 
+        alert(`No hay suficiente stock. Stock actual: ${currentStock}`); 
+        window.quitarUnidadesLock = false;
+        return; 
+      }
     }
     
-    // QUITAR: resta del stock
-    if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-      const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * cantidad);
-      await set(ref(database, `stock/000-00`), nuevo);
-    } else {
-      await set(ref(database, `stock/${code}`), currentStock - cantidad);
+    try {
+      if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+        const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * cantidad);
+        await set(ref(database, `stock/000-00`), nuevo);
+      } else {
+        await set(ref(database, `stock/${code}`), currentStock - cantidad);
+      }
+      
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      
+      await push(cartRef, { 
+        code, 
+        name: currentMovimientosProduct.name, 
+        points: 0, 
+        money: 0, 
+        unidades: cantidad, 
+        esMovimiento: true, 
+        tipoMovimiento: 'quitar',
+        totalPrice: currentMovimientosProduct.price, 
+        fecha, 
+        hora, 
+        timestamp: fecha + ' ' + hora, 
+        timestampCompleto: ahora.getTime(), 
+        fichaConsumption: consumo * cantidad 
+      });
+      
+      closeModal();
+      alert(`✅ Quitado -${cantidad} unidad(es) de ${currentMovimientosProduct.name}`);
+      resetSearch();
+    } catch (error) {
+      console.error('Error:', error);
+      alert('❌ Error al quitar');
+    } finally {
+      window.quitarUnidadesLock = false;
     }
-    
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    await push(cartRef, { 
-      code, name: currentMovimientosProduct.name, points: 0, money: 0, 
-      unidades: cantidad, esMovimiento: true, tipoMovimiento: 'quitar',
-      totalPrice: currentMovimientosProduct.price, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: consumo * cantidad 
-    });
-    
-    closeModal();
-    alert(`✅ Quitado -${cantidad} unidad(es) de ${currentMovimientosProduct.name} (stock reducido)`);
-    resetSearch();
   };
 
   window.closeModal = function() {
@@ -1154,59 +1237,134 @@ body { padding-top: 80px; }
 
   window.calculateRemainingMoney = function() {
     if (!currentProduct) return;
+    
     const calcular = () => {
       let pagado = parseFloat(document.getElementById('pointsInput').value) || 0;
       if (currentProduct.points > 0) {
-        if (pagado > currentProduct.points) { document.getElementById('pointsInput').value = currentProduct.points; pagado = currentProduct.points; }
-        document.getElementById('moneyInput').value = Math.round(currentProduct.price * (1 - pagado / currentProduct.points));
+        if (pagado > currentProduct.points) { 
+          document.getElementById('pointsInput').value = currentProduct.points; 
+          pagado = currentProduct.points; 
+        }
+        const moneyValue = Math.round(currentProduct.price * (1 - pagado / currentProduct.points));
+        document.getElementById('moneyInput').value = moneyValue;
       }
     };
-    if (isIOS) setTimeout(calcular, 10);
-    else calcular();
+    
+    if (isIOS) {
+      requestAnimationFrame(() => {
+        setTimeout(calcular, 50);
+      });
+    } else {
+      calcular();
+    }
   };
 
   window.addToCart = function() {
+    if (window.addToCartLock) {
+      console.log('AddToCart bloqueado');
+      return;
+    }
+    
     if (!currentProduct) return;
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    
+    window.addToCartLock = true;
+    
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
     
     const procesar = () => {
-      const code = currentProduct.code;
-      const consumo = currentProduct.fichaConsumption || 0;
-      let currentStock;
-      
-      if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-        currentStock = stock['000-00'] ?? STOCK_INICIAL;
-        if (currentStock < consumo) { alert('No hay suficientes fichas'); closeModal(); return; }
-      } else {
-        currentStock = stock[code] ?? STOCK_INICIAL;
-        if (currentStock <= 0) { alert('No hay stock'); closeModal(); return; }
+      try {
+        const code = currentProduct.code;
+        const consumo = currentProduct.fichaConsumption || 0;
+        let currentStock;
+        
+        if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+          currentStock = stock['000-00'] ?? STOCK_INICIAL;
+          if (currentStock < consumo) { 
+            alert('No hay suficientes fichas'); 
+            window.addToCartLock = false;
+            return; 
+          }
+        } else {
+          currentStock = stock[code] ?? STOCK_INICIAL;
+          if (currentStock <= 0) { 
+            alert('No hay stock'); 
+            window.addToCartLock = false;
+            return; 
+          }
+        }
+        
+        const points = parseInt(document.getElementById('pointsInput').value) || 0;
+        const money = parseFloat(document.getElementById('moneyInput').value) || 0;
+        
+        if (currentProduct.points > 0 && points > currentProduct.points) { 
+          alert(`Máximo ${currentProduct.points} puntos`); 
+          window.addToCartLock = false;
+          return; 
+        }
+        
+        if (currentProduct.points > 0) {
+          const esperado = Math.round(currentProduct.price * (1 - points / currentProduct.points));
+          if (Math.abs(money - esperado) > 1) { 
+            alert('Error en cálculo'); 
+            window.addToCartLock = false;
+            return; 
+          }
+        }
+        
+        if (points === 0 && money === 0 && currentProduct.price > 0) { 
+          alert('Debes pagar con puntos o dinero'); 
+          window.addToCartLock = false;
+          return; 
+        }
+        
+        if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
+          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - consumo;
+          set(ref(database, `stock/000-00`), nuevo);
+        } else {
+          set(ref(database, `stock/${code}`), currentStock - 1);
+        }
+        
+        const ahora = new Date();
+        const fecha = ahora.toLocaleDateString('es-PY');
+        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        
+        push(cartRef, { 
+          code, 
+          name: currentProduct.name, 
+          points, 
+          money, 
+          totalPrice: currentProduct.price, 
+          fecha, 
+          hora, 
+          timestamp: fecha + ' ' + hora, 
+          timestampCompleto: ahora.getTime(), 
+          fichaConsumption: consumo, 
+          unidades: 1 
+        }).then(() => {
+          resetSearch();
+          closeModal();
+          alert('✅ Producto agregado al carrito');
+        }).catch(error => {
+          console.error('Error al agregar:', error);
+          alert('❌ Error al agregar al carrito');
+        }).finally(() => {
+          window.addToCartLock = false;
+        });
+        
+      } catch (error) {
+        console.error('Error en addToCart:', error);
+        alert('❌ Error al procesar la venta');
+        window.addToCartLock = false;
       }
-      
-      const points = parseInt(document.getElementById('pointsInput').value) || 0;
-      const money = parseFloat(document.getElementById('moneyInput').value) || 0;
-      if (currentProduct.points > 0 && points > currentProduct.points) { alert(`Máximo ${currentProduct.points} puntos`); return; }
-      if (currentProduct.points > 0) {
-        const esperado = Math.round(currentProduct.price * (1 - points / currentProduct.points));
-        if (Math.abs(money - esperado) > 1) { alert('Error en cálculo'); return; }
-      }
-      if (points === 0 && money === 0 && currentProduct.price > 0) { alert('Debes pagar con puntos o dinero'); return; }
-      
-      if (consumo > 0 && !NON_FICHA_CODES.includes(code)) {
-        const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - consumo;
-        set(ref(database, `stock/000-00`), nuevo);
-      } else {
-        set(ref(database, `stock/${code}`), currentStock - 1);
-      }
-      
-      const ahora = new Date();
-      const fecha = ahora.toLocaleDateString('es-PY');
-      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      push(cartRef, { code, name: currentProduct.name, points, money, totalPrice: currentProduct.price, fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), fichaConsumption: consumo, unidades: 1 });
-      resetSearch();
-      closeModal();
     };
-    if (isIOS) setTimeout(procesar, 50);
-    else procesar();
+    
+    if (isIOS) {
+      setTimeout(procesar, 100);
+    } else {
+      procesar();
+    }
   };
 
   async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
@@ -1471,7 +1629,7 @@ body { padding-top: 80px; }
         <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
         <span class="${fichasClase}">${fichasTexto}</span>
         <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
-        <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">🗑️</button></span>`;
+        <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem; touch-action:manipulation;">🗑️</button></span>`;
       div.appendChild(d);
     });
     if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
@@ -1485,10 +1643,8 @@ body { padding-top: 80px; }
     const consumo = item.fichaConsumption || 0;
     const unidades = item.unidades || 1;
     
-    // Si es movimiento, hacer la operación inversa
     if (item.esMovimiento) {
       if (item.tipoMovimiento === 'agregar') {
-        // Si era agregar (sumó al stock), al eliminar RESTAMOS del stock
         if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
           const actual = stock['000-00'] ?? STOCK_INICIAL;
           set(ref(database, `stock/000-00`), actual - Math.abs(consumo));
@@ -1497,7 +1653,6 @@ body { padding-top: 80px; }
           set(ref(database, `stock/${item.code}`), actual - unidades);
         }
       } else if (item.tipoMovimiento === 'quitar') {
-        // Si era quitar (restó del stock), al eliminar SUMAMOS al stock
         if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
           const actual = stock['000-00'] ?? STOCK_INICIAL;
           set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
@@ -1507,7 +1662,6 @@ body { padding-top: 80px; }
         }
       }
     } else {
-      // Para compras normales, restaurar stock
       if (consumo > 0 && !NON_FICHA_CODES.includes(item.code)) {
         const actual = stock['000-00'] ?? STOCK_INICIAL;
         set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
