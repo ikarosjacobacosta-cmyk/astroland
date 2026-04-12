@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ASTROLAND - Panel Unificado</title>
-<!-- Librerías para PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -279,7 +278,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     '200-12', '200-13', '200-14', '200-15', '200-16', '200-17', '200-18', '200-19', '200-20', '200-21', '200-22',
     '200-23', '200-24', '200-25', '200-26', '200-27', '200-28', '200-29', '200-30', '200-31', '200-32', '200-33',
     '200-34', '200-35', '200-36', '200-37', '220-00', '220-01', '220-02', '220-03', '220-04', '220-05', '220-06',
-    '220-07', '250-00', '250-01', '250-02', '250-03', '350-00', '420-00', '420-01', '420-02'
+    '220-07', '250-00', '250-01', '250-02', '250-03', '350-00', '420-00', '420-01', '420-02', '800-00', '800-01'
   ];
 
   function getProductStock(stockData, code) {
@@ -537,6 +536,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             <div class="sub-item"><span class="label">🎴 Combo 100mil (000-03):</span><span class="amount">0 veces</span></div>
             <div class="sub-item"><span class="label">🎴 Combo 150mil (000-04):</span><span class="amount">0 veces</span></div>
           </div>
+          <div class="sub-section"><div class="sub-label">🔄 Movimientos de Stock:</div>
+          <div class="sub-item"><span class="label">➕ Agregados:</span><span class="amount">+0 unidades</span></div>
+          <div class="sub-item"><span class="label">➖ Quitados:</span><span class="amount">-0 unidades</span></div>
+          </div>
           <div class="sub-section"><div class="sub-label">🔴 Error:</div>
           <div class="item"><span class="label">Fichas:</span><span class="amount">0</span></div></div>
           <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
@@ -548,17 +551,22 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
+  // ============ FUNCIÓN ACTUALIZAR ESTADISTICAS CORREGIDA ============
   function actualizarEstadisticas(ventas) {
-    const normales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
+    // Excluir: cierres, movimientos y fichas gratis de las ventas normales
+    const normales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento && !v.esFichaGratis);
     const cierresEfectivo = ventas.filter(v => v.code === '000-09');
     const cierresTarjeta = ventas.filter(v => v.code === '000-10');
+    const movimientos = ventas.filter(v => v.esMovimiento === true);
+    const fichasGratis = ventas.filter(v => v.esFichaGratis === true);
     
     const totalVentas = normales.reduce((s,v)=>s+(v.money||0),0);
     const totalEfectivo = cierresEfectivo.reduce((s,v)=>s+(v.money||0),0);
     const totalTarjeta = cierresTarjeta.reduce((s,v)=>s+(v.money||0),0);
     const totalCierre = totalEfectivo + totalTarjeta;
     const totalPuntos = ventas.reduce((s,v)=>s+(v.points||0),0);
-    const totalFichas = normales.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0);
+    // SOLO contar fichas de ventas NORMALES (excluyendo movimientos y fichas gratis)
+    const totalFichas = normales.filter(v=> v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0);
     const totalOperaciones = ventas.length;
     
     document.getElementById('totalVentas').textContent = totalVentas.toLocaleString();
@@ -572,7 +580,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const sucStats = {};
     for (const suc of sucursales) {
       const vSuc = ventas.filter(v => v.sucursalClave === suc.clave);
-      const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10');
+      const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento && !v.esFichaGratis);
+      const vMov = vSuc.filter(v => v.esMovimiento === true);
       const cEfectivo = vSuc.filter(v => v.code === '000-09');
       const cTarjeta = vSuc.filter(v => v.code === '000-10');
       
@@ -591,6 +600,13 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       
       const fichasStats = getFichasStats(vNorm);
       
+      let movimientosAgregar = 0;
+      let movimientosQuitar = 0;
+      for (const v of vMov) {
+        if (v.tipoMovimiento === 'agregar') movimientosAgregar += (v.unidades || 1);
+        if (v.tipoMovimiento === 'quitar') movimientosQuitar += (v.unidades || 1);
+      }
+      
       sucStats[suc.clave] = {
         operaciones: vSuc.length,
         ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
@@ -599,14 +615,16 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         cierre: cEfectivo.reduce((s,v)=>s+(v.money||0),0) + cTarjeta.reduce((s,v)=>s+(v.money||0),0),
         juguetesMonto: juguetesMonto,
         puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
-        fichasMonto: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+(v.money||0),0),
-        fichasCantidad: vNorm.filter(v=>!v.esFichaGratis && v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
+        fichasMonto: vNorm.filter(v=> v.fichaConsumption>0).reduce((s,v)=>s+(v.money||0),0),
+        fichasCantidad: vNorm.filter(v=> v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
         pulseras, billar, capsulas, error,
         unitarias: fichasStats.unitarias,
         combo30: fichasStats.combo30,
         combo50: fichasStats.combo50,
         combo100: fichasStats.combo100,
-        combo150: fichasStats.combo150
+        combo150: fichasStats.combo150,
+        movimientosAgregar,
+        movimientosQuitar
       };
     }
     
@@ -639,6 +657,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <div class="sub-item"><span class="label">🎴 Combo 150mil (000-04):</span><span class="amount">${s.combo150.toLocaleString()} veces</span></div>
         </div>
         
+        <div class="sub-section"><div class="sub-label">🔄 Movimientos de Stock:</div>
+        <div class="sub-item"><span class="label">➕ Agregados:</span><span class="amount">+${s.movimientosAgregar} unidades</span></div>
+        <div class="sub-item"><span class="label">➖ Quitados:</span><span class="amount">-${s.movimientosQuitar} unidades</span></div>
+        </div>
+        
         <div class="sub-section"><div class="sub-label">🔴 Error:</div>
         <div class="item"><span class="label">Fichas:</span><span class="amount">${s.error.toLocaleString()}</span></div></div>
         <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
@@ -654,15 +677,22 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
         const fechaStr = v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleString() : 
                          (v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora));
+        // Para movimientos, mostrar "Movimiento" en lugar de fichas
+        let fichasDisplay = '-';
+        if (v.esMovimiento) {
+          fichasDisplay = v.tipoMovimiento === 'agregar' ? `+${v.unidades}` : `-${v.unidades}`;
+        } else if (v.fichaConsumption) {
+          fichasDisplay = Math.abs(v.fichaConsumption);
+        }
         return `<tr>
           <td style="color:${suc?.color||'#333'}">${v.sucursal}</td>
           <td>${v.name || v.code}</td>
           <td>${(v.points||0).toLocaleString()}</td>
           <td>Gs. ${(v.money||0).toLocaleString()}</td>
-          <td>${v.fichaConsumption ? Math.abs(v.fichaConsumption) : '-'}</td>
+          <td>${fichasDisplay}</td>
           <td style="font-size:0.7rem;">${fechaStr}</td>
         </tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
@@ -769,7 +799,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     const doc = new jsPDF();
     
-    // Membrete con colores más oscuros y legibles
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
@@ -790,7 +819,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     doc.setTextColor(80, 80, 80);
     doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, 105, 55, { align: 'center' });
     
-    // Tabla resumen por sucursal con estilos más oscuros y legibles
     const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'Tarjeta (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
     
@@ -850,7 +878,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
     });
     
-    // Pie de página
     const pageCount = doc.internal.getNumberOfPages();
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
@@ -889,7 +916,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
-  // Event Listeners
   document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
   document.getElementById('btnLimpiar').addEventListener('click', limpiarFiltro);
   document.getElementById('btnReporte').addEventListener('click', generarReportePDF);
