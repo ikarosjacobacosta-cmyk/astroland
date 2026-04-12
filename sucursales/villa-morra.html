@@ -744,29 +744,21 @@ body { padding-top: 80px; }
   const STOCK_INICIAL = 100;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-  // SOLO estos códigos consumen fichas del stock 000-00
   const FICHA_CONSUMPTION = { 
     '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30,
     '000-05': 1, '000-06': 7
   };
   
-  // Códigos que son INDEPENDIENTES y NO consumen fichas
-  // 000-07, 000-08, 000-09 tienen su propio stock individual
   const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
-  
-  // Códigos de cierre (también independientes)
   const CIERRE_CODES = ['000-09', '000-10'];
 
-  // Locks para evitar múltiples ejecuciones en iOS
   window.addToCartLock = false;
   window.agregarUnidadesLock = false;
   window.quitarUnidadesLock = false;
 
   function shouldShowMovimientosTab(code) {
     const prefix = code.substring(0, 3);
-    // Códigos específicos que muestran movimientos
     if (code === '000-00' || code === '000-07' || code === '000-08') return true;
-    // Todos los códigos que comienzan con 005 en adelante
     const numPrefix = parseInt(prefix);
     if (!isNaN(numPrefix) && numPrefix >= 5) return true;
     return false;
@@ -775,18 +767,14 @@ body { padding-top: 80px; }
   function blockBodyScroll() { document.body.style.overflow = 'hidden'; }
   function unblockBodyScroll() { document.body.style.overflow = ''; }
 
-  // IMPORTANTE: getProductStock ahora maneja correctamente los códigos independientes
   function getProductStock(code) {
-    // Si es código independiente (000-07, 000-08, 000-09), usar su propio stock
     if (NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code)) {
       return stock[code] ?? STOCK_INICIAL;
     }
-    // Si es código que consume fichas
     if (FICHA_CONSUMPTION[code]) {
       const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
       return Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
     }
-    // Resto de productos (005, 020, etc.)
     return stock[code] ?? STOCK_INICIAL;
   }
 
@@ -963,7 +951,6 @@ body { padding-top: 80px; }
     });
   });
 
-  // Evento para los items con protección contra múltiples clics en iOS
   document.querySelectorAll('.imagen-item').forEach(item => {
     let clickTimeout = null;
     
@@ -1145,20 +1132,21 @@ body { padding-top: 80px; }
       const fecha = ahora.toLocaleDateString('es-PY');
       const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       
+      // MOVIMIENTO: SOLO afecta columna Mov, las demás van vacías
       await push(cartRef, { 
         code, 
         name: currentMovimientosProduct.name, 
-        points: 0, 
-        money: 0, 
+        points: 0,
+        money: 0,
         unidades: cantidad, 
         esMovimiento: true, 
         tipoMovimiento: 'agregar',
-        totalPrice: currentMovimientosProduct.price, 
+        totalPrice: 0,
         fecha, 
         hora, 
         timestamp: fecha + ' ' + hora, 
         timestampCompleto: ahora.getTime(), 
-        fichaConsumption: consumo * cantidad 
+        fichaConsumption: 0
       });
       
       closeModal();
@@ -1222,20 +1210,21 @@ body { padding-top: 80px; }
       const fecha = ahora.toLocaleDateString('es-PY');
       const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       
+      // MOVIMIENTO: SOLO afecta columna Mov, las demás van vacías
       await push(cartRef, { 
         code, 
         name: currentMovimientosProduct.name, 
-        points: 0, 
-        money: 0, 
+        points: 0,
+        money: 0,
         unidades: cantidad, 
         esMovimiento: true, 
         tipoMovimiento: 'quitar',
-        totalPrice: currentMovimientosProduct.price, 
+        totalPrice: 0,
         fecha, 
         hora, 
         timestamp: fecha + ' ' + hora, 
         timestampCompleto: ahora.getTime(), 
-        fichaConsumption: consumo * cantidad 
+        fichaConsumption: 0
       });
       
       closeModal();
@@ -1389,28 +1378,74 @@ body { padding-top: 80px; }
   };
 
   async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
-    if (!ventasAEliminar || ventasAEliminar.length === 0) return;
+    if (!ventasAEliminar || ventasAEliminar.length === 0) {
+      console.log("⚠️ No hay ventas para guardar");
+      return false;
+    }
     
-    const fechaObj = new Date(fechaSeleccionada);
-    fechaObj.setHours(12, 0, 0, 0);
+    console.log(`📝 Guardando ${ventasAEliminar.length} ventas en historial...`);
     
-    const registro = {
-      sucursal: "Villa Morra",
-      fechaEliminacion: fechaSeleccionada,
-      timestamp: fechaObj.getTime(),
-      ventas: ventasAEliminar.map(item => ({
-        code: item.code, name: item.name, points: item.points, money: item.money,
-        fichaConsumption: item.fichaConsumption || 0, unidades: item.unidades || 1,
-        fecha: item.fecha, hora: item.hora, esFichaGratis: item.esFichaGratis || false,
-        esMovimiento: item.esMovimiento || false, tipoMovimiento: item.tipoMovimiento
-      })),
-      totalVentas: ventasAEliminar.length,
-      totalDinero: ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0),
-      totalPuntos: ventasAEliminar.reduce((s, v) => s + (v.points || 0), 0),
-      totalFichas: ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0),
-      totalFichasRegaladas: ventasAEliminar.reduce((s, v) => s + (v.esFichaGratis ? Math.abs(v.fichaConsumption) || 0 : 0), 0)
-    };
-    try { await push(historialRef, registro); } catch(e) { console.error(e); }
+    try {
+      if (!fechaSeleccionada || fechaSeleccionada === '') {
+        console.error("❌ Fecha inválida");
+        alert("❌ Error: Fecha inválida");
+        return false;
+      }
+      
+      const fechaObj = new Date(fechaSeleccionada);
+      if (isNaN(fechaObj.getTime())) {
+        console.error("❌ Fecha inválida:", fechaSeleccionada);
+        alert("❌ Error: Formato de fecha inválido");
+        return false;
+      }
+      
+      fechaObj.setHours(12, 0, 0, 0);
+      
+      const ventasMapeadas = ventasAEliminar.map(item => ({
+        code: item.code || '',
+        name: item.name || '',
+        points: item.points || 0,
+        money: item.money || 0,
+        fichaConsumption: item.fichaConsumption || 0,
+        unidades: item.unidades || 1,
+        fecha: item.fecha || new Date().toLocaleDateString('es-PY'),
+        hora: item.hora || new Date().toLocaleTimeString('es-PY'),
+        esFichaGratis: item.esFichaGratis || false,
+        esMovimiento: item.esMovimiento || false,
+        tipoMovimiento: item.tipoMovimiento || null
+      }));
+      
+      const totalDinero = ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0);
+      const totalPuntos = ventasAEliminar.reduce((s, v) => s + (v.points || 0), 0);
+      const totalFichas = ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0);
+      const totalFichasRegaladas = ventasAEliminar.reduce((s, v) => s + (v.esFichaGratis ? Math.abs(v.fichaConsumption) || 0 : 0), 0);
+      
+      const registro = {
+        sucursal: "Villa Morra",
+        fechaEliminacion: fechaSeleccionada,
+        timestamp: fechaObj.getTime(),
+        fechaCreacion: new Date().toISOString(),
+        ventas: ventasMapeadas,
+        totalVentas: ventasAEliminar.length,
+        totalDinero: totalDinero,
+        totalPuntos: totalPuntos,
+        totalFichas: totalFichas,
+        totalFichasRegaladas: totalFichasRegaladas
+      };
+      
+      const nuevoRegistroRef = await push(historialRef, registro);
+      
+      console.log("✅ Historial guardado correctamente, ID:", nuevoRegistroRef.key);
+      console.log(`💰 Total guardado: Gs. ${totalDinero.toLocaleString()}`);
+      console.log(`📦 Items: ${ventasAEliminar.length}`);
+      
+      return true;
+      
+    } catch(e) { 
+      console.error("❌ Error al guardar en historial:", e);
+      alert("❌ Error crítico al guardar en historial. Las ventas NO se eliminaron.");
+      return false;
+    }
   }
 
   window.verifyClearPasswordAndShowDate = function() {
@@ -1457,33 +1492,81 @@ body { padding-top: 80px; }
   window.confirmarAccionFecha = async function() {
     const fechaInput = document.getElementById('fechaHistorialInput').value;
     if (!fechaInput) {
-      alert('Debes seleccionar una fecha');
+      alert('❌ Debes seleccionar una fecha');
       return;
     }
     
-    if (modoEdicionFecha === 'vaciar') {
-      if (cart.length > 0) { 
-        await guardarEnHistorial(cart, fechaInput); 
-      }
-      await remove(cartRef);
-      closeFechaModal();
-      alert(`✅ Carrito vaciado. Las ventas se guardaron en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}`);
-    } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
-      const firebaseKey = modoEdicionFecha.firebaseKey;
-      const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
-      if (registro) {
-        const fechaObj = new Date(fechaInput);
-        fechaObj.setHours(12, 0, 0, 0);
+    const btnConfirmar = document.querySelector('#fechaModal .fecha-modal-buttons button:first-child');
+    const textoOriginal = btnConfirmar.textContent;
+    btnConfirmar.textContent = '⏳ GUARDANDO...';
+    btnConfirmar.disabled = true;
+    
+    try {
+      if (modoEdicionFecha === 'vaciar') {
+        if (cart.length === 0) {
+          alert('⚠️ El carrito está vacío');
+          closeFechaModal();
+          return;
+        }
         
-        await update(ref(database, `historial_ventas/${firebaseKey}`), {
-          fechaEliminacion: fechaInput,
-          timestamp: fechaObj.getTime()
-        });
+        console.log(`📦 Vaciar carrito: ${cart.length} items para guardar`);
         
-        closeFechaModal();
-        alert(`✅ Fecha actualizada a: ${fechaInput.split('-').reverse().join('/')}`);
-        filtrarHistorial();
+        // Backup local
+        const backupLocal = {
+          timestamp: Date.now(),
+          fechaRecuperacion: new Date().toLocaleString(),
+          fechaAsignada: fechaInput,
+          ventas: JSON.parse(JSON.stringify(cart)),
+          totalVentas: cart.length,
+          totalDinero: cart.reduce((s, v) => s + (v.money || 0), 0),
+          sucursal: "Villa Morra"
+        };
+        localStorage.setItem('BACKUP_VENTAS_' + Date.now(), JSON.stringify(backupLocal));
+        localStorage.setItem('BACKUP_ULTIMO', JSON.stringify(backupLocal));
+        console.log("💾 Backup guardado en localStorage");
+        
+        const guardadoExitoso = await guardarEnHistorial(cart, fechaInput);
+        
+        if (guardadoExitoso) {
+          await remove(cartRef);
+          console.log("✅ Carrito vaciado después de guardar");
+          
+          closeFechaModal();
+          alert(`✅ ÉXITO! Se guardaron ${backupLocal.totalVentas} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${backupLocal.totalDinero.toLocaleString()}`);
+          
+          await loadInitialCart();
+          if (document.getElementById('cartModal').style.display === 'block') {
+            renderCart();
+          }
+        } else {
+          alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y están respaldadas localmente.');
+          console.log("💾 Puedes recuperar las ventas del backup local en caso necesario");
+        }
+        
+      } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
+        const firebaseKey = modoEdicionFecha.firebaseKey;
+        const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
+        if (registro) {
+          const fechaObj = new Date(fechaInput);
+          fechaObj.setHours(12, 0, 0, 0);
+          
+          await update(ref(database, `historial_ventas/${firebaseKey}`), {
+            fechaEliminacion: fechaInput,
+            timestamp: fechaObj.getTime()
+          });
+          
+          closeFechaModal();
+          alert(`✅ Fecha actualizada a: ${fechaInput.split('-').reverse().join('/')}`);
+          await loadHistorial();
+          filtrarHistorial();
+        }
       }
+    } catch (error) {
+      console.error("❌ Error en confirmarAccionFecha:", error);
+      alert('❌ Error al procesar la solicitud. Las ventas están respaldadas localmente.');
+    } finally {
+      btnConfirmar.textContent = textoOriginal;
+      btnConfirmar.disabled = false;
     }
     
     modoEdicionFecha = null;
@@ -1612,41 +1695,66 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `Historial_VillaMorra_${desde}_${hasta}.xlsx`);
   };
 
+  // ============ RENDER CART CORREGIDO ============
   function renderCart() {
     const div = document.getElementById('cartItems');
     div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
+    
     cart.forEach(item => {
-      if (!item) return;
-      const d = document.createElement('div');
-      d.className = 'cart-item';
-      
-      let movimientoTexto = '';
-      let movimientoClase = '';
-      if (item.esMovimiento) {
-        if (item.tipoMovimiento === 'agregar') {
-          movimientoTexto = `+${item.unidades || 1}`;
-          movimientoClase = 'unidades-positivo';
-        } else if (item.tipoMovimiento === 'quitar') {
-          movimientoTexto = `-${item.unidades || 1}`;
-          movimientoClase = 'unidades-negativo';
+        if (!item) return;
+        const d = document.createElement('div');
+        d.className = 'cart-item';
+        
+        let movimientoTexto = '';
+        let movimientoClase = '';
+        let puntosTexto = '';
+        let dineroTexto = '';
+        let fichasTexto = '';
+        
+        if (item.esMovimiento) {
+            // Es un movimiento de stock (agregar/quitar)
+            if (item.tipoMovimiento === 'agregar') {
+                movimientoTexto = `+${item.unidades || 1}`;
+                movimientoClase = 'unidades-positivo';
+            } else if (item.tipoMovimiento === 'quitar') {
+                movimientoTexto = `-${item.unidades || 1}`;
+                movimientoClase = 'unidades-negativo';
+            }
+            // Movimientos NO tienen puntos, dinero ni fichas
+            puntosTexto = '-';
+            dineroTexto = '-';
+            fichasTexto = '-';
+        } else {
+            // Es una compra normal o cierre
+            movimientoTexto = '-';
+            
+            // Puntos
+            puntosTexto = (item.points || 0).toLocaleString();
+            
+            // Dinero
+            dineroTexto = `Gs. ${(item.money || 0).toLocaleString()}`;
+            
+            // Fichas (solo para compras normales, no para movimientos)
+            if (item.fichaConsumption && !item.esMovimiento) {
+                fichasTexto = `${Math.abs(item.fichaConsumption)}`;
+            } else {
+                fichasTexto = '-';
+            }
         }
-      } else {
-        movimientoTexto = '-';
-      }
-      
-      const fichasTexto = item.fichaConsumption ? `${Math.abs(item.fichaConsumption)}` : '-';
-      const fichasClase = item.esFichaGratis ? 'unidades-negativo' : '';
-      
-      d.innerHTML = `<span>${item.name}</span>
-        <span>${(item.points || 0).toLocaleString()}</span>
-        <span>G.${(item.money || 0).toLocaleString()}</span>
-        <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
-        <span class="${fichasClase}">${fichasTexto}</span>
-        <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
-        <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem; touch-action:manipulation;">🗑️</button></span>`;
-      div.appendChild(d);
+        
+        d.innerHTML = `<span>${item.name || item.code}</span>
+            <span>${puntosTexto}</span>
+            <span>${dineroTexto}</span>
+            <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
+            <span>${fichasTexto}</span>
+            <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
+            <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem; touch-action:manipulation;">🗑️</button></span>`;
+        div.appendChild(d);
     });
-    if (cart.length === 0) div.innerHTML += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
+    
+    if (cart.length === 0) {
+        div.innerHTML += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
+    }
   }
 
   window.showDeletePrompt = function(firebaseKey) {
@@ -1661,7 +1769,6 @@ body { padding-top: 80px; }
     
     if (item.esMovimiento) {
       if (item.tipoMovimiento === 'agregar') {
-        // Invertir agregar: restar del stock
         if (consumo > 0 && !isIndependentCode) {
           const actual = stock['000-00'] ?? STOCK_INICIAL;
           set(ref(database, `stock/000-00`), actual - Math.abs(consumo));
@@ -1670,7 +1777,6 @@ body { padding-top: 80px; }
           set(ref(database, `stock/${item.code}`), actual - unidades);
         }
       } else if (item.tipoMovimiento === 'quitar') {
-        // Invertir quitar: sumar al stock
         if (consumo > 0 && !isIndependentCode) {
           const actual = stock['000-00'] ?? STOCK_INICIAL;
           set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
@@ -1680,7 +1786,6 @@ body { padding-top: 80px; }
         }
       }
     } else {
-      // Compra normal: restaurar stock
       if (consumo > 0 && !isIndependentCode) {
         const actual = stock['000-00'] ?? STOCK_INICIAL;
         set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
@@ -1750,7 +1855,6 @@ body { padding-top: 80px; }
       const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
       sortedProds.forEach(p => {
         html += `<div class="stock-item" data-code="${p.code}">${p.img}<p>${p.name}</p><div class="stock-control">`;
-        // Los códigos independientes (000-07, 000-08, 000-09) también son editables
         if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
           html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
         } else {
