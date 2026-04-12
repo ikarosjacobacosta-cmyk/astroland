@@ -241,6 +241,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   });
 
+  // Fecha de cambio: 4 de abril de 2026
   const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
 
   const CODIGOS_COMPLETOS = [
@@ -343,11 +344,22 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function getColorIndex(code) { return code.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colores.length; }
   function getImagenHtml(code) { const idx = getColorIndex(code); return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="img-placeholder" style="background:${colores[idx]}; display:none;">${code.replace('-', ' ')}</div>`; }
 
+  // ============ FUNCIÓN CLASIFICAR CORREGIDA (CON FECHA) ============
   function clasificar(code, fechaEliminacion) {
+    // Códigos fijos (siempre iguales)
     if (code === '000-07') return 'pulseras';
     if (code === '000-08') return 'billar';
-    if (code === '000-05') return fechaEliminacion < FECHA_CAMBIO ? 'pulseras' : 'error';
-    if (code === '000-06') return fechaEliminacion < FECHA_CAMBIO ? 'billar' : 'capsulas';
+    
+    // 000-05: ANTES del 4/4/2026 era PULSERAS, DESPUÉS es ERROR
+    if (code === '000-05') {
+      return fechaEliminacion < FECHA_CAMBIO ? 'pulseras' : 'error';
+    }
+    
+    // 000-06: ANTES del 4/4/2026 era BILLAR, DESPUÉS es CÁPSULAS
+    if (code === '000-06') {
+      return fechaEliminacion < FECHA_CAMBIO ? 'billar' : 'capsulas';
+    }
+    
     return 'normal';
   }
 
@@ -378,11 +390,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     return { unitarias, combo30, combo50, combo100, combo150 };
-  }
-
-  function getFechaFromTimestamp(ts) {
-    const date = new Date(ts);
-    return date.toISOString().split('T')[0];
   }
 
   async function cargarTodo() {
@@ -540,9 +547,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <div class="sub-item"><span class="label">➕ Agregados:</span><span class="amount">+0 unidades</span></div>
           <div class="sub-item"><span class="label">➖ Quitados:</span><span class="amount">-0 unidades</span></div>
           </div>
-          <div class="sub-section"><div class="sub-label">🔴 Error:</div>
+          <div class="sub-section"><div class="sub-label">🔴 Error (000-05):</div>
           <div class="item"><span class="label">Fichas:</span><span class="amount">0</span></div></div>
-          <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
+          <div class="sub-section"><div class="sub-label">🎴 Cápsulas (000-06):</div>
           <div class="item"><span class="label">Fichas:</span><span class="amount">0</span></div></div>
         </div>`;
       }).join('');
@@ -553,20 +560,19 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   // ============ FUNCIÓN ACTUALIZAR ESTADISTICAS CORREGIDA ============
   function actualizarEstadisticas(ventas) {
-    // Excluir: cierres, movimientos y fichas gratis de las ventas normales
-    const normales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento && !v.esFichaGratis);
+    // Excluir: cierres, movimientos de las ventas normales
+    const normales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
     const cierresEfectivo = ventas.filter(v => v.code === '000-09');
     const cierresTarjeta = ventas.filter(v => v.code === '000-10');
     const movimientos = ventas.filter(v => v.esMovimiento === true);
-    const fichasGratis = ventas.filter(v => v.esFichaGratis === true);
     
     const totalVentas = normales.reduce((s,v)=>s+(v.money||0),0);
     const totalEfectivo = cierresEfectivo.reduce((s,v)=>s+(v.money||0),0);
     const totalTarjeta = cierresTarjeta.reduce((s,v)=>s+(v.money||0),0);
     const totalCierre = totalEfectivo + totalTarjeta;
     const totalPuntos = ventas.reduce((s,v)=>s+(v.points||0),0);
-    // SOLO contar fichas de ventas NORMALES (excluyendo movimientos y fichas gratis)
-    const totalFichas = normales.filter(v=> v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0);
+    // Fichas: contar fichas vendidas (000-00 a 000-04) que NO son gratis
+    const totalFichas = normales.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0);
     const totalOperaciones = ventas.length;
     
     document.getElementById('totalVentas').textContent = totalVentas.toLocaleString();
@@ -580,7 +586,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const sucStats = {};
     for (const suc of sucursales) {
       const vSuc = ventas.filter(v => v.sucursalClave === suc.clave);
-      const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento && !v.esFichaGratis);
+      const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
       const vMov = vSuc.filter(v => v.esMovimiento === true);
       const cEfectivo = vSuc.filter(v => v.code === '000-09');
       const cTarjeta = vSuc.filter(v => v.code === '000-10');
@@ -615,8 +621,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         cierre: cEfectivo.reduce((s,v)=>s+(v.money||0),0) + cTarjeta.reduce((s,v)=>s+(v.money||0),0),
         juguetesMonto: juguetesMonto,
         puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
-        fichasMonto: vNorm.filter(v=> v.fichaConsumption>0).reduce((s,v)=>s+(v.money||0),0),
-        fichasCantidad: vNorm.filter(v=> v.fichaConsumption>0).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
+        fichasMonto: vNorm.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+(v.money||0),0),
+        fichasCantidad: vNorm.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
         pulseras, billar, capsulas, error,
         unitarias: fichasStats.unitarias,
         combo30: fichasStats.combo30,
@@ -662,9 +668,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         <div class="sub-item"><span class="label">➖ Quitados:</span><span class="amount">-${s.movimientosQuitar} unidades</span></div>
         </div>
         
-        <div class="sub-section"><div class="sub-label">🔴 Error:</div>
+        <div class="sub-section"><div class="sub-label">🔴 Error (000-05):</div>
         <div class="item"><span class="label">Fichas:</span><span class="amount">${s.error.toLocaleString()}</span></div></div>
-        <div class="sub-section"><div class="sub-label">🎴 Cápsulas:</div>
+        <div class="sub-section"><div class="sub-label">🎴 Cápsulas (000-06):</div>
         <div class="item"><span class="label">Fichas:</span><span class="amount">${s.capsulas.toLocaleString()}</span></div></div>
       </div>`;
     }).join('');
@@ -672,12 +678,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function renderizarTablaVentas(ventas) {
-    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
+    const html = `</table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventas.slice(0, 300).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
         const fechaStr = v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleString() : 
                          (v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora));
-        // Para movimientos, mostrar "Movimiento" en lugar de fichas
         let fichasDisplay = '-';
         if (v.esMovimiento) {
           fichasDisplay = v.tipoMovimiento === 'agregar' ? `+${v.unidades}` : `-${v.unidades}`;
