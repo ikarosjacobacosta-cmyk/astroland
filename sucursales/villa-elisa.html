@@ -395,6 +395,9 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-collapse: collapse;
   margin-top: 15px;
   font-size: 0.8rem;
+  overflow-x: auto;
+  display: block;
+  white-space: nowrap;
 }
 .historial-modal th, .historial-modal td {
   border: 1px solid #ddd;
@@ -407,6 +410,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   display: flex;
   gap: 5px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 .btn-editar-fecha {
   background: #FF9800;
@@ -425,6 +429,43 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border-radius: 5px;
   cursor: pointer;
   font-size: 0.75rem;
+}
+.btn-restaurar {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin: 0 2px;
+}
+.btn-restaurar:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+}
+.btn-restaurar:active {
+  transform: translateY(1px);
+}
+.btn-restaurar:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
+@media (max-width: 768px) {
+  .historial-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .btn-editar-fecha,
+  .btn-restaurar,
+  .btn-eliminar-historial {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 0.7rem;
+  }
 }
 
 .cart-button, .stock-button, .historial-btn {
@@ -1375,6 +1416,86 @@ body { padding-top: 80px; }
     }
   };
 
+  // ============ FUNCIÓN RESTAURAR VENTAS DESDE HISTORIAL ============
+  window.restaurarVentasAlCarrito = async function(firebaseKey) {
+    const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
+    if (!registro) {
+      alert('❌ Registro no encontrado');
+      return;
+    }
+    
+    const confirmar = confirm(`📋 RESTAURAR VENTAS\n\n📅 Fecha a restaurar: ${registro.fechaEliminacion}\n📦 Items a restaurar: ${registro.totalVentas || 0}\n💰 Dinero: Gs. ${(registro.totalDinero || 0).toLocaleString()}\n🎯 Puntos: ${(registro.totalPuntos || 0).toLocaleString()}\n\n⚠️ NOTA:\n• Las ventas se AGREGARÁN al carrito actual\n• NO se modificará el stock\n• Los items actuales NO se perderán\n\n¿Continuar?`);
+    
+    if (!confirmar) return;
+    
+    const pwd = prompt('🔐 Contraseña para restaurar:');
+    if (pwd !== PASSWORD_GENERAL) {
+      alert('Contraseña incorrecta');
+      return;
+    }
+    
+    const btnOriginal = event.target;
+    const textoOriginal = btnOriginal.textContent;
+    btnOriginal.textContent = '⏳ RESTAURANDO...';
+    btnOriginal.disabled = true;
+    
+    try {
+      let restaurados = 0;
+      let errores = 0;
+      let dineroTotalRestaurado = 0;
+      let puntosTotalesRestaurados = 0;
+      
+      for (const venta of registro.ventas) {
+        const ahora = new Date();
+        const fecha = ahora.toLocaleDateString('es-PY');
+        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        
+        const itemRestaurado = {
+          code: venta.code,
+          name: venta.name,
+          points: venta.points || 0,
+          money: venta.money || 0,
+          totalPrice: venta.money || 0,
+          fecha: fecha,
+          hora: hora,
+          timestamp: fecha + ' ' + hora,
+          timestampCompleto: ahora.getTime(),
+          fichaConsumption: venta.fichaConsumption || 0,
+          unidades: venta.unidades || 1,
+          esFichaGratis: venta.esFichaGratis || false,
+          esMovimiento: venta.esMovimiento || false,
+          tipoMovimiento: venta.tipoMovimiento || null,
+          restauradoDesde: registro.fechaEliminacion
+        };
+        
+        try {
+          await push(cartRef, itemRestaurado);
+          restaurados++;
+          dineroTotalRestaurado += (venta.money || 0);
+          puntosTotalesRestaurados += (venta.points || 0);
+        } catch(e) {
+          console.error('Error restaurando:', venta);
+          errores++;
+        }
+      }
+      
+      await loadInitialCart();
+      
+      if (document.getElementById('cartModal').style.display === 'block') {
+        renderCart();
+      }
+      
+      alert(`✅ RESTAURACIÓN COMPLETADA!\n\n📅 Fecha original: ${registro.fechaEliminacion}\n✅ Restaurados: ${restaurados} items\n❌ Errores: ${errores}\n💰 Dinero: Gs. ${dineroTotalRestaurado.toLocaleString()}\n🎯 Puntos: ${puntosTotalesRestaurados}\n\n🛒 Los items se agregaron al carrito actual.`);
+      
+    } catch(error) {
+      console.error('Error en restauración:', error);
+      alert('❌ Error al restaurar las ventas');
+    } finally {
+      btnOriginal.textContent = textoOriginal;
+      btnOriginal.disabled = false;
+    }
+  };
+
   async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
     if (!ventasAEliminar || ventasAEliminar.length === 0) {
       console.log("⚠️ No hay ventas para guardar");
@@ -1642,7 +1763,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
+    let html = `<tr><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr>
@@ -1655,12 +1776,13 @@ body { padding-top: 80px; }
         <td>
           <div class="historial-actions">
             <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
+            <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
             <button class="btn-eliminar-historial" onclick="eliminarRegistroHistorial('${h.firebaseKey}')">🗑️ Eliminar</button>
           </div>
         </td>
       </tr>`;
     });
-    html += `</tbody><table>`;
+    html += `</tbody></table>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
     document.getElementById('historialTabla').innerHTML = html;
   };
