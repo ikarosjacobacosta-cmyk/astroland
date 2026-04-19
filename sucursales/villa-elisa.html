@@ -468,72 +468,85 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   }
 }
 
-/* ===== BOTONES FLOTANTES RESPONSIVOS ===== */
+/* ===== BOTONES FLOTANTES GRANDES Y RESPONSIVOS ===== */
 .cart-button, .stock-button, .historial-btn {
   position: fixed;
-  padding: 12px 18px;
+  padding: 14px 24px;
   border: none;
-  border-radius: 50px;
+  border-radius: 60px;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
   z-index: 1500;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 0.9rem;
+  gap: 8px;
+  font-size: 1rem;
   touch-action: manipulation;
   transition: all 0.2s ease;
   white-space: nowrap;
+  background: #2196F3;
+  color: white;
 }
 .cart-button { background: #2196F3; color: white; }
 .stock-button { background: #FF9800; color: white; }
 .historial-btn { background: #9C27B0; color: white; }
 
-/* Desktop: botones espaciados */
+/* Desktop: botones en esquinas */
 @media (min-width: 768px) {
-  .cart-button { right: 20px; bottom: 20px; }
-  .stock-button { left: 20px; bottom: 20px; }
-  .historial-btn { left: 130px; bottom: 20px; }
+  .cart-button { right: 24px; bottom: 24px; }
+  .stock-button { left: 24px; bottom: 24px; }
+  .historial-btn { left: 140px; bottom: 24px; }
 }
 
-/* Móvil: botones en fila en la parte inferior con mejor espaciado */
+/* Móvil: distribución en fila con espacio suficiente */
 @media (max-width: 767px) {
   .cart-button, .stock-button, .historial-btn {
     position: fixed;
-    bottom: 15px;
-    padding: 10px 14px;
-    font-size: 0.8rem;
-    gap: 4px;
+    bottom: 20px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    gap: 6px;
     white-space: nowrap;
+    border-radius: 50px;
   }
   .cart-button { 
-    right: 10px; 
+    right: 15px; 
   }
   .stock-button { 
-    left: 10px; 
+    left: 15px; 
   }
   .historial-btn { 
     left: 50%;
     transform: translateX(-50%);
-    bottom: 15px;
+    bottom: 20px;
   }
 }
 
-/* Pantallas muy pequeñas (menos de 480px) */
+/* Pantallas muy pequeñas (menos de 480px) - botón historial más pequeño para que no toque los bordes */
 @media (max-width: 480px) {
-  .cart-button, .stock-button, .historial-btn {
-    padding: 8px 12px;
-    font-size: 0.7rem;
-    border-radius: 40px;
+  .cart-button, .stock-button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
   }
-  .cart-button { right: 8px; bottom: 12px; }
-  .stock-button { left: 8px; bottom: 12px; }
-  .historial-btn { 
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 12px;
+  .historial-btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    bottom: 20px;
+  }
+}
+
+/* Pantallas extra pequeñas (menos de 400px) - ajuste fino */
+@media (max-width: 400px) {
+  .cart-button, .stock-button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+  .historial-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    bottom: 20px;
   }
 }
 
@@ -1822,7 +1835,7 @@ body { padding-top: 80px; }
         <td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
-        <td>
+        <tr>
           <div class="historial-actions">
             <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
             <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
