@@ -468,10 +468,10 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   }
 }
 
+/* ===== BOTONES FLOTANTES RESPONSIVOS ===== */
 .cart-button, .stock-button, .historial-btn {
   position: fixed;
-  bottom: 20px;
-  padding: 14px 22px;
+  padding: 12px 18px;
   border: none;
   border-radius: 50px;
   font-weight: bold;
@@ -480,13 +480,62 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   z-index: 1500;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1rem;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.9rem;
   touch-action: manipulation;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
-.cart-button { right: 20px; background: #2196F3; color: white; }
-.stock-button { left: 20px; background: #FF9800; color: white; }
-.historial-btn { left: 180px; background: #9C27B0; color: white; }
+.cart-button { background: #2196F3; color: white; }
+.stock-button { background: #FF9800; color: white; }
+.historial-btn { background: #9C27B0; color: white; }
+
+/* Desktop: botones espaciados */
+@media (min-width: 768px) {
+  .cart-button { right: 20px; bottom: 20px; }
+  .stock-button { left: 20px; bottom: 20px; }
+  .historial-btn { left: 130px; bottom: 20px; }
+}
+
+/* Móvil: botones en fila en la parte inferior con mejor espaciado */
+@media (max-width: 767px) {
+  .cart-button, .stock-button, .historial-btn {
+    position: fixed;
+    bottom: 15px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .cart-button { 
+    right: 10px; 
+  }
+  .stock-button { 
+    left: 10px; 
+  }
+  .historial-btn { 
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 15px;
+  }
+}
+
+/* Pantallas muy pequeñas (menos de 480px) */
+@media (max-width: 480px) {
+  .cart-button, .stock-button, .historial-btn {
+    padding: 8px 12px;
+    font-size: 0.7rem;
+    border-radius: 40px;
+  }
+  .cart-button { right: 8px; bottom: 12px; }
+  .stock-button { left: 8px; bottom: 12px; }
+  .historial-btn { 
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 12px;
+  }
+}
 
 .stock-fullscreen {
   background-color: #fff;
