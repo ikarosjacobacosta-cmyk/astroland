@@ -614,7 +614,7 @@ body { padding-top: 80px; }
   </footer>
 
   <button class="cart-button" onclick="openCartModal()">🛒 Carrito (<span id="cartCount">0</span>)</button>
-  <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
+  <button class="stock-button" onclick="showStockManagement()">📦 Stock</button>
   <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
 
   <div id="purchaseModal" class="modal">
@@ -675,7 +675,7 @@ body { padding-top: 80px; }
   <div id="stockModal" class="modal">
     <div class="stock-fullscreen">
       <button class="close" onclick="closeStockModal()">&times;</button>
-      <h3>📦 Gestionar Stock</h3>
+      <h3>📦 Stock</h3>
       <div id="stockPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
         <input type="password" id="stockPassword" placeholder="Contraseña para gestionar stock">
         <button onclick="verifyStockPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
@@ -1763,7 +1763,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<tr><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr>
