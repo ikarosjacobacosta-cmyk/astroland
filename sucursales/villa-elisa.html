@@ -1763,7 +1763,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<tr><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr>
