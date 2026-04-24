@@ -246,7 +246,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 #addToCart { background: #4CAF50; color: white; }
 #cancelModal { background: #f44336; color: white; }
 
-/* Campo de Cantidad - Siempre visible */
 .modal-qty-row {
     display: flex;
     align-items: center;
@@ -659,7 +658,6 @@ body { padding-top: 80px; }
         <div id="modalProductInfo" class="product-info"></div>
         <div id="modalStockInfo" class="stock-info"></div>
         
-        <!-- Renglón de Cantidad - SIEMPRE VISIBLE -->
         <div id="quantityRow" class="modal-qty-row">
           <label>📦 Cantidad:</label>
           <input type="number" id="productQuantity" min="1" step="1" value="1" onfocus="this.select()">
@@ -1082,7 +1080,6 @@ body { padding-top: 80px; }
         
         document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
         
-        // El campo cantidad siempre está visible, solo lo reseteamos a 1
         const quantityInput = document.getElementById('productQuantity');
         quantityInput.value = 1;
         
@@ -1374,7 +1371,6 @@ body { padding-top: 80px; }
     const procesar = () => {
       try {
         const code = currentProduct.code;
-        // Siempre obtener la cantidad del input
         const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
         const consumo = currentProduct.fichaConsumption || 0;
         let currentStock;
@@ -1437,8 +1433,8 @@ body { padding-top: 80px; }
         push(cartRef, { 
           code, 
           name: currentProduct.name, 
-          points, 
-          money, 
+          points: points,
+          money: money,
           totalPrice: totalPriceValue,
           unitPrice: unitPrice,
           qty: qty,
@@ -1819,7 +1815,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
+    let html = `</table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr>
@@ -1870,6 +1866,7 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `Historial_Lambare_${desde}_${hasta}.xlsx`);
   };
 
+  // renderCart AHORA MUESTRA LOS VALORES DIRECTOS SIN MULTIPLICAR
   function renderCart() {
     const div = document.getElementById('cartItems');
     div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
@@ -1900,10 +1897,9 @@ body { padding-top: 80px; }
             fichasTexto = '-';
         } else {
             movimientoTexto = '-';
-            const puntosTotal = (item.points || 0) * qty;
-            const dineroTotal = (item.money || 0);
-            puntosTexto = puntosTotal.toLocaleString();
-            dineroTexto = `Gs. ${dineroTotal.toLocaleString()}`;
+            // Mostrar los valores GUARDADOS en Firebase (ya son totales)
+            puntosTexto = (item.points || 0).toLocaleString();
+            dineroTexto = `Gs. ${(item.money || 0).toLocaleString()}`;
             
             if (item.fichaConsumption && !item.esMovimiento) {
                 fichasTexto = `${Math.abs(item.fichaConsumption)}`;
@@ -2109,15 +2105,16 @@ body { padding-top: 80px; }
 
   function exportToExcel() {
     if (cart.length === 0) { alert('Carrito vacío'); return; }
-    const totalP = cart.reduce((s,i) => s + ((i.points||0) * (i.unidades||1)), 0);
-    const totalM = cart.reduce((s,i) => s + (i.money||0), 0);
-    const totalFichas = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption)||0), 0);
-    const totalFichasRegaladas = cart.reduce((s,i) => s + (i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0), 0);
+    // Usar los valores directos guardados (ya son totales)
+    const totalP = cart.reduce((s,i) => s + (i.points || 0), 0);
+    const totalM = cart.reduce((s,i) => s + (i.money || 0), 0);
+    const totalFichas = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption) || 0), 0);
+    const totalFichasRegaladas = cart.reduce((s,i) => s + (i.esFichaGratis ? Math.abs(i.fichaConsumption) || 0 : 0), 0);
     const totalFichasVendidas = totalFichas - totalFichasRegaladas;
     
     const data = [['ASTROLAND - Lambaré'], ['IN GOD WE TRUST'], [],
       ['Producto','Puntos','Dinero','Movimientos','Fichas Consumidas','Fichas Regaladas','Fichas Vendidas','Fecha','Hora', 'Cantidad'],
-      ...cart.map(i => [i.name, (i.points||0)*(i.unidades||1), i.money||0, 
+      ...cart.map(i => [i.name, (i.points || 0), (i.money || 0), 
         i.esMovimiento ? (i.tipoMovimiento === 'agregar' ? `+${i.unidades}` : `-${i.unidades}`) : '-', 
         Math.abs(i.fichaConsumption)||0, i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, 
         !i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, i.fecha, i.hora, i.unidades||1]),
