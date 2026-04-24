@@ -246,7 +246,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 #addToCart { background: #4CAF50; color: white; }
 #cancelModal { background: #f44336; color: white; }
 
-/* Nuevo estilo para campo cantidad */
+/* Campo de Cantidad - Siempre visible */
 .modal-qty-row {
     display: flex;
     align-items: center;
@@ -659,8 +659,8 @@ body { padding-top: 80px; }
         <div id="modalProductInfo" class="product-info"></div>
         <div id="modalStockInfo" class="stock-info"></div>
         
-        <!-- Renglón de Cantidad (visible solo para códigos que lo requieran) -->
-        <div id="quantityRow" class="modal-qty-row" style="display: none;">
+        <!-- Renglón de Cantidad - SIEMPRE VISIBLE -->
+        <div id="quantityRow" class="modal-qty-row">
           <label>📦 Cantidad:</label>
           <input type="number" id="productQuantity" min="1" step="1" value="1" onfocus="this.select()">
         </div>
@@ -820,7 +820,6 @@ body { padding-top: 80px; }
   const STOCK_INICIAL = 100;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-  // ACTUALIZACIÓN DE PRECIOS: 000-02, 000-03, 000-04
   const FICHA_CONSUMPTION = { 
     '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30,
     '000-05': 1, '000-06': 7
@@ -832,13 +831,6 @@ body { padding-top: 80px; }
   window.addToCartLock = false;
   window.agregarUnidadesLock = false;
   window.quitarUnidadesLock = false;
-
-  // Determina si el código debe mostrar el campo de cantidad (000-05, 000-06, 005-*)
-  function shouldShowQuantityField(code) {
-      if (code === '000-05' || code === '000-06') return true;
-      if (code.startsWith('005-')) return true;
-      return false;
-  }
 
   function shouldShowMovimientosTab(code) {
     const prefix = code.substring(0, 3);
@@ -872,10 +864,8 @@ body { padding-top: 80px; }
     const categorias = [
       { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
         { codigo: "000-00", precio: 10000 }, { codigo: "000-01", precio: 30000 },
-        { codigo: "000-02", precio: 60000 }, // ACTUALIZADO
-        { codigo: "000-03", precio: 120000 },// ACTUALIZADO
-        { codigo: "000-04", precio: 180000 },// ACTUALIZADO
-        { codigo: "000-05", precio: 0 },
+        { codigo: "000-02", precio: 60000 }, { codigo: "000-03", precio: 120000 },
+        { codigo: "000-04", precio: 180000 }, { codigo: "000-05", precio: 0 },
         { codigo: "000-06", precio: 0 }, 
         { codigo: "000-07", precio: 15000 },
         { codigo: "000-08", precio: 15000 },
@@ -1092,21 +1082,14 @@ body { padding-top: 80px; }
         
         document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
         
-        // Lógica para mostrar/ocultar el campo cantidad y resetearlo
-        const quantityRow = document.getElementById('quantityRow');
+        // El campo cantidad siempre está visible, solo lo reseteamos a 1
         const quantityInput = document.getElementById('productQuantity');
-        if (shouldShowQuantityField(code)) {
-            quantityRow.style.display = 'flex';
-            quantityInput.value = 1;
-        } else {
-            quantityRow.style.display = 'none';
-        }
+        quantityInput.value = 1;
         
         document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>🎯 Puntos base: ${currentProduct.points}<br>💰 Precio unitario: G.${currentProduct.price.toLocaleString()}`;
         document.getElementById('modalStockInfo').innerHTML = `📦 Stock disponible: <strong>${stockVal} unidades</strong>`;
         document.getElementById('pointsInput').value = '';
         document.getElementById('pointsInput').max = currentProduct.points || 999999;
-        // Actualizar campo dinero y total basado en cantidad inicial (1)
         updateModalTotalsBasedOnQuantity();
         document.getElementById('addToCart').disabled = (stockVal <= 0);
         
@@ -1124,7 +1107,6 @@ body { padding-top: 80px; }
     item.addEventListener('click', handleClick);
   });
   
-  // Función que actualiza los campos de pago basados en la cantidad y el precio unitario
   function updateModalTotalsBasedOnQuantity() {
       if (!currentProduct) return;
       const qty = parseInt(document.getElementById('productQuantity').value) || 1;
@@ -1137,7 +1119,6 @@ body { padding-top: 80px; }
           const pointsUsed = Math.min(pointsValue, currentProduct.points * qty);
           moneyToPay = Math.round(totalPriceValue * (1 - pointsUsed / (currentProduct.points * qty)));
           if (moneyToPay < 0) moneyToPay = 0;
-          // Ajustar input de puntos para que no exceda el total posible de puntos
           const maxPointsPossible = currentProduct.points * qty;
           if (pointsValue > maxPointsPossible) {
               document.getElementById('pointsInput').value = maxPointsPossible;
@@ -1150,7 +1131,6 @@ body { padding-top: 80px; }
       document.getElementById('moneyInput').value = Math.floor(moneyToPay);
   }
   
-  // Listeners para cambios en cantidad o puntos
   document.getElementById('productQuantity')?.addEventListener('input', function(e) {
       let val = parseInt(e.target.value);
       if (isNaN(val) || val < 1) val = 1;
@@ -1158,7 +1138,6 @@ body { padding-top: 80px; }
       updateModalTotalsBasedOnQuantity();
   });
   
-  // Sobrescribir calculateRemainingMoney para usar cantidad
   window.calculateRemainingMoney = function() {
       updateModalTotalsBasedOnQuantity();
   };
@@ -1395,13 +1374,13 @@ body { padding-top: 80px; }
     const procesar = () => {
       try {
         const code = currentProduct.code;
-        const qty = shouldShowQuantityField(code) ? (parseInt(document.getElementById('productQuantity')?.value) || 1) : 1;
+        // Siempre obtener la cantidad del input
+        const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
         const consumo = currentProduct.fichaConsumption || 0;
         let currentStock;
         
         const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
         
-        // Verificar stock suficiente para la cantidad solicitada
         if (consumo > 0 && !isIndependentCode) {
           currentStock = stock['000-00'] ?? STOCK_INICIAL;
           if (currentStock < (consumo * qty)) { 
@@ -1444,7 +1423,6 @@ body { padding-top: 80px; }
           return; 
         }
         
-        // Actualizar stock
         if (consumo > 0 && !isIndependentCode) {
           const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * qty);
           set(ref(database, `stock/000-00`), nuevo);
@@ -1495,7 +1473,6 @@ body { padding-top: 80px; }
     }
   };
 
-  // ============ FUNCIÓN RESTAURAR VENTAS DESDE HISTORIAL ============
   window.restaurarVentasAlCarrito = async function(firebaseKey) {
     const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
     if (!registro) {
@@ -1893,7 +1870,6 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `Historial_Lambare_${desde}_${hasta}.xlsx`);
   };
 
-  // Modificación en renderCart para mostrar los valores multiplicados por cantidad
   function renderCart() {
     const div = document.getElementById('cartItems');
     div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
@@ -1903,7 +1879,6 @@ body { padding-top: 80px; }
         const d = document.createElement('div');
         d.className = 'cart-item';
         
-        // Obtener cantidad (unidades)
         const qty = item.unidades || 1;
         
         let movimientoTexto = '';
@@ -1925,7 +1900,6 @@ body { padding-top: 80px; }
             fichasTexto = '-';
         } else {
             movimientoTexto = '-';
-            // Multiplicar puntos y dinero por cantidad
             const puntosTotal = (item.points || 0) * qty;
             const dineroTotal = (item.money || 0);
             puntosTexto = puntosTotal.toLocaleString();
