@@ -246,6 +246,33 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 #addToCart { background: #4CAF50; color: white; }
 #cancelModal { background: #f44336; color: white; }
 
+.modal-qty-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f0f7ff;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #cce5ff;
+}
+.modal-qty-row label {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #004085;
+}
+#productQuantity {
+    width: 100px;
+    padding: 12px;
+    font-size: 1.1rem;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-weight: bold;
+    background: white;
+    -webkit-appearance: none;
+}
+
 .maquina-input {
   width: 100%;
   padding: 18px;
@@ -630,6 +657,12 @@ body { padding-top: 80px; }
       <div id="tabCompra" class="tab-pane-compras active">
         <div id="modalProductInfo" class="product-info"></div>
         <div id="modalStockInfo" class="stock-info"></div>
+        
+        <div id="quantityRow" class="modal-qty-row">
+          <label>📦 Cantidad:</label>
+          <input type="number" id="productQuantity" min="1" step="1" value="1" onfocus="this.select()">
+        </div>
+
         <div class="payment-options">
           <div class="payment-option">
             <label>🎯 Pagar con Puntos</label>
@@ -829,8 +862,8 @@ body { padding-top: 80px; }
     const categorias = [
       { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
         { codigo: "000-00", precio: 10000 }, { codigo: "000-01", precio: 30000 },
-        { codigo: "000-02", precio: 50000 }, { codigo: "000-03", precio: 100000 },
-        { codigo: "000-04", precio: 150000 }, { codigo: "000-05", precio: 0 },
+        { codigo: "000-02", precio: 60000 }, { codigo: "000-03", precio: 120000 },
+        { codigo: "000-04", precio: 180000 }, { codigo: "000-05", precio: 0 },
         { codigo: "000-06", precio: 0 }, { codigo: "000-07", precio: 15000 },
         { codigo: "000-08", precio: 15000 }, { codigo: "000-09", precio: 0 },
         { codigo: "000-10", precio: 0 }
@@ -1045,12 +1078,14 @@ body { padding-top: 80px; }
         
         document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
         
-        document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>🎯 Puntos base: ${currentProduct.points}<br>💰 Precio total: G.${currentProduct.price.toLocaleString()}`;
+        const quantityInput = document.getElementById('productQuantity');
+        quantityInput.value = 1;
+        
+        document.getElementById('modalProductInfo').innerHTML = `<strong>${currentProduct.name}</strong><br>🎯 Puntos base: ${currentProduct.points}<br>💰 Precio unitario: G.${currentProduct.price.toLocaleString()}`;
         document.getElementById('modalStockInfo').innerHTML = `📦 Stock disponible: <strong>${stockVal} unidades</strong>`;
         document.getElementById('pointsInput').value = '';
         document.getElementById('pointsInput').max = currentProduct.points || 999999;
-        document.getElementById('moneyInput').value = currentProduct.price;
-        document.getElementById('totalPrice').textContent = currentProduct.price.toLocaleString();
+        updateModalTotalsBasedOnQuantity();
         document.getElementById('addToCart').disabled = (stockVal <= 0);
         
         document.getElementById('movimientosProductInfo').innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock | ➖ Quitar: resta del stock</small>`;
@@ -1066,6 +1101,41 @@ body { padding-top: 80px; }
     item.addEventListener('pointerup', handleClick);
     item.addEventListener('click', handleClick);
   });
+  
+  function updateModalTotalsBasedOnQuantity() {
+      if (!currentProduct) return;
+      const qty = parseInt(document.getElementById('productQuantity').value) || 1;
+      const unitPrice = currentProduct.price;
+      const totalPriceValue = unitPrice * qty;
+      const pointsValue = parseInt(document.getElementById('pointsInput').value) || 0;
+      let moneyToPay = totalPriceValue;
+      
+      if (currentProduct.points > 0) {
+          const pointsUsed = Math.min(pointsValue, currentProduct.points * qty);
+          moneyToPay = Math.round(totalPriceValue * (1 - pointsUsed / (currentProduct.points * qty)));
+          if (moneyToPay < 0) moneyToPay = 0;
+          const maxPointsPossible = currentProduct.points * qty;
+          if (pointsValue > maxPointsPossible) {
+              document.getElementById('pointsInput').value = maxPointsPossible;
+              updateModalTotalsBasedOnQuantity();
+              return;
+          }
+      }
+      
+      document.getElementById('totalPrice').textContent = totalPriceValue.toLocaleString();
+      document.getElementById('moneyInput').value = Math.floor(moneyToPay);
+  }
+  
+  document.getElementById('productQuantity')?.addEventListener('input', function(e) {
+      let val = parseInt(e.target.value);
+      if (isNaN(val) || val < 1) val = 1;
+      e.target.value = val;
+      updateModalTotalsBasedOnQuantity();
+  });
+  
+  window.calculateRemainingMoney = function() {
+      updateModalTotalsBasedOnQuantity();
+  };
 
   async function procesarFichaGratis(code, fichasAConsumir) {
     const currentStock = stock['000-00'] ?? STOCK_INICIAL;
@@ -1282,30 +1352,6 @@ body { padding-top: 80px; }
     unblockBodyScroll();
   };
 
-  window.calculateRemainingMoney = function() {
-    if (!currentProduct) return;
-    
-    const calcular = () => {
-      let pagado = parseFloat(document.getElementById('pointsInput').value) || 0;
-      if (currentProduct.points > 0) {
-        if (pagado > currentProduct.points) { 
-          document.getElementById('pointsInput').value = currentProduct.points; 
-          pagado = currentProduct.points; 
-        }
-        const moneyValue = Math.round(currentProduct.price * (1 - pagado / currentProduct.points));
-        document.getElementById('moneyInput').value = moneyValue;
-      }
-    };
-    
-    if (isIOS) {
-      requestAnimationFrame(() => {
-        setTimeout(calcular, 50);
-      });
-    } else {
-      calcular();
-    }
-  };
-
   window.addToCart = function() {
     if (window.addToCartLock) {
       console.log('AddToCart bloqueado');
@@ -1323,6 +1369,7 @@ body { padding-top: 80px; }
     const procesar = () => {
       try {
         const code = currentProduct.code;
+        const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
         const consumo = currentProduct.fichaConsumption || 0;
         let currentStock;
         
@@ -1330,15 +1377,15 @@ body { padding-top: 80px; }
         
         if (consumo > 0 && !isIndependentCode) {
           currentStock = stock['000-00'] ?? STOCK_INICIAL;
-          if (currentStock < consumo) { 
-            alert('No hay suficientes fichas'); 
+          if (currentStock < (consumo * qty)) { 
+            alert(`No hay suficientes fichas. Necesitas ${consumo * qty}, disponible: ${currentStock}`); 
             window.addToCartLock = false;
             return; 
           }
         } else {
           currentStock = stock[code] ?? STOCK_INICIAL;
-          if (currentStock <= 0) { 
-            alert('No hay stock'); 
+          if (currentStock < qty) { 
+            alert(`No hay suficiente stock. Cantidad: ${qty}, disponible: ${currentStock}`); 
             window.addToCartLock = false;
             return; 
           }
@@ -1346,33 +1393,35 @@ body { padding-top: 80px; }
         
         const points = parseInt(document.getElementById('pointsInput').value) || 0;
         const money = parseFloat(document.getElementById('moneyInput').value) || 0;
+        const unitPrice = currentProduct.price;
+        const totalPriceValue = unitPrice * qty;
         
-        if (currentProduct.points > 0 && points > currentProduct.points) { 
-          alert(`Máximo ${currentProduct.points} puntos`); 
+        if (currentProduct.points > 0 && points > (currentProduct.points * qty)) { 
+          alert(`Máximo ${currentProduct.points * qty} puntos`); 
           window.addToCartLock = false;
           return; 
         }
         
         if (currentProduct.points > 0) {
-          const esperado = Math.round(currentProduct.price * (1 - points / currentProduct.points));
+          const esperado = Math.round(totalPriceValue * (1 - points / (currentProduct.points * qty)));
           if (Math.abs(money - esperado) > 1) { 
-            alert('Error en cálculo'); 
+            alert('Error en cálculo de pago'); 
             window.addToCartLock = false;
             return; 
           }
         }
         
-        if (points === 0 && money === 0 && currentProduct.price > 0) { 
+        if (points === 0 && money === 0 && totalPriceValue > 0) { 
           alert('Debes pagar con puntos o dinero'); 
           window.addToCartLock = false;
           return; 
         }
         
         if (consumo > 0 && !isIndependentCode) {
-          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - consumo;
+          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * qty);
           set(ref(database, `stock/000-00`), nuevo);
         } else {
-          set(ref(database, `stock/${code}`), currentStock - 1);
+          set(ref(database, `stock/${code}`), currentStock - qty);
         }
         
         const ahora = new Date();
@@ -1382,19 +1431,21 @@ body { padding-top: 80px; }
         push(cartRef, { 
           code, 
           name: currentProduct.name, 
-          points, 
-          money, 
-          totalPrice: currentProduct.price, 
+          points: points,
+          money: money,
+          totalPrice: totalPriceValue,
+          unitPrice: unitPrice,
+          qty: qty,
           fecha, 
           hora, 
           timestamp: fecha + ' ' + hora, 
           timestampCompleto: ahora.getTime(), 
-          fichaConsumption: consumo, 
-          unidades: 1 
+          fichaConsumption: consumo * qty,
+          unidades: qty 
         }).then(() => {
           resetSearch();
           closeModal();
-          alert('✅ Producto agregado al carrito');
+          alert(`✅ ${qty} unidad(es) agregada(s) al carrito`);
         }).catch(error => {
           console.error('Error al agregar:', error);
           alert('❌ Error al agregar al carrito');
@@ -1416,7 +1467,6 @@ body { padding-top: 80px; }
     }
   };
 
-  // ============ FUNCIÓN RESTAURAR VENTAS DESDE HISTORIAL ============
   window.restaurarVentasAlCarrito = async function(firebaseKey) {
     const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
     if (!registro) {
@@ -1823,6 +1873,8 @@ body { padding-top: 80px; }
         const d = document.createElement('div');
         d.className = 'cart-item';
         
+        const qty = item.unidades || 1;
+        
         let movimientoTexto = '';
         let movimientoClase = '';
         let puntosTexto = '';
@@ -1831,10 +1883,10 @@ body { padding-top: 80px; }
         
         if (item.esMovimiento) {
             if (item.tipoMovimiento === 'agregar') {
-                movimientoTexto = `+${item.unidades || 1}`;
+                movimientoTexto = `+${qty}`;
                 movimientoClase = 'unidades-positivo';
             } else if (item.tipoMovimiento === 'quitar') {
-                movimientoTexto = `-${item.unidades || 1}`;
+                movimientoTexto = `-${qty}`;
                 movimientoClase = 'unidades-negativo';
             }
             puntosTexto = '-';
@@ -1844,6 +1896,7 @@ body { padding-top: 80px; }
             movimientoTexto = '-';
             puntosTexto = (item.points || 0).toLocaleString();
             dineroTexto = `Gs. ${(item.money || 0).toLocaleString()}`;
+            
             if (item.fichaConsumption && !item.esMovimiento) {
                 fichasTexto = `${Math.abs(item.fichaConsumption)}`;
             } else {
@@ -1851,7 +1904,7 @@ body { padding-top: 80px; }
             }
         }
         
-        d.innerHTML = `<span>${item.name || item.code}</span>
+        d.innerHTML = `<span>${item.name || item.code} ${qty > 1 ? `(x${qty})` : ''}</span>
             <span>${puntosTexto}</span>
             <span>${dineroTexto}</span>
             <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
@@ -2048,19 +2101,19 @@ body { padding-top: 80px; }
 
   function exportToExcel() {
     if (cart.length === 0) { alert('Carrito vacío'); return; }
-    const totalP = cart.reduce((s,i) => s + (i.points||0), 0);
-    const totalM = cart.reduce((s,i) => s + (i.money||0), 0);
-    const totalFichas = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption)||0), 0);
-    const totalFichasRegaladas = cart.reduce((s,i) => s + (i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0), 0);
+    const totalP = cart.reduce((s,i) => s + (i.points || 0), 0);
+    const totalM = cart.reduce((s,i) => s + (i.money || 0), 0);
+    const totalFichas = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption) || 0), 0);
+    const totalFichasRegaladas = cart.reduce((s,i) => s + (i.esFichaGratis ? Math.abs(i.fichaConsumption) || 0 : 0), 0);
     const totalFichasVendidas = totalFichas - totalFichasRegaladas;
     
     const data = [['ASTROLAND - Villa Morra'], ['IN GOD WE TRUST'], [],
-      ['Producto','Puntos','Dinero','Movimientos','Fichas Consumidas','Fichas Regaladas','Fichas Vendidas','Fecha','Hora'],
-      ...cart.map(i => [i.name, i.points||0, i.money||0, 
+      ['Producto','Puntos','Dinero','Movimientos','Fichas Consumidas','Fichas Regaladas','Fichas Vendidas','Fecha','Hora', 'Cantidad'],
+      ...cart.map(i => [i.name, (i.points || 0), (i.money || 0), 
         i.esMovimiento ? (i.tipoMovimiento === 'agregar' ? `+${i.unidades}` : `-${i.unidades}`) : '-', 
         Math.abs(i.fichaConsumption)||0, i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, 
-        !i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, i.fecha, i.hora]),
-      [], ['TOTALES', totalP, totalM, '', totalFichas, totalFichasRegaladas, totalFichasVendidas, '', '']];
+        !i.esFichaGratis ? Math.abs(i.fichaConsumption)||0 : 0, i.fecha, i.hora, i.unidades||1]),
+      [], ['TOTALES', totalP, totalM, '', totalFichas, totalFichasRegaladas, totalFichasVendidas, '', '', '']];
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, 'Carrito');
