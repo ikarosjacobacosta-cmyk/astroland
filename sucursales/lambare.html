@@ -1815,7 +1815,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `</table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
       html += `<tr>
@@ -1866,7 +1866,6 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `Historial_Lambare_${desde}_${hasta}.xlsx`);
   };
 
-  // renderCart AHORA MUESTRA LOS VALORES DIRECTOS SIN MULTIPLICAR
   function renderCart() {
     const div = document.getElementById('cartItems');
     div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
@@ -1897,7 +1896,6 @@ body { padding-top: 80px; }
             fichasTexto = '-';
         } else {
             movimientoTexto = '-';
-            // Mostrar los valores GUARDADOS en Firebase (ya son totales)
             puntosTexto = (item.points || 0).toLocaleString();
             dineroTexto = `Gs. ${(item.money || 0).toLocaleString()}`;
             
@@ -2105,7 +2103,6 @@ body { padding-top: 80px; }
 
   function exportToExcel() {
     if (cart.length === 0) { alert('Carrito vacío'); return; }
-    // Usar los valores directos guardados (ya son totales)
     const totalP = cart.reduce((s,i) => s + (i.points || 0), 0);
     const totalM = cart.reduce((s,i) => s + (i.money || 0), 0);
     const totalFichas = cart.reduce((s,i) => s + (Math.abs(i.fichaConsumption) || 0), 0);
