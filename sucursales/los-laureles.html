@@ -57,6 +57,39 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   .floating-search-container { padding: 10px 0; }
 }
 
+.btn-home {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+}
+.btn-home:hover {
+  background: #45a049;
+  transform: scale(1.05);
+}
+@media (max-width:600px) {
+  .btn-home {
+    top: 70px;
+    right: 10px;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+}
+
 .categoria { margin-bottom:30px; padding:0 6px; }
 .categoria h2 { 
   margin:0 0 12px; 
@@ -629,6 +662,8 @@ body { padding-top: 80px; }
     </div>
   </div>
 
+  <button class="btn-home" onclick="scrollToTop()">🏠 Volver al Inicio</button>
+
   <div class="container">
     <header>
       <h1>ASTROLAND - Los Laureles</h1>
@@ -682,12 +717,29 @@ body { padding-top: 80px; }
       
       <div id="tabMovimientos" class="tab-pane-compras">
         <div id="movimientosProductInfo" class="product-info"></div>
-        <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades">
+        <select id="movimientoDestino" class="maquina-input" style="padding:12px;">
+          <option value="stock">📦 Stock</option>
+          <option value="maq1">⚙️ Maq 1</option>
+          <option value="maq2">⚙️ Maq 2</option>
+          <option value="maq3">⚙️ Maq 3</option>
+          <option value="maq4">⚙️ Maq 4</option>
+          <option value="maq5">⚙️ Maq 5</option>
+          <option value="maq6">⚙️ Maq 6</option>
+          <option value="maq7">⚙️ Maq 7</option>
+          <option value="maq8">⚙️ Maq 8</option>
+          <option value="maq9">⚙️ Maq 9</option>
+          <option value="maq10">⚙️ Maq 10</option>
+        </select>
+        <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades" onfocus="this.select()">
         <div class="maquina-buttons">
-          <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar (Suma al stock)</button>
-          <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar (Resta del stock)</button>
+          <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
+          <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
           <button class="btn-cancelar" onclick="closeModal()">❌ Cancelar</button>
         </div>
+        <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
+          📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
+          🖥️ <strong>Máquina:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
+        </p>
       </div>
     </div>
   </div>
@@ -813,8 +865,8 @@ body { padding-top: 80px; }
   let historialVentas = [];
   let modoEdicionFecha = null;
   
-  const PASSWORD_STOCK = "deisy";
-  const PASSWORD_GENERAL = "mili";
+  const PASSWORD_STOCK = "madelaine";
+  const PASSWORD_GENERAL = "madelaine";
   const STOCK_INICIAL = 100;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
@@ -829,6 +881,14 @@ body { padding-top: 80px; }
   window.addToCartLock = false;
   window.agregarUnidadesLock = false;
   window.quitarUnidadesLock = false;
+
+  window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  function shouldShowQuantity(code) {
+    return code.startsWith('005-13');
+  }
 
   function shouldShowMovimientosTab(code) {
     const prefix = code.substring(0, 3);
@@ -1006,7 +1066,6 @@ body { padding-top: 80px; }
   function resetSearch() {
     const inp = document.getElementById('busqueda');
     if (inp) { inp.value = ''; filterProducts(''); }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
@@ -1078,6 +1137,13 @@ body { padding-top: 80px; }
         
         document.querySelector('.tab-btn-compras[data-tab="compra"]').click();
         
+        const quantityRow = document.getElementById('quantityRow');
+        if (shouldShowQuantity(code)) {
+          quantityRow.style.display = 'flex';
+        } else {
+          quantityRow.style.display = 'none';
+        }
+        
         const quantityInput = document.getElementById('productQuantity');
         quantityInput.value = 1;
         
@@ -1088,7 +1154,7 @@ body { padding-top: 80px; }
         updateModalTotalsBasedOnQuantity();
         document.getElementById('addToCart').disabled = (stockVal <= 0);
         
-        document.getElementById('movimientosProductInfo').innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock | ➖ Quitar: resta del stock</small>`;
+        document.getElementById('movimientosProductInfo').innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (si es Máquina, resta) | ➖ Quitar: resta del stock (si es Máquina, suma)</small>`;
         document.getElementById('unidadesInput').value = 1;
         
         document.getElementById('purchaseModal').style.display = 'block';
@@ -1213,6 +1279,8 @@ body { padding-top: 80px; }
     }
     
     const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+    const destino = document.getElementById('movimientoDestino').value;
+    
     if (cantidad <= 0) { 
       alert('Cantidad inválida'); 
       window.agregarUnidadesLock = false;
@@ -1221,22 +1289,44 @@ body { padding-top: 80px; }
     
     const code = currentMovimientosProduct.code;
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
-    let currentStock;
-    
     const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
     
-    if (consumo > 0 && !isIndependentCode) {
-      currentStock = stock['000-00'] ?? STOCK_INICIAL;
-    } else {
-      currentStock = stock[code] ?? STOCK_INICIAL;
-    }
-    
     try {
-      if (consumo > 0 && !isIndependentCode) {
-        const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
-        await set(ref(database, `stock/000-00`), nuevo);
+      let mensaje = '';
+      
+      if (destino === 'stock') {
+        // AGREGAR suma al stock
+        if (consumo > 0 && !isIndependentCode) {
+          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
+          await set(ref(database, `stock/000-00`), nuevo);
+          mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK (equivale a ${consumo * cantidad} fichas)`;
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          await set(ref(database, `stock/${code}`), currentStock + cantidad);
+          mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
+        }
       } else {
-        await set(ref(database, `stock/${code}`), currentStock + cantidad);
+        // AGREGAR desde una máquina: RESTA del stock (la máquina consume)
+        if (consumo > 0 && !isIndependentCode) {
+          const currentStock = stock['000-00'] ?? STOCK_INICIAL;
+          if (currentStock < consumo * cantidad) {
+            alert(`No hay suficientes fichas en stock. Necesitas ${consumo * cantidad}, disponible: ${currentStock}`);
+            window.agregarUnidadesLock = false;
+            return;
+          }
+          const nuevo = currentStock - (consumo * cantidad);
+          await set(ref(database, `stock/000-00`), nuevo);
+          mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          if (currentStock < cantidad) {
+            alert(`No hay suficiente stock. Stock actual: ${currentStock}`);
+            window.agregarUnidadesLock = false;
+            return;
+          }
+          await set(ref(database, `stock/${code}`), currentStock - cantidad);
+          mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
+        }
       }
       
       const ahora = new Date();
@@ -1251,6 +1341,7 @@ body { padding-top: 80px; }
         unidades: cantidad, 
         esMovimiento: true, 
         tipoMovimiento: 'agregar',
+        destinoMovimiento: destino,
         totalPrice: 0,
         fecha, 
         hora, 
@@ -1260,11 +1351,11 @@ body { padding-top: 80px; }
       });
       
       closeModal();
-      alert(`✅ Agregado +${cantidad} unidad(es) de ${currentMovimientosProduct.name}`);
+      alert(mensaje);
       resetSearch();
     } catch (error) {
       console.error('Error:', error);
-      alert('❌ Error al agregar');
+      alert('❌ Error al procesar el movimiento');
     } finally {
       window.agregarUnidadesLock = false;
     }
@@ -1280,6 +1371,8 @@ body { padding-top: 80px; }
     }
     
     const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+    const destino = document.getElementById('movimientoDestino').value;
+    
     if (cantidad <= 0) { 
       alert('Cantidad inválida'); 
       window.quitarUnidadesLock = false;
@@ -1288,32 +1381,44 @@ body { padding-top: 80px; }
     
     const code = currentMovimientosProduct.code;
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
-    let currentStock;
-    
     const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
     
-    if (consumo > 0 && !isIndependentCode) {
-      currentStock = stock['000-00'] ?? STOCK_INICIAL;
-      if (currentStock < consumo * cantidad) { 
-        alert(`No hay suficientes fichas. Stock actual: ${currentStock}`); 
-        window.quitarUnidadesLock = false;
-        return; 
-      }
-    } else {
-      currentStock = stock[code] ?? STOCK_INICIAL;
-      if (currentStock < cantidad) { 
-        alert(`No hay suficiente stock. Stock actual: ${currentStock}`); 
-        window.quitarUnidadesLock = false;
-        return; 
-      }
-    }
-    
     try {
-      if (consumo > 0 && !isIndependentCode) {
-        const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * cantidad);
-        await set(ref(database, `stock/000-00`), nuevo);
+      let mensaje = '';
+      
+      if (destino === 'stock') {
+        // QUITAR resta del stock
+        if (consumo > 0 && !isIndependentCode) {
+          const currentStock = stock['000-00'] ?? STOCK_INICIAL;
+          if (currentStock < consumo * cantidad) {
+            alert(`No hay suficientes fichas. Stock actual: ${currentStock}`);
+            window.quitarUnidadesLock = false;
+            return;
+          }
+          const nuevo = currentStock - (consumo * cantidad);
+          await set(ref(database, `stock/000-00`), nuevo);
+          mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK (equivale a ${consumo * cantidad} fichas)`;
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          if (currentStock < cantidad) {
+            alert(`No hay suficiente stock. Stock actual: ${currentStock}`);
+            window.quitarUnidadesLock = false;
+            return;
+          }
+          await set(ref(database, `stock/${code}`), currentStock - cantidad);
+          mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${currentMovimientosProduct.name}`;
+        }
       } else {
-        await set(ref(database, `stock/${code}`), currentStock - cantidad);
+        // QUITAR desde una máquina: SUMA al stock (devuelve unidades)
+        if (consumo > 0 && !isIndependentCode) {
+          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
+          await set(ref(database, `stock/000-00`), nuevo);
+          mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
+        } else {
+          const currentStockVal = stock[code] ?? STOCK_INICIAL;
+          await set(ref(database, `stock/${code}`), currentStockVal + cantidad);
+          mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
+        }
       }
       
       const ahora = new Date();
@@ -1328,6 +1433,7 @@ body { padding-top: 80px; }
         unidades: cantidad, 
         esMovimiento: true, 
         tipoMovimiento: 'quitar',
+        destinoMovimiento: destino,
         totalPrice: 0,
         fecha, 
         hora, 
@@ -1337,11 +1443,11 @@ body { padding-top: 80px; }
       });
       
       closeModal();
-      alert(`✅ Quitado -${cantidad} unidad(es) de ${currentMovimientosProduct.name}`);
+      alert(mensaje);
       resetSearch();
     } catch (error) {
       console.error('Error:', error);
-      alert('❌ Error al quitar');
+      alert('❌ Error al procesar el movimiento');
     } finally {
       window.quitarUnidadesLock = false;
     }
@@ -1829,10 +1935,10 @@ body { padding-top: 80px; }
             <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
             <button class="btn-eliminar-historial" onclick="eliminarRegistroHistorial('${h.firebaseKey}')">🗑️ Eliminar</button>
           </div>
-        </tr>
+        </td>
       </tr>`;
     });
-    html += `</tbody><tr>`;
+    html += `</tbody></table>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
     document.getElementById('historialTabla').innerHTML = html;
   };
@@ -1977,11 +2083,14 @@ body { padding-top: 80px; }
   };
 
   window.verifyStockPassword = function() {
-    if (document.getElementById('stockPassword').value === PASSWORD_STOCK) {
+    const passwordInput = document.getElementById('stockPassword').value;
+    if (passwordInput === PASSWORD_STOCK) {
       document.getElementById('stockPasswordPrompt').style.display = 'none';
       document.getElementById('stockManagementContent').style.display = 'block';
       loadAllStockItems();
-    } else alert('Contraseña incorrecta');
+    } else {
+      alert('Contraseña incorrecta');
+    }
   };
 
   function getCategoryName(code) {
@@ -2049,6 +2158,18 @@ body { padding-top: 80px; }
   };
 
   window.guardarStockIndividual = function(code, valor) {
+    if (code === '000-00') {
+      const passwordConfirm = prompt('🔐 Se requiere contraseña para modificar el código 000-00:');
+      if (passwordConfirm !== PASSWORD_STOCK) {
+        alert('❌ Contraseña incorrecta. No se puede modificar el stock del código 000-00');
+        const inp = document.getElementById(`stock-${code}`);
+        if (inp) {
+          inp.value = stock[code] ?? STOCK_INICIAL;
+        }
+        return;
+      }
+    }
+    
     const inp = document.getElementById(`stock-${code}`);
     if (!inp) return;
     
