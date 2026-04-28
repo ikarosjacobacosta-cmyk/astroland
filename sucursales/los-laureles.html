@@ -865,8 +865,9 @@ body { padding-top: 80px; }
   let historialVentas = [];
   let modoEdicionFecha = null;
   
-  const PASSWORD_STOCK = "madelaine";
-  const PASSWORD_GENERAL = "madelaine";
+  const PASSWORD_STOCK = "deisy";
+  const PASSWORD_GENERAL = "majo";
+  const PASSWORD_SPECIAL_CODES = "majo";
   const STOCK_INICIAL = 100;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
@@ -1950,7 +1951,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr>
+    let html = `</table><thead><tr>
       <th>Fecha</th>
       <th>Ventas</th>
       <th>💰 Dinero</th>
@@ -2208,10 +2209,11 @@ body { padding-top: 80px; }
   };
 
   window.guardarStockIndividual = function(code, valor) {
-    if (code === '000-00') {
-      const passwordConfirm = prompt('🔐 Se requiere contraseña para modificar el código 000-00:');
-      if (passwordConfirm !== PASSWORD_STOCK) {
-        alert('❌ Contraseña incorrecta. No se puede modificar el stock del código 000-00');
+    // Para códigos 000-00 y 000-07 se requiere contraseña especial "majo"
+    if (code === '000-00' || code === '000-07') {
+      const passwordConfirm = prompt('🔐 Se requiere contraseña para modificar el código ' + code + ':');
+      if (passwordConfirm !== PASSWORD_SPECIAL_CODES) {
+        alert('❌ Contraseña incorrecta. No se puede modificar el stock del código ' + code);
         const inp = document.getElementById(`stock-${code}`);
         if (inp) {
           inp.value = stock[code] ?? STOCK_INICIAL;
