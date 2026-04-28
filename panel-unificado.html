@@ -69,6 +69,9 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .suc-card .sub-item { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.7rem; padding: 2px 0; }
 .suc-card .sub-item .label { color: #666; }
 .suc-card .sub-item .amount { font-weight: bold; }
+.suc-card .maquina-item { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.7rem; padding: 2px 0; border-left: 2px solid #2196F3; padding-left: 8px; margin-left: 4px; }
+.suc-card .maquina-item .label { color: #1976D2; font-weight: 600; }
+.suc-card .maquina-item .amount { font-family: monospace; font-size: 0.7rem; }
 
 .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
 .tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; min-height: 44px; }
@@ -241,7 +244,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   });
 
-  // Fecha de cambio: 4 de abril de 2026
   const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
 
   const CODIGOS_COMPLETOS = [
@@ -344,22 +346,15 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function getColorIndex(code) { return code.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colores.length; }
   function getImagenHtml(code) { const idx = getColorIndex(code); return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="img-placeholder" style="background:${colores[idx]}; display:none;">${code.replace('-', ' ')}</div>`; }
 
-  // ============ FUNCIÓN CLASIFICAR CORREGIDA (CON FECHA) ============
   function clasificar(code, fechaEliminacion) {
-    // Códigos fijos (siempre iguales)
     if (code === '000-07') return 'pulseras';
     if (code === '000-08') return 'billar';
-    
-    // 000-05: ANTES del 4/4/2026 era PULSERAS, DESPUÉS es ERROR
     if (code === '000-05') {
       return fechaEliminacion < FECHA_CAMBIO ? 'pulseras' : 'error';
     }
-    
-    // 000-06: ANTES del 4/4/2026 era BILLAR, DESPUÉS es CÁPSULAS
     if (code === '000-06') {
       return fechaEliminacion < FECHA_CAMBIO ? 'billar' : 'capsulas';
     }
-    
     return 'normal';
   }
 
@@ -376,20 +371,20 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function getFichasStats(ventas) {
     let unitarias = 0;
     let combo30 = 0;
-    let combo50 = 0;
-    let combo100 = 0;
-    let combo150 = 0;
+    let combo60 = 0;
+    let combo120 = 0;
+    let combo180 = 0;
     
     for (const v of ventas) {
       if (v.esFichaGratis) continue;
       if (v.code === '000-00') unitarias++;
       else if (v.code === '000-01') combo30++;
-      else if (v.code === '000-02') combo50++;
-      else if (v.code === '000-03') combo100++;
-      else if (v.code === '000-04') combo150++;
+      else if (v.code === '000-02') combo60++;
+      else if (v.code === '000-03') combo120++;
+      else if (v.code === '000-04') combo180++;
     }
     
-    return { unitarias, combo30, combo50, combo100, combo150 };
+    return { unitarias, combo30, combo60, combo120, combo180 };
   }
 
   async function cargarTodo() {
@@ -539,13 +534,15 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             <div class="sub-label">📊 Detalle de Fichas:</div>
             <div class="sub-item"><span class="label">🎴 Unitarias (000-00):</span><span class="amount">0 veces</span></div>
             <div class="sub-item"><span class="label">🎴 Combo 30mil (000-01):</span><span class="amount">0 veces</span></div>
-            <div class="sub-item"><span class="label">🎴 Combo 50mil (000-02):</span><span class="amount">0 veces</span></div>
-            <div class="sub-item"><span class="label">🎴 Combo 100mil (000-03):</span><span class="amount">0 veces</span></div>
-            <div class="sub-item"><span class="label">🎴 Combo 150mil (000-04):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 60mil (000-02):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 120mil (000-03):</span><span class="amount">0 veces</span></div>
+            <div class="sub-item"><span class="label">🎴 Combo 180mil (000-04):</span><span class="amount">0 veces</span></div>
           </div>
-          <div class="sub-section"><div class="sub-label">🔄 Movimientos de Stock:</div>
-          <div class="sub-item"><span class="label">➕ Agregados:</span><span class="amount">+0 unidades</span></div>
-          <div class="sub-item"><span class="label">➖ Quitados:</span><span class="amount">-0 unidades</span></div>
+          <div class="sub-section"><div class="sub-label">📦 Movimientos de Stock (por código):</div>
+          <div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>
+          </div>
+          <div class="sub-section"><div class="sub-label">🎰 Movimientos de Máquinas:</div>
+          <div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>
           </div>
           <div class="sub-section"><div class="sub-label">🔴 Error (000-05):</div>
           <div class="item"><span class="label">Fichas:</span><span class="amount">0</span></div></div>
@@ -558,9 +555,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
-  // ============ FUNCIÓN ACTUALIZAR ESTADISTICAS CORREGIDA ============
   function actualizarEstadisticas(ventas) {
-    // Excluir: cierres, movimientos de las ventas normales
     const normales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
     const cierresEfectivo = ventas.filter(v => v.code === '000-09');
     const cierresTarjeta = ventas.filter(v => v.code === '000-10');
@@ -571,7 +566,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const totalTarjeta = cierresTarjeta.reduce((s,v)=>s+(v.money||0),0);
     const totalCierre = totalEfectivo + totalTarjeta;
     const totalPuntos = ventas.reduce((s,v)=>s+(v.points||0),0);
-    // Fichas: contar fichas vendidas (000-00 a 000-04) que NO son gratis
     const totalFichas = normales.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0);
     const totalOperaciones = ventas.length;
     
@@ -606,11 +600,43 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       
       const fichasStats = getFichasStats(vNorm);
       
-      let movimientosAgregar = 0;
-      let movimientosQuitar = 0;
+      // MOVIMIENTOS DE STOCK (solo productos que NO son máquinas - excluir maq1 a maq10)
+      const movimientosStock = {};
       for (const v of vMov) {
-        if (v.tipoMovimiento === 'agregar') movimientosAgregar += (v.unidades || 1);
-        if (v.tipoMovimiento === 'quitar') movimientosQuitar += (v.unidades || 1);
+        const esMaquinaMovimiento = v.destinoMovimiento && v.destinoMovimiento.startsWith('maq');
+        if (!esMaquinaMovimiento) {
+          const code = v.code;
+          if (!movimientosStock[code]) {
+            movimientosStock[code] = { agregar: 0, quitar: 0, neto: 0 };
+          }
+          if (v.tipoMovimiento === 'agregar') {
+            movimientosStock[code].agregar += (v.unidades || 1);
+          } else if (v.tipoMovimiento === 'quitar') {
+            movimientosStock[code].quitar += (v.unidades || 1);
+          }
+          movimientosStock[code].neto = movimientosStock[code].agregar - movimientosStock[code].quitar;
+        }
+      }
+      
+      // MOVIMIENTOS DE MÁQUINAS (maq1 a maq10)
+      const movimientosMaquinas = {};
+      for (let i = 1; i <= 10; i++) {
+        movimientosMaquinas[`maq${i}`] = {};
+      }
+      for (const v of vMov) {
+        const destino = v.destinoMovimiento;
+        if (destino && destino.startsWith('maq')) {
+          const code = v.code;
+          if (!movimientosMaquinas[destino][code]) {
+            movimientosMaquinas[destino][code] = { agregar: 0, quitar: 0, neto: 0 };
+          }
+          if (v.tipoMovimiento === 'agregar') {
+            movimientosMaquinas[destino][code].agregar += (v.unidades || 1);
+          } else if (v.tipoMovimiento === 'quitar') {
+            movimientosMaquinas[destino][code].quitar += (v.unidades || 1);
+          }
+          movimientosMaquinas[destino][code].neto = movimientosMaquinas[destino][code].agregar - movimientosMaquinas[destino][code].quitar;
+        }
       }
       
       sucStats[suc.clave] = {
@@ -626,11 +652,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         pulseras, billar, capsulas, error,
         unitarias: fichasStats.unitarias,
         combo30: fichasStats.combo30,
-        combo50: fichasStats.combo50,
-        combo100: fichasStats.combo100,
-        combo150: fichasStats.combo150,
-        movimientosAgregar,
-        movimientosQuitar
+        combo60: fichasStats.combo60,
+        combo120: fichasStats.combo120,
+        combo180: fichasStats.combo180,
+        movimientosStock,
+        movimientosMaquinas
       };
     }
     
@@ -641,6 +667,40 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         extras = `<div class="item"><span class="label">💫 Pulseras:</span><span class="amount">Gs. ${(s.pulseras||0).toLocaleString()}</span></div>
                   <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. ${(s.billar||0).toLocaleString()}</span></div>`;
       }
+      
+      // Generar HTML de movimientos de stock (solo productos)
+      let stockMovHtml = '';
+      const stockMovs = s.movimientosStock || {};
+      if (Object.keys(stockMovs).length === 0) {
+        stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
+      } else {
+        stockMovHtml = Object.entries(stockMovs).map(([code, datos]) => 
+          `<div class="sub-item"><span class="label">${code}:</span><span class="amount">+${datos.agregar}/-${datos.quitar} = ${datos.neto >= 0 ? '+' : ''}${datos.neto}</span></div>`
+        ).join('');
+      }
+      
+      // Generar HTML de movimientos de máquinas
+      let maquinasHtml = '';
+      const maquinasMovs = s.movimientosMaquinas || {};
+      let tieneMovimientos = false;
+      for (let i = 1; i <= 10; i++) {
+        const maqMovs = maquinasMovs[`maq${i}`] || {};
+        const maqKeys = Object.keys(maqMovs);
+        if (maqKeys.length > 0) {
+          tieneMovimientos = true;
+          const productosHtml = maqKeys.map(code => {
+            const datos = maqMovs[code];
+            return `<span style="display:inline-block; margin-right:8px;">${code}: +${datos.agregar}/-${datos.quitar} = ${datos.neto >= 0 ? '+' : ''}${datos.neto}</span>`;
+          }).join('');
+          maquinasHtml += `<div class="maquina-item"><span class="label">⚙️ Máq ${i}:</span><span class="amount">${productosHtml || '-'}</span></div>`;
+        } else {
+          maquinasHtml += `<div class="maquina-item"><span class="label">⚙️ Máq ${i}:</span><span class="amount">-</span></div>`;
+        }
+      }
+      if (!tieneMovimientos) {
+        maquinasHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
+      }
+      
       return `<div class="suc-card ${suc.clave}">
         <h4><span style="color:${suc.color}">🏢</span> ${suc.nombre}</h4>
         <div class="item"><span class="label">📋 Operaciones:</span><span class="amount">${s.operaciones}</span></div>
@@ -658,14 +718,17 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <div class="sub-label">📊 Detalle de Fichas:</div>
           <div class="sub-item"><span class="label">🎴 Unitarias (000-00):</span><span class="amount">${s.unitarias.toLocaleString()} veces</span></div>
           <div class="sub-item"><span class="label">🎴 Combo 30mil (000-01):</span><span class="amount">${s.combo30.toLocaleString()} veces</span></div>
-          <div class="sub-item"><span class="label">🎴 Combo 50mil (000-02):</span><span class="amount">${s.combo50.toLocaleString()} veces</span></div>
-          <div class="sub-item"><span class="label">🎴 Combo 100mil (000-03):</span><span class="amount">${s.combo100.toLocaleString()} veces</span></div>
-          <div class="sub-item"><span class="label">🎴 Combo 150mil (000-04):</span><span class="amount">${s.combo150.toLocaleString()} veces</span></div>
+          <div class="sub-item"><span class="label">🎴 Combo 60mil (000-02):</span><span class="amount">${s.combo60.toLocaleString()} veces</span></div>
+          <div class="sub-item"><span class="label">🎴 Combo 120mil (000-03):</span><span class="amount">${s.combo120.toLocaleString()} veces</span></div>
+          <div class="sub-item"><span class="label">🎴 Combo 180mil (000-04):</span><span class="amount">${s.combo180.toLocaleString()} veces</span></div>
         </div>
         
-        <div class="sub-section"><div class="sub-label">🔄 Movimientos de Stock:</div>
-        <div class="sub-item"><span class="label">➕ Agregados:</span><span class="amount">+${s.movimientosAgregar} unidades</span></div>
-        <div class="sub-item"><span class="label">➖ Quitados:</span><span class="amount">-${s.movimientosQuitar} unidades</span></div>
+        <div class="sub-section"><div class="sub-label">📦 Movimientos de Stock (por código):</div>
+        ${stockMovHtml}
+        </div>
+        
+        <div class="sub-section"><div class="sub-label">🎰 Movimientos de Máquinas (agregado/quitado = neto):</div>
+        ${maquinasHtml}
         </div>
         
         <div class="sub-section"><div class="sub-label">🔴 Error (000-05):</div>
@@ -678,7 +741,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function renderizarTablaVentas(ventas) {
-    const html = `</table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
+    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventas.slice(0, 300).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
         const fechaStr = v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleString() : 
@@ -697,7 +760,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <td>${fichasDisplay}</td>
           <td style="font-size:0.7rem;">${fechaStr}</td>
         </tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
