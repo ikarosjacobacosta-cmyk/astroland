@@ -1295,7 +1295,6 @@ body { padding-top: 80px; }
       let mensaje = '';
       
       if (destino === 'stock') {
-        // AGREGAR suma al stock
         if (consumo > 0 && !isIndependentCode) {
           const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
           await set(ref(database, `stock/000-00`), nuevo);
@@ -1306,7 +1305,6 @@ body { padding-top: 80px; }
           mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
         }
       } else {
-        // AGREGAR desde una máquina: RESTA del stock (la máquina consume)
         if (consumo > 0 && !isIndependentCode) {
           const currentStock = stock['000-00'] ?? STOCK_INICIAL;
           if (currentStock < consumo * cantidad) {
@@ -1387,7 +1385,6 @@ body { padding-top: 80px; }
       let mensaje = '';
       
       if (destino === 'stock') {
-        // QUITAR resta del stock
         if (consumo > 0 && !isIndependentCode) {
           const currentStock = stock['000-00'] ?? STOCK_INICIAL;
           if (currentStock < consumo * cantidad) {
@@ -1409,7 +1406,6 @@ body { padding-top: 80px; }
           mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${currentMovimientosProduct.name}`;
         }
       } else {
-        // QUITAR desde una máquina: SUMA al stock (devuelve unidades)
         if (consumo > 0 && !isIndependentCode) {
           const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
           await set(ref(database, `stock/000-00`), nuevo);
@@ -1621,6 +1617,7 @@ body { padding-top: 80px; }
           esFichaGratis: venta.esFichaGratis || false,
           esMovimiento: venta.esMovimiento || false,
           tipoMovimiento: venta.tipoMovimiento || null,
+          destinoMovimiento: venta.destinoMovimiento || null,
           restauradoDesde: registro.fechaEliminacion
         };
         
@@ -1687,13 +1684,29 @@ body { padding-top: 80px; }
         hora: item.hora || new Date().toLocaleTimeString('es-PY'),
         esFichaGratis: item.esFichaGratis || false,
         esMovimiento: item.esMovimiento || false,
-        tipoMovimiento: item.tipoMovimiento || null
+        tipoMovimiento: item.tipoMovimiento || null,
+        destinoMovimiento: item.destinoMovimiento || null
       }));
       
       const totalDinero = ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0);
       const totalPuntos = ventasAEliminar.reduce((s, v) => s + (v.points || 0), 0);
       const totalFichas = ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0);
       const totalFichasRegaladas = ventasAEliminar.reduce((s, v) => s + (v.esFichaGratis ? Math.abs(v.fichaConsumption) || 0 : 0), 0);
+      
+      const movimientosPorMaquina = {};
+      ventasAEliminar.forEach(item => {
+        if (item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento !== 'stock') {
+          const maquina = item.destinoMovimiento;
+          if (!movimientosPorMaquina[maquina]) {
+            movimientosPorMaquina[maquina] = { agregar: 0, quitar: 0 };
+          }
+          if (item.tipoMovimiento === 'agregar') {
+            movimientosPorMaquina[maquina].agregar += (item.unidades || 1);
+          } else if (item.tipoMovimiento === 'quitar') {
+            movimientosPorMaquina[maquina].quitar += (item.unidades || 1);
+          }
+        }
+      });
       
       const registro = {
         sucursal: "Los Laureles",
@@ -1705,7 +1718,8 @@ body { padding-top: 80px; }
         totalDinero: totalDinero,
         totalPuntos: totalPuntos,
         totalFichas: totalFichas,
-        totalFichasRegaladas: totalFichasRegaladas
+        totalFichasRegaladas: totalFichasRegaladas,
+        movimientosPorMaquina: movimientosPorMaquina
       };
       
       const nuevoRegistroRef = await push(historialRef, registro);
@@ -1713,6 +1727,7 @@ body { padding-top: 80px; }
       console.log("✅ Historial guardado correctamente, ID:", nuevoRegistroRef.key);
       console.log(`💰 Total guardado: Gs. ${totalDinero.toLocaleString()}`);
       console.log(`📦 Items: ${ventasAEliminar.length}`);
+      console.log(`🖥️ Movimientos por máquina:`, movimientosPorMaquina);
       
       return true;
       
@@ -1893,6 +1908,22 @@ body { padding-top: 80px; }
     } else alert('Contraseña incorrecta');
   };
 
+  function renderMovimientosPorMaquina(movimientos) {
+    if (!movimientos || Object.keys(movimientos).length === 0) {
+      return '<span style="color:#999;">-</span>';
+    }
+    
+    let html = '<div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">';
+    for (const [maquina, datos] of Object.entries(movimientos)) {
+      const nombreMaquina = maquina.toUpperCase().replace('MAQ', 'Máq. ');
+      html += `<span style="background:#e3f2fd; padding:3px 8px; border-radius:12px; font-size:0.7rem;">
+        ${nombreMaquina}: +${datos.agregar || 0}/-${datos.quitar || 0}
+      </span>`;
+    }
+    html += '</div>';
+    return html;
+  }
+
   window.filtrarHistorial = function() {
     const desde = document.getElementById('fechaDesde').value;
     const hasta = document.getElementById('fechaHasta').value;
@@ -1919,9 +1950,21 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr><th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>Acciones</th></tr></thead><tbody>`;
+    let html = `<table><thead><tr>
+      <th>Fecha</th>
+      <th>Ventas</th>
+      <th>💰 Dinero</th>
+      <th>🎯 Puntos</th>
+      <th>🎴 Fichas</th>
+      <th>🎁 Fichas Reg.</th>
+      <th>🖥️ Máquinas</th>
+      <th>Acciones</th>
+    </tr></thead><tbody>`;
+    
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
+      const maquinasHtml = renderMovimientosPorMaquina(h.movimientosPorMaquina);
+      
       html += `<tr>
         <td style="white-space:nowrap;">${fechaMostrar}</td>
         <td style="text-align:center;">${h.totalVentas || 0}</td>
@@ -1929,6 +1972,7 @@ body { padding-top: 80px; }
         <td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
+        <td style="text-align:center;">${maquinasHtml}</td>
         <td>
           <div class="historial-actions">
             <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
@@ -1938,6 +1982,7 @@ body { padding-top: 80px; }
         </td>
       </tr>`;
     });
+    
     html += `</tbody></table>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
     document.getElementById('historialTabla').innerHTML = html;
@@ -1951,10 +1996,14 @@ body { padding-top: 80px; }
     const hastaTime = new Date(hasta).setHours(23,59,59,999);
     const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
     
-    const data = [['Fecha', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas']];
+    const data = [['Fecha', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas', 'Movimientos por Máquina']];
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
-      data.push([fechaMostrar, h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0]);
+      let maquinasStr = '';
+      if (h.movimientosPorMaquina) {
+        maquinasStr = Object.entries(h.movimientosPorMaquina).map(([m, d]) => `${m}: +${d.agregar}/-${d.quitar}`).join('; ');
+      }
+      data.push([fechaMostrar, h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0, maquinasStr]);
     });
     data.push([], ['RESUMEN TOTAL', '', '', '', '', '']);
     data.push(['Total General', 
@@ -1962,7 +2011,8 @@ body { padding-top: 80px; }
       filtrados.reduce((s,h)=>s+(h.totalDinero||0),0), 
       filtrados.reduce((s,h)=>s+(h.totalPuntos||0),0), 
       filtrados.reduce((s,h)=>s+(h.totalFichas||0),0),
-      filtrados.reduce((s,h)=>s+(h.totalFichasRegaladas||0),0)]);
+      filtrados.reduce((s,h)=>s+(h.totalFichasRegaladas||0),0),
+      '']);
     
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(data);
