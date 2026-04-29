@@ -181,7 +181,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border: 1px solid #e0e0e0;
 }
 
-.modal, .maquina-modal, .cierre-modal, .cart-modal {
+.modal, .maquina-modal, .cierre-modal, .cart-modal, .contadores-modal {
   display: none;
   position: fixed;
   z-index: 2000;
@@ -193,7 +193,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-.modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content, .cart-content {
+.modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content, .cart-content, .contadores-modal .modal-content {
   background-color: #fff;
   margin: 0;
   padding: 20px;
@@ -224,7 +224,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   justify-content: center;
 }
 .close:hover { color: #000; background: #eee; }
-.modal h3, .maquina-modal h3, .cierre-modal h3, .cart-content h3 { 
+.modal h3, .maquina-modal h3, .cierre-modal h3, .cart-content h3, .contadores-modal h3 { 
   margin-top: 0; 
   border-bottom: 2px solid #eee; 
   padding-bottom: 10px;
@@ -336,6 +336,56 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .btn-agregar { background: #4CAF50; color: white; }
 .btn-quitar { background: #f44336; color: white; }
 .btn-cancelar { background: #666; color: white; }
+
+.contadores-form {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 15px 0;
+}
+.contadores-field {
+  margin-bottom: 20px;
+}
+.contadores-field label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+.contadores-field select,
+.contadores-field input {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: white;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.contadores-field select:focus,
+.contadores-field input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76,175,80,0.2);
+}
+.contadores-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+.contadores-buttons button {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1rem;
+  touch-action: manipulation;
+}
+.btn-guardar-contadores { background: #4CAF50; color: white; }
+.btn-ver-contadores { background: #2196F3; color: white; }
 
 .cierre-modal input {
   width: 100%;
@@ -554,6 +604,41 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   padding: 20px;
   width: 100%;
   min-height: 100%;
+  position: relative;
+}
+.stock-fullscreen .close-stock-floating {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background: #f44336;
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+.stock-fullscreen .close-stock-floating:hover {
+  background: #d32f2f;
+  transform: scale(1.05);
+}
+@media (max-width:600px) {
+  .stock-fullscreen .close-stock-floating {
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+  }
 }
 .stock-search-container { text-align: center; margin: 20px 0; }
 .stock-search-container input { padding: 12px; font-size: 16px; width: 80%; max-width: 400px; border-radius: 10px; border: 1px solid #ccc; -webkit-appearance: none; appearance: none; }
@@ -759,7 +844,7 @@ body { padding-top: 80px; }
 
   <div id="stockModal" class="modal">
     <div class="stock-fullscreen">
-      <button class="close" onclick="closeStockModal()">&times;</button>
+      <button class="close-stock-floating" onclick="closeStockModal()">✕</button>
       <h3>📦 Gestionar Stock - Villa Morra</h3>
       <div id="stockPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
         <input type="password" id="stockPassword" placeholder="Contraseña para gestionar stock">
@@ -773,7 +858,6 @@ body { padding-top: 80px; }
         <div id="stockItemsContainer"></div>
         <div class="modal-buttons" style="margin-top:20px;">
           <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
-          <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cerrar</button>
         </div>
       </div>
     </div>
@@ -801,6 +885,52 @@ body { padding-top: 80px; }
         <input type="password" id="clearPassword" placeholder="Contraseña">
         <button onclick="verifyClearPasswordAndShowDate()" style="background:#2196F3; color:white;">Confirmar</button>
         <button onclick="hideClearPrompt()" style="background:#f44336;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="contadoresModal" class="contadores-modal">
+    <div class="modal-content">
+      <button class="close" onclick="closeContadoresModal()">&times;</button>
+      <h3>📊 Contadores de Máquinas - Código 000-11</h3>
+      
+      <div class="contadores-form">
+        <div class="contadores-field">
+          <label>🖥️ Seleccionar Máquina:</label>
+          <select id="maquinaSelect">
+            <option value="">-- Seleccionar --</option>
+          </select>
+        </div>
+        
+        <div class="contadores-field">
+          <label>📅 Fecha de Anotación:</label>
+          <input type="date" id="fechaContador" value="">
+        </div>
+        
+        <div class="contadores-field">
+          <label>🎴 Contador de Fichas:</label>
+          <input type="number" id="contadorFichas" min="0" step="1" value="0" placeholder="Fichas ingresadas">
+        </div>
+        
+        <div class="contadores-field">
+          <label>🏆 Contador de Premios:</label>
+          <input type="number" id="contadorPremios" min="0" step="1" value="0" placeholder="Premios entregados">
+        </div>
+        
+        <div class="contadores-field">
+          <label>🧪 Fichas de Prueba:</label>
+          <input type="number" id="fichasPrueba" min="0" step="1" value="0" placeholder="Fichas de prueba">
+        </div>
+        
+        <div class="contadores-field">
+          <label>🎁 Premios de Prueba:</label>
+          <input type="number" id="premiosPrueba" min="0" step="1" value="0" placeholder="Premios de prueba">
+        </div>
+        
+        <div class="contadores-buttons">
+          <button class="btn-guardar-contadores" onclick="guardarContadoresMaquina()">💾 Guardar</button>
+          <button class="btn-ver-contadores" onclick="cargarContadoresMaquina()">🔄 Cargar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -857,6 +987,7 @@ body { padding-top: 80px; }
   const cartRef = ref(database, 'carrito');
   const stockRef = ref(database, 'stock');
   const historialRef = ref(database, 'historial_ventas');
+  const contadoresRef = ref(database, 'contadores_maquinas');
 
   let currentProduct = null;
   let currentMovimientosProduct = null;
@@ -864,6 +995,7 @@ body { padding-top: 80px; }
   let stock = {};
   let historialVentas = [];
   let modoEdicionFecha = null;
+  let contadoresMaquinas = {};
   
   const PASSWORD_STOCK = "mili";
   const PASSWORD_GENERAL = "majo";
@@ -927,20 +1059,20 @@ body { padding-top: 80px; }
         { codigo: "000-04", precio: 180000 }, { codigo: "000-05", precio: 0 },
         { codigo: "000-06", precio: 0 }, { codigo: "000-07", precio: 15000 },
         { codigo: "000-08", precio: 15000 }, { codigo: "000-09", precio: 0 },
-        { codigo: "000-10", precio: 0 }
+        { codigo: "000-10", precio: 0 }, { codigo: "000-11", precio: 0 }
       ]},
       { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 18 } },
-      { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 68 } },
-      { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 71 } },
-      { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 58 } },
-      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 58 } },
-      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 34 } },
-      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 48 } },
-      { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 9 } },
-      { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 36 } },
+      { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 74 } },
+      { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 75 } },
+      { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 59 } },
+      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 63 } },
+      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 37 } },
+      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 53 } },
+      { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 10 } },
+      { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 39 } },
       { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
-      { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 3 } },
-      { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 2 } },
+      { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 5 } },
+      { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 3 } },
       { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
         { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
       ]},
@@ -1014,6 +1146,10 @@ body { padding-top: 80px; }
 
   async function loadHistorial() {
     try { const snap = await get(historialRef); const data = snap.val(); historialVentas = data ? Object.entries(data).map(([k, v]) => ({ ...v, firebaseKey: k })) : []; } catch { historialVentas = []; }
+  }
+
+  async function loadContadores() {
+    try { const snap = await get(contadoresRef); contadoresMaquinas = snap.val() || {}; } catch { contadoresMaquinas = {}; }
   }
 
   function updateAllStockIndicators() {
@@ -1102,6 +1238,11 @@ body { padding-top: 80px; }
         }
         if (code === '000-10') {
           abrirModalCierre('Tarjeta', 'Registrar monto de cierre por TARJETA');
+          clickTimeout = null;
+          return;
+        }
+        if (code === '000-11') {
+          openContadoresModal();
           clickTimeout = null;
           return;
         }
@@ -1453,6 +1594,90 @@ body { padding-top: 80px; }
   window.closeModal = function() {
     document.getElementById('purchaseModal').style.display = 'none';
     unblockBodyScroll();
+  };
+
+  window.openContadoresModal = async function() {
+    await loadContadores();
+    await cargarListaMaquinas();
+    
+    const hoy = new Date();
+    const fechaHoy = hoy.toISOString().split('T')[0];
+    document.getElementById('fechaContador').value = fechaHoy;
+    
+    document.getElementById('contadoresModal').style.display = 'block';
+    blockBodyScroll();
+  };
+
+  window.closeContadoresModal = function() {
+    document.getElementById('contadoresModal').style.display = 'none';
+    unblockBodyScroll();
+  };
+
+  async function cargarListaMaquinas() {
+    const select = document.getElementById('maquinaSelect');
+    select.innerHTML = '<option value="">-- Seleccionar --</option>';
+    for (let i = 1; i <= 20; i++) {
+      const num = i.toString().padStart(2, '0');
+      select.innerHTML += `<option value="maq${num}">🖥️ Máquina ${num}</option>`;
+    }
+  }
+
+  window.cargarContadoresMaquina = async function() {
+    const maquina = document.getElementById('maquinaSelect').value;
+    if (!maquina) {
+      alert('Seleccione una máquina primero');
+      return;
+    }
+    
+    const fecha = document.getElementById('fechaContador').value;
+    if (!fecha) {
+      alert('Seleccione una fecha');
+      return;
+    }
+    
+    const datos = contadoresMaquinas[maquina]?.[fecha] || {
+      fichas: 0,
+      premios: 0,
+      fichasPrueba: 0,
+      premiosPrueba: 0
+    };
+    
+    document.getElementById('contadorFichas').value = datos.fichas || 0;
+    document.getElementById('contadorPremios').value = datos.premios || 0;
+    document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
+    document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
+  };
+
+  window.guardarContadoresMaquina = async function() {
+    const maquina = document.getElementById('maquinaSelect').value;
+    if (!maquina) {
+      alert('Seleccione una máquina primero');
+      return;
+    }
+    
+    const fecha = document.getElementById('fechaContador').value;
+    if (!fecha) {
+      alert('Seleccione una fecha');
+      return;
+    }
+    
+    const fichas = parseInt(document.getElementById('contadorFichas').value) || 0;
+    const premios = parseInt(document.getElementById('contadorPremios').value) || 0;
+    const fichasPrueba = parseInt(document.getElementById('fichasPrueba').value) || 0;
+    const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
+    
+    await set(ref(database, `contadores_maquinas/${maquina}/${fecha}`), {
+      fichas: fichas,
+      premios: premios,
+      fichasPrueba: fichasPrueba,
+      premiosPrueba: premiosPrueba,
+      ultimaActualizacion: new Date().toISOString()
+    });
+    
+    if (!contadoresMaquinas[maquina]) contadoresMaquinas[maquina] = {};
+    contadoresMaquinas[maquina][fecha] = { fichas, premios, fichasPrueba, premiosPrueba };
+    
+    alert(`✅ Datos guardados para ${maquina.toUpperCase()} - Fecha: ${fecha}`);
   };
 
   window.addToCart = function() {
@@ -1951,7 +2176,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `</table><thead><tr>
+    let html = `<table><thead><tr>
       <th>Fecha</th>
       <th>Ventas</th>
       <th>💰 Dinero</th>
@@ -1974,7 +2199,7 @@ body { padding-top: 80px; }
         <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${maquinasHtml}</td>
-        <td>
+        <tr>
           <div class="historial-actions">
             <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
             <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
@@ -2171,7 +2396,7 @@ body { padding-top: 80px; }
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
         html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
-        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09 (stock propio)</p>`;
+        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
@@ -2209,7 +2434,6 @@ body { padding-top: 80px; }
   };
 
   window.guardarStockIndividual = function(code, valor) {
-    // Para códigos 000-00 y 000-07 se requiere contraseña especial "majo"
     if (code === '000-00' || code === '000-07') {
       const passwordConfirm = prompt('🔐 Se requiere contraseña para modificar el código ' + code + ':');
       if (passwordConfirm !== PASSWORD_SPECIAL_CODES) {
@@ -2295,9 +2519,10 @@ body { padding-top: 80px; }
 
   window.onclick = function(e) {};
 
-  Promise.all([loadInitialCart(), loadInitialStock()]).then(() => {
+  Promise.all([loadInitialCart(), loadInitialStock(), loadContadores()]).then(() => {
     onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
     onValue(stockRef, snap => { stock = snap.val() || {}; updateAllStockIndicators(); });
+    onValue(contadoresRef, snap => { contadoresMaquinas = snap.val() || {}; });
   });
 </script>
 </body>
