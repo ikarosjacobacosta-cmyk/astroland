@@ -973,13 +973,15 @@ body { padding-top: 80px; }
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, set, push, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
+  // CONFIGURACIÓN CORRECTA DE FIREBASE PARA LAMBARÉ
   const firebaseConfig = {
-    apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
-    authDomain: "los-laureles-49117.firebaseapp.com",
-    projectId: "los-laureles-49117",
-    storageBucket: "los-laureles-49117.firebasestorage.app",
-    messagingSenderId: "523096933391",
-    appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a"
+    apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
+    authDomain: "lambare-85124.firebaseapp.com",
+    databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
+    projectId: "lambare-85124",
+    storageBucket: "lambare-85124.firebasestorage.app",
+    messagingSenderId: "683666735879",
+    appId: "1:683666735879:web:88a7f147d57165ad60bba2"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -1600,7 +1602,6 @@ body { padding-top: 80px; }
     await loadContadores();
     await cargarListaMaquinas();
     
-    // Setear fecha actual por defecto
     const hoy = new Date();
     const fechaHoy = hoy.toISOString().split('T')[0];
     document.getElementById('fechaContador').value = fechaHoy;
@@ -1647,10 +1648,6 @@ body { padding-top: 80px; }
     document.getElementById('contadorPremios').value = datos.premios || 0;
     document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
     document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
-    
-    if (datos.fichas === 0 && datos.premios === 0 && datos.fichasPrueba === 0 && datos.premiosPrueba === 0) {
-      // No mostrar alerta si es la primera vez
-    }
   };
 
   window.guardarContadoresMaquina = async function() {
@@ -1679,7 +1676,6 @@ body { padding-top: 80px; }
       ultimaActualizacion: new Date().toISOString()
     });
     
-    // Actualizar cache local
     if (!contadoresMaquinas[maquina]) contadoresMaquinas[maquina] = {};
     contadoresMaquinas[maquina][fecha] = { fichas, premios, fichasPrueba, premiosPrueba };
     
@@ -2182,7 +2178,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<td><thead><tr>
+    let html = `<table><thead><tr>
       <th>Fecha</th>
       <th>Ventas</th>
       <th>💰 Dinero</th>
@@ -2205,7 +2201,7 @@ body { padding-top: 80px; }
         <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${maquinasHtml}</td>
-        <td>
+        <tr>
           <div class="historial-actions">
             <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
             <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
@@ -2215,7 +2211,7 @@ body { padding-top: 80px; }
       </tr>`;
     });
     
-    html += `</tbody><tr>`;
+    html += `</tbody></table>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
     document.getElementById('historialTabla').innerHTML = html;
   };
