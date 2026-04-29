@@ -554,6 +554,41 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   padding: 20px;
   width: 100%;
   min-height: 100%;
+  position: relative;
+}
+.stock-fullscreen .close-stock-floating {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background: #f44336;
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+.stock-fullscreen .close-stock-floating:hover {
+  background: #d32f2f;
+  transform: scale(1.05);
+}
+@media (max-width:600px) {
+  .stock-fullscreen .close-stock-floating {
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+  }
 }
 .stock-search-container { text-align: center; margin: 20px 0; }
 .stock-search-container input { padding: 12px; font-size: 16px; width: 80%; max-width: 400px; border-radius: 10px; border: 1px solid #ccc; -webkit-appearance: none; appearance: none; }
@@ -759,7 +794,7 @@ body { padding-top: 80px; }
 
   <div id="stockModal" class="modal">
     <div class="stock-fullscreen">
-      <button class="close" onclick="closeStockModal()">&times;</button>
+      <button class="close-stock-floating" onclick="closeStockModal()">✕</button>
       <h3>📦 Gestionar Stock - Lambaré</h3>
       <div id="stockPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
         <input type="password" id="stockPassword" placeholder="Contraseña para gestionar stock">
@@ -773,7 +808,6 @@ body { padding-top: 80px; }
         <div id="stockItemsContainer"></div>
         <div class="modal-buttons" style="margin-top:20px;">
           <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
-          <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cerrar</button>
         </div>
       </div>
     </div>
@@ -1974,7 +2008,7 @@ body { padding-top: 80px; }
         <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${maquinasHtml}</td>
-        <td>
+        <tr>
           <div class="historial-actions">
             <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
             <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
