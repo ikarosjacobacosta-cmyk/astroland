@@ -386,33 +386,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .btn-guardar-contadores { background: #4CAF50; color: white; }
 .btn-ver-contadores { background: #2196F3; color: white; }
-.contadores-panel {
-  background: #e3f2fd;
-  padding: 15px;
-  border-radius: 10px;
-  margin-top: 20px;
-  display: none;
-}
-.contadores-panel h4 {
-  margin: 0 0 10px 0;
-  color: #1565C0;
-}
-.contadores-panel table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8rem;
-}
-.contadores-panel th,
-.contadores-panel td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: center;
-  background: white;
-}
-.contadores-panel th {
-  background: #1565C0;
-  color: white;
-}
 
 .cierre-modal input {
   width: 100%;
@@ -605,7 +578,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   }
 }
 
-.cart-button, .stock-button, .historial-btn, .contadores-btn {
+.cart-button, .stock-button, .historial-btn {
   position: fixed;
   bottom: 20px;
   padding: 14px 22px;
@@ -624,7 +597,6 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .cart-button { right: 20px; background: #2196F3; color: white; }
 .stock-button { left: 20px; background: #FF9800; color: white; }
 .historial-btn { left: 180px; background: #9C27B0; color: white; }
-.contadores-btn { left: 340px; background: #00BCD4; color: white; }
 
 .stock-fullscreen {
   background-color: #fff;
@@ -765,9 +737,6 @@ body { padding-top: 80px; }
   .stock-indicator { font-size: 0.7rem; padding: 2px 6px; }
   .categoria h2 { font-size: 1.1rem; }
   .stock-item img { max-width: 100%; }
-  .contadores-btn { left: 20px; bottom: 90px; }
-  .stock-button { bottom: 150px; }
-  .historial-btn { bottom: 210px; }
 }
 </style>
 </head>
@@ -794,7 +763,6 @@ body { padding-top: 80px; }
   <button class="cart-button" onclick="openCartModal()">🛒 Carrito (<span id="cartCount">0</span>)</button>
   <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
   <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
-  <button class="contadores-btn" onclick="openContadoresModal()">📊 Contadores Máquinas</button>
 
   <div id="purchaseModal" class="modal">
     <div class="modal-content">
@@ -935,6 +903,11 @@ body { padding-top: 80px; }
         </div>
         
         <div class="contadores-field">
+          <label>📅 Fecha de Anotación:</label>
+          <input type="date" id="fechaContador" value="">
+        </div>
+        
+        <div class="contadores-field">
           <label>🎴 Contador de Fichas:</label>
           <input type="number" id="contadorFichas" min="0" step="1" value="0" placeholder="Fichas ingresadas">
         </div>
@@ -958,11 +931,6 @@ body { padding-top: 80px; }
           <button class="btn-guardar-contadores" onclick="guardarContadoresMaquina()">💾 Guardar</button>
           <button class="btn-ver-contadores" onclick="cargarContadoresMaquina()">🔄 Cargar</button>
         </div>
-      </div>
-      
-      <div id="contadoresPanel" class="contadores-panel">
-        <h4>📋 Panel Unificado de Contadores</h4>
-        <div id="contadoresTabla"></div>
       </div>
     </div>
   </div>
@@ -1631,7 +1599,12 @@ body { padding-top: 80px; }
   window.openContadoresModal = async function() {
     await loadContadores();
     await cargarListaMaquinas();
-    actualizarPanelContadores();
+    
+    // Setear fecha actual por defecto
+    const hoy = new Date();
+    const fechaHoy = hoy.toISOString().split('T')[0];
+    document.getElementById('fechaContador').value = fechaHoy;
+    
     document.getElementById('contadoresModal').style.display = 'block';
     blockBodyScroll();
   };
@@ -1657,7 +1630,13 @@ body { padding-top: 80px; }
       return;
     }
     
-    const datos = contadoresMaquinas[maquina] || {
+    const fecha = document.getElementById('fechaContador').value;
+    if (!fecha) {
+      alert('Seleccione una fecha');
+      return;
+    }
+    
+    const datos = contadoresMaquinas[maquina]?.[fecha] || {
       fichas: 0,
       premios: 0,
       fichasPrueba: 0,
@@ -1668,6 +1647,10 @@ body { padding-top: 80px; }
     document.getElementById('contadorPremios').value = datos.premios || 0;
     document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
     document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
+    
+    if (datos.fichas === 0 && datos.premios === 0 && datos.fichasPrueba === 0 && datos.premiosPrueba === 0) {
+      // No mostrar alerta si es la primera vez
+    }
   };
 
   window.guardarContadoresMaquina = async function() {
@@ -1677,12 +1660,18 @@ body { padding-top: 80px; }
       return;
     }
     
+    const fecha = document.getElementById('fechaContador').value;
+    if (!fecha) {
+      alert('Seleccione una fecha');
+      return;
+    }
+    
     const fichas = parseInt(document.getElementById('contadorFichas').value) || 0;
     const premios = parseInt(document.getElementById('contadorPremios').value) || 0;
     const fichasPrueba = parseInt(document.getElementById('fichasPrueba').value) || 0;
     const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
     
-    await set(ref(database, `contadores_maquinas/${maquina}`), {
+    await set(ref(database, `contadores_maquinas/${maquina}/${fecha}`), {
       fichas: fichas,
       premios: premios,
       fichasPrueba: fichasPrueba,
@@ -1690,52 +1679,12 @@ body { padding-top: 80px; }
       ultimaActualizacion: new Date().toISOString()
     });
     
-    contadoresMaquinas[maquina] = { fichas, premios, fichasPrueba, premiosPrueba };
-    actualizarPanelContadores();
-    alert(`✅ Datos guardados para ${maquina.toUpperCase()}`);
+    // Actualizar cache local
+    if (!contadoresMaquinas[maquina]) contadoresMaquinas[maquina] = {};
+    contadoresMaquinas[maquina][fecha] = { fichas, premios, fichasPrueba, premiosPrueba };
+    
+    alert(`✅ Datos guardados para ${maquina.toUpperCase()} - Fecha: ${fecha}`);
   };
-
-  function actualizarPanelContadores() {
-    const panel = document.getElementById('contadoresPanel');
-    const tablaDiv = document.getElementById('contadoresTabla');
-    
-    if (Object.keys(contadoresMaquinas).length === 0) {
-      panel.style.display = 'none';
-      return;
-    }
-    
-    panel.style.display = 'block';
-    
-    let html = `<table>
-      <thead>
-        <tr>
-          <th>Máquina</th>
-          <th>🎴 Fichas</th>
-          <th>🏆 Premios</th>
-          <th>🧪 Fichas Prueba</th>
-          <th>🎁 Premios Prueba</th>
-          <th>📅 Últ. Actualización</th>
-        </tr>
-      </thead>
-      <tbody>`;
-    
-    const maquinasOrdenadas = Object.keys(contadoresMaquinas).sort();
-    for (const maq of maquinasOrdenadas) {
-      const datos = contadoresMaquinas[maq];
-      const fecha = datos.ultimaActualizacion ? new Date(datos.ultimaActualizacion).toLocaleString('es-PY') : '-';
-      html += `<tr>
-        <td><strong>${maq.toUpperCase()}</strong></td>
-        <td>${(datos.fichas || 0).toLocaleString()}</td>
-        <td>${(datos.premios || 0).toLocaleString()}</td>
-        <td>${(datos.fichasPrueba || 0).toLocaleString()}</td>
-        <td>${(datos.premiosPrueba || 0).toLocaleString()}</td>
-        <td style="font-size:0.7rem;">${fecha}</td>
-      </tr>`;
-    }
-    
-    html += `</tbody></table>`;
-    tablaDiv.innerHTML = html;
-  }
 
   window.addToCart = function() {
     if (window.addToCartLock) {
@@ -2233,7 +2182,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr>
+    let html = `<td><thead><tr>
       <th>Fecha</th>
       <th>Ventas</th>
       <th>💰 Dinero</th>
@@ -2266,7 +2215,7 @@ body { padding-top: 80px; }
       </tr>`;
     });
     
-    html += `</tbody></table>`;
+    html += `</tbody><tr>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
     document.getElementById('historialTabla').innerHTML = html;
   };
@@ -2579,7 +2528,7 @@ body { padding-top: 80px; }
   Promise.all([loadInitialCart(), loadInitialStock(), loadContadores()]).then(() => {
     onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
     onValue(stockRef, snap => { stock = snap.val() || {}; updateAllStockIndicators(); });
-    onValue(contadoresRef, snap => { contadoresMaquinas = snap.val() || {}; if (document.getElementById('contadoresModal').style.display === 'block') actualizarPanelContadores(); });
+    onValue(contadoresRef, snap => { contadoresMaquinas = snap.val() || {}; });
   });
 </script>
 </body>
