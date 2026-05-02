@@ -90,6 +90,40 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   }
 }
 
+.btn-sync {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+}
+.btn-sync:hover {
+  background: #45a049;
+  transform: scale(1.05);
+}
+@media (max-width:600px) {
+  .btn-sync {
+    bottom: 80px;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+}
+
 .categoria { margin-bottom:30px; padding:0 6px; }
 .categoria h2 { 
   margin:0 0 12px; 
@@ -595,8 +629,14 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   touch-action: manipulation;
 }
 .cart-button { right: 20px; background: #2196F3; color: white; }
-.stock-button { left: 20px; background: #FF9800; color: white; }
-.historial-btn { left: 180px; background: #9C27B0; color: white; }
+.stock-button { left: 80px; background: #FF9800; color: white; }
+.historial-btn { left: 220px; background: #9C27B0; color: white; }
+
+@media (max-width:600px) {
+  .stock-button { left: 70px; padding: 10px 16px; font-size: 0.85rem; }
+  .historial-btn { left: 170px; padding: 10px 16px; font-size: 0.85rem; }
+  .cart-button { padding: 10px 16px; font-size: 0.85rem; }
+}
 
 .stock-fullscreen {
   background-color: #fff;
@@ -664,6 +704,29 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .password-input { display: none; margin-top: 10px; text-align: center; }
 .password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 16px; -webkit-appearance: none; appearance: none; }
 .password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; touch-action: manipulation; }
+
+.ficha-stock-panel {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin: 10px 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.ficha-stock-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+}
+.ficha-stock-panel .ficha-count {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 5px 0;
+}
+.ficha-stock-panel small {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
 
 .fecha-modal {
   display: none;
@@ -748,6 +811,7 @@ body { padding-top: 80px; }
   </div>
 
   <button class="btn-home" onclick="scrollToTop()">🏠 Volver al Inicio</button>
+  <button class="btn-sync" onclick="sincronizarForzado()" title="Sincronizar stock desde Firebase">🔄</button>
 
   <div class="container">
     <header>
@@ -1004,11 +1068,12 @@ body { padding-top: 80px; }
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
   const FICHA_CONSUMPTION = { 
-    '000-00': 1, '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30,
+    '000-00': 0,
+    '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30,
     '000-05': 1, '000-06': 7
   };
   
-  const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
+  const NON_FICHA_CODES = ['000-07', '000-08', '000-09', '000-10', '000-11'];
   const CIERRE_CODES = ['000-09', '000-10'];
 
   window.addToCartLock = false;
@@ -1018,6 +1083,89 @@ body { padding-top: 80px; }
   window.scrollToTop = function() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // ============ FUNCIONES CRÍTICAS PARA STOCK DE FICHAS ============
+  
+  async function actualizarStockFichas(cambio, motivo = '') {
+    try {
+      const snapshot = await get(ref(database, 'stock/000-00'));
+      let stockActual = snapshot.exists() ? snapshot.val() : STOCK_INICIAL;
+      stockActual = Number(stockActual) || STOCK_INICIAL;
+      
+      const nuevoStock = stockActual + cambio;
+      
+      if (nuevoStock < 0) {
+        console.error(`❌ Stock negativo evitado: ${stockActual} + ${cambio} = ${nuevoStock}`);
+        alert(`⚠️ No hay suficientes fichas.\nStock actual: ${stockActual}\nNecesitas: ${Math.abs(cambio)}`);
+        return false;
+      }
+      
+      await set(ref(database, 'stock/000-00'), nuevoStock);
+      stock['000-00'] = nuevoStock;
+      
+      console.log(`✅ Stock fichas: ${stockActual} → ${nuevoStock} (${cambio > 0 ? '+' : ''}${cambio}) - ${motivo}`);
+      
+      await recalcularStocksVirtuales();
+      
+      const fichaPanel = document.getElementById('fichaStockPanel');
+      if (fichaPanel) {
+        fichaPanel.querySelector('.ficha-count').textContent = nuevoStock;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Error actualizando stock de fichas:', error);
+      alert('❌ Error al actualizar el stock');
+      return false;
+    }
+  }
+
+  async function recalcularStocksVirtuales() {
+    const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
+    const updates = {};
+    
+    for (const [code, consumo] of Object.entries(FICHA_CONSUMPTION)) {
+      if (code !== '000-00' && consumo > 0) {
+        const nuevoStockVirtual = Math.floor(fichaStock / consumo);
+        if (stock[code] !== nuevoStockVirtual) {
+          stock[code] = nuevoStockVirtual;
+          updates[`stock/${code}`] = nuevoStockVirtual;
+        }
+      }
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      try {
+        await update(ref(database), updates);
+        console.log(`✅ Stocks virtuales recalculados:`, updates);
+      } catch (error) {
+        console.error('Error actualizando stocks virtuales:', error);
+      }
+    }
+    
+    updateAllStockIndicators();
+  }
+
+  window.sincronizarForzado = async function() {
+    const confirmar = confirm('🔄 ¿Sincronizar stock desde Firebase?\nEsto recargará todos los valores guardados.');
+    if (!confirmar) return;
+    
+    try {
+      const snapshot = await get(stockRef);
+      if (snapshot.exists()) {
+        stock = snapshot.val();
+        await recalcularStocksVirtuales();
+        alert('✅ Stock sincronizado correctamente');
+      } else {
+        alert('⚠️ No hay datos en Firebase');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('❌ Error al sincronizar');
+    }
+  };
+
+  // ============ FUNCIONES EXISTENTES (modificadas) ============
 
   function shouldShowQuantity(code) {
     return code.startsWith('005-13');
@@ -1038,10 +1186,20 @@ body { padding-top: 80px; }
     if (NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code)) {
       return stock[code] ?? STOCK_INICIAL;
     }
-    if (FICHA_CONSUMPTION[code]) {
+    
+    if (FICHA_CONSUMPTION[code] && code !== '000-00') {
       const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-      return Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
+      const consumo = FICHA_CONSUMPTION[code];
+      const virtualStock = Math.floor(fichaStock / consumo);
+      
+      if (stock[code] !== virtualStock) {
+        stock[code] = virtualStock;
+        set(ref(database, `stock/${code}`), virtualStock).catch(console.error);
+      }
+      
+      return virtualStock;
     }
+    
     return stock[code] ?? STOCK_INICIAL;
   }
 
@@ -1051,6 +1209,16 @@ body { padding-top: 80px; }
     const header = container.querySelector('header');
     container.innerHTML = '';
     if (header) container.appendChild(header);
+    
+    const fichaPanel = document.createElement('div');
+    fichaPanel.className = 'ficha-stock-panel';
+    fichaPanel.id = 'fichaStockPanel';
+    fichaPanel.innerHTML = `
+      <h3>🎴 STOCK DE FICHAS BASE</h3>
+      <div class="ficha-count">${stock['000-00'] ?? STOCK_INICIAL}</div>
+      <small>Código 000-00</small>
+    `;
+    container.appendChild(fichaPanel);
     
     const categorias = [
       { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
@@ -1109,7 +1277,7 @@ body { padding-top: 80px; }
         let textoPrecio = precio > 0 ? `- G.${precio.toLocaleString('es-PY')}` : '';
         item.innerHTML = `<div class="img-placeholder" style="background: ${colores[index]};">${codigo.replace('-', ' ')}</div>
           <p>${codigo} ${textoPrecio}</p>
-          <div class="stock-indicator">${STOCK_INICIAL}</div>`;
+          <div class="stock-indicator">${getProductStock(codigo)}</div>`;
         
         const img = new Image();
         img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; };
@@ -1132,8 +1300,6 @@ body { padding-top: 80px; }
     });
   }
 
-  generarTodosLosProductos();
-
   function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
 
   async function loadInitialCart() {
@@ -1141,7 +1307,18 @@ body { padding-top: 80px; }
   }
 
   async function loadInitialStock() {
-    try { const snap = await get(stockRef); stock = snap.val() || {}; updateAllStockIndicators(); } catch { updateAllStockIndicators(); }
+    try { 
+      const snap = await get(stockRef); 
+      stock = snap.val() || {}; 
+      if (!stock['000-00']) stock['000-00'] = STOCK_INICIAL;
+      await recalcularStocksVirtuales();
+      const fichaPanel = document.getElementById('fichaStockPanel');
+      if (fichaPanel) {
+        fichaPanel.querySelector('.ficha-count').textContent = stock['000-00'];
+      }
+    } catch { 
+      updateAllStockIndicators(); 
+    }
   }
 
   async function loadHistorial() {
@@ -1158,12 +1335,17 @@ body { padding-top: 80px; }
       let val = getProductStock(code);
       const ind = item.querySelector('.stock-indicator');
       if (ind) ind.textContent = val;
-      if (val <= 0 && !CIERRE_CODES.includes(code)) item.classList.add('out-of-stock');
+      if (val <= 0 && !CIERRE_CODES.includes(code) && code !== '000-11') item.classList.add('out-of-stock');
       else item.classList.remove('out-of-stock');
     });
     updateCategoryStockCounters();
     const searchValue = document.getElementById('busqueda')?.value || '';
     filterProducts(searchValue);
+    
+    const fichaPanel = document.getElementById('fichaStockPanel');
+    if (fichaPanel && stock['000-00']) {
+      fichaPanel.querySelector('.ficha-count').textContent = stock['000-00'];
+    }
   }
 
   function updateCategoryStockCounters() {
@@ -1171,7 +1353,7 @@ body { padding-top: 80px; }
     document.querySelectorAll('.imagen-item').forEach(item => {
       const cat = item.getAttribute('data-category');
       const code = item.getAttribute('data-code');
-      if (!cat || CIERRE_CODES.includes(code)) return;
+      if (!cat || CIERRE_CODES.includes(code) || code === '000-11') return;
       if (!cats[cat]) cats[cat] = 0;
       cats[cat] += getProductStock(code);
     });
@@ -1190,7 +1372,7 @@ body { padding-top: 80px; }
       let any = false;
       cat.querySelectorAll('.imagen-item').forEach(item => {
         const code = item.getAttribute('data-code') || '';
-        if (item.classList.contains('out-of-stock') && !CIERRE_CODES.includes(code)) { item.style.display = 'none'; }
+        if (item.classList.contains('out-of-stock') && !CIERRE_CODES.includes(code) && code !== '000-11') { item.style.display = 'none'; }
         else {
           if (q === '' || code.startsWith(q)) { item.style.display = 'flex'; any = true; }
           else { item.style.display = 'none'; }
@@ -1221,6 +1403,8 @@ body { padding-top: 80px; }
     });
   });
 
+  // ============ EVENTO PRINCIPAL DE CLICK EN PRODUCTOS ============
+  
   document.querySelectorAll('.imagen-item').forEach(item => {
     let clickTimeout = null;
     
@@ -1259,7 +1443,7 @@ body { padding-top: 80px; }
         }
         
         let stockVal = getProductStock(code);
-        if (stockVal <= 0) { alert('Sin stock'); clickTimeout = null; return; }
+        if (stockVal <= 0 && code !== '000-00') { alert('⚠️ Sin stock'); clickTimeout = null; return; }
         const price = parseFloat(this.getAttribute('data-price'));
         const consumo = FICHA_CONSUMPTION[code] || 0;
         const name = this.querySelector('p').textContent;
@@ -1294,7 +1478,7 @@ body { padding-top: 80px; }
         document.getElementById('pointsInput').value = '';
         document.getElementById('pointsInput').max = currentProduct.points || 999999;
         updateModalTotalsBasedOnQuantity();
-        document.getElementById('addToCart').disabled = (stockVal <= 0);
+        document.getElementById('addToCart').disabled = (stockVal <= 0 && code !== '000-00');
         
         document.getElementById('movimientosProductInfo').innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (si es Máquina, resta) | ➖ Quitar: resta del stock (si es Máquina, suma)</small>`;
         document.getElementById('unidadesInput').value = 1;
@@ -1345,24 +1529,301 @@ body { padding-top: 80px; }
       updateModalTotalsBasedOnQuantity();
   };
 
-  async function procesarFichaGratis(code, fichasAConsumir) {
-    const currentStock = stock['000-00'] ?? STOCK_INICIAL;
-    if (currentStock < fichasAConsumir) { 
-      alert(`No hay suficientes fichas. Necesitas ${fichasAConsumir} fichas`); 
-      return; 
+  // ============ ADD TO CART CORREGIDO ============
+  
+  window.addToCart = function() {
+    if (window.addToCartLock) return;
+    if (!currentProduct) return;
+    
+    window.addToCartLock = true;
+    
+    const procesar = async () => {
+      try {
+        const code = currentProduct.code;
+        const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
+        const consumo = currentProduct.fichaConsumption || 0;
+        const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+        
+        // Verificar stock según el tipo de producto
+        if (code === '000-00') {
+          const snapshot = await get(ref(database, 'stock/000-00'));
+          const stockActual = snapshot.exists() ? snapshot.val() : STOCK_INICIAL;
+          if (stockActual < qty) {
+            alert(`❌ Stock insuficiente de fichas. Disponible: ${stockActual}`);
+            window.addToCartLock = false;
+            return;
+          }
+        } else if (consumo > 0 && !isIndependentCode) {
+          const snapshot = await get(ref(database, 'stock/000-00'));
+          const fichaStockActual = snapshot.exists() ? snapshot.val() : STOCK_INICIAL;
+          const fichasNecesarias = consumo * qty;
+          if (fichaStockActual < fichasNecesarias) {
+            alert(`❌ No hay suficientes fichas.\nNecesitas: ${fichasNecesarias}\nDisponible: ${fichaStockActual}`);
+            window.addToCartLock = false;
+            return;
+          }
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          if (currentStock < qty) {
+            alert(`❌ Stock insuficiente para ${code}\nDisponible: ${currentStock}`);
+            window.addToCartLock = false;
+            return;
+          }
+        }
+        
+        // Validar puntos y dinero
+        const points = parseInt(document.getElementById('pointsInput').value) || 0;
+        const money = parseFloat(document.getElementById('moneyInput').value) || 0;
+        const unitPrice = currentProduct.price;
+        const totalPriceValue = unitPrice * qty;
+        
+        if (currentProduct.points > 0 && points > (currentProduct.points * qty)) {
+          alert(`Máximo ${currentProduct.points * qty} puntos`);
+          window.addToCartLock = false;
+          return;
+        }
+        
+        if (currentProduct.points > 0) {
+          const esperado = Math.round(totalPriceValue * (1 - points / (currentProduct.points * qty)));
+          if (Math.abs(money - esperado) > 1) {
+            alert('Error en cálculo de pago');
+            window.addToCartLock = false;
+            return;
+          }
+        }
+        
+        if (points === 0 && money === 0 && totalPriceValue > 0) {
+          alert('Debes pagar con puntos o dinero');
+          window.addToCartLock = false;
+          return;
+        }
+        
+        // ACTUALIZAR STOCK
+        if (code === '000-00') {
+          await actualizarStockFichas(-qty, `Venta directa de fichas x${qty}`);
+        } else if (consumo > 0 && !isIndependentCode) {
+          await actualizarStockFichas(-(consumo * qty), `Venta de ${code} x${qty}`);
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          await set(ref(database, `stock/${code}`), currentStock - qty);
+          stock[code] = currentStock - qty;
+        }
+        
+        // Registrar en carrito
+        const ahora = new Date();
+        const fecha = ahora.toLocaleDateString('es-PY');
+        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        
+        await push(cartRef, {
+          code: code,
+          name: currentProduct.name,
+          points: points,
+          money: money,
+          totalPrice: totalPriceValue,
+          unitPrice: unitPrice,
+          qty: qty,
+          fecha: fecha,
+          hora: hora,
+          timestamp: fecha + ' ' + hora,
+          timestampCompleto: ahora.getTime(),
+          fichaConsumption: consumo * qty,
+          unidades: qty
+        });
+        
+        resetSearch();
+        closeModal();
+        alert(`✅ Venta registrada: ${qty} x ${currentProduct.name}`);
+        
+      } catch (error) {
+        console.error('Error en addToCart:', error);
+        alert('❌ Error al procesar la venta');
+      } finally {
+        window.addToCartLock = false;
+      }
+    };
+    
+    procesar();
+  };
+
+  // ============ MOVIMIENTOS CORREGIDOS ============
+  
+  window.agregarUnidades = async function() {
+    if (window.agregarUnidadesLock) return;
+    if (!currentMovimientosProduct) {
+      window.agregarUnidadesLock = false;
+      return;
     }
     
-    const nuevo = currentStock - fichasAConsumir;
-    await set(ref(database, `stock/000-00`), nuevo);
+    window.agregarUnidadesLock = true;
+    
+    const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+    const destino = document.getElementById('movimientoDestino').value;
+    const code = currentMovimientosProduct.code;
+    const consumo = currentMovimientosProduct.fichaConsumption || 0;
+    const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+    
+    if (cantidad <= 0) {
+      alert('Cantidad inválida');
+      window.agregarUnidadesLock = false;
+      return;
+    }
+    
+    try {
+      let mensaje = '';
+      
+      if (destino === 'stock') {
+        if (consumo > 0 && !isIndependentCode && code !== '000-00') {
+          await actualizarStockFichas(-(consumo * cantidad), `Movimiento: +${cantidad} a stock de ${code}`);
+          mensaje = `✅ Agregado +${cantidad} a STOCK (consume ${consumo * cantidad} fichas)`;
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          await set(ref(database, `stock/${code}`), currentStock + cantidad);
+          stock[code] = currentStock + cantidad;
+          mensaje = `✅ Agregado +${cantidad} a STOCK de ${code}`;
+        }
+      } else {
+        if (consumo > 0 && !isIndependentCode && code !== '000-00') {
+          const exito = await actualizarStockFichas(-(consumo * cantidad), `Movimiento: ${cantidad} a máquina ${destino} (${code})`);
+          if (!exito) return;
+          mensaje = `✅ Máquina ${destino.toUpperCase()}: +${cantidad} (consume ${consumo * cantidad} fichas)`;
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          if (currentStock < cantidad) {
+            alert(`Stock insuficiente: ${currentStock}`);
+            return;
+          }
+          await set(ref(database, `stock/${code}`), currentStock - cantidad);
+          stock[code] = currentStock - cantidad;
+          mensaje = `✅ Máquina ${destino.toUpperCase()}: +${cantidad} (restado de stock)`;
+        }
+      }
+      
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      
+      await push(cartRef, {
+        code, name: currentMovimientosProduct.name,
+        points: 0, money: 0,
+        unidades: cantidad,
+        esMovimiento: true,
+        tipoMovimiento: 'agregar',
+        destinoMovimiento: destino,
+        totalPrice: 0,
+        fecha, hora,
+        timestamp: fecha + ' ' + hora,
+        timestampCompleto: ahora.getTime(),
+        fichaConsumption: 0
+      });
+      
+      closeModal();
+      alert(mensaje);
+      resetSearch();
+      
+    } catch (error) {
+      console.error('Error:', error);
+      alert('❌ Error al procesar el movimiento');
+    } finally {
+      window.agregarUnidadesLock = false;
+    }
+  };
+
+  window.quitarUnidades = async function() {
+    if (window.quitarUnidadesLock) return;
+    if (!currentMovimientosProduct) {
+      window.quitarUnidadesLock = false;
+      return;
+    }
+    
+    window.quitarUnidadesLock = true;
+    
+    const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+    const destino = document.getElementById('movimientoDestino').value;
+    const code = currentMovimientosProduct.code;
+    const consumo = currentMovimientosProduct.fichaConsumption || 0;
+    const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+    
+    if (cantidad <= 0) {
+      alert('Cantidad inválida');
+      window.quitarUnidadesLock = false;
+      return;
+    }
+    
+    try {
+      let mensaje = '';
+      
+      if (destino === 'stock') {
+        if (consumo > 0 && !isIndependentCode && code !== '000-00') {
+          const exito = await actualizarStockFichas(-(consumo * cantidad), `Movimiento: -${cantidad} a stock de ${code}`);
+          if (!exito) return;
+          mensaje = `✅ Quitado -${cantidad} del STOCK (consume ${consumo * cantidad} fichas)`;
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          if (currentStock < cantidad) {
+            alert(`Stock insuficiente: ${currentStock}`);
+            return;
+          }
+          await set(ref(database, `stock/${code}`), currentStock - cantidad);
+          stock[code] = currentStock - cantidad;
+          mensaje = `✅ Quitado -${cantidad} del STOCK de ${code}`;
+        }
+      } else {
+        if (consumo > 0 && !isIndependentCode && code !== '000-00') {
+          await actualizarStockFichas(consumo * cantidad, `Movimiento: devolución de ${cantidad} desde máquina ${destino} (${code})`);
+          mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} (suma ${consumo * cantidad} fichas al stock)`;
+        } else {
+          const currentStock = stock[code] ?? STOCK_INICIAL;
+          await set(ref(database, `stock/${code}`), currentStock + cantidad);
+          stock[code] = currentStock + cantidad;
+          mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} (sumado al stock)`;
+        }
+      }
+      
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      
+      await push(cartRef, {
+        code, name: currentMovimientosProduct.name,
+        points: 0, money: 0,
+        unidades: cantidad,
+        esMovimiento: true,
+        tipoMovimiento: 'quitar',
+        destinoMovimiento: destino,
+        totalPrice: 0,
+        fecha, hora,
+        timestamp: fecha + ' ' + hora,
+        timestampCompleto: ahora.getTime(),
+        fichaConsumption: 0
+      });
+      
+      closeModal();
+      alert(mensaje);
+      resetSearch();
+      
+    } catch (error) {
+      console.error('Error:', error);
+      alert('❌ Error al procesar el movimiento');
+    } finally {
+      window.quitarUnidadesLock = false;
+    }
+  };
+
+  // ============ RESTAURAR FUNCIONES ADICIONALES ============
+  
+  async function procesarFichaGratis(code, fichasAConsumir) {
+    const exito = await actualizarStockFichas(-fichasAConsumir, `Ficha gratis ${code}`);
+    if (!exito) return;
     
     const ahora = new Date();
     const fecha = ahora.toLocaleDateString('es-PY');
     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
-    await push(cartRef, { 
-      code, name: nombreProducto, points: 0, money: 0, 
-      totalPrice: 0, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
+    
+    await push(cartRef, {
+      code, name: nombreProducto, points: 0, money: 0,
+      totalPrice: 0, fecha, hora,
+      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(),
       fichaConsumption: fichasAConsumir, esFichaGratis: true, unidades: 1
     });
     
@@ -1395,10 +1856,10 @@ body { padding-top: 80px; }
     const code = tipo === 'Efectivo' ? '000-09' : '000-10';
     const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
     
-    await push(cartRef, { 
-      code, name, points: 0, money: montoNum, 
-      totalPrice: montoNum, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
+    await push(cartRef, {
+      code, name, points: 0, money: montoNum,
+      totalPrice: montoNum, fecha, hora,
+      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(),
       fichaConsumption: 0, esCierre: true, unidades: 1
     });
     
@@ -1411,198 +1872,30 @@ body { padding-top: 80px; }
     unblockBodyScroll();
   };
 
-  window.agregarUnidades = async function() {
-    if (window.agregarUnidadesLock) return;
-    window.agregarUnidadesLock = true;
-    
-    if (!currentMovimientosProduct) {
-      window.agregarUnidadesLock = false;
-      return;
-    }
-    
-    const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
-    const destino = document.getElementById('movimientoDestino').value;
-    
-    if (cantidad <= 0) { 
-      alert('Cantidad inválida'); 
-      window.agregarUnidadesLock = false;
-      return; 
-    }
-    
-    const code = currentMovimientosProduct.code;
-    const consumo = currentMovimientosProduct.fichaConsumption || 0;
-    const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
-    
-    try {
-      let mensaje = '';
-      
-      if (destino === 'stock') {
-        if (consumo > 0 && !isIndependentCode) {
-          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
-          await set(ref(database, `stock/000-00`), nuevo);
-          mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK (equivale a ${consumo * cantidad} fichas)`;
-        } else {
-          const currentStock = stock[code] ?? STOCK_INICIAL;
-          await set(ref(database, `stock/${code}`), currentStock + cantidad);
-          mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
-        }
-      } else {
-        if (consumo > 0 && !isIndependentCode) {
-          const currentStock = stock['000-00'] ?? STOCK_INICIAL;
-          if (currentStock < consumo * cantidad) {
-            alert(`No hay suficientes fichas en stock. Necesitas ${consumo * cantidad}, disponible: ${currentStock}`);
-            window.agregarUnidadesLock = false;
-            return;
-          }
-          const nuevo = currentStock - (consumo * cantidad);
-          await set(ref(database, `stock/000-00`), nuevo);
-          mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
-        } else {
-          const currentStock = stock[code] ?? STOCK_INICIAL;
-          if (currentStock < cantidad) {
-            alert(`No hay suficiente stock. Stock actual: ${currentStock}`);
-            window.agregarUnidadesLock = false;
-            return;
-          }
-          await set(ref(database, `stock/${code}`), currentStock - cantidad);
-          mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
-        }
-      }
-      
-      const ahora = new Date();
-      const fecha = ahora.toLocaleDateString('es-PY');
-      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      
-      await push(cartRef, { 
-        code, 
-        name: currentMovimientosProduct.name, 
-        points: 0,
-        money: 0,
-        unidades: cantidad, 
-        esMovimiento: true, 
-        tipoMovimiento: 'agregar',
-        destinoMovimiento: destino,
-        totalPrice: 0,
-        fecha, 
-        hora, 
-        timestamp: fecha + ' ' + hora, 
-        timestampCompleto: ahora.getTime(), 
-        fichaConsumption: 0
-      });
-      
-      closeModal();
-      alert(mensaje);
-      resetSearch();
-    } catch (error) {
-      console.error('Error:', error);
-      alert('❌ Error al procesar el movimiento');
-    } finally {
-      window.agregarUnidadesLock = false;
-    }
-  };
-
-  window.quitarUnidades = async function() {
-    if (window.quitarUnidadesLock) return;
-    window.quitarUnidadesLock = true;
-    
-    if (!currentMovimientosProduct) {
-      window.quitarUnidadesLock = false;
-      return;
-    }
-    
-    const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
-    const destino = document.getElementById('movimientoDestino').value;
-    
-    if (cantidad <= 0) { 
-      alert('Cantidad inválida'); 
-      window.quitarUnidadesLock = false;
-      return; 
-    }
-    
-    const code = currentMovimientosProduct.code;
-    const consumo = currentMovimientosProduct.fichaConsumption || 0;
-    const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
-    
-    try {
-      let mensaje = '';
-      
-      if (destino === 'stock') {
-        if (consumo > 0 && !isIndependentCode) {
-          const currentStock = stock['000-00'] ?? STOCK_INICIAL;
-          if (currentStock < consumo * cantidad) {
-            alert(`No hay suficientes fichas. Stock actual: ${currentStock}`);
-            window.quitarUnidadesLock = false;
-            return;
-          }
-          const nuevo = currentStock - (consumo * cantidad);
-          await set(ref(database, `stock/000-00`), nuevo);
-          mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK (equivale a ${consumo * cantidad} fichas)`;
-        } else {
-          const currentStock = stock[code] ?? STOCK_INICIAL;
-          if (currentStock < cantidad) {
-            alert(`No hay suficiente stock. Stock actual: ${currentStock}`);
-            window.quitarUnidadesLock = false;
-            return;
-          }
-          await set(ref(database, `stock/${code}`), currentStock - cantidad);
-          mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${currentMovimientosProduct.name}`;
-        }
-      } else {
-        if (consumo > 0 && !isIndependentCode) {
-          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
-          await set(ref(database, `stock/000-00`), nuevo);
-          mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
-        } else {
-          const currentStockVal = stock[code] ?? STOCK_INICIAL;
-          await set(ref(database, `stock/${code}`), currentStockVal + cantidad);
-          mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
-        }
-      }
-      
-      const ahora = new Date();
-      const fecha = ahora.toLocaleDateString('es-PY');
-      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      
-      await push(cartRef, { 
-        code, 
-        name: currentMovimientosProduct.name, 
-        points: 0,
-        money: 0,
-        unidades: cantidad, 
-        esMovimiento: true, 
-        tipoMovimiento: 'quitar',
-        destinoMovimiento: destino,
-        totalPrice: 0,
-        fecha, 
-        hora, 
-        timestamp: fecha + ' ' + hora, 
-        timestampCompleto: ahora.getTime(), 
-        fichaConsumption: 0
-      });
-      
-      closeModal();
-      alert(mensaje);
-      resetSearch();
-    } catch (error) {
-      console.error('Error:', error);
-      alert('❌ Error al procesar el movimiento');
-    } finally {
-      window.quitarUnidadesLock = false;
-    }
-  };
-
   window.closeModal = function() {
     document.getElementById('purchaseModal').style.display = 'none';
     unblockBodyScroll();
   };
 
+  // ============ CONTADORES DE MÁQUINAS ============
+  
   window.openContadoresModal = async function() {
     await loadContadores();
-    await cargarListaMaquinas();
+    
+    const select = document.getElementById('maquinaSelect');
+    select.innerHTML = '<option value="">-- Seleccionar Máquina --</option>';
+    for (let i = 1; i <= 20; i++) {
+      const num = i.toString().padStart(2, '0');
+      select.innerHTML += `<option value="maq${num}">🎰 Máquina ${num}</option>`;
+    }
     
     const hoy = new Date();
     const fechaHoy = hoy.toISOString().split('T')[0];
     document.getElementById('fechaContador').value = fechaHoy;
+    document.getElementById('contadorFichas').value = 0;
+    document.getElementById('contadorPremios').value = 0;
+    document.getElementById('fichasPrueba').value = 0;
+    document.getElementById('premiosPrueba').value = 0;
     
     document.getElementById('contadoresModal').style.display = 'block';
     blockBodyScroll();
@@ -1612,15 +1905,6 @@ body { padding-top: 80px; }
     document.getElementById('contadoresModal').style.display = 'none';
     unblockBodyScroll();
   };
-
-  async function cargarListaMaquinas() {
-    const select = document.getElementById('maquinaSelect');
-    select.innerHTML = '<option value="">-- Seleccionar --</option>';
-    for (let i = 1; i <= 20; i++) {
-      const num = i.toString().padStart(2, '0');
-      select.innerHTML += `<option value="maq${num}">🖥️ Máquina ${num}</option>`;
-    }
-  }
 
   window.cargarContadoresMaquina = async function() {
     const maquina = document.getElementById('maquinaSelect').value;
@@ -1636,10 +1920,7 @@ body { padding-top: 80px; }
     }
     
     const datos = contadoresMaquinas[maquina]?.[fecha] || {
-      fichas: 0,
-      premios: 0,
-      fichasPrueba: 0,
-      premiosPrueba: 0
+      fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0
     };
     
     document.getElementById('contadorFichas').value = datos.fichas || 0;
@@ -1667,10 +1948,7 @@ body { padding-top: 80px; }
     const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
     
     await set(ref(database, `contadores_maquinas/${maquina}/${fecha}`), {
-      fichas: fichas,
-      premios: premios,
-      fichasPrueba: fichasPrueba,
-      premiosPrueba: premiosPrueba,
+      fichas, premios, fichasPrueba, premiosPrueba,
       ultimaActualizacion: new Date().toISOString()
     });
     
@@ -1680,668 +1958,8 @@ body { padding-top: 80px; }
     alert(`✅ Datos guardados para ${maquina.toUpperCase()} - Fecha: ${fecha}`);
   };
 
-  window.addToCart = function() {
-    if (window.addToCartLock) {
-      console.log('AddToCart bloqueado');
-      return;
-    }
-    
-    if (!currentProduct) return;
-    
-    window.addToCartLock = true;
-    
-    if (document.activeElement && document.activeElement.blur) {
-      document.activeElement.blur();
-    }
-    
-    const procesar = () => {
-      try {
-        const code = currentProduct.code;
-        const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
-        const consumo = currentProduct.fichaConsumption || 0;
-        let currentStock;
-        
-        const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
-        
-        if (consumo > 0 && !isIndependentCode) {
-          currentStock = stock['000-00'] ?? STOCK_INICIAL;
-          if (currentStock < (consumo * qty)) { 
-            alert(`No hay suficientes fichas. Necesitas ${consumo * qty}, disponible: ${currentStock}`); 
-            window.addToCartLock = false;
-            return; 
-          }
-        } else {
-          currentStock = stock[code] ?? STOCK_INICIAL;
-          if (currentStock < qty) { 
-            alert(`No hay suficiente stock. Cantidad: ${qty}, disponible: ${currentStock}`); 
-            window.addToCartLock = false;
-            return; 
-          }
-        }
-        
-        const points = parseInt(document.getElementById('pointsInput').value) || 0;
-        const money = parseFloat(document.getElementById('moneyInput').value) || 0;
-        const unitPrice = currentProduct.price;
-        const totalPriceValue = unitPrice * qty;
-        
-        if (currentProduct.points > 0 && points > (currentProduct.points * qty)) { 
-          alert(`Máximo ${currentProduct.points * qty} puntos`); 
-          window.addToCartLock = false;
-          return; 
-        }
-        
-        if (currentProduct.points > 0) {
-          const esperado = Math.round(totalPriceValue * (1 - points / (currentProduct.points * qty)));
-          if (Math.abs(money - esperado) > 1) { 
-            alert('Error en cálculo de pago'); 
-            window.addToCartLock = false;
-            return; 
-          }
-        }
-        
-        if (points === 0 && money === 0 && totalPriceValue > 0) { 
-          alert('Debes pagar con puntos o dinero'); 
-          window.addToCartLock = false;
-          return; 
-        }
-        
-        if (consumo > 0 && !isIndependentCode) {
-          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * qty);
-          set(ref(database, `stock/000-00`), nuevo);
-        } else {
-          set(ref(database, `stock/${code}`), currentStock - qty);
-        }
-        
-        const ahora = new Date();
-        const fecha = ahora.toLocaleDateString('es-PY');
-        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-        
-        push(cartRef, { 
-          code, 
-          name: currentProduct.name, 
-          points: points,
-          money: money,
-          totalPrice: totalPriceValue,
-          unitPrice: unitPrice,
-          qty: qty,
-          fecha, 
-          hora, 
-          timestamp: fecha + ' ' + hora, 
-          timestampCompleto: ahora.getTime(), 
-          fichaConsumption: consumo * qty,
-          unidades: qty 
-        }).then(() => {
-          resetSearch();
-          closeModal();
-          alert(`✅ ${qty} unidad(es) agregada(s) al carrito`);
-        }).catch(error => {
-          console.error('Error al agregar:', error);
-          alert('❌ Error al agregar al carrito');
-        }).finally(() => {
-          window.addToCartLock = false;
-        });
-        
-      } catch (error) {
-        console.error('Error en addToCart:', error);
-        alert('❌ Error al procesar la venta');
-        window.addToCartLock = false;
-      }
-    };
-    
-    if (isIOS) {
-      setTimeout(procesar, 100);
-    } else {
-      procesar();
-    }
-  };
-
-  window.restaurarVentasAlCarrito = async function(firebaseKey) {
-    const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
-    if (!registro) {
-      alert('❌ Registro no encontrado');
-      return;
-    }
-    
-    const confirmar = confirm(`📋 RESTAURAR VENTAS\n\n📅 Fecha a restaurar: ${registro.fechaEliminacion}\n📦 Items a restaurar: ${registro.totalVentas || 0}\n💰 Dinero: Gs. ${(registro.totalDinero || 0).toLocaleString()}\n🎯 Puntos: ${(registro.totalPuntos || 0).toLocaleString()}\n\n⚠️ NOTA:\n• Las ventas se AGREGARÁN al carrito actual\n• NO se modificará el stock\n• Los items actuales NO se perderán\n\n¿Continuar?`);
-    
-    if (!confirmar) return;
-    
-    const pwd = prompt('🔐 Contraseña para restaurar:');
-    if (pwd !== PASSWORD_GENERAL) {
-      alert('Contraseña incorrecta');
-      return;
-    }
-    
-    const btnOriginal = event.target;
-    const textoOriginal = btnOriginal.textContent;
-    btnOriginal.textContent = '⏳ RESTAURANDO...';
-    btnOriginal.disabled = true;
-    
-    try {
-      let restaurados = 0;
-      let errores = 0;
-      let dineroTotalRestaurado = 0;
-      let puntosTotalesRestaurados = 0;
-      
-      for (const venta of registro.ventas) {
-        const ahora = new Date();
-        const fecha = ahora.toLocaleDateString('es-PY');
-        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-        
-        const itemRestaurado = {
-          code: venta.code,
-          name: venta.name,
-          points: venta.points || 0,
-          money: venta.money || 0,
-          totalPrice: venta.money || 0,
-          fecha: fecha,
-          hora: hora,
-          timestamp: fecha + ' ' + hora,
-          timestampCompleto: ahora.getTime(),
-          fichaConsumption: venta.fichaConsumption || 0,
-          unidades: venta.unidades || 1,
-          esFichaGratis: venta.esFichaGratis || false,
-          esMovimiento: venta.esMovimiento || false,
-          tipoMovimiento: venta.tipoMovimiento || null,
-          destinoMovimiento: venta.destinoMovimiento || null,
-          restauradoDesde: registro.fechaEliminacion
-        };
-        
-        try {
-          await push(cartRef, itemRestaurado);
-          restaurados++;
-          dineroTotalRestaurado += (venta.money || 0);
-          puntosTotalesRestaurados += (venta.points || 0);
-        } catch(e) {
-          console.error('Error restaurando:', venta);
-          errores++;
-        }
-      }
-      
-      await loadInitialCart();
-      
-      if (document.getElementById('cartModal').style.display === 'block') {
-        renderCart();
-      }
-      
-      alert(`✅ RESTAURACIÓN COMPLETADA!\n\n📅 Fecha original: ${registro.fechaEliminacion}\n✅ Restaurados: ${restaurados} items\n❌ Errores: ${errores}\n💰 Dinero: Gs. ${dineroTotalRestaurado.toLocaleString()}\n🎯 Puntos: ${puntosTotalesRestaurados}\n\n🛒 Los items se agregaron al carrito actual.`);
-      
-    } catch(error) {
-      console.error('Error en restauración:', error);
-      alert('❌ Error al restaurar las ventas');
-    } finally {
-      btnOriginal.textContent = textoOriginal;
-      btnOriginal.disabled = false;
-    }
-  };
-
-  async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
-    if (!ventasAEliminar || ventasAEliminar.length === 0) {
-      console.log("⚠️ No hay ventas para guardar");
-      return false;
-    }
-    
-    console.log(`📝 Guardando ${ventasAEliminar.length} ventas en historial...`);
-    
-    try {
-      if (!fechaSeleccionada || fechaSeleccionada === '') {
-        console.error("❌ Fecha inválida");
-        alert("❌ Error: Fecha inválida");
-        return false;
-      }
-      
-      const fechaObj = new Date(fechaSeleccionada);
-      if (isNaN(fechaObj.getTime())) {
-        console.error("❌ Fecha inválida:", fechaSeleccionada);
-        alert("❌ Error: Formato de fecha inválido");
-        return false;
-      }
-      
-      fechaObj.setHours(12, 0, 0, 0);
-      
-      const ventasMapeadas = ventasAEliminar.map(item => ({
-        code: item.code || '',
-        name: item.name || '',
-        points: item.points || 0,
-        money: item.money || 0,
-        fichaConsumption: item.fichaConsumption || 0,
-        unidades: item.unidades || 1,
-        fecha: item.fecha || new Date().toLocaleDateString('es-PY'),
-        hora: item.hora || new Date().toLocaleTimeString('es-PY'),
-        esFichaGratis: item.esFichaGratis || false,
-        esMovimiento: item.esMovimiento || false,
-        tipoMovimiento: item.tipoMovimiento || null,
-        destinoMovimiento: item.destinoMovimiento || null
-      }));
-      
-      const totalDinero = ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0);
-      const totalPuntos = ventasAEliminar.reduce((s, v) => s + (v.points || 0), 0);
-      const totalFichas = ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0);
-      const totalFichasRegaladas = ventasAEliminar.reduce((s, v) => s + (v.esFichaGratis ? Math.abs(v.fichaConsumption) || 0 : 0), 0);
-      
-      const movimientosPorMaquina = {};
-      ventasAEliminar.forEach(item => {
-        if (item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento !== 'stock') {
-          const maquina = item.destinoMovimiento;
-          if (!movimientosPorMaquina[maquina]) {
-            movimientosPorMaquina[maquina] = { agregar: 0, quitar: 0 };
-          }
-          if (item.tipoMovimiento === 'agregar') {
-            movimientosPorMaquina[maquina].agregar += (item.unidades || 1);
-          } else if (item.tipoMovimiento === 'quitar') {
-            movimientosPorMaquina[maquina].quitar += (item.unidades || 1);
-          }
-        }
-      });
-      
-      const registro = {
-        sucursal: "Los Laureles",
-        fechaEliminacion: fechaSeleccionada,
-        timestamp: fechaObj.getTime(),
-        fechaCreacion: new Date().toISOString(),
-        ventas: ventasMapeadas,
-        totalVentas: ventasAEliminar.length,
-        totalDinero: totalDinero,
-        totalPuntos: totalPuntos,
-        totalFichas: totalFichas,
-        totalFichasRegaladas: totalFichasRegaladas,
-        movimientosPorMaquina: movimientosPorMaquina
-      };
-      
-      const nuevoRegistroRef = await push(historialRef, registro);
-      
-      console.log("✅ Historial guardado correctamente, ID:", nuevoRegistroRef.key);
-      console.log(`💰 Total guardado: Gs. ${totalDinero.toLocaleString()}`);
-      console.log(`📦 Items: ${ventasAEliminar.length}`);
-      console.log(`🖥️ Movimientos por máquina:`, movimientosPorMaquina);
-      
-      return true;
-      
-    } catch(e) { 
-      console.error("❌ Error al guardar en historial:", e);
-      alert("❌ Error crítico al guardar en historial. Las ventas NO se eliminaron.");
-      return false;
-    }
-  }
-
-  window.verifyClearPasswordAndShowDate = function() {
-    const pwd = document.getElementById('clearPassword').value;
-    if (pwd !== PASSWORD_GENERAL) { 
-      alert('Contraseña incorrecta'); 
-      return; 
-    }
-    if (cart.length === 0) {
-      alert('El carrito está vacío');
-      return;
-    }
-    
-    hideClearPrompt();
-    document.getElementById('cartModal').style.display = 'none';
-    unblockBodyScroll();
-    
-    modoEdicionFecha = 'vaciar';
-    
-    const hoy = new Date();
-    const ayer = new Date();
-    ayer.setDate(hoy.getDate() - 1);
-    
-    document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para historial';
-    document.getElementById('fechaModalDescripcion').textContent = '¿Qué fecha quieres asignar a este registro?';
-    document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
-    document.getElementById('fechaModal').style.display = 'block';
-  };
-
-  window.mostrarModalEditarFecha = function(firebaseKey, fechaActual) {
-    modoEdicionFecha = { tipo: 'editar', firebaseKey: firebaseKey };
-    
-    document.getElementById('fechaModalTitulo').textContent = '✏️ Editar fecha del historial';
-    document.getElementById('fechaModalDescripcion').textContent = 'Selecciona la nueva fecha para este registro:';
-    document.getElementById('fechaHistorialInput').value = fechaActual;
-    document.getElementById('fechaModal').style.display = 'block';
-  };
-
-  window.closeFechaModal = function() {
-    document.getElementById('fechaModal').style.display = 'none';
-    modoEdicionFecha = null;
-  };
-
-  window.confirmarAccionFecha = async function() {
-    const fechaInput = document.getElementById('fechaHistorialInput').value;
-    if (!fechaInput) {
-      alert('❌ Debes seleccionar una fecha');
-      return;
-    }
-    
-    const btnConfirmar = document.querySelector('#fechaModal .fecha-modal-buttons button:first-child');
-    const textoOriginal = btnConfirmar.textContent;
-    btnConfirmar.textContent = '⏳ GUARDANDO...';
-    btnConfirmar.disabled = true;
-    
-    try {
-      if (modoEdicionFecha === 'vaciar') {
-        if (cart.length === 0) {
-          alert('⚠️ El carrito está vacío');
-          closeFechaModal();
-          return;
-        }
-        
-        console.log(`📦 Vaciar carrito: ${cart.length} items para guardar`);
-        
-        const backupLocal = {
-          timestamp: Date.now(),
-          fechaRecuperacion: new Date().toLocaleString(),
-          fechaAsignada: fechaInput,
-          ventas: JSON.parse(JSON.stringify(cart)),
-          totalVentas: cart.length,
-          totalDinero: cart.reduce((s, v) => s + (v.money || 0), 0),
-          sucursal: "Los Laureles"
-        };
-        localStorage.setItem('BACKUP_VENTAS_' + Date.now(), JSON.stringify(backupLocal));
-        localStorage.setItem('BACKUP_ULTIMO', JSON.stringify(backupLocal));
-        console.log("💾 Backup guardado en localStorage");
-        
-        const guardadoExitoso = await guardarEnHistorial(cart, fechaInput);
-        
-        if (guardadoExitoso) {
-          await remove(cartRef);
-          console.log("✅ Carrito vaciado después de guardar");
-          
-          closeFechaModal();
-          alert(`✅ ÉXITO! Se guardaron ${backupLocal.totalVentas} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${backupLocal.totalDinero.toLocaleString()}`);
-          
-          await loadInitialCart();
-          if (document.getElementById('cartModal').style.display === 'block') {
-            renderCart();
-          }
-        } else {
-          alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y están respaldadas localmente.');
-          console.log("💾 Puedes recuperar las ventas del backup local en caso necesario");
-        }
-        
-      } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
-        const firebaseKey = modoEdicionFecha.firebaseKey;
-        const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
-        if (registro) {
-          const fechaObj = new Date(fechaInput);
-          fechaObj.setHours(12, 0, 0, 0);
-          
-          await update(ref(database, `historial_ventas/${firebaseKey}`), {
-            fechaEliminacion: fechaInput,
-            timestamp: fechaObj.getTime()
-          });
-          
-          closeFechaModal();
-          alert(`✅ Fecha actualizada a: ${fechaInput.split('-').reverse().join('/')}`);
-          await loadHistorial();
-          filtrarHistorial();
-        }
-      }
-    } catch (error) {
-      console.error("❌ Error en confirmarAccionFecha:", error);
-      alert('❌ Error al procesar la solicitud. Las ventas están respaldadas localmente.');
-    } finally {
-      btnConfirmar.textContent = textoOriginal;
-      btnConfirmar.disabled = false;
-    }
-    
-    modoEdicionFecha = null;
-  };
-
-  window.eliminarRegistroHistorial = async function(firebaseKey) {
-    if (!confirm('¿Estás seguro de eliminar este registro del historial? Esta acción no se puede deshacer.')) return;
-    
-    const pwd = prompt('🔐 Contraseña para eliminar:');
-    if (pwd !== PASSWORD_GENERAL) {
-      alert('Contraseña incorrecta');
-      return;
-    }
-    
-    try {
-      await remove(ref(database, `historial_ventas/${firebaseKey}`));
-      alert('✅ Registro eliminado del historial');
-      await loadHistorial();
-      filtrarHistorial();
-    } catch (e) {
-      alert('❌ Error al eliminar');
-      console.error(e);
-    }
-  };
-
-  window.showHistorialModal = function() {
-    document.getElementById('historialModal').style.display = 'block';
-    document.getElementById('historialPasswordPrompt').style.display = 'block';
-    document.getElementById('historialContent').style.display = 'none';
-    document.getElementById('historialPassword').value = '';
-    blockBodyScroll();
-  };
-
-  window.closeHistorialModal = function() { 
-    document.getElementById('historialModal').style.display = 'none';
-    unblockBodyScroll();
-  };
-
-  window.verifyHistorialPassword = async function() {
-    if (document.getElementById('historialPassword').value === PASSWORD_GENERAL) {
-      document.getElementById('historialPasswordPrompt').style.display = 'none';
-      document.getElementById('historialContent').style.display = 'block';
-      await loadHistorial();
-      const hoy = new Date();
-      const hace30Dias = new Date();
-      hace30Dias.setDate(hoy.getDate() - 30);
-      document.getElementById('fechaDesde').value = hace30Dias.toISOString().split('T')[0];
-      document.getElementById('fechaHasta').value = hoy.toISOString().split('T')[0];
-      filtrarHistorial();
-    } else alert('Contraseña incorrecta');
-  };
-
-  function renderMovimientosPorMaquina(movimientos) {
-    if (!movimientos || Object.keys(movimientos).length === 0) {
-      return '<span style="color:#999;">-</span>';
-    }
-    
-    let html = '<div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">';
-    for (const [maquina, datos] of Object.entries(movimientos)) {
-      const nombreMaquina = maquina.toUpperCase().replace('MAQ', 'Máq. ');
-      html += `<span style="background:#e3f2fd; padding:3px 8px; border-radius:12px; font-size:0.7rem;">
-        ${nombreMaquina}: +${datos.agregar || 0}/-${datos.quitar || 0}
-      </span>`;
-    }
-    html += '</div>';
-    return html;
-  }
-
-  window.filtrarHistorial = function() {
-    const desde = document.getElementById('fechaDesde').value;
-    const hasta = document.getElementById('fechaHasta').value;
-    if (!desde || !hasta) return;
-    
-    const desdeTime = new Date(desde).setHours(0,0,0,0);
-    const hastaTime = new Date(hasta).setHours(23,59,59,999);
-    
-    const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
-    filtrados.sort((a,b) => b.timestamp - a.timestamp);
-    
-    const totalDinero = filtrados.reduce((s, h) => s + (h.totalDinero || 0), 0);
-    const totalPuntos = filtrados.reduce((s, h) => s + (h.totalPuntos || 0), 0);
-    const totalFichas = filtrados.reduce((s, h) => s + (h.totalFichas || 0), 0);
-    const totalFichasRegaladas = filtrados.reduce((s, h) => s + (h.totalFichasRegaladas || 0), 0);
-    const totalVentas = filtrados.reduce((s, h) => s + (h.totalVentas || 0), 0);
-    
-    document.getElementById('historialStats').innerHTML = `
-      <strong>📊 Resumen del período:</strong><br>
-      💰 Dinero total: Gs. ${totalDinero.toLocaleString()} | 
-      🎯 Puntos: ${totalPuntos.toLocaleString()} | 
-      🎴 Fichas Consumidas: ${totalFichas.toLocaleString()} | 
-      🎁 Fichas Regaladas: ${totalFichasRegaladas.toLocaleString()} | 
-      🛒 Ventas: ${totalVentas}
-    `;
-    
-    let html = `<table><thead><tr>
-      <th>Fecha</th>
-      <th>Ventas</th>
-      <th>💰 Dinero</th>
-      <th>🎯 Puntos</th>
-      <th>🎴 Fichas</th>
-      <th>🎁 Fichas Reg.</th>
-      <th>🖥️ Máquinas</th>
-      <th>Acciones</th>
-    </tr></thead><tbody>`;
-    
-    filtrados.forEach(h => {
-      const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
-      const maquinasHtml = renderMovimientosPorMaquina(h.movimientosPorMaquina);
-      
-      html += `<tr>
-        <td style="white-space:nowrap;">${fechaMostrar}</td>
-        <td style="text-align:center;">${h.totalVentas || 0}</td>
-        <td style="text-align:center;">Gs. ${(h.totalDinero || 0).toLocaleString()}</td>
-        <td style="text-align:center;">${(h.totalPuntos || 0).toLocaleString()}</td>
-        <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
-        <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
-        <td style="text-align:center;">${maquinasHtml}</td>
-        <tr>
-          <div class="historial-actions">
-            <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
-            <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
-            <button class="btn-eliminar-historial" onclick="eliminarRegistroHistorial('${h.firebaseKey}')">🗑️ Eliminar</button>
-          </div>
-        </td>
-      </tr>`;
-    });
-    
-    html += `</tbody></table>`;
-    if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
-    document.getElementById('historialTabla').innerHTML = html;
-  };
-
-  window.exportarHistorialExcel = function() {
-    const desde = document.getElementById('fechaDesde').value;
-    const hasta = document.getElementById('fechaHasta').value;
-    if (!desde || !hasta) return;
-    const desdeTime = new Date(desde).setHours(0,0,0,0);
-    const hastaTime = new Date(hasta).setHours(23,59,59,999);
-    const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
-    
-    const data = [['Fecha', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas', 'Movimientos por Máquina']];
-    filtrados.forEach(h => {
-      const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
-      let maquinasStr = '';
-      if (h.movimientosPorMaquina) {
-        maquinasStr = Object.entries(h.movimientosPorMaquina).map(([m, d]) => `${m}: +${d.agregar}/-${d.quitar}`).join('; ');
-      }
-      data.push([fechaMostrar, h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0, maquinasStr]);
-    });
-    data.push([], ['RESUMEN TOTAL', '', '', '', '', '']);
-    data.push(['Total General', 
-      filtrados.reduce((s,h)=>s+(h.totalVentas||0),0), 
-      filtrados.reduce((s,h)=>s+(h.totalDinero||0),0), 
-      filtrados.reduce((s,h)=>s+(h.totalPuntos||0),0), 
-      filtrados.reduce((s,h)=>s+(h.totalFichas||0),0),
-      filtrados.reduce((s,h)=>s+(h.totalFichasRegaladas||0),0),
-      '']);
-    
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, 'Historial_Laureles');
-    XLSX.writeFile(wb, `Historial_Laureles_${desde}_${hasta}.xlsx`);
-  };
-
-  function renderCart() {
-    const div = document.getElementById('cartItems');
-    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
-    
-    cart.forEach(item => {
-        if (!item) return;
-        const d = document.createElement('div');
-        d.className = 'cart-item';
-        
-        const qty = item.unidades || 1;
-        
-        let movimientoTexto = '';
-        let movimientoClase = '';
-        let puntosTexto = '';
-        let dineroTexto = '';
-        let fichasTexto = '';
-        
-        if (item.esMovimiento) {
-            if (item.tipoMovimiento === 'agregar') {
-                movimientoTexto = `+${qty}`;
-                movimientoClase = 'unidades-positivo';
-            } else if (item.tipoMovimiento === 'quitar') {
-                movimientoTexto = `-${qty}`;
-                movimientoClase = 'unidades-negativo';
-            }
-            puntosTexto = '-';
-            dineroTexto = '-';
-            fichasTexto = '-';
-        } else {
-            movimientoTexto = '-';
-            puntosTexto = (item.points || 0).toLocaleString();
-            dineroTexto = `Gs. ${(item.money || 0).toLocaleString()}`;
-            
-            if (item.fichaConsumption && !item.esMovimiento) {
-                fichasTexto = `${Math.abs(item.fichaConsumption)}`;
-            } else {
-                fichasTexto = '-';
-            }
-        }
-        
-        d.innerHTML = `<span>${item.name || item.code} ${qty > 1 ? `(x${qty})` : ''}</span>
-            <span>${puntosTexto}</span>
-            <span>${dineroTexto}</span>
-            <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
-            <span>${fichasTexto}</span>
-            <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
-            <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem; touch-action:manipulation;">🗑️</button></span>`;
-        div.appendChild(d);
-    });
-    
-    if (cart.length === 0) {
-        div.innerHTML += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
-    }
-  }
-
-  window.showDeletePrompt = function(firebaseKey) {
-    const pwd = prompt('🔐 Contraseña para eliminar:');
-    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
-    const item = cart.find(i => i.firebaseKey === firebaseKey);
-    if (!item) { alert('Item no encontrado'); return; }
-    const consumo = item.fichaConsumption || 0;
-    const unidades = item.unidades || 1;
-    
-    const isIndependentCode = NON_FICHA_CODES.includes(item.code) || CIERRE_CODES.includes(item.code);
-    
-    if (item.esMovimiento) {
-      if (item.tipoMovimiento === 'agregar') {
-        if (consumo > 0 && !isIndependentCode) {
-          const actual = stock['000-00'] ?? STOCK_INICIAL;
-          set(ref(database, `stock/000-00`), actual - Math.abs(consumo));
-        } else if (item.code && !CIERRE_CODES.includes(item.code)) {
-          const actual = stock[item.code] ?? STOCK_INICIAL;
-          set(ref(database, `stock/${item.code}`), actual - unidades);
-        }
-      } else if (item.tipoMovimiento === 'quitar') {
-        if (consumo > 0 && !isIndependentCode) {
-          const actual = stock['000-00'] ?? STOCK_INICIAL;
-          set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
-        } else if (item.code && !CIERRE_CODES.includes(item.code)) {
-          const actual = stock[item.code] ?? STOCK_INICIAL;
-          set(ref(database, `stock/${item.code}`), actual + unidades);
-        }
-      }
-    } else {
-      if (consumo > 0 && !isIndependentCode) {
-        const actual = stock['000-00'] ?? STOCK_INICIAL;
-        set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
-      } else if (item.code && !CIERRE_CODES.includes(item.code)) {
-        const actual = stock[item.code] ?? STOCK_INICIAL;
-        set(ref(database, `stock/${item.code}`), actual + unidades);
-      }
-    }
-    
-    remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
-  };
-
+  // ============ STOCK MANAGEMENT ============
+  
   window.showStockManagement = function() {
     document.getElementById('stockModal').style.display = 'block';
     document.getElementById('stockPasswordPrompt').style.display = 'block';
@@ -2395,8 +2013,8 @@ body { padding-top: 80px; }
       html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(3), 000-02(9), 000-03(20), 000-04(30), 000-05(1), 000-06(7)</small></p>`;
-        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas base (000-00):</strong> ${fichaStock} fichas disponibles</p>`;
+        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-10, 000-11 (stock propio)</p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
       const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
@@ -2405,7 +2023,7 @@ body { padding-top: 80px; }
         if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
           html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
         } else {
-          html += `<input type="number" value="${p.currentStock}" readonly disabled><span>🎴 Stock de fichas</span>`;
+          html += `<input type="number" value="${p.currentStock}" readonly disabled><span>🎴 Depende de 000-00</span>`;
         }
         html += `</div></div>`;
       });
@@ -2430,18 +2048,16 @@ body { padding-top: 80px; }
     let v = input.value.replace(/\D/g, '');
     if (v.length > 3) v = v.substring(0, 3);
     input.value = v;
-    filterStockItems(v);
+    window.filterStockItems(v);
   };
 
-  window.guardarStockIndividual = function(code, valor) {
+  window.guardarStockIndividual = async function(code, valor) {
     if (code === '000-00' || code === '000-07') {
       const passwordConfirm = prompt('🔐 Se requiere contraseña para modificar el código ' + code + ':');
       if (passwordConfirm !== PASSWORD_SPECIAL_CODES) {
-        alert('❌ Contraseña incorrecta. No se puede modificar el stock del código ' + code);
+        alert('❌ Contraseña incorrecta');
         const inp = document.getElementById(`stock-${code}`);
-        if (inp) {
-          inp.value = stock[code] ?? STOCK_INICIAL;
-        }
+        if (inp) inp.value = stock[code] ?? STOCK_INICIAL;
         return;
       }
     }
@@ -2457,44 +2073,154 @@ body { padding-top: 80px; }
     inp.style.transition = 'background-color 0.3s';
     inp.style.border = '2px solid #4CAF50';
     
-    set(ref(database, `stock/${code}`), newStock).then(() => {
+    try {
+      await set(ref(database, `stock/${code}`), newStock);
       stock[code] = newStock;
+      
+      if (code === '000-00') {
+        await recalcularStocksVirtuales();
+      }
+      
       updateAllStockIndicators();
       
       setTimeout(() => {
         inp.style.backgroundColor = '';
         inp.style.border = '';
       }, 1000);
-    }).catch(e => {
+    } catch(e) {
       inp.style.backgroundColor = '#f8d7da';
       inp.style.border = '2px solid #dc3545';
       setTimeout(() => {
         inp.style.backgroundColor = '';
         inp.style.border = '';
       }, 1000);
-    });
+    }
   };
 
   window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente al editar cada valor');
 
-  window.openCartModal = function() { 
-    renderCart(); 
+  // ============ CARRITO Y OTRAS FUNCIONES ============
+  
+  window.openCartModal = function() {
+    renderCart();
     document.getElementById('cartModal').style.display = 'block';
     blockBodyScroll();
   };
   
-  window.closeCartModal = function() { 
-    document.getElementById('cartModal').style.display = 'none'; 
-    hideExportPrompt(); 
+  window.closeCartModal = function() {
+    document.getElementById('cartModal').style.display = 'none';
+    hideExportPrompt();
     hideClearPrompt();
     unblockBodyScroll();
   };
   
+  function renderCart() {
+    const div = document.getElementById('cartItems');
+    div.innerHTML = '<div class="cart-item cart-header"><span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span></div>';
+    
+    cart.forEach(item => {
+        if (!item) return;
+        const d = document.createElement('div');
+        d.className = 'cart-item';
+        
+        const qty = item.unidades || 1;
+        
+        let movimientoTexto = '';
+        let movimientoClase = '';
+        let puntosTexto = '';
+        let dineroTexto = '';
+        let fichasTexto = '';
+        
+        if (item.esMovimiento) {
+            if (item.tipoMovimiento === 'agregar') {
+                movimientoTexto = `+${qty}`;
+                movimientoClase = 'unidades-positivo';
+            } else if (item.tipoMovimiento === 'quitar') {
+                movimientoTexto = `-${qty}`;
+                movimientoClase = 'unidades-negativo';
+            }
+            puntosTexto = '-';
+            dineroTexto = '-';
+            fichasTexto = '-';
+        } else {
+            movimientoTexto = '-';
+            puntosTexto = (item.points || 0).toLocaleString();
+            dineroTexto = `Gs. ${(item.money || 0).toLocaleString()}`;
+            if (item.fichaConsumption && !item.esMovimiento) {
+                fichasTexto = `${Math.abs(item.fichaConsumption)}`;
+            } else {
+                fichasTexto = '-';
+            }
+        }
+        
+        d.innerHTML = `<span>${item.name || item.code} ${qty > 1 ? `(x${qty})` : ''}</span>
+            <span>${puntosTexto}</span>
+            <span>${dineroTexto}</span>
+            <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
+            <span>${fichasTexto}</span>
+            <span style="font-size:0.7rem;">${item.timestamp || item.fecha + ' ' + item.hora}</span>
+            <span><button onclick="showDeletePrompt('${item.firebaseKey}')" style="padding:5px 8px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem; touch-action:manipulation;">🗑️</button></span>`;
+        div.appendChild(d);
+    });
+    
+    if (cart.length === 0) {
+        div.innerHTML += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
+    }
+  }
+
+  window.showDeletePrompt = async function(firebaseKey) {
+    const pwd = prompt('🔐 Contraseña para eliminar:');
+    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
+    const item = cart.find(i => i.firebaseKey === firebaseKey);
+    if (!item) { alert('Item no encontrado'); return; }
+    const consumo = item.fichaConsumption || 0;
+    const unidades = item.unidades || 1;
+    
+    const isIndependentCode = NON_FICHA_CODES.includes(item.code) || CIERRE_CODES.includes(item.code);
+    
+    if (item.esMovimiento) {
+      if (item.tipoMovimiento === 'agregar') {
+        if (consumo > 0 && !isIndependentCode) {
+          await actualizarStockFichas(-Math.abs(consumo), `Deshacer movimiento agregar`);
+        } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+          const actual = stock[item.code] ?? STOCK_INICIAL;
+          await set(ref(database, `stock/${item.code}`), actual - unidades);
+          stock[item.code] = actual - unidades;
+        }
+      } else if (item.tipoMovimiento === 'quitar') {
+        if (consumo > 0 && !isIndependentCode) {
+          await actualizarStockFichas(Math.abs(consumo), `Deshacer movimiento quitar`);
+        } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+          const actual = stock[item.code] ?? STOCK_INICIAL;
+          await set(ref(database, `stock/${item.code}`), actual + unidades);
+          stock[item.code] = actual + unidades;
+        }
+      }
+    } else {
+      if (consumo > 0 && !isIndependentCode) {
+        await actualizarStockFichas(Math.abs(consumo), `Deshacer venta de ${item.code}`);
+      } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+        const actual = stock[item.code] ?? STOCK_INICIAL;
+        await set(ref(database, `stock/${item.code}`), actual + unidades);
+        stock[item.code] = actual + unidades;
+      }
+    }
+    
+    await remove(ref(database, `carrito/${firebaseKey}`));
+    alert('✅ Eliminado');
+  };
+
   window.showExportPasswordPrompt = () => document.getElementById('exportPasswordPrompt').style.display = 'block';
   window.hideExportPrompt = () => { document.getElementById('exportPasswordPrompt').style.display = 'none'; document.getElementById('exportPassword').value = ''; };
   window.showClearPasswordPrompt = () => document.getElementById('clearPasswordPrompt').style.display = 'block';
   window.hideClearPrompt = () => { document.getElementById('clearPasswordPrompt').style.display = 'none'; document.getElementById('clearPassword').value = ''; };
-  window.verifyAndExport = function() { if (document.getElementById('exportPassword').value === PASSWORD_GENERAL) { exportToExcel(); hideExportPrompt(); } else alert('Contraseña incorrecta'); };
+  
+  window.verifyAndExport = function() {
+    if (document.getElementById('exportPassword').value === PASSWORD_GENERAL) {
+      exportToExcel();
+      hideExportPrompt();
+    } else alert('Contraseña incorrecta');
+  };
 
   function exportToExcel() {
     if (cart.length === 0) { alert('Carrito vacío'); return; }
@@ -2517,11 +2243,345 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `ASTROLAND_Laureles_${new Date().toLocaleDateString('es-PY').replace(/\//g,'-')}.xlsx`);
   }
 
-  window.onclick = function(e) {};
+  // ============ HISTORIAL ============
+  
+  window.showHistorialModal = function() {
+    document.getElementById('historialModal').style.display = 'block';
+    document.getElementById('historialPasswordPrompt').style.display = 'block';
+    document.getElementById('historialContent').style.display = 'none';
+    document.getElementById('historialPassword').value = '';
+    blockBodyScroll();
+  };
 
+  window.closeHistorialModal = function() {
+    document.getElementById('historialModal').style.display = 'none';
+    unblockBodyScroll();
+  };
+
+  window.verifyHistorialPassword = async function() {
+    if (document.getElementById('historialPassword').value === PASSWORD_GENERAL) {
+      document.getElementById('historialPasswordPrompt').style.display = 'none';
+      document.getElementById('historialContent').style.display = 'block';
+      await loadHistorial();
+      const hoy = new Date();
+      const hace30Dias = new Date();
+      hace30Dias.setDate(hoy.getDate() - 30);
+      document.getElementById('fechaDesde').value = hace30Dias.toISOString().split('T')[0];
+      document.getElementById('fechaHasta').value = hoy.toISOString().split('T')[0];
+      filtrarHistorial();
+    } else alert('Contraseña incorrecta');
+  };
+
+  window.filtrarHistorial = function() {
+    const desde = document.getElementById('fechaDesde').value;
+    const hasta = document.getElementById('fechaHasta').value;
+    if (!desde || !hasta) return;
+    
+    const desdeTime = new Date(desde).setHours(0,0,0,0);
+    const hastaTime = new Date(hasta).setHours(23,59,59,999);
+    
+    const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
+    filtrados.sort((a,b) => b.timestamp - a.timestamp);
+    
+    const totalDinero = filtrados.reduce((s, h) => s + (h.totalDinero || 0), 0);
+    const totalPuntos = filtrados.reduce((s, h) => s + (h.totalPuntos || 0), 0);
+    const totalFichas = filtrados.reduce((s, h) => s + (h.totalFichas || 0), 0);
+    const totalFichasRegaladas = filtrados.reduce((s, h) => s + (h.totalFichasRegaladas || 0), 0);
+    const totalVentas = filtrados.reduce((s, h) => s + (h.totalVentas || 0), 0);
+    
+    document.getElementById('historialStats').innerHTML = `
+      <strong>📊 Resumen del período:</strong><br>
+      💰 Dinero total: Gs. ${totalDinero.toLocaleString()} | 
+      🎯 Puntos: ${totalPuntos.toLocaleString()} | 
+      🎴 Fichas Consumidas: ${totalFichas.toLocaleString()} | 
+      🎁 Fichas Regaladas: ${totalFichasRegaladas.toLocaleString()} | 
+      🛒 Ventas: ${totalVentas}
+    `;
+    
+    let html = `<table><thead><tr>
+      <th>Fecha</th><th>Ventas</th><th>💰 Dinero</th><th>🎯 Puntos</th><th>🎴 Fichas</th><th>🎁 Fichas Reg.</th><th>🖥️ Máquinas</th><th>Acciones</th>
+    </tr></thead><tbody>`;
+    
+    filtrados.forEach(h => {
+      const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
+      let maquinasHtml = '-';
+      if (h.movimientosPorMaquina && Object.keys(h.movimientosPorMaquina).length > 0) {
+        let html2 = '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
+        for (const [maquina, datos] of Object.entries(h.movimientosPorMaquina)) {
+          html2 += `<span style="background:#e3f2fd; padding:3px 8px; border-radius:12px;">${maquina.toUpperCase()}: +${datos.agregar || 0}/-${datos.quitar || 0}</span>`;
+        }
+        maquinasHtml = html2 + '</div>';
+      }
+      
+      html += `<tr>
+        <td>${fechaMostrar}</td>
+        <td>${h.totalVentas || 0}</td>
+        <td>Gs. ${(h.totalDinero || 0).toLocaleString()}</td>
+        <td>${(h.totalPuntos || 0).toLocaleString()}</td>
+        <td>${(h.totalFichas || 0).toLocaleString()}</td>
+        <td>${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
+        <td>${maquinasHtml}</td>
+        <td>
+          <div class="historial-actions">
+            <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
+            <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
+            <button class="btn-eliminar-historial" onclick="eliminarRegistroHistorial('${h.firebaseKey}')">🗑️ Eliminar</button>
+          </div>
+        </td>
+      </tr>`;
+    });
+    
+    html += `</tbody></table>`;
+    if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
+    document.getElementById('historialTabla').innerHTML = html;
+  };
+
+  window.exportarHistorialExcel = function() {
+    const desde = document.getElementById('fechaDesde').value;
+    const hasta = document.getElementById('fechaHasta').value;
+    if (!desde || !hasta) return;
+    const desdeTime = new Date(desde).setHours(0,0,0,0);
+    const hastaTime = new Date(hasta).setHours(23,59,59,999);
+    const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
+    
+    const data = [['Fecha', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas', 'Movimientos por Máquina']];
+    filtrados.forEach(h => {
+      const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
+      let maquinasStr = '';
+      if (h.movimientosPorMaquina) {
+        maquinasStr = Object.entries(h.movimientosPorMaquina).map(([m, d]) => `${m}: +${d.agregar}/-${d.quitar}`).join('; ');
+      }
+      data.push([fechaMostrar, h.totalVentas || 0, h.totalDinero || 0, h.totalPuntos || 0, h.totalFichas || 0, h.totalFichasRegaladas || 0, maquinasStr]);
+    });
+    
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, 'Historial_Laureles');
+    XLSX.writeFile(wb, `Historial_Laureles_${desde}_${hasta}.xlsx`);
+  };
+
+  window.mostrarModalEditarFecha = function(firebaseKey, fechaActual) {
+    modoEdicionFecha = { tipo: 'editar', firebaseKey: firebaseKey };
+    document.getElementById('fechaModalTitulo').textContent = '✏️ Editar fecha del historial';
+    document.getElementById('fechaModalDescripcion').textContent = 'Selecciona la nueva fecha para este registro:';
+    document.getElementById('fechaHistorialInput').value = fechaActual;
+    document.getElementById('fechaModal').style.display = 'block';
+  };
+
+  window.closeFechaModal = function() {
+    document.getElementById('fechaModal').style.display = 'none';
+    modoEdicionFecha = null;
+  };
+
+  window.confirmarAccionFecha = async function() {
+    const fechaInput = document.getElementById('fechaHistorialInput').value;
+    if (!fechaInput) {
+      alert('❌ Debes seleccionar una fecha');
+      return;
+    }
+    
+    if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
+      const firebaseKey = modoEdicionFecha.firebaseKey;
+      const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
+      if (registro) {
+        const fechaObj = new Date(fechaInput);
+        fechaObj.setHours(12, 0, 0, 0);
+        await update(ref(database, `historial_ventas/${firebaseKey}`), {
+          fechaEliminacion: fechaInput,
+          timestamp: fechaObj.getTime()
+        });
+        closeFechaModal();
+        alert(`✅ Fecha actualizada a: ${fechaInput.split('-').reverse().join('/')}`);
+        await loadHistorial();
+        filtrarHistorial();
+      }
+    } else if (modoEdicionFecha === 'vaciar') {
+      if (cart.length === 0) {
+        alert('⚠️ El carrito está vacío');
+        closeFechaModal();
+        return;
+      }
+      
+      const guardadoExitoso = await guardarEnHistorial(cart, fechaInput);
+      if (guardadoExitoso) {
+        await remove(cartRef);
+        closeFechaModal();
+        alert(`✅ Se guardaron ${cart.length} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}`);
+        await loadInitialCart();
+        if (document.getElementById('cartModal').style.display === 'block') renderCart();
+      } else {
+        alert('❌ Error al guardar en historial');
+      }
+    }
+    modoEdicionFecha = null;
+  };
+
+  async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
+    if (!ventasAEliminar || ventasAEliminar.length === 0) return false;
+    
+    try {
+      const fechaObj = new Date(fechaSeleccionada);
+      fechaObj.setHours(12, 0, 0, 0);
+      
+      const ventasMapeadas = ventasAEliminar.map(item => ({
+        code: item.code || '',
+        name: item.name || '',
+        points: item.points || 0,
+        money: item.money || 0,
+        fichaConsumption: item.fichaConsumption || 0,
+        unidades: item.unidades || 1,
+        fecha: item.fecha || new Date().toLocaleDateString('es-PY'),
+        hora: item.hora || new Date().toLocaleTimeString('es-PY'),
+        esFichaGratis: item.esFichaGratis || false,
+        esMovimiento: item.esMovimiento || false,
+        tipoMovimiento: item.tipoMovimiento || null,
+        destinoMovimiento: item.destinoMovimiento || null
+      }));
+      
+      const totalDinero = ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0);
+      const totalPuntos = ventasAEliminar.reduce((s, v) => s + (v.points || 0), 0);
+      const totalFichas = ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0);
+      const totalFichasRegaladas = ventasAEliminar.reduce((s, v) => s + (v.esFichaGratis ? Math.abs(v.fichaConsumption) || 0 : 0), 0);
+      
+      const movimientosPorMaquina = {};
+      ventasAEliminar.forEach(item => {
+        if (item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento !== 'stock') {
+          const maquina = item.destinoMovimiento;
+          if (!movimientosPorMaquina[maquina]) movimientosPorMaquina[maquina] = { agregar: 0, quitar: 0 };
+          if (item.tipoMovimiento === 'agregar') movimientosPorMaquina[maquina].agregar += (item.unidades || 1);
+          else if (item.tipoMovimiento === 'quitar') movimientosPorMaquina[maquina].quitar += (item.unidades || 1);
+        }
+      });
+      
+      const registro = {
+        sucursal: "Los Laureles",
+        fechaEliminacion: fechaSeleccionada,
+        timestamp: fechaObj.getTime(),
+        fechaCreacion: new Date().toISOString(),
+        ventas: ventasMapeadas,
+        totalVentas: ventasAEliminar.length,
+        totalDinero: totalDinero,
+        totalPuntos: totalPuntos,
+        totalFichas: totalFichas,
+        totalFichasRegaladas: totalFichasRegaladas,
+        movimientosPorMaquina: movimientosPorMaquina
+      };
+      
+      await push(historialRef, registro);
+      return true;
+    } catch(e) {
+      console.error("Error al guardar en historial:", e);
+      return false;
+    }
+  }
+
+  window.verifyClearPasswordAndShowDate = function() {
+    const pwd = document.getElementById('clearPassword').value;
+    if (pwd !== PASSWORD_GENERAL) {
+      alert('Contraseña incorrecta');
+      return;
+    }
+    if (cart.length === 0) {
+      alert('El carrito está vacío');
+      return;
+    }
+    hideClearPrompt();
+    document.getElementById('cartModal').style.display = 'none';
+    unblockBodyScroll();
+    
+    modoEdicionFecha = 'vaciar';
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para historial';
+    document.getElementById('fechaModalDescripcion').textContent = '¿Qué fecha quieres asignar a este registro?';
+    document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
+    document.getElementById('fechaModal').style.display = 'block';
+  };
+
+  window.eliminarRegistroHistorial = async function(firebaseKey) {
+    if (!confirm('¿Estás seguro de eliminar este registro del historial? Esta acción no se puede deshacer.')) return;
+    const pwd = prompt('🔐 Contraseña para eliminar:');
+    if (pwd !== PASSWORD_GENERAL) {
+      alert('Contraseña incorrecta');
+      return;
+    }
+    try {
+      await remove(ref(database, `historial_ventas/${firebaseKey}`));
+      alert('✅ Registro eliminado');
+      await loadHistorial();
+      filtrarHistorial();
+    } catch (e) {
+      alert('❌ Error al eliminar');
+    }
+  };
+
+  window.restaurarVentasAlCarrito = async function(firebaseKey) {
+    const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
+    if (!registro) {
+      alert('❌ Registro no encontrado');
+      return;
+    }
+    
+    const confirmar = confirm(`📋 RESTAURAR VENTAS\n\n📅 Fecha: ${registro.fechaEliminacion}\n📦 Items: ${registro.totalVentas || 0}\n💰 Dinero: Gs. ${(registro.totalDinero || 0).toLocaleString()}\n🎯 Puntos: ${(registro.totalPuntos || 0).toLocaleString()}\n\n¿Continuar?`);
+    if (!confirmar) return;
+    
+    const pwd = prompt('🔐 Contraseña para restaurar:');
+    if (pwd !== PASSWORD_GENERAL) {
+      alert('Contraseña incorrecta');
+      return;
+    }
+    
+    for (const venta of registro.ventas) {
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      
+      await push(cartRef, {
+        code: venta.code,
+        name: venta.name,
+        points: venta.points || 0,
+        money: venta.money || 0,
+        totalPrice: venta.money || 0,
+        fecha: fecha,
+        hora: hora,
+        timestamp: fecha + ' ' + hora,
+        timestampCompleto: ahora.getTime(),
+        fichaConsumption: venta.fichaConsumption || 0,
+        unidades: venta.unidades || 1,
+        esFichaGratis: venta.esFichaGratis || false,
+        esMovimiento: venta.esMovimiento || false,
+        tipoMovimiento: venta.tipoMovimiento || null,
+        destinoMovimiento: venta.destinoMovimiento || null,
+        restauradoDesde: registro.fechaEliminacion
+      });
+    }
+    
+    await loadInitialCart();
+    alert(`✅ Restaurados ${registro.ventas.length} items al carrito`);
+  };
+
+  // ============ INICIALIZACIÓN ============
+  
   Promise.all([loadInitialCart(), loadInitialStock(), loadContadores()]).then(() => {
-    onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
-    onValue(stockRef, snap => { stock = snap.val() || {}; updateAllStockIndicators(); });
+    generarTodosLosProductos();
+    
+    onValue(cartRef, async (snap) => {
+      const d = snap.val();
+      cart = d ? Object.entries(d).map(([k, v])=>({...v, firebaseKey:k})) : [];
+      updateCartCount();
+      if (document.getElementById('cartModal').style.display === 'block') renderCart();
+    });
+    
+    onValue(stockRef, async (snap) => {
+      stock = snap.val() || {};
+      if (!stock['000-00']) stock['000-00'] = STOCK_INICIAL;
+      await recalcularStocksVirtuales();
+      const fichaPanel = document.getElementById('fichaStockPanel');
+      if (fichaPanel && stock['000-00']) {
+        fichaPanel.querySelector('.ficha-count').textContent = stock['000-00'];
+      }
+    });
+    
     onValue(contadoresRef, snap => { contadoresMaquinas = snap.val() || {}; });
   });
 </script>
