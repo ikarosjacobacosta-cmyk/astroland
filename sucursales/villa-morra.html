@@ -718,6 +718,23 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
+.overlay-mensaje {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: bold;
+  z-index: 10000;
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: monospace;
+}
+
 @media (min-width: 1200px) { 
   .galeria { grid-template-columns: repeat(5, 1fr); }
   .imagen-item p { font-size: 0.9rem; }
@@ -804,16 +821,6 @@ body { padding-top: 80px; }
         <div id="movimientosProductInfo" class="product-info"></div>
         <select id="movimientoDestino" class="maquina-input" style="padding:12px;">
           <option value="stock">📦 Stock</option>
-          <option value="maq1">⚙️ Maq 1</option>
-          <option value="maq2">⚙️ Maq 2</option>
-          <option value="maq3">⚙️ Maq 3</option>
-          <option value="maq4">⚙️ Maq 4</option>
-          <option value="maq5">⚙️ Maq 5</option>
-          <option value="maq6">⚙️ Maq 6</option>
-          <option value="maq7">⚙️ Maq 7</option>
-          <option value="maq8">⚙️ Maq 8</option>
-          <option value="maq9">⚙️ Maq 9</option>
-          <option value="maq10">⚙️ Maq 10</option>
         </select>
         <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades" onfocus="this.select()">
         <div class="maquina-buttons">
@@ -1014,6 +1021,34 @@ body { padding-top: 80px; }
   window.addToCartLock = false;
   window.agregarUnidadesLock = false;
   window.quitarUnidadesLock = false;
+
+  // Verificación de conexión a internet
+  function isOnline() {
+    return navigator.onLine;
+  }
+
+  function mostrarMensajeTemporal(texto, esError = false) {
+    const div = document.createElement('div');
+    div.className = 'overlay-mensaje';
+    div.textContent = texto;
+    div.style.background = esError ? 'rgba(244, 67, 54, 0.9)' : 'rgba(0,0,0,0.85)';
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 2000);
+  }
+
+  function mostrarMensajeEnProceso(texto) {
+    const div = document.createElement('div');
+    div.id = 'mensajeEnProceso';
+    div.className = 'overlay-mensaje';
+    div.textContent = texto + ' ⏳';
+    div.style.background = 'rgba(33, 150, 243, 0.9)';
+    document.body.appendChild(div);
+  }
+
+  function ocultarMensajeEnProceso() {
+    const div = document.getElementById('mensajeEnProceso');
+    if (div) div.remove();
+  }
 
   window.scrollToTop = function() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1221,6 +1256,17 @@ body { padding-top: 80px; }
     });
   });
 
+  // Generar opciones de máquinas hasta 20
+  function generarOpcionesMaquinas() {
+    const select = document.getElementById('movimientoDestino');
+    if (select) {
+      for (let i = 1; i <= 20; i++) {
+        select.innerHTML += `<option value="maq${i}">⚙️ Maq ${i}</option>`;
+      }
+    }
+  }
+  generarOpcionesMaquinas();
+
   document.querySelectorAll('.imagen-item').forEach(item => {
     let clickTimeout = null;
     
@@ -1346,28 +1392,41 @@ body { padding-top: 80px; }
   };
 
   async function procesarFichaGratis(code, fichasAConsumir) {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede procesar', true);
+      return;
+    }
+    
     const currentStock = stock['000-00'] ?? STOCK_INICIAL;
     if (currentStock < fichasAConsumir) { 
       alert(`No hay suficientes fichas. Necesitas ${fichasAConsumir} fichas`); 
       return; 
     }
     
-    const nuevo = currentStock - fichasAConsumir;
-    await set(ref(database, `stock/000-00`), nuevo);
+    mostrarMensajeEnProceso('🔄 Procesando ficha gratis');
     
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
-    await push(cartRef, { 
-      code, name: nombreProducto, points: 0, money: 0, 
-      totalPrice: 0, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: fichasAConsumir, esFichaGratis: true, unidades: 1
-    });
-    
-    alert(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code} (sin costo)`);
-    resetSearch();
+    try {
+      const nuevo = currentStock - fichasAConsumir;
+      await set(ref(database, `stock/000-00`), nuevo);
+      
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
+      await push(cartRef, { 
+        code, name: nombreProducto, points: 0, money: 0, 
+        totalPrice: 0, fecha, hora, 
+        timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
+        fichaConsumption: fichasAConsumir, esFichaGratis: true, unidades: 1
+      });
+      
+      ocultarMensajeEnProceso();
+      alert(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code} (sin costo)`);
+      resetSearch();
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al procesar ficha gratis');
+    }
   }
 
   function abrirModalCierre(tipo, descripcion) {
@@ -1384,26 +1443,40 @@ body { padding-top: 80px; }
   }
 
   async function confirmarCierre(tipo) {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede registrar el cierre', true);
+      closeCierreModal();
+      return;
+    }
+    
     let monto = document.getElementById('cierreMonto').value;
     monto = monto.replace(/\./g, '');
     let montoNum = parseFloat(monto);
     if (isNaN(montoNum)) montoNum = 0;
     
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const code = tipo === 'Efectivo' ? '000-09' : '000-10';
-    const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
+    mostrarMensajeEnProceso('🔄 Registrando cierre');
     
-    await push(cartRef, { 
-      code, name, points: 0, money: montoNum, 
-      totalPrice: montoNum, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: 0, esCierre: true, unidades: 1
-    });
-    
-    closeCierreModal();
-    alert(`✅ Cierre de ${tipo} registrado: Gs. ${montoNum.toLocaleString()}`);
+    try {
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const code = tipo === 'Efectivo' ? '000-09' : '000-10';
+      const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
+      
+      await push(cartRef, { 
+        code, name, points: 0, money: montoNum, 
+        totalPrice: montoNum, fecha, hora, 
+        timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
+        fichaConsumption: 0, esCierre: true, unidades: 1
+      });
+      
+      ocultarMensajeEnProceso();
+      closeCierreModal();
+      alert(`✅ Cierre de ${tipo} registrado: Gs. ${montoNum.toLocaleString()}`);
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al registrar cierre');
+    }
   }
 
   window.closeCierreModal = () => {
@@ -1413,6 +1486,12 @@ body { padding-top: 80px; }
 
   window.agregarUnidades = async function() {
     if (window.agregarUnidadesLock) return;
+    
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede realizar el movimiento', true);
+      return;
+    }
+    
     window.agregarUnidadesLock = true;
     
     if (!currentMovimientosProduct) {
@@ -1433,6 +1512,8 @@ body { padding-top: 80px; }
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
     const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
     
+    mostrarMensajeEnProceso('🔄 Procesando movimiento');
+    
     try {
       let mensaje = '';
       
@@ -1450,6 +1531,7 @@ body { padding-top: 80px; }
         if (consumo > 0 && !isIndependentCode) {
           const currentStock = stock['000-00'] ?? STOCK_INICIAL;
           if (currentStock < consumo * cantidad) {
+            ocultarMensajeEnProceso();
             alert(`No hay suficientes fichas en stock. Necesitas ${consumo * cantidad}, disponible: ${currentStock}`);
             window.agregarUnidadesLock = false;
             return;
@@ -1460,6 +1542,7 @@ body { padding-top: 80px; }
         } else {
           const currentStock = stock[code] ?? STOCK_INICIAL;
           if (currentStock < cantidad) {
+            ocultarMensajeEnProceso();
             alert(`No hay suficiente stock. Stock actual: ${currentStock}`);
             window.agregarUnidadesLock = false;
             return;
@@ -1490,10 +1573,12 @@ body { padding-top: 80px; }
         fichaConsumption: 0
       });
       
+      ocultarMensajeEnProceso();
       closeModal();
       alert(mensaje);
       resetSearch();
     } catch (error) {
+      ocultarMensajeEnProceso();
       console.error('Error:', error);
       alert('❌ Error al procesar el movimiento');
     } finally {
@@ -1503,6 +1588,12 @@ body { padding-top: 80px; }
 
   window.quitarUnidades = async function() {
     if (window.quitarUnidadesLock) return;
+    
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede realizar el movimiento', true);
+      return;
+    }
+    
     window.quitarUnidadesLock = true;
     
     if (!currentMovimientosProduct) {
@@ -1523,6 +1614,8 @@ body { padding-top: 80px; }
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
     const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
     
+    mostrarMensajeEnProceso('🔄 Procesando movimiento');
+    
     try {
       let mensaje = '';
       
@@ -1530,6 +1623,7 @@ body { padding-top: 80px; }
         if (consumo > 0 && !isIndependentCode) {
           const currentStock = stock['000-00'] ?? STOCK_INICIAL;
           if (currentStock < consumo * cantidad) {
+            ocultarMensajeEnProceso();
             alert(`No hay suficientes fichas. Stock actual: ${currentStock}`);
             window.quitarUnidadesLock = false;
             return;
@@ -1540,6 +1634,7 @@ body { padding-top: 80px; }
         } else {
           const currentStock = stock[code] ?? STOCK_INICIAL;
           if (currentStock < cantidad) {
+            ocultarMensajeEnProceso();
             alert(`No hay suficiente stock. Stock actual: ${currentStock}`);
             window.quitarUnidadesLock = false;
             return;
@@ -1580,10 +1675,12 @@ body { padding-top: 80px; }
         fichaConsumption: 0
       });
       
+      ocultarMensajeEnProceso();
       closeModal();
       alert(mensaje);
       resetSearch();
     } catch (error) {
+      ocultarMensajeEnProceso();
       console.error('Error:', error);
       alert('❌ Error al procesar el movimiento');
     } finally {
@@ -1623,6 +1720,11 @@ body { padding-top: 80px; }
   }
 
   window.cargarContadoresMaquina = async function() {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede cargar', true);
+      return;
+    }
+    
     const maquina = document.getElementById('maquinaSelect').value;
     if (!maquina) {
       alert('Seleccione una máquina primero');
@@ -1635,20 +1737,35 @@ body { padding-top: 80px; }
       return;
     }
     
-    const datos = contadoresMaquinas[maquina]?.[fecha] || {
-      fichas: 0,
-      premios: 0,
-      fichasPrueba: 0,
-      premiosPrueba: 0
-    };
+    mostrarMensajeEnProceso('🔄 Cargando contadores');
     
-    document.getElementById('contadorFichas').value = datos.fichas || 0;
-    document.getElementById('contadorPremios').value = datos.premios || 0;
-    document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
-    document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
+    try {
+      const datos = contadoresMaquinas[maquina]?.[fecha] || {
+        fichas: 0,
+        premios: 0,
+        fichasPrueba: 0,
+        premiosPrueba: 0
+      };
+      
+      document.getElementById('contadorFichas').value = datos.fichas || 0;
+      document.getElementById('contadorPremios').value = datos.premios || 0;
+      document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
+      document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
+      
+      ocultarMensajeEnProceso();
+      alert(`✅ Datos cargados para ${maquina} - Fecha: ${fecha}`);
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al cargar contadores');
+    }
   };
 
   window.guardarContadoresMaquina = async function() {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede guardar', true);
+      return;
+    }
+    
     const maquina = document.getElementById('maquinaSelect').value;
     if (!maquina) {
       alert('Seleccione una máquina primero');
@@ -1666,23 +1783,33 @@ body { padding-top: 80px; }
     const fichasPrueba = parseInt(document.getElementById('fichasPrueba').value) || 0;
     const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
     
-    await set(ref(database, `contadores_maquinas/${maquina}/${fecha}`), {
-      fichas: fichas,
-      premios: premios,
-      fichasPrueba: fichasPrueba,
-      premiosPrueba: premiosPrueba,
-      ultimaActualizacion: new Date().toISOString()
-    });
+    mostrarMensajeEnProceso('🔄 Guardando contadores');
     
-    if (!contadoresMaquinas[maquina]) contadoresMaquinas[maquina] = {};
-    contadoresMaquinas[maquina][fecha] = { fichas, premios, fichasPrueba, premiosPrueba };
-    
-    alert(`✅ Datos guardados para ${maquina.toUpperCase()} - Fecha: ${fecha}`);
+    try {
+      await set(ref(database, `contadores_maquinas/${maquina}/${fecha}`), {
+        fichas: fichas,
+        premios: premios,
+        fichasPrueba: fichasPrueba,
+        premiosPrueba: premiosPrueba,
+        ultimaActualizacion: new Date().toISOString()
+      });
+      
+      if (!contadoresMaquinas[maquina]) contadoresMaquinas[maquina] = {};
+      contadoresMaquinas[maquina][fecha] = { fichas, premios, fichasPrueba, premiosPrueba };
+      
+      ocultarMensajeEnProceso();
+      alert(`✅ Datos guardados para ${maquina} - Fecha: ${fecha}`);
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al guardar contadores');
+    }
   };
 
   window.addToCart = function() {
-    if (window.addToCartLock) {
-      console.log('AddToCart bloqueado');
+    if (window.addToCartLock) return;
+    
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede agregar al carrito', true);
       return;
     }
     
@@ -1693,6 +1820,8 @@ body { padding-top: 80px; }
     if (document.activeElement && document.activeElement.blur) {
       document.activeElement.blur();
     }
+    
+    mostrarMensajeEnProceso('🔄 Procesando venta');
     
     const procesar = () => {
       try {
@@ -1706,6 +1835,7 @@ body { padding-top: 80px; }
         if (consumo > 0 && !isIndependentCode) {
           currentStock = stock['000-00'] ?? STOCK_INICIAL;
           if (currentStock < (consumo * qty)) { 
+            ocultarMensajeEnProceso();
             alert(`No hay suficientes fichas. Necesitas ${consumo * qty}, disponible: ${currentStock}`); 
             window.addToCartLock = false;
             return; 
@@ -1713,6 +1843,7 @@ body { padding-top: 80px; }
         } else {
           currentStock = stock[code] ?? STOCK_INICIAL;
           if (currentStock < qty) { 
+            ocultarMensajeEnProceso();
             alert(`No hay suficiente stock. Cantidad: ${qty}, disponible: ${currentStock}`); 
             window.addToCartLock = false;
             return; 
@@ -1725,6 +1856,7 @@ body { padding-top: 80px; }
         const totalPriceValue = unitPrice * qty;
         
         if (currentProduct.points > 0 && points > (currentProduct.points * qty)) { 
+          ocultarMensajeEnProceso();
           alert(`Máximo ${currentProduct.points * qty} puntos`); 
           window.addToCartLock = false;
           return; 
@@ -1733,6 +1865,7 @@ body { padding-top: 80px; }
         if (currentProduct.points > 0) {
           const esperado = Math.round(totalPriceValue * (1 - points / (currentProduct.points * qty)));
           if (Math.abs(money - esperado) > 1) { 
+            ocultarMensajeEnProceso();
             alert('Error en cálculo de pago'); 
             window.addToCartLock = false;
             return; 
@@ -1740,6 +1873,7 @@ body { padding-top: 80px; }
         }
         
         if (points === 0 && money === 0 && totalPriceValue > 0) { 
+          ocultarMensajeEnProceso();
           alert('Debes pagar con puntos o dinero'); 
           window.addToCartLock = false;
           return; 
@@ -1771,10 +1905,12 @@ body { padding-top: 80px; }
           fichaConsumption: consumo * qty,
           unidades: qty 
         }).then(() => {
+          ocultarMensajeEnProceso();
           resetSearch();
           closeModal();
           alert(`✅ ${qty} unidad(es) agregada(s) al carrito`);
         }).catch(error => {
+          ocultarMensajeEnProceso();
           console.error('Error al agregar:', error);
           alert('❌ Error al agregar al carrito');
         }).finally(() => {
@@ -1782,6 +1918,7 @@ body { padding-top: 80px; }
         });
         
       } catch (error) {
+        ocultarMensajeEnProceso();
         console.error('Error en addToCart:', error);
         alert('❌ Error al procesar la venta');
         window.addToCartLock = false;
@@ -1796,6 +1933,11 @@ body { padding-top: 80px; }
   };
 
   window.restaurarVentasAlCarrito = async function(firebaseKey) {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede restaurar', true);
+      return;
+    }
+    
     const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
     if (!registro) {
       alert('❌ Registro no encontrado');
@@ -1816,6 +1958,8 @@ body { padding-top: 80px; }
     const textoOriginal = btnOriginal.textContent;
     btnOriginal.textContent = '⏳ RESTAURANDO...';
     btnOriginal.disabled = true;
+    
+    mostrarMensajeEnProceso('🔄 Restaurando ventas');
     
     try {
       let restaurados = 0;
@@ -1864,9 +2008,11 @@ body { padding-top: 80px; }
         renderCart();
       }
       
+      ocultarMensajeEnProceso();
       alert(`✅ RESTAURACIÓN COMPLETADA!\n\n📅 Fecha original: ${registro.fechaEliminacion}\n✅ Restaurados: ${restaurados} items\n❌ Errores: ${errores}\n💰 Dinero: Gs. ${dineroTotalRestaurado.toLocaleString()}\n🎯 Puntos: ${puntosTotalesRestaurados}\n\n🛒 Los items se agregaron al carrito actual.`);
       
     } catch(error) {
+      ocultarMensajeEnProceso();
       console.error('Error en restauración:', error);
       alert('❌ Error al restaurar las ventas');
     } finally {
@@ -1951,10 +2097,6 @@ body { padding-top: 80px; }
       const nuevoRegistroRef = await push(historialRef, registro);
       
       console.log("✅ Historial guardado correctamente, ID:", nuevoRegistroRef.key);
-      console.log(`💰 Total guardado: Gs. ${totalDinero.toLocaleString()}`);
-      console.log(`📦 Items: ${ventasAEliminar.length}`);
-      console.log(`🖥️ Movimientos por máquina:`, movimientosPorMaquina);
-      
       return true;
       
     } catch(e) { 
@@ -2055,7 +2197,6 @@ body { padding-top: 80px; }
           }
         } else {
           alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y están respaldadas localmente.');
-          console.log("💾 Puedes recuperar las ventas del backup local en caso necesario");
         }
         
       } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
@@ -2199,7 +2340,7 @@ body { padding-top: 80px; }
         <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${maquinasHtml}</td>
-        <tr>
+        <td>
           <div class="historial-actions">
             <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
             <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
@@ -2518,6 +2659,10 @@ body { padding-top: 80px; }
   }
 
   window.onclick = function(e) {};
+
+  // Detectar cambios de conexión
+  window.addEventListener('online', () => mostrarMensajeTemporal('✅ Conexión restablecida'));
+  window.addEventListener('offline', () => mostrarMensajeTemporal('❌ Sin conexión a internet', true));
 
   Promise.all([loadInitialCart(), loadInitialStock(), loadContadores()]).then(() => {
     onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
