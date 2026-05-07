@@ -1821,9 +1821,10 @@ body { padding-top: 80px; }
       document.activeElement.blur();
     }
     
+    // Mostrar mensaje de procesando solo al inicio
     mostrarMensajeEnProceso('🔄 Procesando venta');
     
-    const procesar = () => {
+    const procesar = async () => {
       try {
         const code = currentProduct.code;
         const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
@@ -1879,18 +1880,20 @@ body { padding-top: 80px; }
           return; 
         }
         
+        // Primera operación: Actualizar stock
         if (consumo > 0 && !isIndependentCode) {
           const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * qty);
-          set(ref(database, `stock/000-00`), nuevo);
+          await set(ref(database, `stock/000-00`), nuevo);
         } else {
-          set(ref(database, `stock/${code}`), currentStock - qty);
+          await set(ref(database, `stock/${code}`), currentStock - qty);
         }
         
+        // Segunda operación: Agregar al carrito
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-PY');
         const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         
-        push(cartRef, { 
+        await push(cartRef, { 
           code, 
           name: currentProduct.name, 
           points: points,
@@ -1904,29 +1907,29 @@ body { padding-top: 80px; }
           timestampCompleto: ahora.getTime(), 
           fichaConsumption: consumo * qty,
           unidades: qty 
-        }).then(() => {
-          ocultarMensajeEnProceso();
-          resetSearch();
-          closeModal();
-          alert(`✅ ${qty} unidad(es) agregada(s) al carrito`);
-        }).catch(error => {
-          ocultarMensajeEnProceso();
-          console.error('Error al agregar:', error);
-          alert('❌ Error al agregar al carrito');
-        }).finally(() => {
-          window.addToCartLock = false;
         });
+        
+        // Solo después de que TODO se completó exitosamente:
+        ocultarMensajeEnProceso();
+        resetSearch();
+        closeModal();
+        
+        // Ahora sí mostrar el mensaje de éxito
+        setTimeout(() => {
+          alert(`✅ ${qty} unidad(es) agregada(s) al carrito`);
+        }, 100);
         
       } catch (error) {
         ocultarMensajeEnProceso();
-        console.error('Error en addToCart:', error);
-        alert('❌ Error al procesar la venta');
+        console.error('Error al agregar:', error);
+        alert('❌ Error al agregar al carrito');
+      } finally {
         window.addToCartLock = false;
       }
     };
     
     if (isIOS) {
-      setTimeout(procesar, 100);
+      setTimeout(() => procesar(), 100);
     } else {
       procesar();
     }
