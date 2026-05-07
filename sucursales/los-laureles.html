@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>ASTROLAND - Los Laureles</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+</script>
 <style>
 :root { color-scheme: light; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -718,6 +719,23 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
+.overlay-mensaje {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: bold;
+  z-index: 10000;
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: monospace;
+}
+
 @media (min-width: 1200px) { 
   .galeria { grid-template-columns: repeat(5, 1fr); }
   .imagen-item p { font-size: 0.9rem; }
@@ -741,237 +759,227 @@ body { padding-top: 80px; }
 </style>
 </head>
 <body>
-  <div class="floating-search-container">
-    <div class="busqueda-container">
-      <input type="text" id="busqueda" placeholder="Buscar código (ej: 005)..." aria-label="Buscar" inputmode="numeric" pattern="\d*">
+<div class="floating-search-container">
+  <div class="busqueda-container">
+    <input type="text" id="busqueda" placeholder="Buscar código (ej: 005)..." aria-label="Buscar" inputmode="numeric" pattern="\d*">
+  </div>
+</div>
+
+<button class="btn-home" onclick="scrollToTop()">🏠 Volver al Inicio</button>
+
+<div class="container">
+  <header>
+    <h1>ASTROLAND - Los Laureles</h1>
+    <p style="color: #4CAF50; font-size: 0.9rem;">✓ Sucursal Los Laureles</p>
+  </header>
+</div>
+
+<footer>
+  <p>© 2026 ASTROLAND - Los Laureles</p>
+</footer>
+
+<button class="cart-button" onclick="openCartModal()">🛒 Carrito (<span id="cartCount">0</span>)</button>
+<button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
+<button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
+
+<div id="purchaseModal" class="modal">
+  <div class="modal-content">
+    <button class="close" onclick="closeModal()">&times;</button>
+    <h3>🛍️ Producto</h3>
+    
+    <div class="tabs-compras">
+      <button class="tab-btn-compras active" data-tab="compra">🛒 Compra</button>
+      <button class="tab-btn-compras" data-tab="movimientos">🔄 Movimientos</button>
+    </div>
+    
+    <div id="tabCompra" class="tab-pane-compras active">
+      <div id="modalProductInfo" class="product-info"></div>
+      <div id="modalStockInfo" class="stock-info"></div>
+      
+      <div id="quantityRow" class="modal-qty-row">
+        <label>📦 Cantidad:</label>
+        <input type="number" id="productQuantity" min="1" step="1" value="1" onfocus="this.select()">
+      </div>
+
+      <div class="payment-options">
+        <div class="payment-option">
+          <label>🎯 Pagar con Puntos</label>
+          <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" inputmode="numeric">
+          <div class="auto-calc">💰 Total del producto: G.<span id="totalPrice">0</span></div>
+        </div>
+        <div class="payment-option">
+          <label>💵 Completar con Dinero (G.)</label>
+          <input type="number" id="moneyInput" min="0" step="1000" value="0" readonly style="background-color:#f5f5f5;">
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="addToCart" type="button" onclick="addToCart()">✅ Agregar al Carrito</button>
+        <button id="cancelModal" onclick="closeModal()">❌ Cancelar</button>
+      </div>
+    </div>
+    
+    <div id="tabMovimientos" class="tab-pane-compras">
+      <div id="movimientosProductInfo" class="product-info"></div>
+      <select id="movimientoDestino" class="maquina-input" style="padding:12px;">
+        <option value="stock">📦 Stock</option>
+      </select>
+      <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades" onfocus="this.select()">
+      <div class="maquina-buttons">
+        <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
+        <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
+        <button class="btn-cancelar" onclick="closeModal()">❌ Cancelar</button>
+      </div>
+      <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
+        📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
+        🖥️ <strong>Máquina:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
+      </p>
     </div>
   </div>
+</div>
 
-  <button class="btn-home" onclick="scrollToTop()">🏠 Volver al Inicio</button>
-
-  <div class="container">
-    <header>
-      <h1>ASTROLAND - Los Laureles</h1>
-      <p style="color: #4CAF50; font-size: 0.9rem;">✓ Sucursal Los Laureles</p>
-    </header>
+<div id="cierreModal" class="cierre-modal">
+  <div class="modal-content">
+    <button class="close" onclick="closeCierreModal()">&times;</button>
+    <h3 id="cierreTitulo">💰 Cierre de Caja</h3>
+    <p id="cierreDescripcion" style="font-size:1.1rem; text-align:center;"></p>
+    <input type="text" id="cierreMonto" placeholder="Ingrese el monto" inputmode="numeric">
+    <div style="display: flex; gap: 10px; justify-content: center;">
+      <button id="cierreBtnConfirmar" style="background:#4CAF50; color:white;">✅ Confirmar</button>
+      <button onclick="closeCierreModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
+    </div>
   </div>
-  
-  <footer>
-    <p>© 2026 ASTROLAND - Los Laureles</p>
-  </footer>
+</div>
 
-  <button class="cart-button" onclick="openCartModal()">🛒 Carrito (<span id="cartCount">0</span>)</button>
-  <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
-  <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
-
-  <div id="purchaseModal" class="modal">
-    <div class="modal-content">
-      <button class="close" onclick="closeModal()">&times;</button>
-      <h3>🛍️ Producto</h3>
-      
-      <div class="tabs-compras">
-        <button class="tab-btn-compras active" data-tab="compra">🛒 Compra</button>
-        <button class="tab-btn-compras" data-tab="movimientos">🔄 Movimientos</button>
+<div id="stockModal" class="modal">
+  <div class="stock-fullscreen">
+    <button class="close-stock-floating" onclick="closeStockModal()">✕</button>
+    <h3>📦 Gestionar Stock - Los Laureles</h3>
+    <div id="stockPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
+      <input type="password" id="stockPassword" placeholder="Contraseña para gestionar stock">
+      <button onclick="verifyStockPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
+      <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
+    </div>
+    <div id="stockManagementContent" style="display:none;">
+      <div class="stock-search-container">
+        <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." oninput="handleStockSearchInput(this)">
       </div>
-      
-      <div id="tabCompra" class="tab-pane-compras active">
-        <div id="modalProductInfo" class="product-info"></div>
-        <div id="modalStockInfo" class="stock-info"></div>
-        
-        <div id="quantityRow" class="modal-qty-row">
-          <label>📦 Cantidad:</label>
-          <input type="number" id="productQuantity" min="1" step="1" value="1" onfocus="this.select()">
-        </div>
-
-        <div class="payment-options">
-          <div class="payment-option">
-            <label>🎯 Pagar con Puntos</label>
-            <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" inputmode="numeric">
-            <div class="auto-calc">💰 Total del producto: G.<span id="totalPrice">0</span></div>
-          </div>
-          <div class="payment-option">
-            <label>💵 Completar con Dinero (G.)</label>
-            <input type="number" id="moneyInput" min="0" step="1000" value="0" readonly style="background-color:#f5f5f5;">
-          </div>
-        </div>
-        <div class="modal-buttons">
-          <button id="addToCart" type="button" onclick="addToCart()">✅ Agregar al Carrito</button>
-          <button id="cancelModal" onclick="closeModal()">❌ Cancelar</button>
-        </div>
+      <div id="stockItemsContainer"></div>
+      <div class="modal-buttons" style="margin-top:20px;">
+        <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
       </div>
-      
-      <div id="tabMovimientos" class="tab-pane-compras">
-        <div id="movimientosProductInfo" class="product-info"></div>
-        <select id="movimientoDestino" class="maquina-input" style="padding:12px;">
-          <option value="stock">📦 Stock</option>
-          <option value="maq1">⚙️ Maq 1</option>
-          <option value="maq2">⚙️ Maq 2</option>
-          <option value="maq3">⚙️ Maq 3</option>
-          <option value="maq4">⚙️ Maq 4</option>
-          <option value="maq5">⚙️ Maq 5</option>
-          <option value="maq6">⚙️ Maq 6</option>
-          <option value="maq7">⚙️ Maq 7</option>
-          <option value="maq8">⚙️ Maq 8</option>
-          <option value="maq9">⚙️ Maq 9</option>
-          <option value="maq10">⚙️ Maq 10</option>
+    </div>
+  </div>
+</div>
+
+<div id="cartModal" class="cart-modal">
+  <div class="cart-content">
+    <button class="close" onclick="closeCartModal()">&times;</button>
+    <h3>🛒 Carrito de Compras</h3>
+    <div id="cartItems" class="cart-items">
+      <div class="cart-item cart-header">
+        <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span>
+      </div>
+    </div>
+    <div class="cart-actions">
+      <button onclick="showExportPasswordPrompt()" style="background:#4CAF50; color:white;">📥 Descargar Excel</button>
+      <button onclick="showClearPasswordPrompt()" style="background:#ff9800; color:white;">🗑️ Vaciar Carrito</button>
+    </div>
+    <div id="exportPasswordPrompt" class="password-input">
+      <input type="password" id="exportPassword" placeholder="Contraseña">
+      <button onclick="verifyAndExport()" style="background:#2196F3; color:white;">Confirmar</button>
+      <button onclick="hideExportPrompt()" style="background:#f44336;">Cancelar</button>
+    </div>
+    <div id="clearPasswordPrompt" class="password-input">
+      <input type="password" id="clearPassword" placeholder="Contraseña">
+      <button onclick="verifyClearPasswordAndShowDate()" style="background:#2196F3; color:white;">Confirmar</button>
+      <button onclick="hideClearPrompt()" style="background:#f44336;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="contadoresModal" class="contadores-modal">
+  <div class="modal-content">
+    <button class="close" onclick="closeContadoresModal()">&times;</button>
+    <h3>📊 Contadores de Máquinas - Código 000-11</h3>
+    
+    <div class="contadores-form">
+      <div class="contadores-field">
+        <label>🖥️ Seleccionar Máquina:</label>
+        <select id="maquinaSelect">
+          <option value="">-- Seleccionar --</option>
         </select>
-        <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades" onfocus="this.select()">
-        <div class="maquina-buttons">
-          <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
-          <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
-          <button class="btn-cancelar" onclick="closeModal()">❌ Cancelar</button>
-        </div>
-        <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
-          📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
-          🖥️ <strong>Máquina:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
-        </p>
       </div>
-    </div>
-  </div>
-
-  <div id="cierreModal" class="cierre-modal">
-    <div class="modal-content">
-      <button class="close" onclick="closeCierreModal()">&times;</button>
-      <h3 id="cierreTitulo">💰 Cierre de Caja</h3>
-      <p id="cierreDescripcion" style="font-size:1.1rem; text-align:center;"></p>
-      <input type="text" id="cierreMonto" placeholder="Ingrese el monto" inputmode="numeric">
-      <div style="display: flex; gap: 10px; justify-content: center;">
-        <button id="cierreBtnConfirmar" style="background:#4CAF50; color:white;">✅ Confirmar</button>
-        <button onclick="closeCierreModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="stockModal" class="modal">
-    <div class="stock-fullscreen">
-      <button class="close-stock-floating" onclick="closeStockModal()">✕</button>
-      <h3>📦 Gestionar Stock - Los Laureles</h3>
-      <div id="stockPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
-        <input type="password" id="stockPassword" placeholder="Contraseña para gestionar stock">
-        <button onclick="verifyStockPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
-        <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
-      </div>
-      <div id="stockManagementContent" style="display:none;">
-        <div class="stock-search-container">
-          <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." oninput="handleStockSearchInput(this)">
-        </div>
-        <div id="stockItemsContainer"></div>
-        <div class="modal-buttons" style="margin-top:20px;">
-          <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="cartModal" class="cart-modal">
-    <div class="cart-content">
-      <button class="close" onclick="closeCartModal()">&times;</button>
-      <h3>🛒 Carrito de Compras</h3>
-      <div id="cartItems" class="cart-items">
-        <div class="cart-item cart-header">
-          <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span>
-        </div>
-      </div>
-      <div class="cart-actions">
-        <button onclick="showExportPasswordPrompt()" style="background:#4CAF50; color:white;">📥 Descargar Excel</button>
-        <button onclick="showClearPasswordPrompt()" style="background:#ff9800; color:white;">🗑️ Vaciar Carrito</button>
-      </div>
-      <div id="exportPasswordPrompt" class="password-input">
-        <input type="password" id="exportPassword" placeholder="Contraseña">
-        <button onclick="verifyAndExport()" style="background:#2196F3; color:white;">Confirmar</button>
-        <button onclick="hideExportPrompt()" style="background:#f44336;">Cancelar</button>
-      </div>
-      <div id="clearPasswordPrompt" class="password-input">
-        <input type="password" id="clearPassword" placeholder="Contraseña">
-        <button onclick="verifyClearPasswordAndShowDate()" style="background:#2196F3; color:white;">Confirmar</button>
-        <button onclick="hideClearPrompt()" style="background:#f44336;">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="contadoresModal" class="contadores-modal">
-    <div class="modal-content">
-      <button class="close" onclick="closeContadoresModal()">&times;</button>
-      <h3>📊 Contadores de Máquinas - Código 000-11</h3>
       
-      <div class="contadores-form">
-        <div class="contadores-field">
-          <label>🖥️ Seleccionar Máquina:</label>
-          <select id="maquinaSelect">
-            <option value="">-- Seleccionar --</option>
-          </select>
-        </div>
-        
-        <div class="contadores-field">
-          <label>📅 Fecha de Anotación:</label>
-          <input type="date" id="fechaContador" value="">
-        </div>
-        
-        <div class="contadores-field">
-          <label>🎴 Contador de Fichas:</label>
-          <input type="number" id="contadorFichas" min="0" step="1" value="0" placeholder="Fichas ingresadas">
-        </div>
-        
-        <div class="contadores-field">
-          <label>🏆 Contador de Premios:</label>
-          <input type="number" id="contadorPremios" min="0" step="1" value="0" placeholder="Premios entregados">
-        </div>
-        
-        <div class="contadores-field">
-          <label>🧪 Fichas de Prueba:</label>
-          <input type="number" id="fichasPrueba" min="0" step="1" value="0" placeholder="Fichas de prueba">
-        </div>
-        
-        <div class="contadores-field">
-          <label>🎁 Premios de Prueba:</label>
-          <input type="number" id="premiosPrueba" min="0" step="1" value="0" placeholder="Premios de prueba">
-        </div>
-        
-        <div class="contadores-buttons">
-          <button class="btn-guardar-contadores" onclick="guardarContadoresMaquina()">💾 Guardar</button>
-          <button class="btn-ver-contadores" onclick="cargarContadoresMaquina()">🔄 Cargar</button>
-        </div>
+      <div class="contadores-field">
+        <label>📅 Fecha de Anotación:</label>
+        <input type="date" id="fechaContador" value="">
+      </div>
+      
+      <div class="contadores-field">
+        <label>🎴 Contador de Fichas:</label>
+        <input type="number" id="contadorFichas" min="0" step="1" value="0" placeholder="Fichas ingresadas">
+      </div>
+      
+      <div class="contadores-field">
+        <label>🏆 Contador de Premios:</label>
+        <input type="number" id="contadorPremios" min="0" step="1" value="0" placeholder="Premios entregados">
+      </div>
+      
+      <div class="contadores-field">
+        <label>🧪 Fichas de Prueba:</label>
+        <input type="number" id="fichasPrueba" min="0" step="1" value="0" placeholder="Fichas de prueba">
+      </div>
+      
+      <div class="contadores-field">
+        <label>🎁 Premios de Prueba:</label>
+        <input type="number" id="premiosPrueba" min="0" step="1" value="0" placeholder="Premios de prueba">
+      </div>
+      
+      <div class="contadores-buttons">
+        <button class="btn-guardar-contadores" onclick="guardarContadoresMaquina()">💾 Guardar</button>
+        <button class="btn-ver-contadores" onclick="cargarContadoresMaquina()">🔄 Cargar</button>
       </div>
     </div>
   </div>
+</div>
 
-  <div id="fechaModal" class="fecha-modal">
-    <div class="fecha-modal-content">
-      <h4 id="fechaModalTitulo">📅 Seleccionar fecha para historial</h4>
-      <p id="fechaModalDescripcion" style="text-align:center; color:#666;">¿Qué fecha quieres asignar a este registro?</p>
-      <input type="date" id="fechaHistorialInput">
-      <div class="fecha-modal-buttons">
-        <button id="fechaModalConfirmar" style="background:#4CAF50; color:white;" onclick="confirmarAccionFecha()">✅ Confirmar</button>
-        <button onclick="closeFechaModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
-      </div>
+<div id="fechaModal" class="fecha-modal">
+  <div class="fecha-modal-content">
+    <h4 id="fechaModalTitulo">📅 Seleccionar fecha para historial</h4>
+    <p id="fechaModalDescripcion" style="text-align:center; color:#666;">¿Qué fecha quieres asignar a este registro?</p>
+    <input type="date" id="fechaHistorialInput">
+    <div class="fecha-modal-buttons">
+      <button id="fechaModalConfirmar" style="background:#4CAF50; color:white;" onclick="confirmarAccionFecha()">✅ Confirmar</button>
+      <button onclick="closeFechaModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
     </div>
   </div>
+</div>
 
-  <div id="historialModal" class="historial-modal">
-    <div class="modal-content">
-      <button class="close" onclick="closeHistorialModal()">&times;</button>
-      <h3>📜 Historial de Ventas - Los Laureles</h3>
-      <div id="historialPasswordPrompt" class="password-input" style="display:block;">
-        <input type="password" id="historialPassword" placeholder="Contraseña">
-        <button onclick="verifyHistorialPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
-        <button onclick="closeHistorialModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
+<div id="historialModal" class="historial-modal">
+  <div class="modal-content">
+    <button class="close" onclick="closeHistorialModal()">&times;</button>
+    <h3>📜 Historial de Ventas - Los Laureles</h3>
+    <div id="historialPasswordPrompt" class="password-input" style="display:block;">
+      <input type="password" id="historialPassword" placeholder="Contraseña">
+      <button onclick="verifyHistorialPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
+      <button onclick="closeHistorialModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
+    </div>
+    <div id="historialContent" style="display:none;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+        <label>📅 Desde: <input type="date" id="fechaDesde"></label>
+        <label>📅 Hasta: <input type="date" id="fechaHasta"></label>
+        <button onclick="filtrarHistorial()" style="background:#2196F3; color:white;">🔍 Filtrar</button>
+        <button onclick="exportarHistorialExcel()" style="background:#4CAF50; color:white;">📥 Exportar Excel</button>
       </div>
-      <div id="historialContent" style="display:none;">
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
-          <label>📅 Desde: <input type="date" id="fechaDesde"></label>
-          <label>📅 Hasta: <input type="date" id="fechaHasta"></label>
-          <button onclick="filtrarHistorial()" style="background:#2196F3; color:white;">🔍 Filtrar</button>
-          <button onclick="exportarHistorialExcel()" style="background:#4CAF50; color:white;">📥 Exportar Excel</button>
-        </div>
-        <div id="historialStats" style="background:#f0f0f0; padding:10px; border-radius:8px; margin-bottom:15px;"></div>
-        <div id="historialTabla"></div>
-      </div>
+      <div id="historialStats" style="background:#f0f0f0; padding:10px; border-radius:8px; margin-bottom:15px;"></div>
+      <div id="historialTabla"></div>
     </div>
   </div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+  import { getDatabase, ref, set, push, onValue, remove, get, update, runTransaction } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
@@ -1015,6 +1023,131 @@ body { padding-top: 80px; }
   window.agregarUnidadesLock = false;
   window.quitarUnidadesLock = false;
 
+  function isOnline() {
+    return navigator.onLine;
+  }
+
+  function mostrarMensajeTemporal(texto, esError = false) {
+    const div = document.createElement('div');
+    div.className = 'overlay-mensaje';
+    div.textContent = texto;
+    div.style.background = esError ? 'rgba(244, 67, 54, 0.9)' : 'rgba(0,0,0,0.85)';
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 2000);
+  }
+
+  function mostrarMensajeEnProceso(texto) {
+    const div = document.createElement('div');
+    div.id = 'mensajeEnProceso';
+    div.className = 'overlay-mensaje';
+    div.textContent = texto + ' ⏳';
+    div.style.background = 'rgba(33, 150, 243, 0.9)';
+    document.body.appendChild(div);
+  }
+
+  function ocultarMensajeEnProceso() {
+    const div = document.getElementById('mensajeEnProceso');
+    if (div) div.remove();
+  }
+
+  async function modificarStockAtomico(stockKey, cantidad, minimo = 0) {
+    const stockRefKey = ref(database, `stock/${stockKey}`);
+    
+    try {
+      const resultado = await runTransaction(stockRefKey, (currentValue) => {
+        if (currentValue === null) {
+          currentValue = STOCK_INICIAL;
+        }
+        
+        const nuevoValor = currentValue + cantidad;
+        
+        if (nuevoValor < minimo) {
+          return;
+        }
+        
+        return nuevoValor;
+      });
+      
+      if (resultado.committed) {
+        return { 
+          success: true, 
+          newValue: resultado.snapshot.val()
+        };
+      } else {
+        return { 
+          success: false, 
+          error: 'Transacción abortada: stock insuficiente o conflicto'
+        };
+      }
+    } catch (error) {
+      console.error('Error en transacción de stock:', error);
+      return { 
+        success: false, 
+        error: `Error de conexión: ${error.message}` 
+      };
+    }
+  }
+
+  async function agregarAlCarritoAtomico(itemData) {
+    try {
+      const nuevoRef = await push(cartRef, itemData);
+      return { 
+        success: true, 
+        key: nuevoRef.key,
+        data: { ...itemData, firebaseKey: nuevoRef.key }
+      };
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+      return { 
+        success: false, 
+        error: error.message 
+      };
+    }
+  }
+
+  async function procesarVentaAtomica(stockKey, cantidadRestar, cartData) {
+    mostrarMensajeEnProceso('🔄 Procesando venta');
+    
+    try {
+      const resultadoStock = await modificarStockAtomico(stockKey, -cantidadRestar, 0);
+      
+      if (!resultadoStock.success) {
+        ocultarMensajeEnProceso();
+        return { 
+          success: false, 
+          error: 'Stock insuficiente o conflicto en la transacción'
+        };
+      }
+      
+      const resultadoCarrito = await agregarAlCarritoAtomico(cartData);
+      
+      if (!resultadoCarrito.success) {
+        console.error('Carrito falló, revirtiendo stock...');
+        await modificarStockAtomico(stockKey, cantidadRestar, 0);
+        ocultarMensajeEnProceso();
+        return { 
+          success: false, 
+          error: 'Error al agregar al carrito, stock revertido'
+        };
+      }
+      
+      ocultarMensajeEnProceso();
+      return { 
+        success: true, 
+        stock: resultadoStock.newValue,
+        carrito: resultadoCarrito.data
+      };
+      
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      console.error('Error en procesarVentaAtomica:', error);
+      return { 
+        success: false, 
+        error: 'Error inesperado en el proceso de venta' 
+      };
+    }
+  }
+
   window.scrollToTop = function() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1043,6 +1176,16 @@ body { padding-top: 80px; }
       return Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
     }
     return stock[code] ?? STOCK_INICIAL;
+  }
+
+  // Generar opciones de máquinas dinámicamente (20 máquinas)
+  function generarOpcionesMaquinas() {
+    const select = document.getElementById('movimientoDestino');
+    if (select) {
+      for (let i = 1; i <= 20; i++) {
+        select.innerHTML += `<option value="maq${i}">⚙️ Maq ${i}</option>`;
+      }
+    }
   }
 
   function generarTodosLosProductos() {
@@ -1133,6 +1276,8 @@ body { padding-top: 80px; }
   }
 
   generarTodosLosProductos();
+  // Generar las 20 máquinas en el selector de movimientos
+  generarOpcionesMaquinas();
 
   function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
 
@@ -1346,28 +1491,47 @@ body { padding-top: 80px; }
   };
 
   async function procesarFichaGratis(code, fichasAConsumir) {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede procesar', true);
+      return;
+    }
+    
     const currentStock = stock['000-00'] ?? STOCK_INICIAL;
     if (currentStock < fichasAConsumir) { 
       alert(`No hay suficientes fichas. Necesitas ${fichasAConsumir} fichas`); 
       return; 
     }
     
-    const nuevo = currentStock - fichasAConsumir;
-    await set(ref(database, `stock/000-00`), nuevo);
+    mostrarMensajeEnProceso('🔄 Procesando ficha gratis');
     
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
-    await push(cartRef, { 
-      code, name: nombreProducto, points: 0, money: 0, 
-      totalPrice: 0, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: fichasAConsumir, esFichaGratis: true, unidades: 1
-    });
-    
-    alert(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code} (sin costo)`);
-    resetSearch();
+    try {
+      const resultadoStock = await modificarStockAtomico('000-00', -fichasAConsumir, 0);
+      
+      if (!resultadoStock.success) {
+        ocultarMensajeEnProceso();
+        alert('❌ Error: Stock insuficiente o conflicto');
+        return;
+      }
+      
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
+      
+      await push(cartRef, { 
+        code, name: nombreProducto, points: 0, money: 0, 
+        totalPrice: 0, fecha, hora, 
+        timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
+        fichaConsumption: fichasAConsumir, esFichaGratis: true, unidades: 1
+      });
+      
+      ocultarMensajeEnProceso();
+      alert(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code} (sin costo)`);
+      resetSearch();
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al procesar ficha gratis');
+    }
   }
 
   function abrirModalCierre(tipo, descripcion) {
@@ -1384,26 +1548,40 @@ body { padding-top: 80px; }
   }
 
   async function confirmarCierre(tipo) {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede registrar el cierre', true);
+      closeCierreModal();
+      return;
+    }
+    
     let monto = document.getElementById('cierreMonto').value;
     monto = monto.replace(/\./g, '');
     let montoNum = parseFloat(monto);
     if (isNaN(montoNum)) montoNum = 0;
     
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-PY');
-    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const code = tipo === 'Efectivo' ? '000-09' : '000-10';
-    const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
+    mostrarMensajeEnProceso('🔄 Registrando cierre');
     
-    await push(cartRef, { 
-      code, name, points: 0, money: montoNum, 
-      totalPrice: montoNum, fecha, hora, 
-      timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
-      fichaConsumption: 0, esCierre: true, unidades: 1
-    });
-    
-    closeCierreModal();
-    alert(`✅ Cierre de ${tipo} registrado: Gs. ${montoNum.toLocaleString()}`);
+    try {
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-PY');
+      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      const code = tipo === 'Efectivo' ? '000-09' : '000-10';
+      const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
+      
+      await push(cartRef, { 
+        code, name, points: 0, money: montoNum, 
+        totalPrice: montoNum, fecha, hora, 
+        timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(), 
+        fichaConsumption: 0, esCierre: true, unidades: 1
+      });
+      
+      ocultarMensajeEnProceso();
+      closeCierreModal();
+      alert(`✅ Cierre de ${tipo} registrado: Gs. ${montoNum.toLocaleString()}`);
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al registrar cierre');
+    }
   }
 
   window.closeCierreModal = () => {
@@ -1413,6 +1591,12 @@ body { padding-top: 80px; }
 
   window.agregarUnidades = async function() {
     if (window.agregarUnidadesLock) return;
+    
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede realizar el movimiento', true);
+      return;
+    }
+    
     window.agregarUnidadesLock = true;
     
     if (!currentMovimientosProduct) {
@@ -1433,67 +1617,81 @@ body { padding-top: 80px; }
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
     const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
     
+    mostrarMensajeEnProceso('🔄 Procesando movimiento');
+    
     try {
       let mensaje = '';
+      let operacionExitosa = true;
       
       if (destino === 'stock') {
         if (consumo > 0 && !isIndependentCode) {
-          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
-          await set(ref(database, `stock/000-00`), nuevo);
-          mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK (equivale a ${consumo * cantidad} fichas)`;
+          const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
+          if (!resultado.success) {
+            operacionExitosa = false;
+            alert('❌ Error en la transacción de stock');
+          } else {
+            mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK (equivale a ${consumo * cantidad} fichas)`;
+          }
         } else {
-          const currentStock = stock[code] ?? STOCK_INICIAL;
-          await set(ref(database, `stock/${code}`), currentStock + cantidad);
-          mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
+          const resultado = await modificarStockAtomico(code, cantidad, 0);
+          if (!resultado.success) {
+            operacionExitosa = false;
+            alert('❌ Error en la transacción de stock');
+          } else {
+            mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
+          }
         }
       } else {
         if (consumo > 0 && !isIndependentCode) {
-          const currentStock = stock['000-00'] ?? STOCK_INICIAL;
-          if (currentStock < consumo * cantidad) {
-            alert(`No hay suficientes fichas en stock. Necesitas ${consumo * cantidad}, disponible: ${currentStock}`);
-            window.agregarUnidadesLock = false;
-            return;
+          const resultado = await modificarStockAtomico('000-00', -(consumo * cantidad), 0);
+          if (!resultado.success) {
+            operacionExitosa = false;
+            alert(`No hay suficientes fichas en stock para ${destino}`);
+          } else {
+            mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
           }
-          const nuevo = currentStock - (consumo * cantidad);
-          await set(ref(database, `stock/000-00`), nuevo);
-          mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
         } else {
-          const currentStock = stock[code] ?? STOCK_INICIAL;
-          if (currentStock < cantidad) {
-            alert(`No hay suficiente stock. Stock actual: ${currentStock}`);
-            window.agregarUnidadesLock = false;
-            return;
+          const resultado = await modificarStockAtomico(code, -cantidad, 0);
+          if (!resultado.success) {
+            operacionExitosa = false;
+            alert(`No hay suficiente stock para ${destino}`);
+          } else {
+            mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
           }
-          await set(ref(database, `stock/${code}`), currentStock - cantidad);
-          mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
         }
       }
       
-      const ahora = new Date();
-      const fecha = ahora.toLocaleDateString('es-PY');
-      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      
-      await push(cartRef, { 
-        code, 
-        name: currentMovimientosProduct.name, 
-        points: 0,
-        money: 0,
-        unidades: cantidad, 
-        esMovimiento: true, 
-        tipoMovimiento: 'agregar',
-        destinoMovimiento: destino,
-        totalPrice: 0,
-        fecha, 
-        hora, 
-        timestamp: fecha + ' ' + hora, 
-        timestampCompleto: ahora.getTime(), 
-        fichaConsumption: 0
-      });
-      
-      closeModal();
-      alert(mensaje);
-      resetSearch();
+      if (operacionExitosa) {
+        const ahora = new Date();
+        const fecha = ahora.toLocaleDateString('es-PY');
+        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        
+        await push(cartRef, { 
+          code, 
+          name: currentMovimientosProduct.name, 
+          points: 0,
+          money: 0,
+          unidades: cantidad, 
+          esMovimiento: true, 
+          tipoMovimiento: 'agregar',
+          destinoMovimiento: destino,
+          totalPrice: 0,
+          fecha, 
+          hora, 
+          timestamp: fecha + ' ' + hora, 
+          timestampCompleto: ahora.getTime(), 
+          fichaConsumption: 0
+        });
+        
+        ocultarMensajeEnProceso();
+        closeModal();
+        alert(mensaje);
+        resetSearch();
+      } else {
+        ocultarMensajeEnProceso();
+      }
     } catch (error) {
+      ocultarMensajeEnProceso();
       console.error('Error:', error);
       alert('❌ Error al procesar el movimiento');
     } finally {
@@ -1503,6 +1701,12 @@ body { padding-top: 80px; }
 
   window.quitarUnidades = async function() {
     if (window.quitarUnidadesLock) return;
+    
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede realizar el movimiento', true);
+      return;
+    }
+    
     window.quitarUnidadesLock = true;
     
     if (!currentMovimientosProduct) {
@@ -1523,67 +1727,81 @@ body { padding-top: 80px; }
     const consumo = currentMovimientosProduct.fichaConsumption || 0;
     const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
     
+    mostrarMensajeEnProceso('🔄 Procesando movimiento');
+    
     try {
       let mensaje = '';
+      let operacionExitosa = true;
       
       if (destino === 'stock') {
         if (consumo > 0 && !isIndependentCode) {
-          const currentStock = stock['000-00'] ?? STOCK_INICIAL;
-          if (currentStock < consumo * cantidad) {
-            alert(`No hay suficientes fichas. Stock actual: ${currentStock}`);
-            window.quitarUnidadesLock = false;
-            return;
+          const resultado = await modificarStockAtomico('000-00', -(consumo * cantidad), 0);
+          if (!resultado.success) {
+            operacionExitosa = false;
+            alert(`No hay suficientes fichas. Stock insuficiente`);
+          } else {
+            mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK (equivale a ${consumo * cantidad} fichas)`;
           }
-          const nuevo = currentStock - (consumo * cantidad);
-          await set(ref(database, `stock/000-00`), nuevo);
-          mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK (equivale a ${consumo * cantidad} fichas)`;
         } else {
-          const currentStock = stock[code] ?? STOCK_INICIAL;
-          if (currentStock < cantidad) {
-            alert(`No hay suficiente stock. Stock actual: ${currentStock}`);
-            window.quitarUnidadesLock = false;
-            return;
+          const resultado = await modificarStockAtomico(code, -cantidad, 0);
+          if (!resultado.success) {
+            operacionExitosa = false;
+            alert(`No hay suficiente stock`);
+          } else {
+            mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${currentMovimientosProduct.name}`;
           }
-          await set(ref(database, `stock/${code}`), currentStock - cantidad);
-          mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${currentMovimientosProduct.name}`;
         }
       } else {
         if (consumo > 0 && !isIndependentCode) {
-          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) + (consumo * cantidad);
-          await set(ref(database, `stock/000-00`), nuevo);
-          mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
+          const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
+          if (!resultado.success) {
+            operacionExitosa = false;
+            alert('❌ Error en la transacción');
+          } else {
+            mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
+          }
         } else {
-          const currentStockVal = stock[code] ?? STOCK_INICIAL;
-          await set(ref(database, `stock/${code}`), currentStockVal + cantidad);
-          mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
+          const resultado = await modificarStockAtomico(code, cantidad, 0);
+          if (!resultado.success) {
+            operacionExitosa = false;
+            alert('❌ Error en la transacción');
+          } else {
+            mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
+          }
         }
       }
       
-      const ahora = new Date();
-      const fecha = ahora.toLocaleDateString('es-PY');
-      const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      
-      await push(cartRef, { 
-        code, 
-        name: currentMovimientosProduct.name, 
-        points: 0,
-        money: 0,
-        unidades: cantidad, 
-        esMovimiento: true, 
-        tipoMovimiento: 'quitar',
-        destinoMovimiento: destino,
-        totalPrice: 0,
-        fecha, 
-        hora, 
-        timestamp: fecha + ' ' + hora, 
-        timestampCompleto: ahora.getTime(), 
-        fichaConsumption: 0
-      });
-      
-      closeModal();
-      alert(mensaje);
-      resetSearch();
+      if (operacionExitosa) {
+        const ahora = new Date();
+        const fecha = ahora.toLocaleDateString('es-PY');
+        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        
+        await push(cartRef, { 
+          code, 
+          name: currentMovimientosProduct.name, 
+          points: 0,
+          money: 0,
+          unidades: cantidad, 
+          esMovimiento: true, 
+          tipoMovimiento: 'quitar',
+          destinoMovimiento: destino,
+          totalPrice: 0,
+          fecha, 
+          hora, 
+          timestamp: fecha + ' ' + hora, 
+          timestampCompleto: ahora.getTime(), 
+          fichaConsumption: 0
+        });
+        
+        ocultarMensajeEnProceso();
+        closeModal();
+        alert(mensaje);
+        resetSearch();
+      } else {
+        ocultarMensajeEnProceso();
+      }
     } catch (error) {
+      ocultarMensajeEnProceso();
       console.error('Error:', error);
       alert('❌ Error al procesar el movimiento');
     } finally {
@@ -1623,6 +1841,11 @@ body { padding-top: 80px; }
   }
 
   window.cargarContadoresMaquina = async function() {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede cargar', true);
+      return;
+    }
+    
     const maquina = document.getElementById('maquinaSelect').value;
     if (!maquina) {
       alert('Seleccione una máquina primero');
@@ -1635,20 +1858,35 @@ body { padding-top: 80px; }
       return;
     }
     
-    const datos = contadoresMaquinas[maquina]?.[fecha] || {
-      fichas: 0,
-      premios: 0,
-      fichasPrueba: 0,
-      premiosPrueba: 0
-    };
+    mostrarMensajeEnProceso('🔄 Cargando contadores');
     
-    document.getElementById('contadorFichas').value = datos.fichas || 0;
-    document.getElementById('contadorPremios').value = datos.premios || 0;
-    document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
-    document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
+    try {
+      const datos = contadoresMaquinas[maquina]?.[fecha] || {
+        fichas: 0,
+        premios: 0,
+        fichasPrueba: 0,
+        premiosPrueba: 0
+      };
+      
+      document.getElementById('contadorFichas').value = datos.fichas || 0;
+      document.getElementById('contadorPremios').value = datos.premios || 0;
+      document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
+      document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
+      
+      ocultarMensajeEnProceso();
+      alert(`✅ Datos cargados para ${maquina} - Fecha: ${fecha}`);
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al cargar contadores');
+    }
   };
 
   window.guardarContadoresMaquina = async function() {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede guardar', true);
+      return;
+    }
+    
     const maquina = document.getElementById('maquinaSelect').value;
     if (!maquina) {
       alert('Seleccione una máquina primero');
@@ -1666,23 +1904,33 @@ body { padding-top: 80px; }
     const fichasPrueba = parseInt(document.getElementById('fichasPrueba').value) || 0;
     const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
     
-    await set(ref(database, `contadores_maquinas/${maquina}/${fecha}`), {
-      fichas: fichas,
-      premios: premios,
-      fichasPrueba: fichasPrueba,
-      premiosPrueba: premiosPrueba,
-      ultimaActualizacion: new Date().toISOString()
-    });
+    mostrarMensajeEnProceso('🔄 Guardando contadores');
     
-    if (!contadoresMaquinas[maquina]) contadoresMaquinas[maquina] = {};
-    contadoresMaquinas[maquina][fecha] = { fichas, premios, fichasPrueba, premiosPrueba };
-    
-    alert(`✅ Datos guardados para ${maquina.toUpperCase()} - Fecha: ${fecha}`);
+    try {
+      await set(ref(database, `contadores_maquinas/${maquina}/${fecha}`), {
+        fichas: fichas,
+        premios: premios,
+        fichasPrueba: fichasPrueba,
+        premiosPrueba: premiosPrueba,
+        ultimaActualizacion: new Date().toISOString()
+      });
+      
+      if (!contadoresMaquinas[maquina]) contadoresMaquinas[maquina] = {};
+      contadoresMaquinas[maquina][fecha] = { fichas, premios, fichasPrueba, premiosPrueba };
+      
+      ocultarMensajeEnProceso();
+      alert(`✅ Datos guardados para ${maquina.toUpperCase()} - Fecha: ${fecha}`);
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al guardar contadores');
+    }
   };
 
   window.addToCart = function() {
-    if (window.addToCartLock) {
-      console.log('AddToCart bloqueado');
+    if (window.addToCartLock) return;
+    
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede agregar al carrito', true);
       return;
     }
     
@@ -1694,30 +1942,13 @@ body { padding-top: 80px; }
       document.activeElement.blur();
     }
     
-    const procesar = () => {
+    const procesar = async () => {
       try {
         const code = currentProduct.code;
         const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
         const consumo = currentProduct.fichaConsumption || 0;
-        let currentStock;
         
         const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
-        
-        if (consumo > 0 && !isIndependentCode) {
-          currentStock = stock['000-00'] ?? STOCK_INICIAL;
-          if (currentStock < (consumo * qty)) { 
-            alert(`No hay suficientes fichas. Necesitas ${consumo * qty}, disponible: ${currentStock}`); 
-            window.addToCartLock = false;
-            return; 
-          }
-        } else {
-          currentStock = stock[code] ?? STOCK_INICIAL;
-          if (currentStock < qty) { 
-            alert(`No hay suficiente stock. Cantidad: ${qty}, disponible: ${currentStock}`); 
-            window.addToCartLock = false;
-            return; 
-          }
-        }
         
         const points = parseInt(document.getElementById('pointsInput').value) || 0;
         const money = parseFloat(document.getElementById('moneyInput').value) || 0;
@@ -1745,18 +1976,22 @@ body { padding-top: 80px; }
           return; 
         }
         
+        let stockKey;
+        let cantidadRestar;
+        
         if (consumo > 0 && !isIndependentCode) {
-          const nuevo = (stock['000-00'] ?? STOCK_INICIAL) - (consumo * qty);
-          set(ref(database, `stock/000-00`), nuevo);
+          stockKey = '000-00';
+          cantidadRestar = consumo * qty;
         } else {
-          set(ref(database, `stock/${code}`), currentStock - qty);
+          stockKey = code;
+          cantidadRestar = qty;
         }
         
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-PY');
         const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         
-        push(cartRef, { 
+        const cartData = { 
           code, 
           name: currentProduct.name, 
           points: points,
@@ -1770,32 +2005,42 @@ body { padding-top: 80px; }
           timestampCompleto: ahora.getTime(), 
           fichaConsumption: consumo * qty,
           unidades: qty 
-        }).then(() => {
+        };
+        
+        const resultado = await procesarVentaAtomica(stockKey, cantidadRestar, cartData);
+        
+        if (resultado.success) {
           resetSearch();
           closeModal();
-          alert(`✅ ${qty} unidad(es) agregada(s) al carrito`);
-        }).catch(error => {
-          console.error('Error al agregar:', error);
-          alert('❌ Error al agregar al carrito');
-        }).finally(() => {
-          window.addToCartLock = false;
-        });
+          
+          setTimeout(() => {
+            alert(`✅ ${qty} unidad(es) agregada(s) al carrito`);
+          }, 100);
+        } else {
+          alert(`❌ ${resultado.error || 'Error al procesar la venta'}`);
+        }
         
       } catch (error) {
         console.error('Error en addToCart:', error);
-        alert('❌ Error al procesar la venta');
+        alert('❌ Error inesperado al procesar la venta');
+      } finally {
         window.addToCartLock = false;
       }
     };
     
     if (isIOS) {
-      setTimeout(procesar, 100);
+      setTimeout(() => procesar(), 100);
     } else {
       procesar();
     }
   };
 
   window.restaurarVentasAlCarrito = async function(firebaseKey) {
+    if (!isOnline()) {
+      mostrarMensajeTemporal('❌ Sin internet - No se puede restaurar', true);
+      return;
+    }
+    
     const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
     if (!registro) {
       alert('❌ Registro no encontrado');
@@ -1816,6 +2061,8 @@ body { padding-top: 80px; }
     const textoOriginal = btnOriginal.textContent;
     btnOriginal.textContent = '⏳ RESTAURANDO...';
     btnOriginal.disabled = true;
+    
+    mostrarMensajeEnProceso('🔄 Restaurando ventas');
     
     try {
       let restaurados = 0;
@@ -1864,9 +2111,11 @@ body { padding-top: 80px; }
         renderCart();
       }
       
+      ocultarMensajeEnProceso();
       alert(`✅ RESTAURACIÓN COMPLETADA!\n\n📅 Fecha original: ${registro.fechaEliminacion}\n✅ Restaurados: ${restaurados} items\n❌ Errores: ${errores}\n💰 Dinero: Gs. ${dineroTotalRestaurado.toLocaleString()}\n🎯 Puntos: ${puntosTotalesRestaurados}\n\n🛒 Los items se agregaron al carrito actual.`);
       
     } catch(error) {
+      ocultarMensajeEnProceso();
       console.error('Error en restauración:', error);
       alert('❌ Error al restaurar las ventas');
     } finally {
@@ -2199,7 +2448,7 @@ body { padding-top: 80px; }
         <td style="text-align:center;">${(h.totalFichas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${(h.totalFichasRegaladas || 0).toLocaleString()}</td>
         <td style="text-align:center;">${maquinasHtml}</td>
-        <tr>
+        <td>
           <div class="historial-actions">
             <button class="btn-editar-fecha" onclick="mostrarModalEditarFecha('${h.firebaseKey}', '${fechaMostrar.split('/').reverse().join('-')}')">✏️ Editar</button>
             <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
@@ -2314,28 +2563,22 @@ body { padding-top: 80px; }
     if (item.esMovimiento) {
       if (item.tipoMovimiento === 'agregar') {
         if (consumo > 0 && !isIndependentCode) {
-          const actual = stock['000-00'] ?? STOCK_INICIAL;
-          set(ref(database, `stock/000-00`), actual - Math.abs(consumo));
+          set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) - Math.abs(consumo));
         } else if (item.code && !CIERRE_CODES.includes(item.code)) {
-          const actual = stock[item.code] ?? STOCK_INICIAL;
-          set(ref(database, `stock/${item.code}`), actual - unidades);
+          set(ref(database, `stock/${item.code}`), (stock[item.code] ?? STOCK_INICIAL) - unidades);
         }
       } else if (item.tipoMovimiento === 'quitar') {
         if (consumo > 0 && !isIndependentCode) {
-          const actual = stock['000-00'] ?? STOCK_INICIAL;
-          set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
+          set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) + Math.abs(consumo));
         } else if (item.code && !CIERRE_CODES.includes(item.code)) {
-          const actual = stock[item.code] ?? STOCK_INICIAL;
-          set(ref(database, `stock/${item.code}`), actual + unidades);
+          set(ref(database, `stock/${item.code}`), (stock[item.code] ?? STOCK_INICIAL) + unidades);
         }
       }
     } else {
       if (consumo > 0 && !isIndependentCode) {
-        const actual = stock['000-00'] ?? STOCK_INICIAL;
-        set(ref(database, `stock/000-00`), actual + Math.abs(consumo));
+        set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) + Math.abs(consumo));
       } else if (item.code && !CIERRE_CODES.includes(item.code)) {
-        const actual = stock[item.code] ?? STOCK_INICIAL;
-        set(ref(database, `stock/${item.code}`), actual + unidades);
+        set(ref(database, `stock/${item.code}`), (stock[item.code] ?? STOCK_INICIAL) + unidades);
       }
     }
     
@@ -2518,6 +2761,9 @@ body { padding-top: 80px; }
   }
 
   window.onclick = function(e) {};
+
+  window.addEventListener('online', () => mostrarMensajeTemporal('✅ Conexión restablecida'));
+  window.addEventListener('offline', () => mostrarMensajeTemporal('❌ Sin conexión a internet', true));
 
   Promise.all([loadInitialCart(), loadInitialStock(), loadContadores()]).then(() => {
     onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
