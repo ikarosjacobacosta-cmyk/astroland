@@ -2517,7 +2517,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<table><thead><tr>
+    let html = `<td><thead><tr>
       <th>Fecha</th>
       <th>Ventas</th>
       <th>💰 Dinero</th>
@@ -2526,7 +2526,7 @@ body { padding-top: 80px; }
       <th>🎁 Fichas Reg.</th>
       <th>🖥️ Máquinas</th>
       <th>Acciones</th>
-    </table></thead><tbody>`;
+    </tr></thead><tbody>`;
     
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
@@ -2546,7 +2546,7 @@ body { padding-top: 80px; }
             <button class="btn-restaurar" onclick="restaurarVentasAlCarrito('${h.firebaseKey}')">🔄 Restaurar</button>
             <button class="btn-eliminar-historial" onclick="eliminarRegistroHistorial('${h.firebaseKey}')">🗑️ Eliminar</button>
           </div>
-        <tr>
+        </td>
       </tr>`;
     });
     
