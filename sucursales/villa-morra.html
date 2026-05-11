@@ -756,6 +756,16 @@ body { padding-top: 80px; }
   .categoria h2 { font-size: 1.1rem; }
   .stock-item img { max-width: 100%; }
 }
+
+/* Estilo para el nombre del producto clickeable en el carrito */
+.cart-product-name {
+  cursor: pointer;
+  color: #2196F3;
+  text-decoration: underline;
+}
+.cart-product-name:hover {
+  opacity: 0.7;
+}
 </style>
 </head>
 <body>
@@ -1050,10 +1060,6 @@ body { padding-top: 80px; }
     if (div) div.remove();
   }
 
-  /**
-   * TRANSACCIÓN ATÓMICA PARA MODIFICAR STOCK
-   * Garantiza operaciones seguras sin condiciones de carrera
-   */
   async function modificarStockAtomico(stockKey, cantidad, minimo = 0) {
     const stockRefKey = ref(database, `stock/${stockKey}`);
     
@@ -1066,7 +1072,7 @@ body { padding-top: 80px; }
         const nuevoValor = currentValue + cantidad;
         
         if (nuevoValor < minimo) {
-          return; // Aborta la transacción
+          return;
         }
         
         return nuevoValor;
@@ -1092,9 +1098,6 @@ body { padding-top: 80px; }
     }
   }
 
-  /**
-   * TRANSACCIÓN ATÓMICA PARA AGREGAR AL CARRITO
-   */
   async function agregarAlCarritoAtomico(itemData) {
     try {
       const nuevoRef = await push(cartRef, itemData);
@@ -1112,15 +1115,10 @@ body { padding-top: 80px; }
     }
   }
 
-  /**
-   * TRANSACCIÓN ATÓMICA COMPLETA: ACTUALIZAR STOCK + AGREGAR AL CARRITO
-   * Si falla el carrito, revierte el stock automáticamente
-   */
   async function procesarVentaAtomica(stockKey, cantidadRestar, cartData) {
     mostrarMensajeEnProceso('🔄 Procesando venta');
     
     try {
-      // Paso 1: Modificar stock atómicamente
       const resultadoStock = await modificarStockAtomico(stockKey, -cantidadRestar, 0);
       
       if (!resultadoStock.success) {
@@ -1131,11 +1129,9 @@ body { padding-top: 80px; }
         };
       }
       
-      // Paso 2: Agregar al carrito
       const resultadoCarrito = await agregarAlCarritoAtomico(cartData);
       
       if (!resultadoCarrito.success) {
-        // REVERTIR EL STOCK si falla el carrito
         console.error('Carrito falló, revirtiendo stock...');
         await modificarStockAtomico(stockKey, cantidadRestar, 0);
         ocultarMensajeEnProceso();
@@ -1145,7 +1141,6 @@ body { padding-top: 80px; }
         };
       }
       
-      // ÉXITO
       ocultarMensajeEnProceso();
       return { 
         success: true, 
@@ -1378,6 +1373,92 @@ body { padding-top: 80px; }
     }
   }
   generarOpcionesMaquinas();
+
+  // Función para mostrar la imagen del producto al hacer clic en el nombre
+  function mostrarImagenProducto(code) {
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.95)';
+    modal.style.zIndex = '10000';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.cursor = 'pointer';
+    
+    const content = document.createElement('div');
+    content.style.backgroundColor = '#fff';
+    content.style.borderRadius = '16px';
+    content.style.padding = '20px';
+    content.style.maxWidth = '90%';
+    content.style.maxHeight = '90%';
+    content.style.textAlign = 'center';
+    content.style.position = 'relative';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '✕';
+    closeBtn.style.position = 'absolute';
+    closeBtn.style.top = '10px';
+    closeBtn.style.right = '15px';
+    closeBtn.style.fontSize = '28px';
+    closeBtn.style.background = 'none';
+    closeBtn.style.border = 'none';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.color = '#333';
+    closeBtn.style.fontWeight = 'bold';
+    
+    const title = document.createElement('h3');
+    title.textContent = code;
+    title.style.margin = '0 0 15px 0';
+    title.style.color = '#333';
+    
+    const img = document.createElement('img');
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '60vh';
+    img.style.borderRadius = '8px';
+    img.style.objectFit = 'contain';
+    img.alt = code;
+    
+    img.src = `../imagenes/${code}.jpg`;
+    
+    img.onerror = () => {
+      img.style.display = 'none';
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '200px';
+      placeholder.style.height = '200px';
+      placeholder.style.backgroundColor = '#667eea';
+      placeholder.style.borderRadius = '12px';
+      placeholder.style.display = 'flex';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.justifyContent = 'center';
+      placeholder.style.color = 'white';
+      placeholder.style.fontSize = '1.2rem';
+      placeholder.style.fontWeight = 'bold';
+      placeholder.textContent = code;
+      content.insertBefore(placeholder, closeBtn.nextSibling);
+    };
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
+        unblockBodyScroll();
+      }
+    });
+    closeBtn.onclick = () => {
+      document.body.removeChild(modal);
+      unblockBodyScroll();
+    };
+    
+    content.appendChild(closeBtn);
+    content.appendChild(title);
+    content.appendChild(img);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    blockBodyScroll();
+  }
 
   document.querySelectorAll('.imagen-item').forEach(item => {
     let clickTimeout = null;
@@ -1939,7 +2020,6 @@ body { padding-top: 80px; }
     }
   };
 
-  // FUNCIÓN PRINCIPAL DE VENTA CON TRANSACCIONES ATÓMICAS
   window.addToCart = function() {
     if (window.addToCartLock) return;
     
@@ -1964,7 +2044,6 @@ body { padding-top: 80px; }
         
         const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
         
-        // Validaciones previas
         const points = parseInt(document.getElementById('pointsInput').value) || 0;
         const money = parseFloat(document.getElementById('moneyInput').value) || 0;
         const unitPrice = currentProduct.price;
@@ -1991,7 +2070,6 @@ body { padding-top: 80px; }
           return; 
         }
         
-        // Determinar la clave de stock y cantidad a restar
         let stockKey;
         let cantidadRestar;
         
@@ -2003,7 +2081,6 @@ body { padding-top: 80px; }
           cantidadRestar = qty;
         }
         
-        // Crear datos del carrito
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-PY');
         const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -2024,7 +2101,6 @@ body { padding-top: 80px; }
           unidades: qty 
         };
         
-        // USAR LA TRANSACCIÓN ATÓMICA COMPLETA
         const resultado = await procesarVentaAtomica(stockKey, cantidadRestar, cartData);
         
         if (resultado.success) {
@@ -2548,7 +2624,10 @@ body { padding-top: 80px; }
             }
         }
         
-        d.innerHTML = `<span>${item.name || item.code} ${qty > 1 ? `(x${qty})` : ''}</span>
+        const productName = item.name || item.code;
+        const productCode = item.code;
+        
+        d.innerHTML = `<span class="cart-product-name" data-code="${productCode}" style="cursor:pointer; color:#2196F3; text-decoration:underline;">${productName} ${qty > 1 ? `(x${qty})` : ''}</span>
             <span>${puntosTexto}</span>
             <span>${dineroTexto}</span>
             <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
@@ -2561,6 +2640,13 @@ body { padding-top: 80px; }
     if (cart.length === 0) {
         div.innerHTML += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
     }
+    
+    document.querySelectorAll('.cart-product-name').forEach(elem => {
+        elem.addEventListener('click', function() {
+            const code = this.getAttribute('data-code');
+            mostrarImagenProducto(code);
+        });
+    });
   }
 
   window.showDeletePrompt = function(firebaseKey) {
