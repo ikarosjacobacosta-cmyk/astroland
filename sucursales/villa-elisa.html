@@ -736,6 +736,15 @@ body { padding-top: 80px; }
   font-family: monospace;
 }
 
+.cart-product-name {
+  cursor: pointer;
+  color: #2196F3;
+  text-decoration: underline;
+}
+.cart-product-name:hover {
+  opacity: 0.7;
+}
+
 @media (min-width: 1200px) { 
   .galeria { grid-template-columns: repeat(5, 1fr); }
   .imagen-item p { font-size: 0.9rem; }
@@ -1178,7 +1187,6 @@ body { padding-top: 80px; }
     return stock[code] ?? STOCK_INICIAL;
   }
 
-  // Generar opciones de máquinas dinámicamente (20 máquinas)
   function generarOpcionesMaquinas() {
     const select = document.getElementById('movimientoDestino');
     if (select) {
@@ -1276,7 +1284,6 @@ body { padding-top: 80px; }
   }
 
   generarTodosLosProductos();
-  // Generar las 20 máquinas en el selector de movimientos
   generarOpcionesMaquinas();
 
   function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
@@ -1365,6 +1372,91 @@ body { padding-top: 80px; }
       }
     });
   });
+
+  function mostrarImagenProducto(code) {
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.95)';
+    modal.style.zIndex = '10000';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.cursor = 'pointer';
+    
+    const content = document.createElement('div');
+    content.style.backgroundColor = '#fff';
+    content.style.borderRadius = '16px';
+    content.style.padding = '20px';
+    content.style.maxWidth = '90%';
+    content.style.maxHeight = '90%';
+    content.style.textAlign = 'center';
+    content.style.position = 'relative';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '✕';
+    closeBtn.style.position = 'absolute';
+    closeBtn.style.top = '10px';
+    closeBtn.style.right = '15px';
+    closeBtn.style.fontSize = '28px';
+    closeBtn.style.background = 'none';
+    closeBtn.style.border = 'none';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.color = '#333';
+    closeBtn.style.fontWeight = 'bold';
+    
+    const title = document.createElement('h3');
+    title.textContent = code;
+    title.style.margin = '0 0 15px 0';
+    title.style.color = '#333';
+    
+    const img = document.createElement('img');
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '60vh';
+    img.style.borderRadius = '8px';
+    img.style.objectFit = 'contain';
+    img.alt = code;
+    
+    img.src = `../imagenes/${code}.jpg`;
+    
+    img.onerror = () => {
+      img.style.display = 'none';
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '200px';
+      placeholder.style.height = '200px';
+      placeholder.style.backgroundColor = '#667eea';
+      placeholder.style.borderRadius = '12px';
+      placeholder.style.display = 'flex';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.justifyContent = 'center';
+      placeholder.style.color = 'white';
+      placeholder.style.fontSize = '1.2rem';
+      placeholder.style.fontWeight = 'bold';
+      placeholder.textContent = code;
+      content.insertBefore(placeholder, closeBtn.nextSibling);
+    };
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
+        unblockBodyScroll();
+      }
+    });
+    closeBtn.onclick = () => {
+      document.body.removeChild(modal);
+      unblockBodyScroll();
+    };
+    
+    content.appendChild(closeBtn);
+    content.appendChild(title);
+    content.appendChild(img);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    blockBodyScroll();
+  }
 
   document.querySelectorAll('.imagen-item').forEach(item => {
     let clickTimeout = null;
@@ -2458,7 +2550,7 @@ body { padding-top: 80px; }
       </tr>`;
     });
     
-    html += `</tbody></table>`;
+    html += `</tbody><table>`;
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
     document.getElementById('historialTabla').innerHTML = html;
   };
@@ -2535,7 +2627,10 @@ body { padding-top: 80px; }
             }
         }
         
-        d.innerHTML = `<span>${item.name || item.code} ${qty > 1 ? `(x${qty})` : ''}</span>
+        const productName = item.name || item.code;
+        const productCode = item.code;
+        
+        d.innerHTML = `<span class="cart-product-name" data-code="${productCode}">${productName} ${qty > 1 ? `(x${qty})` : ''}</span>
             <span>${puntosTexto}</span>
             <span>${dineroTexto}</span>
             <span class="unidades-maquina ${movimientoClase}">${movimientoTexto}</span>
@@ -2548,6 +2643,13 @@ body { padding-top: 80px; }
     if (cart.length === 0) {
         div.innerHTML += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 Carrito vacío</span></div>';
     }
+    
+    document.querySelectorAll('.cart-product-name').forEach(elem => {
+        elem.addEventListener('click', function() {
+            const code = this.getAttribute('data-code');
+            mostrarImagenProducto(code);
+        });
+    });
   }
 
   window.showDeletePrompt = function(firebaseKey) {
