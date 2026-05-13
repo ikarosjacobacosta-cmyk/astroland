@@ -73,7 +73,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .suc-card .maquina-item .label { color: #1976D2; font-weight: 600; }
 .suc-card .maquina-item .amount { font-family: monospace; font-size: 0.7rem; }
 
-.tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+.tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; min-height: 44px; }
 .tab-btn.active { background: #2196F3; color: white; }
 
@@ -159,30 +159,103 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .stock-sucursales .lambare { background: #fff3e0; color: #ff9800; }
 .stock-sucursales .morra { background: #e8f5e9; color: #4caf50; }
 
-/* Categorías para el stock */
-.stock-category {
-  margin-bottom: 40px;
+/* Estilos para contadores de máquinas */
+.contadores-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-.category-header {
+.contadores-filtros {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 15px;
-  border-left: 5px solid #2196F3;
-  padding-left: 12px;
+  gap: 15px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eee;
 }
-.category-header h3 {
-  font-size: 1.3rem;
-  color: #1a1a2e;
-  margin: 0;
+.contadores-filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: #666;
 }
-.category-header .total-stock-badge {
-  background: #e0e0e0;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+.contadores-filtros input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.contadores-filtros button {
+  padding: 8px 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
   font-weight: bold;
-  color: #555;
+  min-height: 44px;
+}
+.contadores-filtros button:hover { background: #45a049; }
+
+.contadores-tabla {
+  overflow-x: auto;
+}
+.contadores-tabla table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.contadores-tabla th, .contadores-tabla td {
+  padding: 12px 8px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+.contadores-tabla th {
+  background: #1a1a2e;
+  color: white;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+.contadores-tabla tr:hover {
+  background: #f5f5f5;
+}
+.contadores-tabla .maquina-nombre {
+  font-weight: bold;
+  text-align: left;
+}
+.contadores-tabla .positivo {
+  color: #4CAF50;
+  font-weight: bold;
+}
+.contadores-tabla .negativo {
+  color: #f44336;
+}
+.contadores-resumen {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e3f2fd;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+.contadores-resumen-item {
+  text-align: center;
+}
+.contadores-resumen-item .label {
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+}
+.contadores-resumen-item .value {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #1976D2;
 }
 
 .ventas-table { background: white; border-radius: 12px; overflow-x: auto; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -195,8 +268,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; min-height: 44px; }
 footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-size: 0.7rem; border-top: 1px solid #ddd; }
 
-#chartContainer { display: none; }
-#reportCanvas { width: 400px; height: 400px; }
+#stockContainer, #contadoresContainer { display: block; }
 #searchContainer { display: none; }
 
 @media (max-width: 600px) {
@@ -209,7 +281,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   .filtro-fechas input { width: 100%; }
   .stock-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  .category-header h3 { font-size: 1.1rem; }
+  .contadores-tabla th, .contadores-tabla td { font-size: 0.7rem; padding: 8px 4px; }
 }
 </style>
 </head>
@@ -217,7 +289,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 <div class="container">
   <div class="header">
     <h1>📊 ASTROLAND - Panel Unificado</h1>
-    <p class="subtitle">Stock + Estadísticas de ventas | 4 sucursales</p>
+    <p class="subtitle">Stock + Estadísticas de ventas + Contadores de Máquinas | 4 sucursales</p>
     <div class="badges">
       <div class="badge laureles">🏢 Los Laureles</div>
       <div class="badge elisa">🏢 Villa Elisa</div>
@@ -249,6 +321,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="tabs">
     <button class="tab-btn active" id="tabStockBtn">📦 Stock</button>
     <button class="tab-btn" id="tabVentasBtn">🛒 Historial</button>
+    <button class="tab-btn" id="tabContadoresBtn">📊 Contadores Máquinas</button>
   </div>
 
   <div id="tabStock" class="tab-content">
@@ -257,6 +330,19 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   <div id="tabVentas" class="tab-content" style="display:none;">
     <div class="ventas-table"><div class="loading">🔄 Cargando historial...</div></div>
+  </div>
+
+  <div id="tabContadores" class="tab-content" style="display:none;">
+    <div class="contadores-container">
+      <div class="contadores-filtros">
+        <label>📅 Fecha Inicial: <input type="date" id="contadorFechaInicio" value=""></label>
+        <label>📅 Fecha Final: <input type="date" id="contadorFechaFin" value=""></label>
+        <button id="btnCalcularContadores">🔄 Calcular Diferencias</button>
+      </div>
+      <div id="contadoresResultados">
+        <div class="loading">📊 Selecciona un rango de fechas para ver las diferencias de contadores</div>
+      </div>
+    </div>
   </div>
 
   <div class="update-info">
@@ -372,6 +458,16 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
+  async function obtenerContadores(db) {
+    try {
+      const data = (await get(ref(db, 'contadores_maquinas'))).val();
+      return data || {};
+    } catch(e) {
+      console.error("Error al obtener contadores:", e);
+      return {};
+    }
+  }
+
   let todosLosProductos = [];
   let todasLasVentas = [];
   let todoHistorial = [];
@@ -380,6 +476,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   let hayVentasEnCarrito = false;
   let fechaDesde = null;
   let fechaHasta = null;
+  let contadoresGlobales = {};
 
   const colores = ['linear-gradient(135deg, #667eea, #764ba2)', 'linear-gradient(135deg, #f093fb, #f5576c)', 'linear-gradient(135deg, #4facfe, #00f2fe)', 'linear-gradient(135deg, #43e97b, #38f9d7)', 'linear-gradient(135deg, #fa709a, #fee140)'];
   function getColorIndex(code) { return code.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colores.length; }
@@ -422,7 +519,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function cargarTodo() {
     todasLasVentas = [];
     todoHistorial = [];
-    await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial()]);
+    await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial(), cargarTodosContadores()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
     if (tabActual === 'stock') renderizarStock();
     else if (tabActual === 'ventas') mostrarVentasSegunEstado();
@@ -442,7 +539,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           stocksObj[suc.clave] = cant;
           total += cant;
         }
-        // Ocultar productos con stock 0 en todas las sucursales
         if (total > 0) {
           todosLosProductos.push({ code, stocks: stocksObj, total });
         }
@@ -452,12 +548,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     } catch(e) { console.error(e); }
   }
 
-  // Renderizado del stock IGUAL al catálogo
   function renderizarStock() {
       const container = document.getElementById('stockContainer');
       if (!container) return;
       
-      // Agrupar por categoría (primeros 3 dígitos)
       const categorias = {};
       for (const prod of todosLosProductos) {
           const catKey = prod.code.substring(0, 3);
@@ -465,7 +559,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           categorias[catKey].push(prod);
       }
       
-      // Ordenar categorías
       const categoriasOrdenadas = Object.keys(categorias).sort((a,b) => {
           const numA = parseInt(a);
           const numB = parseInt(b);
@@ -479,7 +572,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           const productos = categorias[catKey];
           const totalCat = productos.reduce((sum, p) => sum + p.total, 0);
           
-          // Nombre de la categoría igual al catálogo
           let nombreCat = `${catKey} puntos`;
           if (catKey === '000') nombreCat = '000 puntos';
           
@@ -512,6 +604,205 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
       
       container.innerHTML = html;
+  }
+
+  async function cargarTodosContadores() {
+    try {
+      contadoresGlobales = {};
+      for (const suc of sucursales) {
+        contadoresGlobales[suc.clave] = await obtenerContadores(dbs[suc.clave]);
+      }
+      console.log("✅ Contadores cargados");
+      
+      // Si estamos en la pestaña de contadores y hay fechas predefinidas, actualizar
+      if (tabActual === 'contadores') {
+        calcularDiferenciasContadores();
+      }
+    } catch(e) {
+      console.error("Error cargando contadores:", e);
+    }
+  }
+
+  function calcularDiferenciasContadores() {
+    const fechaInicio = document.getElementById('contadorFechaInicio').value;
+    const fechaFin = document.getElementById('contadorFechaFin').value;
+    
+    if (!fechaInicio || !fechaFin) {
+      document.getElementById('contadoresResultados').innerHTML = '<div class="loading">📊 Selecciona un rango de fechas para ver las diferencias de contadores</div>';
+      return;
+    }
+    
+    // Recopilar todas las fechas disponibles de todas las sucursales
+    const todasLasFechas = new Set();
+    for (const sucClave in contadoresGlobales) {
+      const maquinas = contadoresGlobales[sucClave];
+      for (const maquina in maquinas) {
+        for (const fecha in maquinas[maquina]) {
+          todasLasFechas.add(fecha);
+        }
+      }
+    }
+    
+    const fechasOrdenadas = Array.from(todasLasFechas).sort();
+    const fechaInicioObj = new Date(fechaInicio);
+    const fechaFinObj = new Date(fechaFin);
+    
+    // Encontrar la lectura más cercana anterior o igual a fechaInicio
+    let lecturaAnterior = null;
+    let lecturaPosterior = null;
+    let fechaAnterior = null;
+    let fechaPosterior = null;
+    
+    for (const fecha of fechasOrdenadas) {
+      const fechaObj = new Date(fecha);
+      if (fechaObj <= fechaInicioObj) {
+        lecturaAnterior = fecha;
+        fechaAnterior = fecha;
+      }
+      if (fechaObj >= fechaInicioObj && !lecturaPosterior) {
+        lecturaPosterior = fecha;
+        fechaPosterior = fecha;
+      }
+    }
+    
+    // Si no hay lectura anterior, usar la primera disponible
+    if (!lecturaAnterior && fechasOrdenadas.length > 0) {
+      lecturaAnterior = fechasOrdenadas[0];
+      fechaAnterior = fechasOrdenadas[0];
+    }
+    
+    // Buscar lectura final (anterior o igual a fechaFin)
+    let lecturaFinal = null;
+    let fechaFinal = null;
+    for (const fecha of fechasOrdenadas) {
+      const fechaObj = new Date(fecha);
+      if (fechaObj <= fechaFinObj) {
+        lecturaFinal = fecha;
+        fechaFinal = fecha;
+      }
+    }
+    
+    if (!lecturaAnterior || !lecturaFinal || lecturaAnterior === lecturaFinal) {
+      document.getElementById('contadoresResultados').innerHTML = '<div class="loading">⚠️ No hay suficientes lecturas de contadores en el rango seleccionado. Se necesitan al menos dos fechas con registros.</div>';
+      return;
+    }
+    
+    // Calcular diferencias para cada máquina en cada sucursal
+    const resultados = [];
+    let totalFichasGenerales = 0;
+    let totalPremiosGenerales = 0;
+    let totalFichasReales = 0;
+    let totalPremiosReales = 0;
+    
+    for (const suc of sucursales) {
+      const maquinasSuc = contadoresGlobales[suc.clave] || {};
+      
+      for (let i = 1; i <= 20; i++) {
+        const maquinaKey = `maq${i.toString().padStart(2, '0')}`;
+        const datosMaquina = maquinasSuc[maquinaKey] || {};
+        
+        const datosAnterior = datosMaquina[lecturaAnterior] || { fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0 };
+        const datosFinal = datosMaquina[lecturaFinal] || { fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0 };
+        
+        const fichasBruto = (datosFinal.fichas || 0) - (datosAnterior.fichas || 0);
+        const premiosBruto = (datosFinal.premios || 0) - (datosAnterior.premios || 0);
+        const fichasPrueba = (datosFinal.fichasPrueba || 0) - (datosAnterior.fichasPrueba || 0);
+        const premiosPrueba = (datosFinal.premiosPrueba || 0) - (datosAnterior.premiosPrueba || 0);
+        
+        const fichasReales = fichasBruto - fichasPrueba;
+        const premiosReales = premiosBruto - premiosPrueba;
+        
+        if (fichasBruto !== 0 || premiosBruto !== 0) {
+          resultados.push({
+            sucursal: suc.nombre,
+            maquina: i,
+            fechaAnterior: lecturaAnterior,
+            fechaFinal: lecturaFinal,
+            fichasBruto,
+            premiosBruto,
+            fichasPrueba,
+            premiosPrueba,
+            fichasReales,
+            premiosReales
+          });
+          
+          totalFichasGenerales += fichasBruto;
+          totalPremiosGenerales += premiosBruto;
+          totalFichasReales += fichasReales;
+          totalPremiosReales += premiosReales;
+        }
+      }
+    }
+    
+    // Generar HTML de resultados
+    let html = `
+      <div class="contadores-resumen">
+        <div class="contadores-resumen-item">
+          <div class="label">📅 Período</div>
+          <div class="value">${lecturaAnterior} → ${lecturaFinal}</div>
+        </div>
+        <div class="contadores-resumen-item">
+          <div class="label">🎴 Total Fichas (Bruto)</div>
+          <div class="value">${totalFichasGenerales.toLocaleString()}</div>
+        </div>
+        <div class="contadores-resumen-item">
+          <div class="label">🏆 Total Premios (Bruto)</div>
+          <div class="value">${totalPremiosGenerales.toLocaleString()}</div>
+        </div>
+        <div class="contadores-resumen-item">
+          <div class="label">🎴 Fichas de Prueba</div>
+          <div class="value">${(totalFichasGenerales - totalFichasReales).toLocaleString()}</div>
+        </div>
+        <div class="contadores-resumen-item">
+          <div class="label">🏆 Premios de Prueba</div>
+          <div class="value">${(totalPremiosGenerales - totalPremiosReales).toLocaleString()}</div>
+        </div>
+        <div class="contadores-resumen-item">
+          <div class="label">✅ Fichas REALES</div>
+          <div class="value" style="color:#4CAF50;">${totalFichasReales.toLocaleString()}</div>
+        </div>
+        <div class="contadores-resumen-item">
+          <div class="label">✅ Premios REALES</div>
+          <div class="value" style="color:#4CAF50;">${totalPremiosReales.toLocaleString()}</div>
+        </div>
+      </div>
+      
+      <div class="contadores-tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>Sucursal</th>
+              <th>Máquina</th>
+              <th>🎴 Fichas (Bruto)</th>
+              <th>🏆 Premios (Bruto)</th>
+              <th>🧪 Fichas Prueba</th>
+              <th>🎁 Premios Prueba</th>
+              <th>✅ Fichas REALES</th>
+              <th>✅ Premios REALES</th>
+            </tr>
+          </thead>
+          <tbody>`;
+    
+    for (const r of resultados) {
+      html += `<tr>
+        <td>${r.sucursal}</td>
+        <td class="maquina-nombre">🖥️ Máquina ${r.maquina}</td>
+        <td class="${r.fichasBruto >= 0 ? 'positivo' : 'negativo'}">${r.fichasBruto.toLocaleString()}</td>
+        <td class="${r.premiosBruto >= 0 ? 'positivo' : 'negativo'}">${r.premiosBruto.toLocaleString()}</td>
+        <td>${r.fichasPrueba.toLocaleString()}</td>
+        <td>${r.premiosPrueba.toLocaleString()}</td>
+        <td class="positivo" style="font-weight:bold;">${r.fichasReales.toLocaleString()}</td>
+        <td class="positivo" style="font-weight:bold;">${r.premiosReales.toLocaleString()}</td>
+      </tr>`;
+    }
+    
+    if (resultados.length === 0) {
+      html += `<tr><td colspan="8" style="text-align:center;">📭 No hay movimientos registrados en este período</td></tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
+    
+    document.getElementById('contadoresResultados').innerHTML = html;
   }
 
   async function cargarVentasCarrito() {
@@ -717,7 +1008,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function renderizarTablaVentas(ventas) {
-    const html = `</table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
+    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventas.slice(0, 300).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
         const fechaStr = v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleString() : (v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora));
@@ -833,16 +1124,31 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function mostrarTab(tab) {
     tabActual = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById('tabStock').style.display = 'none';
+    document.getElementById('tabVentas').style.display = 'none';
+    document.getElementById('tabContadores').style.display = 'none';
+    
     if (tab === 'stock') {
       document.getElementById('tabStockBtn').classList.add('active');
       document.getElementById('tabStock').style.display = 'block';
-      document.getElementById('tabVentas').style.display = 'none';
       renderizarStock();
-    } else {
+    } else if (tab === 'ventas') {
       document.getElementById('tabVentasBtn').classList.add('active');
-      document.getElementById('tabStock').style.display = 'none';
       document.getElementById('tabVentas').style.display = 'block';
       mostrarVentasSegunEstado();
+    } else if (tab === 'contadores') {
+      document.getElementById('tabContadoresBtn').classList.add('active');
+      document.getElementById('tabContadores').style.display = 'block';
+      // Establecer fechas por defecto (últimos 30 días)
+      const hoy = new Date();
+      const hace30Dias = new Date();
+      hace30Dias.setDate(hoy.getDate() - 30);
+      if (!document.getElementById('contadorFechaInicio').value) {
+        document.getElementById('contadorFechaInicio').value = hace30Dias.toISOString().split('T')[0];
+        document.getElementById('contadorFechaFin').value = hoy.toISOString().split('T')[0];
+      }
+      calcularDiferenciasContadores();
     }
   }
 
@@ -853,6 +1159,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   document.getElementById('btnActualizar').addEventListener('click', cargarTodo);
   document.getElementById('tabStockBtn').addEventListener('click', () => mostrarTab('stock'));
   document.getElementById('tabVentasBtn').addEventListener('click', () => mostrarTab('ventas'));
+  document.getElementById('tabContadoresBtn').addEventListener('click', () => mostrarTab('contadores'));
+  document.getElementById('btnCalcularContadores').addEventListener('click', calcularDiferenciasContadores);
 
   if (sessionStorage.getItem('filtroDesde')) document.getElementById('fechaDesde').value = sessionStorage.getItem('filtroDesde');
   if (sessionStorage.getItem('filtroHasta')) document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
