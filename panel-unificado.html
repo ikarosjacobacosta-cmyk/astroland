@@ -77,112 +77,112 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #
 .tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; min-height: 44px; }
 .tab-btn.active { background: #2196F3; color: white; }
 
-/* Estilos para el stock estilo catálogo */
-.stock-grid {
-    display: grid;
-    gap: 15px;
-    margin-top: 10px;
+/* Estilos del stock IGUAL al catálogo */
+.stock-grid { 
+  display: grid; 
+  gap: 15px; 
 }
 @media (min-width: 1200px) { .stock-grid { grid-template-columns: repeat(5, 1fr); } }
 @media (min-width: 768px) and (max-width: 1199px) { .stock-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 767px) { .stock-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; } }
 
 .stock-card {
-    background: white;
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease;
-    cursor: pointer;
-    border: 1px solid #eee;
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #eee;
 }
-.stock-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.stock-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
 .stock-card img {
-    width: 100%;
-    aspect-ratio: 1/1;
-    object-fit: contain;
-    background: #fafafa;
-    border-radius: 8px;
-    border: 1px solid #eaeaea;
-    margin-bottom: 10px;
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: contain;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eaeaea;
+  margin-bottom: 10px;
 }
 .stock-card .img-placeholder {
-    width: 100%;
-    aspect-ratio: 1/1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    font-size: 0.8rem;
-    font-weight: bold;
-    border-radius: 8px;
-    margin-bottom: 10px;
+  width: 100%;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
-.stock-card .codigo {
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: #1976D2;
-    margin-bottom: 5px;
-    letter-spacing: 0.5px;
+.stock-card .codigo { 
+  font-weight: 700; 
+  font-size: 0.85rem; 
+  color: #1976D2; 
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
 }
-.stock-card .stock-total {
-    font-weight: 800;
-    font-size: 1rem;
-    display: inline-block;
-    padding: 3px 12px;
-    border-radius: 20px;
-    margin: 8px 0;
+.stock-card .stock-total { 
+  font-weight: 800; 
+  font-size: 1rem; 
+  display: inline-block; 
+  padding: 4px 12px; 
+  border-radius: 20px; 
+  margin: 5px 0;
 }
 .stock-card .stock-bajo { background: #ffebee; color: #f44336; }
 .stock-card .stock-medio { background: #fff3e0; color: #ff9800; }
 .stock-card .stock-normal { background: #e8f5e9; color: #2e7d32; }
+
 .stock-sucursales {
-    margin-top: 10px;
-    font-size: 0.7rem;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 8px;
+  margin-top: 10px;
+  font-size: 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
 }
 .stock-sucursales span {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 20px;
-    font-weight: 500;
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
 }
 .stock-sucursales .laureles { background: #e3f2fd; color: #1976D2; }
 .stock-sucursales .elisa { background: #f3e5f5; color: #9c27b0; }
 .stock-sucursales .lambare { background: #fff3e0; color: #ff9800; }
 .stock-sucursales .morra { background: #e8f5e9; color: #4caf50; }
 
-/* Sección de categorías para el stock (como en el catálogo) */
+/* Categorías para el stock */
 .stock-category {
-    margin-bottom: 35px;
+  margin-bottom: 40px;
 }
 .category-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 15px;
-    border-left: 5px solid #2196F3;
-    padding-left: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 15px;
+  border-left: 5px solid #2196F3;
+  padding-left: 12px;
 }
 .category-header h3 {
-    font-size: 1.4rem;
-    color: #1a1a2e;
-    margin: 0;
+  font-size: 1.3rem;
+  color: #1a1a2e;
+  margin: 0;
 }
 .category-header .total-stock-badge {
-    background: #e0e0e0;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: #555;
+  background: #e0e0e0;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #555;
 }
 
 .ventas-table { background: white; border-radius: 12px; overflow-x: auto; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -197,19 +197,19 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
 #chartContainer { display: none; }
 #reportCanvas { width: 400px; height: 400px; }
+#searchContainer { display: none; }
 
 @media (max-width: 600px) {
   body { padding: 10px; }
   .stat-card .value { font-size: 1rem; }
   .tab-btn { padding: 6px 15px; font-size: 0.75rem; }
   .ventas-table th, .ventas-table td { font-size: 0.65rem; padding: 6px 3px; }
-  .sub-item .label { font-size: 0.65rem; }
   .filtro-fechas { flex-direction: column; align-items: stretch; }
   .filtro-fechas label { display: flex; flex-direction: column; gap: 5px; }
   .filtro-fechas input { width: 100%; }
   .stock-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  .category-header h3 { font-size: 1.2rem; }
+  .category-header h3 { font-size: 1.1rem; }
 }
 </style>
 </head>
@@ -266,10 +266,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   </div>
 </div>
 
-<div id="chartContainer">
-  <canvas id="reportCanvas" width="400" height="400"></canvas>
-</div>
-
 <footer>© 2026 ASTROLAND - Panel Unificado</footer>
 
 <script type="module">
@@ -300,7 +296,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
 
-  // Códigos completos (los mismos)
   const CODIGOS_COMPLETOS = [
     '000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06', '000-07', '000-08', '000-09', '000-10',
     '005-00', '020-00', '020-01', '020-02', '020-03', '020-04', '020-05', '020-06', '020-07', '020-08', '020-09',
@@ -354,9 +349,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       const data = (await get(ref(db, 'carrito'))).val(); 
       if (!data) return [];
       return Object.values(data);
-    } catch { 
-      return []; 
-    }
+    } catch { return []; }
   }
   async function obtenerHistorial(db) { 
     try { 
@@ -379,7 +372,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
-  // Variables globales
   let todosLosProductos = [];
   let todasLasVentas = [];
   let todoHistorial = [];
@@ -393,8 +385,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function getColorIndex(code) { return code.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colores.length; }
   function getImagenHtml(code) { 
       const idx = getColorIndex(code);
-      // Intenta cargar la imagen directamente, si falla muestra el placeholder
-      return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width:100%; aspect-ratio:1/1; object-fit:contain; background:#f9f9f9; border-radius:8px; margin-bottom:8px;"><div class="img-placeholder" style="background:${colores[idx]}; display:none; width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; border-radius:8px; margin-bottom:8px;">${code.replace('-', ' ')}</div>`; 
+      return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width:100%; aspect-ratio:1/1; object-fit:contain; background:#f9f9f9; border-radius:8px; margin-bottom:8px;"><div class="img-placeholder" style="background:${colores[idx]}; display:none;">${code.replace('-', ' ')}</div>`; 
   }
 
   function clasificar(code, fechaEliminacion) {
@@ -433,7 +424,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     todoHistorial = [];
     await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
-    if (tabActual === 'stock') renderizarStockEstiloCatalogo();
+    if (tabActual === 'stock') renderizarStock();
     else if (tabActual === 'ventas') mostrarVentasSegunEstado();
   }
 
@@ -451,32 +442,31 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           stocksObj[suc.clave] = cant;
           total += cant;
         }
-        // Solo guardamos productos que tengan stock total > 0 (ocultar stock 0 en todas)
+        // Ocultar productos con stock 0 en todas las sucursales
         if (total > 0) {
           todosLosProductos.push({ code, stocks: stocksObj, total });
         }
       }
-      // Ordenar alfabéticamente para mantener consistencia
       todosLosProductos.sort((a,b) => a.code.localeCompare(b.code));
-      if (tabActual === 'stock') renderizarStockEstiloCatalogo();
+      if (tabActual === 'stock') renderizarStock();
     } catch(e) { console.error(e); }
   }
 
-  // Función para renderizar el stock con estilo catálogo (como en las vistas por sucursal)
-  function renderizarStockEstiloCatalogo() {
+  // Renderizado del stock IGUAL al catálogo
+  function renderizarStock() {
       const container = document.getElementById('stockContainer');
       if (!container) return;
       
-      // Agrupar productos por categoría (primeros 3 dígitos)
-      const categories = {};
+      // Agrupar por categoría (primeros 3 dígitos)
+      const categorias = {};
       for (const prod of todosLosProductos) {
-          const categoryKey = prod.code.substring(0, 3);
-          if (!categories[categoryKey]) categories[categoryKey] = [];
-          categories[categoryKey].push(prod);
+          const catKey = prod.code.substring(0, 3);
+          if (!categorias[catKey]) categorias[catKey] = [];
+          categorias[catKey].push(prod);
       }
       
-      // Ordenar categorías numéricamente
-      const sortedCategories = Object.keys(categories).sort((a,b) => {
+      // Ordenar categorías
+      const categoriasOrdenadas = Object.keys(categorias).sort((a,b) => {
           const numA = parseInt(a);
           const numB = parseInt(b);
           if (isNaN(numA)) return 1;
@@ -485,35 +475,34 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       });
       
       let html = '';
-      for (const catKey of sortedCategories) {
-          const products = categories[catKey];
-          // Calcular stock total de la categoría
-          const totalStockCat = products.reduce((sum, p) => sum + p.total, 0);
-          // Mapeo de nombres de categorías (similar al catálogo)
-          let categoryName = `${catKey} puntos`;
-          if (catKey === '000') categoryName = '000 puntos / Fichas';
-          if (catKey === '005') categoryName = '005 puntos';
+      for (const catKey of categoriasOrdenadas) {
+          const productos = categorias[catKey];
+          const totalCat = productos.reduce((sum, p) => sum + p.total, 0);
+          
+          // Nombre de la categoría igual al catálogo
+          let nombreCat = `${catKey} puntos`;
+          if (catKey === '000') nombreCat = '000 puntos';
           
           html += `<div class="stock-category">
                       <div class="category-header">
-                          <h3>🎯 ${categoryName}</h3>
-                          <span class="total-stock-badge">📦 Stock Total: ${totalStockCat}</span>
+                          <h3>🎯 ${nombreCat}</h3>
+                          <span class="total-stock-badge">📦 ${totalCat}</span>
                       </div>
                       <div class="stock-grid">`;
           
-          for (const prod of products) {
+          for (const prod of productos) {
               let stockClass = 'stock-normal';
               if (prod.total < 5) stockClass = 'stock-bajo';
               else if (prod.total < 20) stockClass = 'stock-medio';
               
               const sucHtml = sucursales.map(suc => `<span class="${suc.clave}">${prod.stocks[suc.clave] || 0}</span>`).join('');
               
-              html += `<div class="stock-card" data-code="${prod.code}">
-                          <div>${getImagenHtml(prod.code)}</div>
+              html += `<div class="stock-card">
+                          ${getImagenHtml(prod.code)}
                           <div class="codigo">${prod.code}</div>
                           <div class="stock-total ${stockClass}">📦 ${prod.total}</div>
                           <div class="stock-sucursales">${sucHtml}</div>
-                       </div>`;
+                        </div>`;
           }
           html += `</div></div>`;
       }
@@ -525,7 +514,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       container.innerHTML = html;
   }
 
-  // Resto de funciones (cargarVentasCarrito, cargarHistorial, etc.) se mantienen igual
   async function cargarVentasCarrito() {
     try {
       const ventasTemp = [];
@@ -574,13 +562,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       renderizarTablaVentas(todasLasVentas);
       ventasActualesParaReporte = [...todasLasVentas];
     } else {
-      // Estadísticas vacías
-      document.getElementById('statsVentas').innerHTML = `...`; // Se deja igual por brevedad, pero se reemplazará completo
-      // Para mantener funcionalidad, actualizamos igual la UI con ceros
       actualizarEstadisticas([]);
       document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 No hay ventas en los carritos actuales</div>';
-      // Actualizar sucursales grid con ceros
-      actualizarEstadisticas([]);
       ventasActualesParaReporte = [];
     }
   }
@@ -589,7 +572,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const normales = ventas.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
     const cierresEfectivo = ventas.filter(v => v.code === '000-09');
     const cierresTarjeta = ventas.filter(v => v.code === '000-10');
-    const movimientos = ventas.filter(v => v.esMovimiento === true);
     
     const totalVentas = normales.reduce((s,v)=>s+(v.money||0),0);
     const totalEfectivo = cierresEfectivo.reduce((s,v)=>s+(v.money||0),0);
@@ -607,8 +589,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
     document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
 
-    // Lógica para sucursales (se mantiene igual pero por brevedad no la copio completa aquí, asumo que está definida)
-    // Definición de sucStats y generación de HTML para sucursales...
     const sucStats = {};
     for (const suc of sucursales) {
       const vSuc = ventas.filter(v => v.sucursalClave === suc.clave);
@@ -737,7 +717,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function renderizarTablaVentas(ventas) {
-    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
+    const html = `</table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
       ventas.slice(0, 300).map(v => {
         const suc = sucursales.find(s=>s.nombre===v.sucursal);
         const fechaStr = v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleString() : (v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora));
@@ -745,7 +725,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         if (v.esMovimiento) fichasDisplay = v.tipoMovimiento === 'agregar' ? `+${v.unidades}` : `-${v.unidades}`;
         else if (v.fichaConsumption) fichasDisplay = Math.abs(v.fichaConsumption);
         return `<tr><td style="color:${suc?.color||'#333'}">${v.sucursal}</td><td>${v.name || v.code}</td><td>${(v.points||0).toLocaleString()}</td><td>Gs. ${(v.money||0).toLocaleString()}</td><td>${fichasDisplay}</td><td style="font-size:0.7rem;">${fechaStr}</td></tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody>}</div>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
@@ -857,7 +837,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       document.getElementById('tabStockBtn').classList.add('active');
       document.getElementById('tabStock').style.display = 'block';
       document.getElementById('tabVentas').style.display = 'none';
-      renderizarStockEstiloCatalogo();
+      renderizarStock();
     } else {
       document.getElementById('tabVentasBtn').classList.add('active');
       document.getElementById('tabStock').style.display = 'none';
