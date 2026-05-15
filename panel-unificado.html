@@ -576,7 +576,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function cargarTodo() {
     console.log("🔄 Cargando todos los datos...");
     
-    // Cargar stock
     try {
       const stocks = {};
       for (const suc of sucursales) {
@@ -600,7 +599,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       console.log("✅ Stock cargado:", todosLosProductos.length, "productos");
     } catch(e) { console.error(e); }
     
-    // Cargar contadores
     try {
       contadoresGlobales = {};
       for (const suc of sucursales) {
@@ -628,7 +626,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
       console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
       
-      // Limpiar filtros cuando se recargan los carritos
       sessionStorage.removeItem('filtroDesde');
       sessionStorage.removeItem('filtroHasta');
       document.getElementById('fechaDesde').value = '';
@@ -818,7 +815,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         <div class="contadores-resumen-item"><div class="label">✅ Premios REALES</div><div class="value" style="color:#4CAF50;">${totalPremiosReales.toLocaleString()}</div></div>
       </div>
       <div class="contadores-tabla">
-        <table>
+        </table>
           <thead><tr><th>Sucursal</th><th>Máquina</th><th>🎴 Fichas</th><th>🏆 Premios</th><th>✅ Fichas Reales</th><th>✅ Premios Reales</th></tr></thead>
           <tbody>`;
     
@@ -855,6 +852,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
+  // FUNCIÓN ACTUALIZAR ESTADÍSTICAS CORREGIDA
   function actualizarEstadisticas(ventas) {
     console.log("Actualizando estadísticas con", ventas.length, "ventas");
     
@@ -880,7 +878,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
     document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
 
-    // Inicializar sucStats para TODAS las sucursales
+    // Inicializar sucStats para TODAS las sucursales con valores por defecto
     const sucStats = {};
     for (const suc of sucursales) {
         sucStats[suc.clave] = {
@@ -971,13 +969,21 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             combo60: fichasStats.combo60,
             combo120: fichasStats.combo120,
             combo180: fichasStats.combo180,
-            movimientosStock, movimientosMaquinas
+            movimientosStock: movimientosStock || {},
+            movimientosMaquinas: movimientosMaquinas || {}
         };
     }
     
     // Generar HTML de sucursales
     const sucHtml = sucursales.map(suc => {
-        const s = sucStats[suc.clave];
+        // Asegurar que s existe, si no, usar valores por defecto
+        const s = sucStats[suc.clave] || {
+            operaciones: 0, ventas: 0, efectivo: 0, tarjeta: 0, cierre: 0,
+            juguetesMonto: 0, puntos: 0, fichasMonto: 0, fichasCantidad: 0,
+            pulseras: 0, billar: 0, capsulas: 0, error: 0,
+            unitarias: 0, combo30: 0, combo60: 0, combo120: 0, combo180: 0,
+            movimientosStock: {}, movimientosMaquinas: {}
+        };
         
         let extras = '';
         if (suc.clave === 'laureles') {
@@ -985,6 +991,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
                       <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. ${(s.billar||0).toLocaleString()}</span></div>`;
         }
         
+        // MOVIMIENTOS DE STOCK - Manejo seguro
         let stockMovHtml = '';
         const stockMovs = (s.movimientosStock && typeof s.movimientosStock === 'object') ? s.movimientosStock : {};
         if (Object.keys(stockMovs).length === 0) {
@@ -997,6 +1004,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             if (stockMovHtml === '') stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
         }
         
+        // MOVIMIENTOS DE MÁQUINAS - Manejo seguro
         let maquinasHtml = '';
         const maquinasMovs = (s.movimientosMaquinas && typeof s.movimientosMaquinas === 'object') ? s.movimientosMaquinas : {};
         let tieneMovimientos = false;
@@ -1118,7 +1126,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     fechaDesde = null;
     fechaHasta = null;
     
-    // Recargar ventas del carrito
     cargarVentasCarrito().then(() => {
       console.log("✅ Ventas recargadas, total:", todasLasVentas.length);
       if (todasLasVentas.length > 0) {
@@ -1351,7 +1358,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     console.log("✅ Datos cargados, total ventas en carritos:", todasLasVentas.length);
     console.log("✅ Historial cargado, total:", todoHistorial.length);
     
-    // Mostrar la pestaña de ventas después de tener los datos
     mostrarTab('ventas');
   }
   
