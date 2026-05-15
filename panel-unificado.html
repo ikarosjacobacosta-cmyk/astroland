@@ -11,7 +11,6 @@
 * { margin:0; padding:0; box-sizing: border-box; }
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 20px; }
 .container { max-width: 1400px; margin: 0 auto; }
-
 .header { text-align: center; margin-bottom: 30px; }
 .header h1 { font-size: 1.8rem; margin-bottom: 5px; color: #1a1a2e; }
 .header .subtitle { color: #666; font-size: 0.9rem; }
@@ -424,6 +423,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   async function obtenerStock(db) { try { return (await get(ref(db, 'stock'))).val() || {}; } catch { return {}; } }
+  
   async function obtenerCarrito(db) { 
     try { 
       const data = (await get(ref(db, 'carrito'))).val(); 
@@ -431,6 +431,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       return Object.values(data);
     } catch { return []; }
   }
+  
   async function obtenerHistorial(db) { 
     try { 
       const data = (await get(ref(db, 'historial_ventas'))).val(); 
@@ -755,7 +756,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</tr>`;
+      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</td>`;
     }
     
     html += `</tbody>}</div>`;
@@ -776,6 +777,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
+  // FUNCIÓN CORREGIDA - Inicializa sucStats para todas las sucursales primero
   function actualizarEstadisticas(ventas) {
     console.log("Actualizando estadísticas con", ventas.length, "ventas");
     
@@ -801,146 +803,167 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
     document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
 
-    // Calcular estadísticas por sucursal
+    // INICIALIZAR sucStats para TODAS las sucursales con valores por defecto
     const sucStats = {};
     for (const suc of sucursales) {
-      const vSuc = ventas.filter(v => v && v.sucursalClave === suc.clave);
-      const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
-      const vMov = vSuc.filter(v => v.esMovimiento === true);
-      const cEfectivo = vSuc.filter(v => v.code === '000-09');
-      const cTarjeta = vSuc.filter(v => v.code === '000-10');
-      
-      let pulseras=0, billar=0, capsulas=0, error=0;
-      let juguetesMonto = 0;
-      
-      for (const v of vNorm) {
-        const fecha = v.timestampEliminacion || v.timestamp || Date.now();
-        const tipo = clasificar(v.code, fecha);
-        if (tipo === 'pulseras') pulseras += v.money || 0;
-        if (tipo === 'billar') billar += v.money || 0;
-        if (tipo === 'capsulas') capsulas += Math.abs(v.fichaConsumption || 0);
-        if (tipo === 'error') error += Math.abs(v.fichaConsumption || 0);
-        if (esJuguete(v.code)) juguetesMonto += v.money || 0;
-      }
-      
-      const fichasStats = getFichasStats(vNorm);
-      
-      const movimientosStock = {};
-      for (const v of vMov) {
-        const esMaquinaMovimiento = v.destinoMovimiento && v.destinoMovimiento.startsWith('maq');
-        if (!esMaquinaMovimiento) {
-          const code = v.code;
-          if (!movimientosStock[code]) movimientosStock[code] = { agregar: 0, quitar: 0, neto: 0 };
-          if (v.tipoMovimiento === 'agregar') movimientosStock[code].agregar += (v.unidades || 1);
-          else if (v.tipoMovimiento === 'quitar') movimientosStock[code].quitar += (v.unidades || 1);
-          movimientosStock[code].neto = movimientosStock[code].agregar - movimientosStock[code].quitar;
-        }
-      }
-      
-      const movimientosMaquinas = {};
-      for (let i = 1; i <= 10; i++) movimientosMaquinas[`maq${i}`] = {};
-      for (const v of vMov) {
-        const destino = v.destinoMovimiento;
-        if (destino && destino.startsWith('maq')) {
-          const code = v.code;
-          if (!movimientosMaquinas[destino][code]) movimientosMaquinas[destino][code] = { agregar: 0, quitar: 0, neto: 0 };
-          if (v.tipoMovimiento === 'agregar') movimientosMaquinas[destino][code].agregar += (v.unidades || 1);
-          else if (v.tipoMovimiento === 'quitar') movimientosMaquinas[destino][code].quitar += (v.unidades || 1);
-          movimientosMaquinas[destino][code].neto = movimientosMaquinas[destino][code].agregar - movimientosMaquinas[destino][code].quitar;
-        }
-      }
-      
-      sucStats[suc.clave] = {
-        operaciones: vSuc.length,
-        ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
-        efectivo: cEfectivo.reduce((s,v)=>s+(v.money||0),0),
-        tarjeta: cTarjeta.reduce((s,v)=>s+(v.money||0),0),
-        cierre: cEfectivo.reduce((s,v)=>s+(v.money||0),0) + cTarjeta.reduce((s,v)=>s+(v.money||0),0),
-        juguetesMonto: juguetesMonto,
-        puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
-        fichasMonto: vNorm.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+(v.money||0),0),
-        fichasCantidad: vNorm.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
-        pulseras, billar, capsulas, error,
-        unitarias: fichasStats.unitarias,
-        combo30: fichasStats.combo30,
-        combo60: fichasStats.combo60,
-        combo120: fichasStats.combo120,
-        combo180: fichasStats.combo180,
-        movimientosStock, movimientosMaquinas
-      };
+        sucStats[suc.clave] = {
+            operaciones: 0,
+            ventas: 0,
+            efectivo: 0,
+            tarjeta: 0,
+            cierre: 0,
+            juguetesMonto: 0,
+            puntos: 0,
+            fichasMonto: 0,
+            fichasCantidad: 0,
+            pulseras: 0,
+            billar: 0,
+            capsulas: 0,
+            error: 0,
+            unitarias: 0,
+            combo30: 0,
+            combo60: 0,
+            combo120: 0,
+            combo180: 0,
+            movimientosStock: {},
+            movimientosMaquinas: {}
+        };
     }
     
-    // Generar HTML de sucursales
-    const sucHtml = sucursales.map(suc => {
-      const s = sucStats[suc.clave] || {
-        operaciones: 0, ventas: 0, efectivo: 0, tarjeta: 0, cierre: 0,
-        juguetesMonto: 0, puntos: 0, fichasMonto: 0, fichasCantidad: 0,
-        pulseras: 0, billar: 0, capsulas: 0, error: 0,
-        unitarias: 0, combo30: 0, combo60: 0, combo120: 0, combo180: 0,
-        movimientosStock: {}, movimientosMaquinas: {}
-      };
-      
-      let extras = '';
-      if (suc.clave === 'laureles') {
-        extras = `<div class="item"><span class="label">💫 Pulseras:</span><span class="amount">Gs. ${(s.pulseras||0).toLocaleString()}</span></div>
-                  <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. ${(s.billar||0).toLocaleString()}</span></div>`;
-      }
-      
-      let stockMovHtml = '';
-      const stockMovs = s.movimientosStock || {};
-      if (Object.keys(stockMovs).length === 0) {
-        stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
-      } else {
-        stockMovHtml = Object.entries(stockMovs).map(([code, datos]) => 
-          `<div class="sub-item"><span class="label">${code}:</span><span class="amount">+${datos.agregar}/-${datos.quitar} = ${datos.neto >= 0 ? '+' : ''}${datos.neto}</span></div>`
-        ).join('');
-      }
-      
-      let maquinasHtml = '';
-      const maquinasMovs = s.movimientosMaquinas || {};
-      let tieneMovimientos = false;
-      for (let i = 1; i <= 10; i++) {
-        const maqMovs = maquinasMovs[`maq${i}`] || {};
-        const maqKeys = Object.keys(maqMovs);
-        if (maqKeys.length > 0) {
-          tieneMovimientos = true;
-          const productosHtml = maqKeys.map(code => {
-            const datos = maqMovs[code];
-            return `<span style="display:inline-block; margin-right:8px;">${code}: +${datos.agregar}/-${datos.quitar} = ${datos.neto >= 0 ? '+' : ''}${datos.neto}</span>`;
-          }).join('');
-          maquinasHtml += `<div class="maquina-item"><span class="label">⚙️ Máq ${i}:</span><span class="amount">${productosHtml || '-'}</span></div>`;
-        } else {
-          maquinasHtml += `<div class="maquina-item"><span class="label">⚙️ Máq ${i}:</span><span class="amount">-</span></div>`;
+    // Llenar estadísticas por sucursal
+    for (const suc of sucursales) {
+        const vSuc = ventas.filter(v => v && v.sucursalClave === suc.clave);
+        const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
+        const vMov = vSuc.filter(v => v.esMovimiento === true);
+        const cEfectivo = vSuc.filter(v => v.code === '000-09');
+        const cTarjeta = vSuc.filter(v => v.code === '000-10');
+        
+        let pulseras = 0, billar = 0, capsulas = 0, error = 0;
+        let juguetesMonto = 0;
+        
+        for (const v of vNorm) {
+            const fecha = v.timestampEliminacion || v.timestamp || Date.now();
+            const tipo = clasificar(v.code, fecha);
+            if (tipo === 'pulseras') pulseras += v.money || 0;
+            if (tipo === 'billar') billar += v.money || 0;
+            if (tipo === 'capsulas') capsulas += Math.abs(v.fichaConsumption || 0);
+            if (tipo === 'error') error += Math.abs(v.fichaConsumption || 0);
+            if (esJuguete(v.code)) juguetesMonto += v.money || 0;
         }
-      }
-      if (!tieneMovimientos) {
-        maquinasHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
-      }
-      
-      return `<div class="suc-card ${suc.clave}">
-        <h4><span style="color:${suc.color}">🏢</span> ${suc.nombre}</h4>
-        <div class="item"><span class="label">📋 Operaciones:</span><span class="amount">${s.operaciones}</span></div>
-        <div class="item"><span class="label">💰 Ventas:</span><span class="amount">Gs. ${s.ventas.toLocaleString()}</span></div>
-        <div class="item"><span class="label">💵 Efectivo:</span><span class="amount">Gs. ${s.efectivo.toLocaleString()}</span></div>
-        <div class="item"><span class="label">💳 Tarjeta:</span><span class="amount">Gs. ${s.tarjeta.toLocaleString()}</span></div>
-        <div class="item"><span class="label">💰 Total Cierre:</span><span class="amount">Gs. ${s.cierre.toLocaleString()}</span></div>
-        <div class="item"><span class="label">🎁 Juguetes:</span><span class="amount">Gs. ${s.juguetesMonto.toLocaleString()}</span></div>
-        ${extras}
-        <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">${s.puntos.toLocaleString()}</span></div>
-        <div class="item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. ${s.fichasMonto.toLocaleString()}</span></div>
-        <div class="item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">${s.fichasCantidad.toLocaleString()}</span></div>
-        <div class="sub-section"><div class="sub-label">📊 Detalle de Fichas:</div>
-          <div class="sub-item"><span class="label">🎴 Unitarias (000-00):</span><span class="amount">${s.unitarias.toLocaleString()} veces</span></div>
-          <div class="sub-item"><span class="label">🎴 Combo 30mil (000-01):</span><span class="amount">${s.combo30.toLocaleString()} veces</span></div>
-          <div class="sub-item"><span class="label">🎴 Combo 60mil (000-02):</span><span class="amount">${s.combo60.toLocaleString()} veces</span></div>
-          <div class="sub-item"><span class="label">🎴 Combo 120mil (000-03):</span><span class="amount">${s.combo120.toLocaleString()} veces</span></div>
-          <div class="sub-item"><span class="label">🎴 Combo 180mil (000-04):</span><span class="amount">${s.combo180.toLocaleString()} veces</span></div>
-        </div>
-        <div class="sub-section"><div class="sub-label">📦 Movimientos de Stock (por código):</div>${stockMovHtml}</div>
-        <div class="sub-section"><div class="sub-label">🎰 Movimientos de Máquinas:</div>${maquinasHtml}</div>
-        <div class="sub-section"><div class="sub-label">🔴 Error (000-05):</div><div class="item"><span class="label">Fichas:</span><span class="amount">${s.error.toLocaleString()}</span></div></div>
-        <div class="sub-section"><div class="sub-label">🎴 Cápsulas (000-06):</div><div class="item"><span class="label">Fichas:</span><span class="amount">${s.capsulas.toLocaleString()}</span></div></div>
-      </div>`;
+        
+        const fichasStats = getFichasStats(vNorm);
+        
+        const movimientosStock = {};
+        for (const v of vMov) {
+            const esMaquinaMovimiento = v.destinoMovimiento && v.destinoMovimiento.startsWith('maq');
+            if (!esMaquinaMovimiento) {
+                const code = v.code;
+                if (!movimientosStock[code]) movimientosStock[code] = { agregar: 0, quitar: 0, neto: 0 };
+                if (v.tipoMovimiento === 'agregar') movimientosStock[code].agregar += (v.unidades || 1);
+                else if (v.tipoMovimiento === 'quitar') movimientosStock[code].quitar += (v.unidades || 1);
+                movimientosStock[code].neto = movimientosStock[code].agregar - movimientosStock[code].quitar;
+            }
+        }
+        
+        const movimientosMaquinas = {};
+        for (let i = 1; i <= 10; i++) movimientosMaquinas[`maq${i}`] = {};
+        for (const v of vMov) {
+            const destino = v.destinoMovimiento;
+            if (destino && destino.startsWith('maq')) {
+                const code = v.code;
+                if (!movimientosMaquinas[destino][code]) movimientosMaquinas[destino][code] = { agregar: 0, quitar: 0, neto: 0 };
+                if (v.tipoMovimiento === 'agregar') movimientosMaquinas[destino][code].agregar += (v.unidades || 1);
+                else if (v.tipoMovimiento === 'quitar') movimientosMaquinas[destino][code].quitar += (v.unidades || 1);
+                movimientosMaquinas[destino][code].neto = movimientosMaquinas[destino][code].agregar - movimientosMaquinas[destino][code].quitar;
+            }
+        }
+        
+        // Actualizar los valores para esta sucursal
+        sucStats[suc.clave] = {
+            operaciones: vSuc.length,
+            ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
+            efectivo: cEfectivo.reduce((s,v)=>s+(v.money||0),0),
+            tarjeta: cTarjeta.reduce((s,v)=>s+(v.money||0),0),
+            cierre: cEfectivo.reduce((s,v)=>s+(v.money||0),0) + cTarjeta.reduce((s,v)=>s+(v.money||0),0),
+            juguetesMonto: juguetesMonto,
+            puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
+            fichasMonto: vNorm.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+(v.money||0),0),
+            fichasCantidad: vNorm.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
+            pulseras, billar, capsulas, error,
+            unitarias: fichasStats.unitarias,
+            combo30: fichasStats.combo30,
+            combo60: fichasStats.combo60,
+            combo120: fichasStats.combo120,
+            combo180: fichasStats.combo180,
+            movimientosStock, movimientosMaquinas
+        };
+    }
+    
+    // Generar HTML de sucursales - AHORA siempre existe sucStats[suc.clave]
+    const sucHtml = sucursales.map(suc => {
+        const s = sucStats[suc.clave]; // Esto siempre existe porque lo inicializamos
+        
+        let extras = '';
+        if (suc.clave === 'laureles') {
+            extras = `<div class="item"><span class="label">💫 Pulseras:</span><span class="amount">Gs. ${(s.pulseras||0).toLocaleString()}</span></div>
+                      <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. ${(s.billar||0).toLocaleString()}</span></div>`;
+        }
+        
+        let stockMovHtml = '';
+        const stockMovs = s.movimientosStock || {};
+        if (Object.keys(stockMovs).length === 0) {
+            stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
+        } else {
+            stockMovHtml = Object.entries(stockMovs).map(([code, datos]) => 
+                `<div class="sub-item"><span class="label">${code}:</span><span class="amount">+${datos.agregar}/-${datos.quitar} = ${datos.neto >= 0 ? '+' : ''}${datos.neto}</span></div>`
+            ).join('');
+        }
+        
+        let maquinasHtml = '';
+        const maquinasMovs = s.movimientosMaquinas || {};
+        let tieneMovimientos = false;
+        for (let i = 1; i <= 10; i++) {
+            const maqMovs = maquinasMovs[`maq${i}`] || {};
+            const maqKeys = Object.keys(maqMovs);
+            if (maqKeys.length > 0) {
+                tieneMovimientos = true;
+                const productosHtml = maqKeys.map(code => {
+                    const datos = maqMovs[code];
+                    return `<span style="display:inline-block; margin-right:8px;">${code}: +${datos.agregar}/-${datos.quitar} = ${datos.neto >= 0 ? '+' : ''}${datos.neto}</span>`;
+                }).join('');
+                maquinasHtml += `<div class="maquina-item"><span class="label">⚙️ Máq ${i}:</span><span class="amount">${productosHtml || '-'}</span></div>`;
+            } else {
+                maquinasHtml += `<div class="maquina-item"><span class="label">⚙️ Máq ${i}:</span><span class="amount">-</span></div>`;
+            }
+        }
+        if (!tieneMovimientos) {
+            maquinasHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
+        }
+        
+        return `<div class="suc-card ${suc.clave}">
+            <h4><span style="color:${suc.color}">🏢</span> ${suc.nombre}</h4>
+            <div class="item"><span class="label">📋 Operaciones:</span><span class="amount">${s.operaciones}</span></div>
+            <div class="item"><span class="label">💰 Ventas:</span><span class="amount">Gs. ${s.ventas.toLocaleString()}</span></div>
+            <div class="item"><span class="label">💵 Efectivo:</span><span class="amount">Gs. ${s.efectivo.toLocaleString()}</span></div>
+            <div class="item"><span class="label">💳 Tarjeta:</span><span class="amount">Gs. ${s.tarjeta.toLocaleString()}</span></div>
+            <div class="item"><span class="label">💰 Total Cierre:</span><span class="amount">Gs. ${s.cierre.toLocaleString()}</span></div>
+            <div class="item"><span class="label">🎁 Juguetes:</span><span class="amount">Gs. ${s.juguetesMonto.toLocaleString()}</span></div>
+            ${extras}
+            <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">${s.puntos.toLocaleString()}</span></div>
+            <div class="item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. ${s.fichasMonto.toLocaleString()}</span></div>
+            <div class="item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">${s.fichasCantidad.toLocaleString()}</span></div>
+            <div class="sub-section"><div class="sub-label">📊 Detalle de Fichas:</div>
+                <div class="sub-item"><span class="label">🎴 Unitarias (000-00):</span><span class="amount">${s.unitarias.toLocaleString()} veces</span></div>
+                <div class="sub-item"><span class="label">🎴 Combo 30mil (000-01):</span><span class="amount">${s.combo30.toLocaleString()} veces</span></div>
+                <div class="sub-item"><span class="label">🎴 Combo 60mil (000-02):</span><span class="amount">${s.combo60.toLocaleString()} veces</span></div>
+                <div class="sub-item"><span class="label">🎴 Combo 120mil (000-03):</span><span class="amount">${s.combo120.toLocaleString()} veces</span></div>
+                <div class="sub-item"><span class="label">🎴 Combo 180mil (000-04):</span><span class="amount">${s.combo180.toLocaleString()} veces</span></div>
+            </div>
+            <div class="sub-section"><div class="sub-label">📦 Movimientos de Stock (por código):</div>${stockMovHtml}</div>
+            <div class="sub-section"><div class="sub-label">🎰 Movimientos de Máquinas:</div>${maquinasHtml}</div>
+            <div class="sub-section"><div class="sub-label">🔴 Error (000-05):</div><div class="item"><span class="label">Fichas:</span><span class="amount">${s.error.toLocaleString()}</span></div></div>
+            <div class="sub-section"><div class="sub-label">🎴 Cápsulas (000-06):</div><div class="item"><span class="label">Fichas:</span><span class="amount">${s.capsulas.toLocaleString()}</span></div></div>
+        </div>`;
     }).join('');
     
     document.getElementById('sucursalesGrid').innerHTML = sucHtml;
@@ -1021,7 +1044,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     // Recargar ventas del carrito y actualizar UI
     cargarVentasCarrito().then(() => {
       console.log("✅ Ventas recargadas, total:", todasLasVentas.length);
-      // Forzar actualización de la UI
       if (todasLasVentas.length > 0) {
         actualizarEstadisticas(todasLasVentas);
         renderizarTablaVentas(todasLasVentas);
