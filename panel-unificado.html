@@ -11,6 +11,7 @@
 * { margin:0; padding:0; box-sizing: border-box; }
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 20px; }
 .container { max-width: 1400px; margin: 0 auto; }
+
 .header { text-align: center; margin-bottom: 30px; }
 .header h1 { font-size: 1.8rem; margin-bottom: 5px; color: #1a1a2e; }
 .header .subtitle { color: #666; font-size: 0.9rem; }
@@ -312,7 +313,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="sucursales-grid" id="sucursalesGrid"></div>
 
   <div class="tabs">
-    <button class="tab-btn" id="tabStockBtn">📦 Stock</button>
+    <button class="tab-btn active" id="tabStockBtn">📦 Stock</button>
     <button class="tab-btn" id="tabVentasBtn">🛒 Historial</button>
     <button class="tab-btn" id="tabContadoresBtn">📊 Contadores Máquinas</button>
   </div>
@@ -351,11 +352,68 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
+  // CONFIGURACIONES CORREGIDAS CON databaseURL
   const sucursales = [
-    { nombre: "Los Laureles", clave: "laureles", color: "#2196F3", bg: "#e3f2fd", config: { apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w", authDomain: "los-laureles-49117.firebaseapp.com", projectId: "los-laureles-49117", storageBucket: "los-laureles-49117.firebasestorage.app", messagingSenderId: "523096933391", appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a" } },
-    { nombre: "Villa Elisa", clave: "elisa", color: "#9c27b0", bg: "#f3e5f5", config: { apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ", authDomain: "villa-elisa-3adbe.firebaseapp.com", projectId: "villa-elisa-3adbe", storageBucket: "villa-elisa-3adbe.firebasestorage.app", messagingSenderId: "147294403718", appId: "1:147294403718:web:96d8289e6d3d3c7ce72507" } },
-    { nombre: "Lambare", clave: "lambare", color: "#ff9800", bg: "#fff3e0", config: { apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY", authDomain: "lambare-85124.firebaseapp.com", projectId: "lambare-85124", storageBucket: "lambare-85124.firebasestorage.app", messagingSenderId: "683666735879", appId: "1:683666735879:web:c654add46d1dad6160bba2" } },
-    { nombre: "Villa Morra", clave: "morra", color: "#4caf50", bg: "#e8f5e9", config: { apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", authDomain: "villa-morra.firebaseapp.com", projectId: "villa-morra", storageBucket: "villa-morra.firebasestorage.app", messagingSenderId: "184849063287", appId: "1:184849063287:web:15f360231ade1b85ab5572" } }
+    { 
+      nombre: "Los Laureles", 
+      clave: "laureles", 
+      color: "#2196F3", 
+      bg: "#e3f2fd", 
+      config: { 
+        apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w", 
+        authDomain: "los-laureles-49117.firebaseapp.com",
+        databaseURL: "https://los-laureles-49117-default-rtdb.firebaseio.com",
+        projectId: "los-laureles-49117", 
+        storageBucket: "los-laureles-49117.firebasestorage.app", 
+        messagingSenderId: "523096933391", 
+        appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a" 
+      } 
+    },
+    { 
+      nombre: "Villa Elisa", 
+      clave: "elisa", 
+      color: "#9c27b0", 
+      bg: "#f3e5f5", 
+      config: { 
+        apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ", 
+        authDomain: "villa-elisa-3adbe.firebaseapp.com",
+        databaseURL: "https://villa-elisa-3adbe-default-rtdb.firebaseio.com",
+        projectId: "villa-elisa-3adbe", 
+        storageBucket: "villa-elisa-3adbe.firebasestorage.app", 
+        messagingSenderId: "147294403718", 
+        appId: "1:147294403718:web:96d8289e6d3d3c7ce72507" 
+      } 
+    },
+    { 
+      nombre: "Lambare", 
+      clave: "lambare", 
+      color: "#ff9800", 
+      bg: "#fff3e0", 
+      config: { 
+        apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY", 
+        authDomain: "lambare-85124.firebaseapp.com",
+        databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
+        projectId: "lambare-85124", 
+        storageBucket: "lambare-85124.firebasestorage.app", 
+        messagingSenderId: "683666735879", 
+        appId: "1:683666735879:web:c654add46d1dad6160bba2" 
+      } 
+    },
+    { 
+      nombre: "Villa Morra", 
+      clave: "morra", 
+      color: "#4caf50", 
+      bg: "#e8f5e9", 
+      config: { 
+        apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", 
+        authDomain: "villa-morra.firebaseapp.com",
+        databaseURL: "https://villa-morra-default-rtdb.firebaseio.com",
+        projectId: "villa-morra", 
+        storageBucket: "villa-morra.firebasestorage.app", 
+        messagingSenderId: "184849063287", 
+        appId: "1:184849063287:web:15f360231ade1b85ab5572" 
+      } 
+    }
   ];
 
   const apps = {};
@@ -422,19 +480,32 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     return stockData[code] ?? 0;
   }
 
-  async function obtenerStock(db) { try { return (await get(ref(db, 'stock'))).val() || {}; } catch { return {}; } }
+  async function obtenerStock(db) { 
+    try { 
+      const snapshot = await get(ref(db, 'stock'));
+      return snapshot.val() || {}; 
+    } catch(e) { 
+      console.error("Error obteniendo stock:", e);
+      return {}; 
+    } 
+  }
   
   async function obtenerCarrito(db) { 
     try { 
-      const data = (await get(ref(db, 'carrito'))).val(); 
+      const snapshot = await get(ref(db, 'carrito'));
+      const data = snapshot.val();
       if (!data) return [];
       return Object.values(data);
-    } catch { return []; }
+    } catch(e) { 
+      console.error("Error obteniendo carrito:", e);
+      return []; 
+    }
   }
   
   async function obtenerHistorial(db) { 
     try { 
-      const data = (await get(ref(db, 'historial_ventas'))).val(); 
+      const snapshot = await get(ref(db, 'historial_ventas'));
+      const data = snapshot.val();
       if (!data) return [];
       const historialArray = Object.values(data);
       const todasLasVentas = [];
@@ -455,8 +526,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   async function obtenerContadores(db) {
     try {
-      const data = (await get(ref(db, 'contadores_maquinas'))).val();
-      return data || {};
+      const snapshot = await get(ref(db, 'contadores_maquinas'));
+      return snapshot.val() || {};
     } catch(e) {
       console.error("Error al obtener contadores:", e);
       return {};
@@ -516,7 +587,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     // Cargar stock
     try {
       const stocks = {};
-      for (const suc of sucursales) stocks[suc.clave] = await obtenerStock(dbs[suc.clave]);
+      for (const suc of sucursales) {
+        stocks[suc.clave] = await obtenerStock(dbs[suc.clave]);
+      }
       
       todosLosProductos = [];
       for (const code of CODIGOS_COMPLETOS) {
@@ -532,6 +605,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         }
       }
       todosLosProductos.sort((a,b) => a.code.localeCompare(b.code));
+      console.log("✅ Stock cargado:", todosLosProductos.length, "productos");
     } catch(e) { console.error(e); }
     
     // Cargar contadores
@@ -548,6 +622,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   async function cargarVentasCarrito() {
     try {
+      console.log("🔄 Cargando ventas de carritos...");
       const ventasTemp = [];
       for (const suc of sucursales) {
         const ventas = await obtenerCarrito(dbs[suc.clave]);
@@ -569,21 +644,32 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       fechaDesde = null;
       fechaHasta = null;
       
-    } catch(e) { console.error(e); }
+      return todasLasVentas;
+    } catch(e) { 
+      console.error("Error cargando ventas:", e);
+      return [];
+    }
   }
 
   async function cargarHistorial() {
     try {
+      console.log("🔄 Cargando historial...");
       const historialTemp = [];
       for (const suc of sucursales) {
         const historial = await obtenerHistorial(dbs[suc.clave]);
         console.log(`📜 ${suc.nombre}: ${historial.length} ventas en historial`);
-        historial.forEach(v => { historialTemp.push({ ...v, sucursal: suc.nombre, sucursalClave: suc.clave, esHistorial: true }); });
+        historial.forEach(v => { 
+          historialTemp.push({ ...v, sucursal: suc.nombre, sucursalClave: suc.clave, esHistorial: true }); 
+        });
       }
       todoHistorial = historialTemp;
       todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
       console.log(`✅ Total ventas en historial: ${todoHistorial.length}`);
-    } catch(e) { console.error(e); }
+      return todoHistorial;
+    } catch(e) { 
+      console.error(e);
+      return [];
+    }
   }
 
   function renderizarStock() {
@@ -756,7 +842,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</td>`;
+      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</tr>`;
     }
     
     html += `</tbody>}</div>`;
@@ -777,7 +863,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
-  // FUNCIÓN CORREGIDA - Inicializa sucStats para todas las sucursales primero
   function actualizarEstadisticas(ventas) {
     console.log("Actualizando estadísticas con", ventas.length, "ventas");
     
@@ -899,9 +984,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         };
     }
     
-    // Generar HTML de sucursales - AHORA siempre existe sucStats[suc.clave]
+    // Generar HTML de sucursales
     const sucHtml = sucursales.map(suc => {
-        const s = sucStats[suc.clave]; // Esto siempre existe porque lo inicializamos
+        const s = sucStats[suc.clave];
         
         let extras = '';
         if (suc.clave === 'laureles') {
@@ -1265,7 +1350,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
   }
 
-  // Iniciar la aplicación
+  // Iniciar la aplicación - PRIMERO cargar ventas y historial, luego mostrar
   async function iniciar() {
     console.log("🚀 Iniciando carga inicial...");
     await cargarTodo();
