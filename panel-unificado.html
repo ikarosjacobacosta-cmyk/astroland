@@ -815,7 +815,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         <div class="contadores-resumen-item"><div class="label">✅ Premios REALES</div><div class="value" style="color:#4CAF50;">${totalPremiosReales.toLocaleString()}</div></div>
       </div>
       <div class="contadores-tabla">
-        </table>
+        <table>
           <thead><tr><th>Sucursal</th><th>Máquina</th><th>🎴 Fichas</th><th>🏆 Premios</th><th>✅ Fichas Reales</th><th>✅ Premios Reales</th></tr></thead>
           <tbody>`;
     
@@ -940,15 +940,24 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             }
         }
         
+        // MOVIMIENTOS DE MÁQUINAS - VERSIÓN CORREGIDA
         const movimientosMaquinas = {};
-        for (let i = 1; i <= 10; i++) movimientosMaquinas[`maq${i}`] = {};
         for (const v of vMov) {
             const destino = v.destinoMovimiento;
             if (destino && destino.startsWith('maq')) {
                 const code = v.code;
-                if (!movimientosMaquinas[destino][code]) movimientosMaquinas[destino][code] = { agregar: 0, quitar: 0, neto: 0 };
-                if (v.tipoMovimiento === 'agregar') movimientosMaquinas[destino][code].agregar += (v.unidades || 1);
-                else if (v.tipoMovimiento === 'quitar') movimientosMaquinas[destino][code].quitar += (v.unidades || 1);
+                // IMPORTANTE: Inicializar el objeto de la máquina si no existe
+                if (!movimientosMaquinas[destino]) {
+                    movimientosMaquinas[destino] = {};
+                }
+                if (!movimientosMaquinas[destino][code]) {
+                    movimientosMaquinas[destino][code] = { agregar: 0, quitar: 0, neto: 0 };
+                }
+                if (v.tipoMovimiento === 'agregar') {
+                    movimientosMaquinas[destino][code].agregar += (v.unidades || 1);
+                } else if (v.tipoMovimiento === 'quitar') {
+                    movimientosMaquinas[destino][code].quitar += (v.unidades || 1);
+                }
                 movimientosMaquinas[destino][code].neto = movimientosMaquinas[destino][code].agregar - movimientosMaquinas[destino][code].quitar;
             }
         }
@@ -976,14 +985,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     
     // Generar HTML de sucursales
     const sucHtml = sucursales.map(suc => {
-        // Asegurar que s existe, si no, usar valores por defecto
-        const s = sucStats[suc.clave] || {
-            operaciones: 0, ventas: 0, efectivo: 0, tarjeta: 0, cierre: 0,
-            juguetesMonto: 0, puntos: 0, fichasMonto: 0, fichasCantidad: 0,
-            pulseras: 0, billar: 0, capsulas: 0, error: 0,
-            unitarias: 0, combo30: 0, combo60: 0, combo120: 0, combo180: 0,
-            movimientosStock: {}, movimientosMaquinas: {}
-        };
+        const s = sucStats[suc.clave];
         
         let extras = '';
         if (suc.clave === 'laureles') {
@@ -991,7 +993,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
                       <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. ${(s.billar||0).toLocaleString()}</span></div>`;
         }
         
-        // MOVIMIENTOS DE STOCK - Manejo seguro
         let stockMovHtml = '';
         const stockMovs = (s.movimientosStock && typeof s.movimientosStock === 'object') ? s.movimientosStock : {};
         if (Object.keys(stockMovs).length === 0) {
@@ -1004,7 +1005,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             if (stockMovHtml === '') stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
         }
         
-        // MOVIMIENTOS DE MÁQUINAS - Manejo seguro
         let maquinasHtml = '';
         const maquinasMovs = (s.movimientosMaquinas && typeof s.movimientosMaquinas === 'object') ? s.movimientosMaquinas : {};
         let tieneMovimientos = false;
