@@ -533,7 +533,19 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       todosLosProductos.sort((a,b) => a.code.localeCompare(b.code));
     } catch(e) { console.error(e); }
     
-    // Cargar ventas del carrito
+    // Cargar contadores
+    try {
+      contadoresGlobales = {};
+      for (const suc of sucursales) {
+        contadoresGlobales[suc.clave] = await obtenerContadores(dbs[suc.clave]);
+      }
+      console.log("✅ Contadores cargados");
+    } catch(e) { console.error(e); }
+    
+    document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
+  }
+
+  async function cargarVentasCarrito() {
     try {
       const ventasTemp = [];
       for (const suc of sucursales) {
@@ -547,9 +559,19 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       todasLasVentas = ventasTemp;
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
       console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
+      
+      // Limpiar filtros cuando se recargan los carritos
+      sessionStorage.removeItem('filtroDesde');
+      sessionStorage.removeItem('filtroHasta');
+      document.getElementById('fechaDesde').value = '';
+      document.getElementById('fechaHasta').value = '';
+      fechaDesde = null;
+      fechaHasta = null;
+      
     } catch(e) { console.error(e); }
-    
-    // Cargar historial
+  }
+
+  async function cargarHistorial() {
     try {
       const historialTemp = [];
       for (const suc of sucursales) {
@@ -561,17 +583,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
       console.log(`✅ Total ventas en historial: ${todoHistorial.length}`);
     } catch(e) { console.error(e); }
-    
-    // Cargar contadores
-    try {
-      contadoresGlobales = {};
-      for (const suc of sucursales) {
-        contadoresGlobales[suc.clave] = await obtenerContadores(dbs[suc.clave]);
-      }
-      console.log("✅ Contadores cargados");
-    } catch(e) { console.error(e); }
-    
-    document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
   }
 
   function renderizarStock() {
@@ -744,7 +755,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</td>`;
+      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</tr>`;
     }
     
     html += `</tbody>}</div>`;
@@ -994,16 +1005,35 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function limpiarFiltro() {
-    sessionStorage.removeItem('filtroDesde');
-    sessionStorage.removeItem('filtroHasta');
+    console.log("🔄 Limpiando filtro y mostrando carritos actuales...");
     
+    // Limpiar inputs
     document.getElementById('fechaDesde').value = '';
     document.getElementById('fechaHasta').value = '';
+    
+    // Limpiar sesión
+    sessionStorage.removeItem('filtroDesde');
+    sessionStorage.removeItem('filtroHasta');
     
     fechaDesde = null;
     fechaHasta = null;
     
-    mostrarCarritosActuales();
+    // Recargar ventas del carrito y actualizar UI
+    cargarVentasCarrito().then(() => {
+      console.log("✅ Ventas recargadas, total:", todasLasVentas.length);
+      // Forzar actualización de la UI
+      if (todasLasVentas.length > 0) {
+        actualizarEstadisticas(todasLasVentas);
+        renderizarTablaVentas(todasLasVentas);
+        ventasActualesParaReporte = [...todasLasVentas];
+      } else {
+        actualizarEstadisticas([]);
+        document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 No hay ventas en los carritos actuales</div>';
+        ventasActualesParaReporte = [];
+      }
+    }).catch(error => {
+      console.error("Error al recargar ventas:", error);
+    });
   }
 
   async function generarReportePDF() {
@@ -1172,14 +1202,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     } else if (tab === 'ventas') {
       document.getElementById('tabVentasBtn').classList.add('active');
       document.getElementById('tabVentas').style.display = 'block';
-      // No llamar a mostrarCarritosActuales aquí porque los datos ya están cargados
-      // Solo actualizar la vista si es necesario
-      if (todasLasVentas.length > 0) {
-        actualizarEstadisticas(todasLasVentas);
-        renderizarTablaVentas(todasLasVentas);
-      } else {
-        actualizarEstadisticas([]);
-      }
+      mostrarCarritosActuales();
     } else if (tab === 'contadores') {
       document.getElementById('tabContadoresBtn').classList.add('active');
       document.getElementById('tabContadores').style.display = 'block';
@@ -1199,7 +1222,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   document.getElementById('btnLimpiar').addEventListener('click', limpiarFiltro);
   document.getElementById('btnReporte').addEventListener('click', generarReportePDF);
   document.getElementById('btnActualizar').addEventListener('click', async () => {
-    await cargarTodo();
+    await cargarVentasCarrito();
     if (tabActual === 'ventas') {
       mostrarCarritosActuales();
     } else if (tabActual === 'stock') {
@@ -1224,6 +1247,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function iniciar() {
     console.log("🚀 Iniciando carga inicial...");
     await cargarTodo();
+    await cargarVentasCarrito();
+    await cargarHistorial();
     console.log("✅ Datos cargados, total ventas en carritos:", todasLasVentas.length);
     console.log("✅ Historial cargado, total:", todoHistorial.length);
     
@@ -1233,7 +1258,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   
   iniciar();
   setInterval(async () => {
-    await cargarTodo();
+    await cargarVentasCarrito();
     if (tabActual === 'ventas') {
       mostrarCarritosActuales();
     } else if (tabActual === 'stock') {
