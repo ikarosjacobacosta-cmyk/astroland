@@ -313,12 +313,12 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   <div class="sucursales-grid" id="sucursalesGrid"></div>
 
   <div class="tabs">
-    <button class="tab-btn active" id="tabStockBtn">📦 Stock</button>
+    <button class="tab-btn" id="tabStockBtn">📦 Stock</button>
     <button class="tab-btn" id="tabVentasBtn">🛒 Historial</button>
     <button class="tab-btn" id="tabContadoresBtn">📊 Contadores Máquinas</button>
   </div>
 
-  <div id="tabStock" class="tab-content">
+  <div id="tabStock" class="tab-content" style="display:none;">
     <div id="stockContainer"></div>
   </div>
 
@@ -424,7 +424,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   async function obtenerStock(db) { try { return (await get(ref(db, 'stock'))).val() || {}; } catch { return {}; } }
-  
   async function obtenerCarrito(db) { 
     try { 
       const data = (await get(ref(db, 'carrito'))).val(); 
@@ -432,7 +431,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       return Object.values(data);
     } catch { return []; }
   }
-  
   async function obtenerHistorial(db) { 
     try { 
       const data = (await get(ref(db, 'historial_ventas'))).val(); 
@@ -512,12 +510,20 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   async function cargarTodo() {
+    console.log("🔄 Cargando todos los datos...");
     todasLasVentas = [];
     todoHistorial = [];
     await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial(), cargarTodosContadores()]);
     document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
-    if (tabActual === 'stock') renderizarStock();
-    else if (tabActual === 'ventas') mostrarVentasSegunEstado();
+    
+    // Si estamos en la pestaña de ventas, actualizar la vista
+    if (tabActual === 'ventas') {
+      mostrarVentasSegunEstado();
+    } else if (tabActual === 'stock') {
+      renderizarStock();
+    } else if (tabActual === 'contadores') {
+      calcularDiferenciasContadores();
+    }
   }
 
   async function cargarStock() {
@@ -729,7 +735,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td></tr>`;
+      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</tr>`;
     }
     
     html += `</tbody></table></div>`;
@@ -751,7 +757,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
       console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
       
-      if (tabActual === 'ventas') mostrarVentasSegunEstado();
+      if (tabActual === 'ventas') {
+        mostrarVentasSegunEstado();
+      }
     } catch(e) { console.error(e); }
   }
 
@@ -766,7 +774,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       todoHistorial = historialTemp;
       todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
       console.log(`✅ Total ventas en historial: ${todoHistorial.length}`);
-      if (tabActual === 'ventas') mostrarVentasSegunEstado();
+      if (tabActual === 'ventas') {
+        mostrarVentasSegunEstado();
+      }
     } catch(e) { console.error(e); }
   }
 
@@ -783,7 +793,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   }
 
   function mostrarCarritosActuales() {
-    // CORREGIDO: Siempre actualizar estadísticas con las ventas actuales
     console.log("Mostrando carritos actuales, ventas:", todasLasVentas.length);
     
     if (todasLasVentas && todasLasVentas.length > 0) {
@@ -791,7 +800,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       renderizarTablaVentas(todasLasVentas);
       ventasActualesParaReporte = [...todasLasVentas];
     } else {
-      // Si no hay ventas, mostrar todo en cero
       actualizarEstadisticas([]);
       document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 No hay ventas en los carritos actuales</div>';
       ventasActualesParaReporte = [];
@@ -801,13 +809,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function actualizarEstadisticas(ventas) {
     console.log("Actualizando estadísticas con", ventas.length, "ventas");
     
-    // Asegurar que ventas es un array
     if (!ventas) ventas = [];
     
     const normales = ventas.filter(v => v && !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
     const cierresEfectivo = ventas.filter(v => v && v.code === '000-09');
     const cierresTarjeta = ventas.filter(v => v && v.code === '000-10');
-    const movimientos = ventas.filter(v => v && v.esMovimiento === true);
     
     const totalVentas = normales.reduce((s,v)=>s+(v.money||0),0);
     const totalEfectivo = cierresEfectivo.reduce((s,v)=>s+(v.money||0),0);
@@ -991,7 +997,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <td>${fichasDisplay}</td>
           <td style="font-size:0.7rem;">${fechaStr}</td>
         </tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td></tr>' : ''}</tbody></table>`;
+      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody>}</div>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
 
@@ -1038,7 +1044,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     fechaDesde = null;
     fechaHasta = null;
     
-    // Recargar y mostrar carritos actuales
     cargarVentasCarrito().then(() => {
       mostrarCarritosActuales();
     });
@@ -1242,9 +1247,15 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
   }
 
-  // Iniciar en la pestaña de ventas
-  mostrarTab('ventas');
+  // PRIMERO cargar todos los datos
+  console.log("🚀 Iniciando carga inicial...");
   await cargarTodo();
+  
+  // DESPUÉS de cargados, mostrar la pestaña de ventas
+  console.log("✅ Datos cargados, mostrando pestaña de ventas");
+  mostrarTab('ventas');
+  
+  // Finalmente iniciar el intervalo
   setInterval(() => cargarTodo(), 15000);
 </script>
 </body>
