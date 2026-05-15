@@ -352,7 +352,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-  // CONFIGURACIONES CORREGIDAS CON databaseURL
   const sucursales = [
     { 
       nombre: "Los Laureles", 
@@ -584,7 +583,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function cargarTodo() {
     console.log("🔄 Cargando todos los datos...");
     
-    // Cargar stock
     try {
       const stocks = {};
       for (const suc of sucursales) {
@@ -608,7 +606,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       console.log("✅ Stock cargado:", todosLosProductos.length, "productos");
     } catch(e) { console.error(e); }
     
-    // Cargar contadores
     try {
       contadoresGlobales = {};
       for (const suc of sucursales) {
@@ -636,7 +633,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
       console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
       
-      // Limpiar filtros cuando se recargan los carritos
       sessionStorage.removeItem('filtroDesde');
       sessionStorage.removeItem('filtroHasta');
       document.getElementById('fechaDesde').value = '';
@@ -888,7 +884,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
     document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
 
-    // INICIALIZAR sucStats para TODAS las sucursales con valores por defecto
     const sucStats = {};
     for (const suc of sucursales) {
         sucStats[suc.clave] = {
@@ -915,7 +910,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         };
     }
     
-    // Llenar estadísticas por sucursal
     for (const suc of sucursales) {
         const vSuc = ventas.filter(v => v && v.sucursalClave === suc.clave);
         const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
@@ -963,7 +957,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             }
         }
         
-        // Actualizar los valores para esta sucursal
         sucStats[suc.clave] = {
             operaciones: vSuc.length,
             ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
@@ -984,7 +977,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         };
     }
     
-    // Generar HTML de sucursales
     const sucHtml = sucursales.map(suc => {
         const s = sucStats[suc.clave];
         
@@ -995,17 +987,19 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         }
         
         let stockMovHtml = '';
-        const stockMovs = s.movimientosStock || {};
+        const stockMovs = (s.movimientosStock && typeof s.movimientosStock === 'object') ? s.movimientosStock : {};
         if (Object.keys(stockMovs).length === 0) {
             stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
         } else {
-            stockMovHtml = Object.entries(stockMovs).map(([code, datos]) => 
-                `<div class="sub-item"><span class="label">${code}:</span><span class="amount">+${datos.agregar}/-${datos.quitar} = ${datos.neto >= 0 ? '+' : ''}${datos.neto}</span></div>`
-            ).join('');
+            stockMovHtml = Object.entries(stockMovs).map(([code, datos]) => {
+                if (!datos) return '';
+                return `<div class="sub-item"><span class="label">${code}:</span><span class="amount">+${datos.agregar || 0}/-${datos.quitar || 0} = ${(datos.neto || 0) >= 0 ? '+' : ''}${datos.neto || 0}</span></div>`;
+            }).filter(html => html !== '').join('');
+            if (stockMovHtml === '') stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
         }
         
         let maquinasHtml = '';
-        const maquinasMovs = s.movimientosMaquinas || {};
+        const maquinasMovs = (s.movimientosMaquinas && typeof s.movimientosMaquinas === 'object') ? s.movimientosMaquinas : {};
         let tieneMovimientos = false;
         for (let i = 1; i <= 10; i++) {
             const maqMovs = maquinasMovs[`maq${i}`] || {};
@@ -1014,8 +1008,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
                 tieneMovimientos = true;
                 const productosHtml = maqKeys.map(code => {
                     const datos = maqMovs[code];
-                    return `<span style="display:inline-block; margin-right:8px;">${code}: +${datos.agregar}/-${datos.quitar} = ${datos.neto >= 0 ? '+' : ''}${datos.neto}</span>`;
-                }).join('');
+                    if (!datos) return '';
+                    return `<span style="display:inline-block; margin-right:8px;">${code}: +${datos.agregar || 0}/-${datos.quitar || 0} = ${(datos.neto || 0) >= 0 ? '+' : ''}${datos.neto || 0}</span>`;
+                }).filter(html => html !== '').join('');
                 maquinasHtml += `<div class="maquina-item"><span class="label">⚙️ Máq ${i}:</span><span class="amount">${productosHtml || '-'}</span></div>`;
             } else {
                 maquinasHtml += `<div class="maquina-item"><span class="label">⚙️ Máq ${i}:</span><span class="amount">-</span></div>`;
@@ -1115,18 +1110,15 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   function limpiarFiltro() {
     console.log("🔄 Limpiando filtro y mostrando carritos actuales...");
     
-    // Limpiar inputs
     document.getElementById('fechaDesde').value = '';
     document.getElementById('fechaHasta').value = '';
     
-    // Limpiar sesión
     sessionStorage.removeItem('filtroDesde');
     sessionStorage.removeItem('filtroHasta');
     
     fechaDesde = null;
     fechaHasta = null;
     
-    // Recargar ventas del carrito y actualizar UI
     cargarVentasCarrito().then(() => {
       console.log("✅ Ventas recargadas, total:", todasLasVentas.length);
       if (todasLasVentas.length > 0) {
@@ -1324,7 +1316,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
-  // Event Listeners
   document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
   document.getElementById('btnLimpiar').addEventListener('click', limpiarFiltro);
   document.getElementById('btnReporte').addEventListener('click', generarReportePDF);
@@ -1350,7 +1341,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
   }
 
-  // Iniciar la aplicación - PRIMERO cargar ventas y historial, luego mostrar
   async function iniciar() {
     console.log("🚀 Iniciando carga inicial...");
     await cargarTodo();
@@ -1358,8 +1348,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     await cargarHistorial();
     console.log("✅ Datos cargados, total ventas en carritos:", todasLasVentas.length);
     console.log("✅ Historial cargado, total:", todoHistorial.length);
-    
-    // Mostrar la pestaña de ventas después de tener los datos
     mostrarTab('ventas');
   }
   
