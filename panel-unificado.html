@@ -352,6 +352,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
+  // CONFIGURACIONES CORREGIDAS CON databaseURL
   const sucursales = [
     { 
       nombre: "Los Laureles", 
@@ -479,15 +480,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     return stockData[code] ?? 0;
   }
 
-  async function obtenerStock(db) { 
-    try { 
-      const snapshot = await get(ref(db, 'stock'));
-      return snapshot.val() || {}; 
-    } catch(e) { 
-      console.error("Error obteniendo stock:", e);
-      return {}; 
-    } 
-  }
+  async function obtenerStock(db) { try { return (await get(ref(db, 'stock'))).val() || {}; } catch { return {}; } }
   
   async function obtenerCarrito(db) { 
     try { 
@@ -583,6 +576,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function cargarTodo() {
     console.log("🔄 Cargando todos los datos...");
     
+    // Cargar stock
     try {
       const stocks = {};
       for (const suc of sucursales) {
@@ -606,6 +600,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       console.log("✅ Stock cargado:", todosLosProductos.length, "productos");
     } catch(e) { console.error(e); }
     
+    // Cargar contadores
     try {
       contadoresGlobales = {};
       for (const suc of sucursales) {
@@ -633,6 +628,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
       console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
       
+      // Limpiar filtros cuando se recargan los carritos
       sessionStorage.removeItem('filtroDesde');
       sessionStorage.removeItem('filtroHasta');
       document.getElementById('fechaDesde').value = '';
@@ -884,6 +880,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
     document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
 
+    // Inicializar sucStats para TODAS las sucursales
     const sucStats = {};
     for (const suc of sucursales) {
         sucStats[suc.clave] = {
@@ -910,6 +907,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         };
     }
     
+    // Llenar estadísticas por sucursal
     for (const suc of sucursales) {
         const vSuc = ventas.filter(v => v && v.sucursalClave === suc.clave);
         const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
@@ -977,6 +975,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         };
     }
     
+    // Generar HTML de sucursales
     const sucHtml = sucursales.map(suc => {
         const s = sucStats[suc.clave];
         
@@ -1119,6 +1118,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     fechaDesde = null;
     fechaHasta = null;
     
+    // Recargar ventas del carrito
     cargarVentasCarrito().then(() => {
       console.log("✅ Ventas recargadas, total:", todasLasVentas.length);
       if (todasLasVentas.length > 0) {
@@ -1316,6 +1316,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
   }
 
+  // Event Listeners
   document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
   document.getElementById('btnLimpiar').addEventListener('click', limpiarFiltro);
   document.getElementById('btnReporte').addEventListener('click', generarReportePDF);
@@ -1341,6 +1342,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
   }
 
+  // Iniciar la aplicación
   async function iniciar() {
     console.log("🚀 Iniciando carga inicial...");
     await cargarTodo();
@@ -1348,6 +1350,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     await cargarHistorial();
     console.log("✅ Datos cargados, total ventas en carritos:", todasLasVentas.length);
     console.log("✅ Historial cargado, total:", todoHistorial.length);
+    
+    // Mostrar la pestaña de ventas después de tener los datos
     mostrarTab('ventas');
   }
   
