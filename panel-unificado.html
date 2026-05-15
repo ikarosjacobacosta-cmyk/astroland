@@ -511,22 +511,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
 
   async function cargarTodo() {
     console.log("🔄 Cargando todos los datos...");
-    todasLasVentas = [];
-    todoHistorial = [];
-    await Promise.all([cargarStock(), cargarVentasCarrito(), cargarHistorial(), cargarTodosContadores()]);
-    document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
     
-    // Si estamos en la pestaña de ventas, actualizar la vista
-    if (tabActual === 'ventas') {
-      mostrarVentasSegunEstado();
-    } else if (tabActual === 'stock') {
-      renderizarStock();
-    } else if (tabActual === 'contadores') {
-      calcularDiferenciasContadores();
-    }
-  }
-
-  async function cargarStock() {
+    // Cargar stock
     try {
       const stocks = {};
       for (const suc of sucursales) stocks[suc.clave] = await obtenerStock(dbs[suc.clave]);
@@ -545,8 +531,47 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         }
       }
       todosLosProductos.sort((a,b) => a.code.localeCompare(b.code));
-      if (tabActual === 'stock') renderizarStock();
     } catch(e) { console.error(e); }
+    
+    // Cargar ventas del carrito
+    try {
+      const ventasTemp = [];
+      for (const suc of sucursales) {
+        const ventas = await obtenerCarrito(dbs[suc.clave]);
+        console.log(`📦 ${suc.nombre}: ${ventas.length} ventas en carrito`);
+        ventas.forEach(v => {
+          const timestamp = v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime();
+          ventasTemp.push({ ...v, sucursal: suc.nombre, sucursalClave: suc.clave, timestamp: timestamp });
+        });
+      }
+      todasLasVentas = ventasTemp;
+      todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
+      console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
+    } catch(e) { console.error(e); }
+    
+    // Cargar historial
+    try {
+      const historialTemp = [];
+      for (const suc of sucursales) {
+        const historial = await obtenerHistorial(dbs[suc.clave]);
+        console.log(`📜 ${suc.nombre}: ${historial.length} ventas en historial`);
+        historial.forEach(v => { historialTemp.push({ ...v, sucursal: suc.nombre, sucursalClave: suc.clave, esHistorial: true }); });
+      }
+      todoHistorial = historialTemp;
+      todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
+      console.log(`✅ Total ventas en historial: ${todoHistorial.length}`);
+    } catch(e) { console.error(e); }
+    
+    // Cargar contadores
+    try {
+      contadoresGlobales = {};
+      for (const suc of sucursales) {
+        contadoresGlobales[suc.clave] = await obtenerContadores(dbs[suc.clave]);
+      }
+      console.log("✅ Contadores cargados");
+    } catch(e) { console.error(e); }
+    
+    document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
   }
 
   function renderizarStock() {
@@ -605,22 +630,6 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       }
       
       container.innerHTML = html;
-  }
-
-  async function cargarTodosContadores() {
-    try {
-      contadoresGlobales = {};
-      for (const suc of sucursales) {
-        contadoresGlobales[suc.clave] = await obtenerContadores(dbs[suc.clave]);
-      }
-      console.log("✅ Contadores cargados");
-      
-      if (tabActual === 'contadores') {
-        calcularDiferenciasContadores();
-      }
-    } catch(e) {
-      console.error("Error cargando contadores:", e);
-    }
   }
 
   function calcularDiferenciasContadores() {
@@ -735,61 +744,11 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</tr>`;
+      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</td>`;
     }
     
-    html += `</tbody></table></div>`;
+    html += `</tbody>}</div>`;
     document.getElementById('contadoresResultados').innerHTML = html;
-  }
-
-  async function cargarVentasCarrito() {
-    try {
-      const ventasTemp = [];
-      for (const suc of sucursales) {
-        const ventas = await obtenerCarrito(dbs[suc.clave]);
-        console.log(`📦 ${suc.nombre}: ${ventas.length} ventas en carrito`);
-        ventas.forEach(v => {
-          const timestamp = v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime();
-          ventasTemp.push({ ...v, sucursal: suc.nombre, sucursalClave: suc.clave, timestamp: timestamp });
-        });
-      }
-      todasLasVentas = ventasTemp;
-      todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
-      console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
-      
-      if (tabActual === 'ventas') {
-        mostrarVentasSegunEstado();
-      }
-    } catch(e) { console.error(e); }
-  }
-
-  async function cargarHistorial() {
-    try {
-      const historialTemp = [];
-      for (const suc of sucursales) {
-        const historial = await obtenerHistorial(dbs[suc.clave]);
-        console.log(`📜 ${suc.nombre}: ${historial.length} ventas en historial`);
-        historial.forEach(v => { historialTemp.push({ ...v, sucursal: suc.nombre, sucursalClave: suc.clave, esHistorial: true }); });
-      }
-      todoHistorial = historialTemp;
-      todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
-      console.log(`✅ Total ventas en historial: ${todoHistorial.length}`);
-      if (tabActual === 'ventas') {
-        mostrarVentasSegunEstado();
-      }
-    } catch(e) { console.error(e); }
-  }
-
-  function mostrarVentasSegunEstado() {
-    const desde = sessionStorage.getItem('filtroDesde');
-    const hasta = sessionStorage.getItem('filtroHasta');
-    if (desde || hasta) {
-      fechaDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
-      fechaHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
-      aplicarFiltroConValores(fechaDesde, fechaHasta);
-    } else {
-      mostrarCarritosActuales();
-    }
   }
 
   function mostrarCarritosActuales() {
@@ -1044,9 +1003,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     fechaDesde = null;
     fechaHasta = null;
     
-    cargarVentasCarrito().then(() => {
-      mostrarCarritosActuales();
-    });
+    mostrarCarritosActuales();
   }
 
   async function generarReportePDF() {
@@ -1215,7 +1172,14 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     } else if (tab === 'ventas') {
       document.getElementById('tabVentasBtn').classList.add('active');
       document.getElementById('tabVentas').style.display = 'block';
-      mostrarVentasSegunEstado();
+      // No llamar a mostrarCarritosActuales aquí porque los datos ya están cargados
+      // Solo actualizar la vista si es necesario
+      if (todasLasVentas.length > 0) {
+        actualizarEstadisticas(todasLasVentas);
+        renderizarTablaVentas(todasLasVentas);
+      } else {
+        actualizarEstadisticas([]);
+      }
     } else if (tab === 'contadores') {
       document.getElementById('tabContadoresBtn').classList.add('active');
       document.getElementById('tabContadores').style.display = 'block';
@@ -1234,7 +1198,16 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
   document.getElementById('btnLimpiar').addEventListener('click', limpiarFiltro);
   document.getElementById('btnReporte').addEventListener('click', generarReportePDF);
-  document.getElementById('btnActualizar').addEventListener('click', cargarTodo);
+  document.getElementById('btnActualizar').addEventListener('click', async () => {
+    await cargarTodo();
+    if (tabActual === 'ventas') {
+      mostrarCarritosActuales();
+    } else if (tabActual === 'stock') {
+      renderizarStock();
+    } else if (tabActual === 'contadores') {
+      calcularDiferenciasContadores();
+    }
+  });
   document.getElementById('tabStockBtn').addEventListener('click', () => mostrarTab('stock'));
   document.getElementById('tabVentasBtn').addEventListener('click', () => mostrarTab('ventas'));
   document.getElementById('tabContadoresBtn').addEventListener('click', () => mostrarTab('contadores'));
@@ -1247,16 +1220,28 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
   }
 
-  // PRIMERO cargar todos los datos
-  console.log("🚀 Iniciando carga inicial...");
-  await cargarTodo();
+  // Iniciar la aplicación
+  async function iniciar() {
+    console.log("🚀 Iniciando carga inicial...");
+    await cargarTodo();
+    console.log("✅ Datos cargados, total ventas en carritos:", todasLasVentas.length);
+    console.log("✅ Historial cargado, total:", todoHistorial.length);
+    
+    // Mostrar la pestaña de ventas después de tener los datos
+    mostrarTab('ventas');
+  }
   
-  // DESPUÉS de cargados, mostrar la pestaña de ventas
-  console.log("✅ Datos cargados, mostrando pestaña de ventas");
-  mostrarTab('ventas');
-  
-  // Finalmente iniciar el intervalo
-  setInterval(() => cargarTodo(), 15000);
+  iniciar();
+  setInterval(async () => {
+    await cargarTodo();
+    if (tabActual === 'ventas') {
+      mostrarCarritosActuales();
+    } else if (tabActual === 'stock') {
+      renderizarStock();
+    } else if (tabActual === 'contadores') {
+      calcularDiferenciasContadores();
+    }
+  }, 15000);
 </script>
 </body>
 </html>
