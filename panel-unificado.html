@@ -360,7 +360,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       clave: "laureles", 
       color: "#2196F3", 
       bg: "#e3f2fd",
-      url: "los_laureles.html",
+      url: "sucursales/los_laureles.html",
       config: { 
         apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w", 
         authDomain: "los-laureles-49117.firebaseapp.com",
@@ -376,7 +376,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       clave: "elisa", 
       color: "#9c27b0", 
       bg: "#f3e5f5",
-      url: "villa_elisa.html",
+      url: "sucursales/villa_elisa.html",
       config: { 
         apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ", 
         authDomain: "villa-elisa-3adbe.firebaseapp.com",
@@ -392,7 +392,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       clave: "lambare", 
       color: "#ff9800", 
       bg: "#fff3e0",
-      url: "lambare.html",
+      url: "sucursales/lambare.html",
       config: { 
         apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY", 
         authDomain: "lambare-85124.firebaseapp.com",
@@ -408,7 +408,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       clave: "morra", 
       color: "#4caf50", 
       bg: "#e8f5e9",
-      url: "villa_morra.html",
+      url: "sucursales/villa_morra.html",
       config: { 
         apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", 
         authDomain: "villa-morra.firebaseapp.com",
@@ -828,7 +828,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</tr>`;
+      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</td>`;
     }
     
     html += `</tbody>}</div>`;
@@ -1178,108 +1178,84 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     
-    // 1. Fondo azul Francia
+    // Fondo azul oscuro
     doc.setFillColor(0, 51, 102);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
     
-    // 2. Marcos dorados
+    // Marco decorativo
     doc.setDrawColor(212, 175, 55);
-    doc.setLineWidth(1.5);
-    doc.rect(5, 5, pageWidth - 10, pageHeight - 10, 'S');
-    doc.setLineWidth(0.8);
+    doc.setLineWidth(1);
     doc.rect(8, 8, pageWidth - 16, pageHeight - 16, 'S');
-    doc.setLineWidth(0.3);
-    doc.rect(11, 11, pageWidth - 22, pageHeight - 22, 'S');
+    doc.setLineWidth(0.5);
+    doc.rect(10, 10, pageWidth - 20, pageHeight - 20, 'S');
     
-    // 3. Flor de lis como sello en relieve
-    doc.setDrawColor(212, 175, 55);
-    doc.setFillColor(212, 175, 55);
-    doc.setGState(new doc.GState({ opacity: 0.25 }));
-    
-    const centerX = pageWidth / 2;
-    const centerY = pageHeight / 2;
-    const size = 75;
-    
-    doc.circle(centerX, centerY - size * 0.32, size * 0.26, 'F');
-    doc.circle(centerX - size * 0.38, centerY + size * 0.15, size * 0.26, 'F');
-    doc.circle(centerX + size * 0.38, centerY + size * 0.15, size * 0.26, 'F');
-    doc.triangle(centerX, centerY - size * 0.1, centerX - size * 0.22, centerY + size * 0.38, centerX + size * 0.22, centerY + size * 0.38, 'F');
-    doc.triangle(centerX, centerY - size * 0.62, centerX - size * 0.14, centerY - size * 0.12, centerX + size * 0.14, centerY - size * 0.12, 'F');
-    
-    doc.setLineWidth(1.5);
-    doc.setDrawColor(212, 175, 55);
-    doc.line(centerX, centerY - size * 0.72, centerX, centerY + size * 0.52);
-    doc.line(centerX - size * 0.32, centerY - size * 0.38, centerX + size * 0.32, centerY - size * 0.38);
-    doc.line(centerX - size * 0.26, centerY, centerX + size * 0.26, centerY);
-    doc.circle(centerX, centerY - size * 0.1, size * 0.08, 'D');
-    
-    doc.setGState(new doc.GState({ opacity: 1 }));
-    
-    // 4. Títulos en negrita y legibles
+    // Título ASTROLAND - rojo negrita grande
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(32);
-    doc.setTextColor(255, 215, 0);
-    doc.text('ASTROLAND', pageWidth / 2, 28, { align: 'center' });
+    doc.setFontSize(36);
+    doc.setTextColor(220, 20, 60);
+    doc.text('ASTROLAND', pageWidth / 2, 30, { align: 'center' });
     
+    // Subtítulo IN GOD WE TRUST
     doc.setFont('helvetica', 'bolditalic');
-    doc.setFontSize(13);
-    doc.setTextColor(255, 255, 255);
-    doc.text('IN GOD WE TRUST', pageWidth / 2, 39, { align: 'center' });
-    
-    doc.setDrawColor(212, 175, 55);
-    doc.setLineWidth(0.8);
-    doc.line(pageWidth / 2 - 60, 44, pageWidth / 2 + 60, 44);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(14);
     doc.setTextColor(255, 215, 0);
-    doc.text('REPORTE DE CIERRES', pageWidth / 2, 58, { align: 'center' });
+    doc.text('IN GOD WE TRUST', pageWidth / 2, 45, { align: 'center' });
     
+    // Línea decorativa
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(0.6);
+    doc.line(pageWidth / 2 - 50, 50, pageWidth / 2 + 50, 50);
+    
+    // Título del reporte
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(14);
     doc.setTextColor(255, 255, 255);
-    doc.text(rangoFechas, pageWidth / 2, 69, { align: 'center' });
+    doc.text('REPORTE DE CIERRES', pageWidth / 2, 65, { align: 'center' });
     
+    // Rango de fechas
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 215, 0);
+    doc.text(rangoFechas, pageWidth / 2, 75, { align: 'center' });
+    
+    // Fecha de generación
     doc.setFontSize(8);
     doc.setTextColor(200, 200, 200);
-    doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, pageWidth / 2, 78, { align: 'center' });
+    doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, pageWidth / 2, 83, { align: 'center' });
     
-    // 5. Tabla
+    // Tabla
     const tableHeaders = [['SUCURSAL', 'EFECTIVO (Gs.)', 'TARJETA (Gs.)', 'TOTAL (Gs.)']];
     const tableRows = [];
     for (const suc of sucursales) {
         const stats = sucStats[suc.clave];
-        tableRows.push([stats.nombre, `${stats.efectivo.toLocaleString()}`, `${stats.tarjeta.toLocaleString()}`, `${stats.total.toLocaleString()}`]);
+        tableRows.push([stats.nombre, stats.efectivo.toLocaleString(), stats.tarjeta.toLocaleString(), stats.total.toLocaleString()]);
     }
-    tableRows.push(['TOTAL GENERAL', `${totalEfectivoGeneral.toLocaleString()}`, `${totalTarjetaGeneral.toLocaleString()}`, `${totalCierreGeneral.toLocaleString()}`]);
+    tableRows.push(['TOTAL GENERAL', totalEfectivoGeneral.toLocaleString(), totalTarjetaGeneral.toLocaleString(), totalCierreGeneral.toLocaleString()]);
     
     doc.autoTable({
         head: tableHeaders,
         body: tableRows,
-        startY: 88,
+        startY: 95,
         theme: 'grid',
         styles: {
-            fontSize: 11,
-            cellPadding: 7,
+            fontSize: 12,
+            cellPadding: 8,
             textColor: [255, 255, 255],
             lineColor: [212, 175, 55],
             lineWidth: 0.5,
             valign: 'middle',
-            halign: 'center',
-            fontStyle: 'normal'
+            halign: 'center'
         },
         headStyles: {
             fillColor: [212, 175, 55],
             textColor: [0, 51, 102],
             fontStyle: 'bold',
-            fontSize: 12,
+            fontSize: 13,
             halign: 'center'
         },
         bodyStyles: {
             fillColor: [0, 85, 164],
-            textColor: [255, 255, 255],
-            fontStyle: 'normal'
+            textColor: [255, 255, 255]
         },
         alternateRowStyles: {
             fillColor: [26, 95, 174]
@@ -1288,7 +1264,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             fillColor: [212, 175, 55],
             textColor: [0, 51, 102],
             fontStyle: 'bold',
-            fontSize: 12
+            fontSize: 13
         },
         columnStyles: {
             0: { halign: 'left', cellWidth: 65, fontStyle: 'bold' },
@@ -1299,32 +1275,9 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         margin: { left: 15, right: 15 }
     });
     
-    // 6. Sello final
-    const finalY = doc.lastAutoTable.finalY + 15;
-    if (finalY < pageHeight - 30) {
-        doc.setFont('helvetica', 'bolditalic');
-        doc.setFontSize(10);
-        doc.setTextColor(255, 215, 0);
-        doc.text('"Que Dios bendiga estos recursos"', pageWidth / 2, finalY, { align: 'center' });
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor(200, 200, 200);
-        doc.text('Documento oficial de ASTROLAND', pageWidth / 2, finalY + 7, { align: 'center' });
-        
-        doc.setDrawColor(212, 175, 55);
-        doc.setFillColor(212, 175, 55);
-        doc.setGState(new doc.GState({ opacity: 0.5 }));
-        const smallSize = 6;
-        doc.circle(pageWidth / 2, finalY + 15, smallSize * 0.5, 'F');
-        doc.circle(pageWidth / 2 - smallSize * 0.6, finalY + 15 + smallSize * 0.3, smallSize * 0.5, 'F');
-        doc.circle(pageWidth / 2 + smallSize * 0.6, finalY + 15 + smallSize * 0.3, smallSize * 0.5, 'F');
-        doc.setGState(new doc.GState({ opacity: 1 }));
-    }
-    
     const fileName = `ASTROLAND_Reporte_Cierres_${rangoFechas.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
     doc.save(fileName);
-    console.log("✅ PDF generado con estilo real");
+    console.log("✅ PDF generado correctamente");
   }
 
   function mostrarTab(tab) {
