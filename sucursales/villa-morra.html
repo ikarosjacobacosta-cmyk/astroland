@@ -769,7 +769,7 @@ body { padding-top: 80px; }
 <body>
 <div class="floating-search-container">
   <div class="busqueda-container">
-    <input type="text" id="busqueda" placeholder="Buscar código (ej: 005)..." aria-label="Buscar" inputmode="numeric" pattern="\d*">
+    <input type="text" id="busqueda" placeholder="Ej: 005-13 (escribe y presiona Enter)" aria-label="Buscar" inputmode="text">
   </div>
 </div>
 
@@ -1037,6 +1037,75 @@ body { padding-top: 80px; }
     fechaHasta: ''
   };
 
+  // ========== MEJORA DE BÚSQUEDA ==========
+  // Filtra solo con ENTER o cuando se completa el código completo (3+1+2 = 6 caracteres)
+  let timeoutBusqueda = null;
+
+  function configurarBusqueda() {
+      const input = document.getElementById('busqueda');
+      if (!input) return;
+      
+      // Remover event listeners anteriores clonando el elemento
+      const nuevoInput = input.cloneNode(true);
+      input.parentNode.replaceChild(nuevoInput, input);
+      
+      // Evento: cuando el usuario escribe
+      nuevoInput.addEventListener('input', function(e) {
+          let v = this.value;
+          // Permitir solo números y guión
+          v = v.replace(/[^0-9-]/g, '');
+          this.value = v;
+          
+          // Limpiar timeout anterior
+          if (timeoutBusqueda) clearTimeout(timeoutBusqueda);
+          
+          // Si se borró todo, mostrar todos los productos inmediatamente
+          if (v === '') {
+              filterProducts('');
+              return;
+          }
+          
+          // Verificar si el código está completo (formato: XXX-XX = 6 caracteres)
+          const codigoCompleto = /^\d{3}-\d{2}$/.test(v);
+          
+          if (codigoCompleto) {
+              // Código completo: filtrar después de 300ms
+              timeoutBusqueda = setTimeout(() => {
+                  const prefijo = v.substring(0, 3);
+                  filterProducts(prefijo);
+              }, 300);
+          }
+          // Si no está completo, NO filtrar automáticamente
+      });
+      
+      // Evento: cuando el usuario presiona ENTER
+      nuevoInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              let v = this.value;
+              const prefijo = v.substring(0, 3).replace(/[^0-9]/g, '');
+              if (prefijo.length > 0) {
+                  filterProducts(prefijo);
+              } else {
+                  filterProducts('');
+              }
+              this.blur();
+          }
+      });
+      
+      // Evento: cuando el input pierde el foco
+      nuevoInput.addEventListener('blur', function() {
+          let v = this.value;
+          const codigoCompleto = /^\d{3}-\d{2}$/.test(v);
+          if (codigoCompleto) {
+              const prefijo = v.substring(0, 3);
+              filterProducts(prefijo);
+          }
+      });
+      
+      nuevoInput.placeholder = "Ej: 005-13 (escribe y presiona Enter)";
+  }
+
   function isOnline() {
     return navigator.onLine;
   }
@@ -1280,6 +1349,7 @@ body { padding-top: 80px; }
   }
 
   generarTodosLosProductos();
+  configurarBusqueda(); // <-- Inicializar la búsqueda mejorada
 
   function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
 
@@ -1310,7 +1380,8 @@ body { padding-top: 80px; }
     });
     updateCategoryStockCounters();
     const searchValue = document.getElementById('busqueda')?.value || '';
-    filterProducts(searchValue);
+    const prefijo = searchValue.substring(0, 3).replace(/[^0-9]/g, '');
+    filterProducts(prefijo);
   }
 
   function updateCategoryStockCounters() {
@@ -1324,13 +1395,6 @@ body { padding-top: 80px; }
     });
     for (let c in cats) { const badge = document.getElementById(`stock-${c}`); if (badge) badge.querySelector('span').textContent = cats[c]; }
   }
-
-  window.handleSearchInput = function(input) {
-    let v = input.value.replace(/\D/g, '');
-    if (v.length > 3) v = v.substring(0, 3);
-    input.value = v;
-    if (v.length === 3) { input.blur(); filterProducts(v); } else filterProducts('');
-  };
 
   function filterProducts(q) {
     document.querySelectorAll('.categoria').forEach(cat => {
@@ -1351,8 +1415,6 @@ body { padding-top: 80px; }
     const inp = document.getElementById('busqueda');
     if (inp) { inp.value = ''; filterProducts(''); }
   }
-
-  document.getElementById('busqueda').addEventListener('input', function() { window.handleSearchInput(this); });
 
   document.querySelectorAll('.tab-btn-compras').forEach(btn => {
     btn.addEventListener('click', function() {
