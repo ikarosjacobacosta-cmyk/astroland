@@ -1348,7 +1348,7 @@ body { padding-top: 80px; }
 
   generarTodosLosProductos();
   generarOpcionesMaquinas();
-  configurarBusqueda(); // <-- Inicializar la búsqueda mejorada
+  configurarBusqueda();
 
   function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
 
@@ -2547,6 +2547,7 @@ body { padding-top: 80px; }
     return html;
   }
 
+  // ========== FUNCIÓN FILTRAR HISTORIAL CORREGIDA ==========
   window.filtrarHistorial = function() {
     const desde = document.getElementById('fechaDesde').value;
     const hasta = document.getElementById('fechaHasta').value;
@@ -2573,7 +2574,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<tr>
+    let html = `<table>
       <thead>
         <tr>
           <th>Fecha</th>
@@ -2647,7 +2648,6 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `Historial_VillaElisa_${desde}_${hasta}.xlsx`);
   };
 
-  // Función para renderizar el carrito con filtros
   function renderCart() {
     const div = document.getElementById('cartItems');
     
