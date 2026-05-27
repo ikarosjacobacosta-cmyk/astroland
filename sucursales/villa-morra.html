@@ -1038,47 +1038,37 @@ body { padding-top: 80px; }
   };
 
   // ========== MEJORA DE BÚSQUEDA ==========
-  // Filtra solo con ENTER o cuando se completa el código completo (3+1+2 = 6 caracteres)
   let timeoutBusqueda = null;
 
   function configurarBusqueda() {
       const input = document.getElementById('busqueda');
       if (!input) return;
       
-      // Remover event listeners anteriores clonando el elemento
       const nuevoInput = input.cloneNode(true);
       input.parentNode.replaceChild(nuevoInput, input);
       
-      // Evento: cuando el usuario escribe
       nuevoInput.addEventListener('input', function(e) {
           let v = this.value;
-          // Permitir solo números y guión
           v = v.replace(/[^0-9-]/g, '');
           this.value = v;
           
-          // Limpiar timeout anterior
           if (timeoutBusqueda) clearTimeout(timeoutBusqueda);
           
-          // Si se borró todo, mostrar todos los productos inmediatamente
           if (v === '') {
               filterProducts('');
               return;
           }
           
-          // Verificar si el código está completo (formato: XXX-XX = 6 caracteres)
           const codigoCompleto = /^\d{3}-\d{2}$/.test(v);
           
           if (codigoCompleto) {
-              // Código completo: filtrar después de 300ms
               timeoutBusqueda = setTimeout(() => {
                   const prefijo = v.substring(0, 3);
                   filterProducts(prefijo);
               }, 300);
           }
-          // Si no está completo, NO filtrar automáticamente
       });
       
-      // Evento: cuando el usuario presiona ENTER
       nuevoInput.addEventListener('keypress', function(e) {
           if (e.key === 'Enter') {
               e.preventDefault();
@@ -1093,7 +1083,6 @@ body { padding-top: 80px; }
           }
       });
       
-      // Evento: cuando el input pierde el foco
       nuevoInput.addEventListener('blur', function() {
           let v = this.value;
           const codigoCompleto = /^\d{3}-\d{2}$/.test(v);
@@ -1261,6 +1250,15 @@ body { padding-top: 80px; }
     return stock[code] ?? STOCK_INICIAL;
   }
 
+  function generarOpcionesMaquinas() {
+    const select = document.getElementById('movimientoDestino');
+    if (select) {
+      for (let i = 1; i <= 20; i++) {
+        select.innerHTML += `<option value="maq${i}">⚙️ Maq ${i}</option>`;
+      }
+    }
+  }
+
   function generarTodosLosProductos() {
     const container = document.querySelector('.container');
     if (!container) return;
@@ -1349,7 +1347,8 @@ body { padding-top: 80px; }
   }
 
   generarTodosLosProductos();
-  configurarBusqueda(); // <-- Inicializar la búsqueda mejorada
+  generarOpcionesMaquinas();
+  configurarBusqueda();
 
   function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
 
@@ -1429,16 +1428,6 @@ body { padding-top: 80px; }
       }
     });
   });
-
-  function generarOpcionesMaquinas() {
-    const select = document.getElementById('movimientoDestino');
-    if (select) {
-      for (let i = 1; i <= 20; i++) {
-        select.innerHTML += `<option value="maq${i}">⚙️ Maq ${i}</option>`;
-      }
-    }
-  }
-  generarOpcionesMaquinas();
 
   function mostrarImagenProducto(code) {
     const modal = document.createElement('div');
@@ -2078,7 +2067,7 @@ body { padding-top: 80px; }
       contadoresMaquinas[maquina][fecha] = { fichas, premios, fichasPrueba, premiosPrueba };
       
       ocultarMensajeEnProceso();
-      alert(`✅ Datos guardados para ${maquina} - Fecha: ${fecha}`);
+      alert(`✅ Datos guardados para ${maquina.toUpperCase()} - Fecha: ${fecha}`);
     } catch (error) {
       ocultarMensajeEnProceso();
       alert('❌ Error al guardar contadores');
@@ -2359,6 +2348,10 @@ body { padding-top: 80px; }
       const nuevoRegistroRef = await push(historialRef, registro);
       
       console.log("✅ Historial guardado correctamente, ID:", nuevoRegistroRef.key);
+      console.log(`💰 Total guardado: Gs. ${totalDinero.toLocaleString()}`);
+      console.log(`📦 Items: ${ventasAEliminar.length}`);
+      console.log(`🖥️ Movimientos por máquina:`, movimientosPorMaquina);
+      
       return true;
       
     } catch(e) { 
@@ -2459,6 +2452,7 @@ body { padding-top: 80px; }
           }
         } else {
           alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y están respaldadas localmente.');
+          console.log("💾 Puedes recuperar las ventas del backup local en caso necesario");
         }
         
       } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
@@ -2553,6 +2547,7 @@ body { padding-top: 80px; }
     return html;
   }
 
+  // ========== FUNCIÓN FILTRAR HISTORIAL CORREGIDA ==========
   window.filtrarHistorial = function() {
     const desde = document.getElementById('fechaDesde').value;
     const hasta = document.getElementById('fechaHasta').value;
@@ -2579,7 +2574,7 @@ body { padding-top: 80px; }
       🛒 Ventas: ${totalVentas}
     `;
     
-    let html = `<tr>
+    let html = `<table>
       <thead>
         <tr>
           <th>Fecha</th>
@@ -2653,29 +2648,20 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `Historial_VillaMorra_${desde}_${hasta}.xlsx`);
   };
 
-  // Función para renderizar el carrito con filtros
   function renderCart() {
     const div = document.getElementById('cartItems');
     
-    // Aplicar filtros
     let itemsFiltrados = cart.filter(item => {
-        // Filtro por texto (búsqueda en nombre o código)
         if (filtroCarrito.texto) {
             const nombreCompleto = (item.name || item.code || '').toLowerCase();
-            if (!nombreCompleto.includes(filtroCarrito.texto.toLowerCase())) {
-                return false;
-            }
+            if (!nombreCompleto.includes(filtroCarrito.texto.toLowerCase())) return false;
         }
-        
-        // Filtro por tipo
         if (filtroCarrito.tipo !== 'todos') {
             if (filtroCarrito.tipo === 'compras' && (item.esMovimiento || item.esCierre || item.esFichaGratis)) return false;
             if (filtroCarrito.tipo === 'movimientos' && !item.esMovimiento) return false;
             if (filtroCarrito.tipo === 'fichas_gratis' && !item.esFichaGratis) return false;
             if (filtroCarrito.tipo === 'cierres' && !item.esCierre) return false;
         }
-        
-        // Filtro por fecha
         if (filtroCarrito.fechaDesde) {
             const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
             if (fechaItem < filtroCarrito.fechaDesde) return false;
@@ -2684,11 +2670,9 @@ body { padding-top: 80px; }
             const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
             if (fechaItem > filtroCarrito.fechaHasta) return false;
         }
-        
         return true;
     });
     
-    // Calcular estadísticas de los items filtrados
     const stats = {
         totalItems: itemsFiltrados.length,
         totalDinero: itemsFiltrados.reduce((s, i) => s + (i.money || 0), 0),
@@ -2700,7 +2684,6 @@ body { padding-top: 80px; }
         totalCierres: itemsFiltrados.filter(i => i.esCierre).length
     };
     
-    // Construir HTML del carrito con filtros y estadísticas
     let html = `
         <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
             <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 15px;">
@@ -2819,7 +2802,6 @@ body { padding-top: 80px; }
     
     div.innerHTML = html;
     
-    // Re-asignar eventos click a los nombres de productos
     document.querySelectorAll('.cart-product-name').forEach(elem => {
         elem.addEventListener('click', function() {
             const code = this.getAttribute('data-code');
@@ -2828,24 +2810,16 @@ body { padding-top: 80px; }
     });
   }
 
-  // Funciones para manejar los filtros del carrito
   window.aplicarFiltroCarrito = function(tipo, valor) {
     if (tipo === 'texto') filtroCarrito.texto = valor;
     else if (tipo === 'tipo') filtroCarrito.tipo = valor;
     else if (tipo === 'fechaDesde') filtroCarrito.fechaDesde = valor;
     else if (tipo === 'fechaHasta') filtroCarrito.fechaHasta = valor;
-    
     renderCart();
   };
 
   window.limpiarFiltrosCarrito = function() {
-    filtroCarrito = {
-        texto: '',
-        tipo: 'todos',
-        fechaDesde: '',
-        fechaHasta: ''
-    };
-    // Actualizar los valores de los inputs
+    filtroCarrito = { texto: '', tipo: 'todos', fechaDesde: '', fechaHasta: '' };
     const textoInput = document.getElementById('filtroTexto');
     const tipoSelect = document.getElementById('filtroTipo');
     const fechaDesdeInput = document.getElementById('filtroFechaDesde');
@@ -2857,16 +2831,10 @@ body { padding-top: 80px; }
     renderCart();
   };
 
-  // Función para exportar SOLO los items filtrados a Excel
   window.exportarFiltradoExcel = function() {
-    // Verificar contraseña primero
     const pwd = prompt('🔐 Contraseña para exportar filtrado:');
-    if (pwd !== PASSWORD_GENERAL) {
-      alert('Contraseña incorrecta');
-      return;
-    }
+    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
     
-    // Aplicar los mismos filtros que en renderCart
     let itemsFiltrados = cart.filter(item => {
         if (filtroCarrito.texto) {
             const nombreCompleto = (item.name || item.code || '').toLowerCase();
@@ -2889,10 +2857,7 @@ body { padding-top: 80px; }
         return true;
     });
     
-    if (itemsFiltrados.length === 0) {
-        alert('No hay items para exportar con los filtros actuales');
-        return;
-    }
+    if (itemsFiltrados.length === 0) { alert('No hay items para exportar con los filtros actuales'); return; }
     
     const totalP = itemsFiltrados.reduce((s,i) => s + (i.points || 0), 0);
     const totalM = itemsFiltrados.reduce((s,i) => s + (i.money || 0), 0);
@@ -2918,7 +2883,6 @@ body { padding-top: 80px; }
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, 'Carrito_Filtrado');
     XLSX.writeFile(wb, `ASTROLAND_VillaMorra_Filtrado_${new Date().toLocaleDateString('es-PY').replace(/\//g,'-')}.xlsx`);
-    
     alert(`✅ Exportados ${itemsFiltrados.length} items filtrados`);
   };
 
