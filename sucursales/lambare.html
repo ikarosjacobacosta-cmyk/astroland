@@ -769,7 +769,7 @@ body { padding-top: 80px; }
 <body>
 <div class="floating-search-container">
   <div class="busqueda-container">
-    <input type="text" id="busqueda" placeholder="Ej: 005-13 (escribe y presiona Enter)" aria-label="Buscar" inputmode="text">
+    <input type="text" id="busqueda" placeholder="Ej: 005 (escribe 3 dígitos para buscar)" aria-label="Buscar" inputmode="numeric">
   </div>
 </div>
 
@@ -869,7 +869,7 @@ body { padding-top: 80px; }
     </div>
     <div id="stockManagementContent" style="display:none;">
       <div class="stock-search-container">
-        <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." oninput="handleStockSearchInput(this)">
+        <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." inputmode="numeric">
       </div>
       <div id="stockItemsContainer"></div>
       <div class="modal-buttons" style="margin-top:20px;">
@@ -886,9 +886,48 @@ body { padding-top: 80px; }
     <div id="cartItems" class="cart-items"></div>
     <div class="cart-actions">
       <button onclick="showExportPasswordPrompt()" style="background:#4CAF50; color:white;">📥 Exportar Todo</button>
-      <button onclick="exportarFiltradoExcel()" style="background:#2196F3; color:white;">📊 Exportar Filtrado</button>
+      <button onclick="mostrarPanelFiltrado()" style="background:#FF9800; color:white;">🔓 Mostrar Filtros y Totales</button>
       <button onclick="showClearPasswordPrompt()" style="background:#ff9800; color:white;">🗑️ Vaciar Carrito</button>
     </div>
+    <div id="filtrosCarritoSeccion" style="display: none;">
+        <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                <h4 style="margin:0;">🔍 Filtros de análisis</h4>
+                <button onclick="limpiarFiltrosCarrito()" style="background:#666; color:white; border:none; border-radius:20px; padding:5px 15px; cursor:pointer;">🗑️ Limpiar filtros</button>
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size:0.8rem;">🔎 Buscar producto:</label>
+                    <input type="text" id="filtroTexto" placeholder="Código completo (ej: 100-38)" value="" 
+                           style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" 
+                           inputmode="numeric">
+                </div>
+                
+                <div style="min-width: 130px;">
+                    <label style="font-size:0.8rem;">📋 Tipo:</label>
+                    <select id="filtroTipo" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+                        <option value="todos">📊 Todos</option>
+                        <option value="compras">🛒 Solo Compras</option>
+                        <option value="movimientos">🔄 Solo Movimientos</option>
+                        <option value="fichas_gratis">🎁 Fichas Gratis</option>
+                        <option value="cierres">💰 Cierres de Caja</option>
+                    </select>
+                </div>
+                
+                <div style="min-width: 140px;">
+                    <label style="font-size:0.8rem;">📅 Desde:</label>
+                    <input type="date" id="filtroFechaDesde" value="" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+                </div>
+                
+                <div style="min-width: 140px;">
+                    <label style="font-size:0.8rem;">📅 Hasta:</label>
+                    <input type="date" id="filtroFechaHasta" value="" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="totalesCarritoSeccion" style="display: none;"></div>
     <div id="exportPasswordPrompt" class="password-input">
       <input type="password" id="exportPassword" placeholder="Contraseña">
       <button onclick="verifyAndExport()" style="background:#2196F3; color:white;">Confirmar</button>
@@ -1037,18 +1076,23 @@ body { padding-top: 80px; }
     fechaHasta: ''
   };
 
-  // ========== MEJORA DE BÚSQUEDA ==========
+  // ========== MEJORA DE BÚSQUEDA DEL CATÁLOGO PRINCIPAL ==========
   let timeoutBusqueda = null;
 
   function configurarBusqueda() {
       const input = document.getElementById('busqueda');
       if (!input) return;
       
+      // Configurar teclado numérico en celulares
+      input.inputMode = 'numeric';
+      
+      // Limpiar evento anterior y configurar nuevo
       const nuevoInput = input.cloneNode(true);
       input.parentNode.replaceChild(nuevoInput, input);
       
       nuevoInput.addEventListener('input', function(e) {
           let v = this.value;
+          // Solo permitir números y guiones
           v = v.replace(/[^0-9-]/g, '');
           this.value = v;
           
@@ -1059,12 +1103,11 @@ body { padding-top: 80px; }
               return;
           }
           
-          const codigoCompleto = /^\d{3}-\d{2}$/.test(v);
-          
-          if (codigoCompleto) {
+          // Extraer los primeros 3 dígitos numéricos (ignorando guiones)
+          const match = v.match(/\d{3}/);
+          if (match && match[0].length === 3) {
               timeoutBusqueda = setTimeout(() => {
-                  const prefijo = v.substring(0, 3);
-                  filterProducts(prefijo);
+                  filterProducts(match[0]);
               }, 300);
           }
       });
@@ -1073,9 +1116,9 @@ body { padding-top: 80px; }
           if (e.key === 'Enter') {
               e.preventDefault();
               let v = this.value;
-              const prefijo = v.substring(0, 3).replace(/[^0-9]/g, '');
-              if (prefijo.length > 0) {
-                  filterProducts(prefijo);
+              const match = v.match(/\d{3}/);
+              if (match && match[0].length > 0) {
+                  filterProducts(match[0]);
               } else {
                   filterProducts('');
               }
@@ -1083,16 +1126,7 @@ body { padding-top: 80px; }
           }
       });
       
-      nuevoInput.addEventListener('blur', function() {
-          let v = this.value;
-          const codigoCompleto = /^\d{3}-\d{2}$/.test(v);
-          if (codigoCompleto) {
-              const prefijo = v.substring(0, 3);
-              filterProducts(prefijo);
-          }
-      });
-      
-      nuevoInput.placeholder = "Ej: 005-13 (escribe y presiona Enter)";
+      nuevoInput.placeholder = "Ej: 005 (escribe 3 dígitos para buscar)";
   }
 
   function isOnline() {
@@ -1288,7 +1322,8 @@ body { padding-top: 80px; }
       { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 5 } },
       { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 3 } },
       { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
-        { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 }
+        { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 },
+        { sufijo: "03", precio: 60000 }
       ]},
       { nombre: "800 puntos", categoria: "800", puntos: 800, productos: [
         { codigo: "800-00", precio: 250000 }, { codigo: "800-01", precio: 250000 }
@@ -1312,6 +1347,7 @@ body { padding-top: 80px; }
       galeria.className = 'galeria';
       
       const crearItem = (codigo, precio) => {
+        if (codigo === '100-38') precio = 13000;
         const item = document.createElement('div');
         item.className = 'imagen-item';
         item.setAttribute('data-code', codigo);
@@ -1379,7 +1415,8 @@ body { padding-top: 80px; }
     });
     updateCategoryStockCounters();
     const searchValue = document.getElementById('busqueda')?.value || '';
-    const prefijo = searchValue.substring(0, 3).replace(/[^0-9]/g, '');
+    const match = searchValue.match(/\d{3}/);
+    const prefijo = match ? match[0] : '';
     filterProducts(prefijo);
   }
 
@@ -2611,7 +2648,8 @@ body { padding-top: 80px; }
       </tr>`;
     });
     
-    html += `</tbody></table>`;
+    html += `</tbody>`;
+
     if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
     document.getElementById('historialTabla').innerHTML = html;
   };
@@ -2646,6 +2684,59 @@ body { padding-top: 80px; }
     const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, 'Historial_Lambare');
     XLSX.writeFile(wb, `Historial_Lambare_${desde}_${hasta}.xlsx`);
+  };
+
+  // Función para mostrar/ocultar panel de filtros y totales con contraseña
+  window.mostrarPanelFiltrado = function() {
+      const pwd = prompt('🔐 Ingrese la contraseña para mostrar los filtros y totales:');
+      if (pwd === PASSWORD_GENERAL) {
+          const seccionFiltros = document.getElementById('filtrosCarritoSeccion');
+          const seccionTotales = document.getElementById('totalesCarritoSeccion');
+          
+          if (seccionFiltros.style.display === 'none') {
+              seccionFiltros.style.display = 'block';
+              seccionTotales.style.display = 'block';
+              
+              // Configurar eventos después de mostrar
+              const filtroTexto = document.getElementById('filtroTexto');
+              const filtroTipo = document.getElementById('filtroTipo');
+              const filtroFechaDesde = document.getElementById('filtroFechaDesde');
+              const filtroFechaHasta = document.getElementById('filtroFechaHasta');
+
+              // Limpiar listeners previos para evitar duplicados
+              const nuevoFiltroTexto = filtroTexto.cloneNode(true);
+              filtroTexto.parentNode.replaceChild(nuevoFiltroTexto, filtroTexto);
+              
+              // Mejora 2: Búsqueda en filtros del carrito con código completo y teclado numérico
+              nuevoFiltroTexto.inputMode = 'numeric';
+              nuevoFiltroTexto.addEventListener('input', function(e) {
+                  let v = this.value;
+                  v = v.replace(/[^0-9-]/g, '');
+                  this.value = v;
+                  
+                  // Solo filtrar cuando el código esté completo (ej: 100-38)
+                  if (/^\d{3}-\d{2}$/.test(v)) {
+                      aplicarFiltroCarrito('texto', v);
+                  } else if (v === '') {
+                      aplicarFiltroCarrito('texto', '');
+                  }
+              });
+              
+              filtroTipo.addEventListener('change', () => aplicarFiltroCarrito('tipo', filtroTipo.value));
+              filtroFechaDesde.addEventListener('change', () => aplicarFiltroCarrito('fechaDesde', filtroFechaDesde.value));
+              filtroFechaHasta.addEventListener('change', () => aplicarFiltroCarrito('fechaHasta', filtroFechaHasta.value));
+              
+              // Forzar render para que aparezcan los totales
+              renderCart();
+          } else {
+              seccionFiltros.style.display = 'none';
+              seccionTotales.style.display = 'none';
+              // Limpiar filtros al ocultar para que los empleados no vean datos sensibles por accidente
+              limpiarFiltrosCarrito();
+          }
+      } else {
+          alert('Contraseña incorrecta');
+      }
   };
 
   function renderCart() {
@@ -2684,66 +2775,28 @@ body { padding-top: 80px; }
         totalCierres: itemsFiltrados.filter(i => i.esCierre).length
     };
     
-    let html = `
-        <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                <h4 style="margin:0;">🔍 Filtros de análisis</h4>
-                <button onclick="limpiarFiltrosCarrito()" style="background:#666; color:white; border:none; border-radius:20px; padding:5px 15px; cursor:pointer;">🗑️ Limpiar filtros</button>
-            </div>
-            
-            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="font-size:0.8rem;">🔎 Buscar producto:</label>
-                    <input type="text" id="filtroTexto" placeholder="Nombre o código..." value="${filtroCarrito.texto}" 
-                           style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" 
-                           oninput="aplicarFiltroCarrito('texto', this.value)">
-                </div>
-                
-                <div style="min-width: 130px;">
-                    <label style="font-size:0.8rem;">📋 Tipo:</label>
-                    <select id="filtroTipo" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" 
-                            onchange="aplicarFiltroCarrito('tipo', this.value)">
-                        <option value="todos" ${filtroCarrito.tipo === 'todos' ? 'selected' : ''}>📊 Todos</option>
-                        <option value="compras" ${filtroCarrito.tipo === 'compras' ? 'selected' : ''}>🛒 Solo Compras</option>
-                        <option value="movimientos" ${filtroCarrito.tipo === 'movimientos' ? 'selected' : ''}>🔄 Solo Movimientos</option>
-                        <option value="fichas_gratis" ${filtroCarrito.tipo === 'fichas_gratis' ? 'selected' : ''}>🎁 Fichas Gratis</option>
-                        <option value="cierres" ${filtroCarrito.tipo === 'cierres' ? 'selected' : ''}>💰 Cierres de Caja</option>
-                    </select>
-                </div>
-                
-                <div style="min-width: 140px;">
-                    <label style="font-size:0.8rem;">📅 Desde:</label>
-                    <input type="date" id="filtroFechaDesde" value="${filtroCarrito.fechaDesde}" 
-                           style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" 
-                           onchange="aplicarFiltroCarrito('fechaDesde', this.value)">
-                </div>
-                
-                <div style="min-width: 140px;">
-                    <label style="font-size:0.8rem;">📅 Hasta:</label>
-                    <input type="date" id="filtroFechaHasta" value="${filtroCarrito.fechaHasta}" 
-                           style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" 
-                           onchange="aplicarFiltroCarrito('fechaHasta', this.value)">
+    // Renderizar los totales en el div correspondiente (solo visible si se ingresó la contraseña)
+    const totalesDiv = document.getElementById('totalesCarritoSeccion');
+    if (totalesDiv) {
+        totalesDiv.innerHTML = `
+            <div style="margin-bottom: 15px; padding: 12px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border-radius: 12px; color: white;">
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-around; text-align: center;">
+                    <div><strong>📦 Items</strong><br><span style="font-size:1.3rem;">${stats.totalItems}</span></div>
+                    <div><strong>💰 Dinero</strong><br><span style="font-size:1.3rem;">Gs. ${stats.totalDinero.toLocaleString()}</span></div>
+                    <div><strong>🎯 Puntos</strong><br><span style="font-size:1.3rem;">${stats.totalPuntos.toLocaleString()}</span></div>
+                    <div><strong>🎴 Fichas</strong><br><span style="font-size:1.3rem;">${stats.totalFichas.toLocaleString()}</span></div>
+                    <div><strong>🛒 Compras</strong><br><span style="font-size:1.3rem;">${stats.totalCompras}</span></div>
+                    <div><strong>🔄 Mov.</strong><br><span style="font-size:1.3rem;">${stats.totalMovimientos}</span></div>
+                    <div><strong>🎁 Gratis</strong><br><span style="font-size:1.3rem;">${stats.totalFichasGratis}</span></div>
+                    <div><strong>💰 Cierres</strong><br><span style="font-size:1.3rem;">${stats.totalCierres}</span></div>
                 </div>
             </div>
-        </div>
-        
-        <div style="margin-bottom: 15px; padding: 12px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border-radius: 12px; color: white;">
-            <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-around; text-align: center;">
-                <div><strong>📦 Items</strong><br><span style="font-size:1.3rem;">${stats.totalItems}</span></div>
-                <div><strong>💰 Dinero</strong><br><span style="font-size:1.3rem;">Gs. ${stats.totalDinero.toLocaleString()}</span></div>
-                <div><strong>🎯 Puntos</strong><br><span style="font-size:1.3rem;">${stats.totalPuntos.toLocaleString()}</span></div>
-                <div><strong>🎴 Fichas</strong><br><span style="font-size:1.3rem;">${stats.totalFichas.toLocaleString()}</span></div>
-                <div><strong>🛒 Compras</strong><br><span style="font-size:1.3rem;">${stats.totalCompras}</span></div>
-                <div><strong>🔄 Mov.</strong><br><span style="font-size:1.3rem;">${stats.totalMovimientos}</span></div>
-                <div><strong>🎁 Gratis</strong><br><span style="font-size:1.3rem;">${stats.totalFichasGratis}</span></div>
-                <div><strong>💰 Cierres</strong><br><span style="font-size:1.3rem;">${stats.totalCierres}</span></div>
-            </div>
-        </div>
-        
-        <div class="cart-item cart-header">
+        `;
+    }
+    
+    let html = `<div class="cart-item cart-header">
             <span>Producto</span><span>🎯 Pts</span><span>💰 Gs.</span><span>🔄 Mov</span><span>🎴 Fichas</span><span>📅 Fecha/Hora</span><span>🗑️</span>
-        </div>
-    `;
+        </div>`;
     
     if (itemsFiltrados.length === 0) {
         html += '<div class="cart-item"><span colspan="7" style="text-align:center; padding:20px;">🛒 No hay items que coincidan con los filtros</span></div>';
@@ -3005,7 +3058,27 @@ body { padding-top: 80px; }
     });
   };
 
+  function configurarBusquedaStock() {
+      const input = document.getElementById('stockSearch');
+      if (!input) return;
+      
+      input.inputMode = 'numeric';
+      input.addEventListener('input', function(e) {
+          let v = this.value.replace(/[^0-9-]/g, '');
+          this.value = v;
+          
+          // Activar búsqueda al tener 3 dígitos
+          const match = v.match(/\d{3}/);
+          if (match && match[0].length === 3) {
+              filterStockItems(match[0]);
+          } else if (v === '') {
+              filterStockItems('');
+          }
+      });
+  }
+
   window.handleStockSearchInput = function(input) {
+    // Mantenemos la función original para compatibilidad
     let v = input.value.replace(/\D/g, '');
     if (v.length > 3) v = v.substring(0, 3);
     input.value = v;
@@ -3066,6 +3139,9 @@ body { padding-top: 80px; }
     document.getElementById('cartModal').style.display = 'none'; 
     hideExportPrompt(); 
     hideClearPrompt();
+    // Ocultar también la sección de filtros y totales al cerrar el carrito
+    document.getElementById('filtrosCarritoSeccion').style.display = 'none';
+    document.getElementById('totalesCarritoSeccion').style.display = 'none';
     unblockBodyScroll();
   };
   
@@ -3105,6 +3181,8 @@ body { padding-top: 80px; }
     onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
     onValue(stockRef, snap => { stock = snap.val() || {}; updateAllStockIndicators(); });
     onValue(contadoresRef, snap => { contadoresMaquinas = snap.val() || {}; });
+    // Configurar la búsqueda de stock después de cargar
+    configurarBusquedaStock();
   });
 </script>
 </body>
