@@ -813,7 +813,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
       </div>
       <div class="contadores-tabla">
         <table>
-          <thead><tr><th>Sucursal</th><th>Máquina</th><th>🎴 Fichas</th><th>🏆 Premios</th><th>✅ Fichas Reales</th><th>✅ Premios Reales</th></tr></thead>
+          <thead>汽<th>Sucursal</th><th>Máquina</th><th>🎴 Fichas</th><th>🏆 Premios</th><th>✅ Fichas Reales</th><th>✅ Premios Reales</th>}</thead>
           <tbody>`;
     
     for (const r of resultados) {
@@ -828,7 +828,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</tr>`;
+      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td></tr>`;
     }
     
     html += `</tbody>}</div>`;
@@ -1271,11 +1271,8 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         }
     }
     
-    // Guardar índice de la fila de total (será la última)
-    const totalRowIndex = tableRows.length;
-    
     // Agregar fila de total
-    tableRows.push(['Total', totalEfectivoGeneral.toLocaleString(), totalPosGeneral.toLocaleString(), totalGeneral.toLocaleString()]);
+    tableRows.push(['TOTAL', totalEfectivoGeneral.toLocaleString(), totalPosGeneral.toLocaleString(), totalGeneral.toLocaleString()]);
     
     // Colores personalizados
     const amarilloRutilante = [255, 215, 0]; // RGB para amarillo rutilante
@@ -1303,20 +1300,10 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             fontSize: 12,
             halign: 'center'
         },
-        bodyStyles: (data) => {
-            // Si es la fila de total (última fila), aplicar fondo amarillo rutilante
-            if (data.row.index === totalRowIndex) {
-                return {
-                    fillColor: amarilloRutilante,
-                    textColor: azulFrancia,
-                    fontStyle: 'bold'
-                };
-            }
-            return {
-                fillColor: [255, 255, 255],
-                textColor: azulFrancia,
-                fontStyle: 'bold'
-            };
+        bodyStyles: {
+            fillColor: [255, 255, 255],
+            textColor: azulFrancia,
+            fontStyle: 'bold'
         },
         columnStyles: {
             0: { halign: 'left', cellWidth: 65 },
@@ -1324,7 +1311,18 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
             2: { halign: 'right', cellWidth: 55 },
             3: { halign: 'right', cellWidth: 55 }
         },
-        margin: { left: 20, right: 20 }
+        margin: { left: 20, right: 20 },
+        didDrawCell: function(data) {
+            // Pintar la última fila (TOTAL) de amarillo rutilante
+            if (data.row.index === tableRows.length - 1) {
+                doc.setFillColor(amarilloRutilante[0], amarilloRutilante[1], amarilloRutilante[2]);
+                doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor(azulFrancia[0], azulFrancia[1], azulFrancia[2]);
+                doc.text(data.cell.raw, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2, { align: 'center', baseline: 'middle' });
+            }
+        }
     });
     
     // Pie de página - obtener posición Y final de la tabla
