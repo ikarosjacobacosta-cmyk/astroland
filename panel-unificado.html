@@ -828,7 +828,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
     }
     
     if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</td>`;
+      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td</tr>`;
     }
     
     html += `</tbody>}</div>`;
@@ -1066,7 +1066,7 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
           <td>Gs. ${(v.money||0).toLocaleString()}</td>
           <td>${fichasDisplay}</td>
           <td style="font-size:0.7rem;">${fechaStr}</td>
-        </tr>`;
+        </table>`;
       }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody>}</div>`;
     document.querySelector('#tabVentas .ventas-table').innerHTML = html;
   }
@@ -1142,11 +1142,56 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
   async function generarReportePDF() {
     const { jsPDF } = window.jspdf;
     
+    // Usar las ventas filtradas actuales para el reporte
     let ventasParaReporte = ventasActualesParaReporte;
     if (!ventasParaReporte || ventasParaReporte.length === 0) {
         ventasParaReporte = [...todasLasVentas, ...todoHistorial];
     }
     
+    // Calcular totales por sucursal (solo ventas de cierre: efectivo y tarjeta)
+    const ventasCierre = ventasParaReporte.filter(v => v.code === '000-09' || v.code === '000-10');
+    
+    // Crear objeto con datos por sucursal
+    const datosSucursales = [
+        { nombre: "Villa Morra", efectivo: 0, pos: 0, total: 0 },
+        { nombre: "Los Laureles", efectivo: 0, pos: 0, total: 0 },
+        { nombre: "Lambare", efectivo: 0, pos: 0, total: 0 },
+        { nombre: "Villa Elisa", efectivo: 0, pos: 0, total: 0 }
+    ];
+    
+    // Mapear nombres a índices
+    const nombreToIndex = {
+        "Villa Morra": 0,
+        "Los Laureles": 1,
+        "Lambare": 2,
+        "Villa Elisa": 3
+    };
+    
+    // Sumar los montos de cierre por sucursal
+    for (const venta of ventasCierre) {
+        const idx = nombreToIndex[venta.sucursal];
+        if (idx !== undefined) {
+            if (venta.code === '000-09') { // Efectivo
+                datosSucursales[idx].efectivo += (venta.money || 0);
+                datosSucursales[idx].total += (venta.money || 0);
+            } else if (venta.code === '000-10') { // Tarjeta / POS
+                datosSucursales[idx].pos += (venta.money || 0);
+                datosSucursales[idx].total += (venta.money || 0);
+            }
+        }
+    }
+    
+    // Calcular totales generales
+    let totalEfectivoGeneral = 0;
+    let totalPosGeneral = 0;
+    let totalGeneral = 0;
+    for (const suc of datosSucursales) {
+        totalEfectivoGeneral += suc.efectivo;
+        totalPosGeneral += suc.pos;
+        totalGeneral += suc.total;
+    }
+    
+    // Obtener rango de fechas para mostrar
     const desdeInput = document.getElementById('fechaDesde').value;
     const hastaInput = document.getElementById('fechaHasta').value;
     let rangoFechas = '';
@@ -1160,122 +1205,135 @@ footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-
         rangoFechas = 'Todos los registros';
     }
     
-    const ventasCierre = ventasParaReporte.filter(v => v.code === '000-09' || v.code === '000-10');
-    const sucStats = {};
-    let totalEfectivoGeneral = 0, totalTarjetaGeneral = 0, totalCierreGeneral = 0;
-    
-    for (const suc of sucursales) {
-        const vSuc = ventasCierre.filter(v => v.sucursalClave === suc.clave);
-        const efectivo = vSuc.filter(v => v.code === '000-09').reduce((s,v)=>s+(v.money||0),0);
-        const tarjeta = vSuc.filter(v => v.code === '000-10').reduce((s,v)=>s+(v.money||0),0);
-        sucStats[suc.clave] = { nombre: suc.nombre, efectivo, tarjeta, total: efectivo + tarjeta };
-        totalEfectivoGeneral += efectivo;
-        totalTarjetaGeneral += tarjeta;
-        totalCierreGeneral += (efectivo + tarjeta);
-    }
+    // Fecha y hora actual para impresión
+    const fechaHoraImpresion = new Date().toLocaleString('es-PY', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
     
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     
-    // Fondo azul oscuro
-    doc.setFillColor(0, 51, 102);
+    // Fondo blanco
+    doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
     
-    // Marco decorativo
-    doc.setDrawColor(212, 175, 55);
-    doc.setLineWidth(1);
-    doc.rect(8, 8, pageWidth - 16, pageHeight - 16, 'S');
-    doc.setLineWidth(0.5);
-    doc.rect(10, 10, pageWidth - 20, pageHeight - 20, 'S');
-    
-    // Título ASTROLAND - rojo negrita grande
+    // Título grande en rojo carmesí y negrita
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(36);
-    doc.setTextColor(220, 20, 60);
-    doc.text('ASTROLAND', pageWidth / 2, 30, { align: 'center' });
+    doc.setFontSize(28);
+    doc.setTextColor(220, 20, 60); // Carmesí
+    doc.text('ASTROLAND', pageWidth / 2, 25, { align: 'center' });
     
-    // Subtítulo IN GOD WE TRUST
-    doc.setFont('helvetica', 'bolditalic');
-    doc.setFontSize(14);
-    doc.setTextColor(255, 215, 0);
-    doc.text('IN GOD WE TRUST', pageWidth / 2, 45, { align: 'center' });
-    
-    // Línea decorativa
-    doc.setDrawColor(212, 175, 55);
-    doc.setLineWidth(0.6);
-    doc.line(pageWidth / 2 - 50, 50, pageWidth / 2 + 50, 50);
-    
-    // Título del reporte
+    // Subtítulo azul francia negrita
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.setTextColor(255, 255, 255);
-    doc.text('REPORTE DE CIERRES', pageWidth / 2, 65, { align: 'center' });
+    doc.setTextColor(0, 85, 164); // Azul Francia
+    doc.text('IN GOD WE TRUST', pageWidth / 2, 38, { align: 'center' });
+    
+    // Línea separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(20, 45, pageWidth - 20, 45);
     
     // Rango de fechas
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 85, 164);
+    doc.text(`RANGO DE FECHAS: ${rangoFechas}`, pageWidth / 2, 55, { align: 'center' });
+    
+    // Fecha y hora de impresión
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(255, 215, 0);
-    doc.text(rangoFechas, pageWidth / 2, 75, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Fecha/Hora de impresión: ${fechaHoraImpresion}`, pageWidth / 2, 63, { align: 'center' });
     
-    // Fecha de generación
-    doc.setFontSize(8);
-    doc.setTextColor(200, 200, 200);
-    doc.text(`Generado: ${new Date().toLocaleString('es-PY')}`, pageWidth / 2, 83, { align: 'center' });
-    
-    // Tabla
-    const tableHeaders = [['SUCURSAL', 'EFECTIVO (Gs.)', 'TARJETA (Gs.)', 'TOTAL (Gs.)']];
+    // Tabla de 4 columnas
+    const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'POS (Gs.)', 'Total (Gs.)']];
     const tableRows = [];
-    for (const suc of sucursales) {
-        const stats = sucStats[suc.clave];
-        tableRows.push([stats.nombre, stats.efectivo.toLocaleString(), stats.tarjeta.toLocaleString(), stats.total.toLocaleString()]);
+    
+    // Agregar filas de sucursales en el orden solicitado
+    const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambare", "Villa Elisa"];
+    for (const nombre of ordenSucursales) {
+        const suc = datosSucursales.find(s => s.nombre === nombre);
+        if (suc) {
+            tableRows.push([
+                suc.nombre,
+                suc.efectivo.toLocaleString(),
+                suc.pos.toLocaleString(),
+                suc.total.toLocaleString()
+            ]);
+        }
     }
-    tableRows.push(['TOTAL GENERAL', totalEfectivoGeneral.toLocaleString(), totalTarjetaGeneral.toLocaleString(), totalCierreGeneral.toLocaleString()]);
+    
+    // Fila de total (pintada en amarillo rutilante)
+    tableRows.push(['Total', totalEfectivoGeneral.toLocaleString(), totalPosGeneral.toLocaleString(), totalGeneral.toLocaleString()]);
+    
+    // Colores personalizados
+    const amarilloRutilante = [255, 215, 0]; // RGB para amarillo rutilante
+    const azulFrancia = [0, 85, 164];
     
     doc.autoTable({
         head: tableHeaders,
         body: tableRows,
-        startY: 95,
+        startY: 72,
         theme: 'grid',
         styles: {
             fontSize: 12,
-            cellPadding: 8,
-            textColor: [255, 255, 255],
-            lineColor: [212, 175, 55],
-            lineWidth: 0.5,
+            cellPadding: 6,
+            textColor: azulFrancia,
+            lineColor: [180, 180, 180],
+            lineWidth: 0.3,
             valign: 'middle',
-            halign: 'center'
+            halign: 'center',
+            fontStyle: 'bold'
         },
         headStyles: {
-            fillColor: [212, 175, 55],
-            textColor: [0, 51, 102],
+            fillColor: amarilloRutilante,
+            textColor: azulFrancia,
             fontStyle: 'bold',
-            fontSize: 13,
+            fontSize: 12,
             halign: 'center'
         },
         bodyStyles: {
-            fillColor: [0, 85, 164],
-            textColor: [255, 255, 255]
-        },
-        alternateRowStyles: {
-            fillColor: [26, 95, 174]
+            fillColor: [255, 255, 255],
+            textColor: azulFrancia,
+            fontStyle: 'bold'
         },
         footStyles: {
-            fillColor: [212, 175, 55],
-            textColor: [0, 51, 102],
+            fillColor: amarilloRutilante,
+            textColor: azulFrancia,
             fontStyle: 'bold',
-            fontSize: 13
+            fontSize: 12
         },
         columnStyles: {
-            0: { halign: 'left', cellWidth: 65, fontStyle: 'bold' },
+            0: { halign: 'left', cellWidth: 65 },
             1: { halign: 'right', cellWidth: 55 },
             2: { halign: 'right', cellWidth: 55 },
-            3: { halign: 'right', cellWidth: 55, fontStyle: 'bold' }
+            3: { halign: 'right', cellWidth: 55 }
         },
-        margin: { left: 15, right: 15 }
+        margin: { left: 20, right: 20 }
     });
     
-    const fileName = `ASTROLAND_Reporte_Cierres_${rangoFechas.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    // Pie de página - obtener posición Y final de la tabla
+    const finalY = doc.lastAutoTable.finalY || 120;
+    
+    // Pie de página: izquierda vacío, centro "GRACIAS DIOS NUESTRO", derecha "Pág. 1 de 1"
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(azulFrancia[0], azulFrancia[1], azulFrancia[2]);
+    
+    // Centro
+    doc.text('GRACIAS DIOS NUESTRO', pageWidth / 2, finalY + 12, { align: 'center' });
+    // Derecha
+    doc.text('Pág. 1 de 1', pageWidth - 20, finalY + 12, { align: 'right' });
+    
+    const fileName = `ASTROLAND_Reporte_${rangoFechas.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
     doc.save(fileName);
     console.log("✅ PDF generado correctamente");
   }
