@@ -88,6 +88,11 @@
             font-weight: bold;
             border-top: 2px solid #ff9800;
         }
+        .cierre-row td {
+            background: #e3f2fd !important;
+            font-weight: bold;
+            border-top: 2px solid #2196F3;
+        }
 
         .filter-grid {
             display: flex;
@@ -187,6 +192,11 @@
             margin-top: 5px;
         }
 
+        /* Resaltar cierres en la tabla de resultados */
+        .cierre-item td {
+            background: #fff9c4 !important;
+        }
+
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: stretch; text-align: center; }
             .filter-grid { flex-direction: column; }
@@ -229,6 +239,10 @@
                 </tbody>
             </table>
         </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #666; background: #f5f5f5; padding: 8px 15px; border-radius: 8px;">
+            📌 <strong>Nota:</strong> El "Monto Total" NO incluye los cierres (000-09 y 000-10). 
+            Los cierres se muestran en columnas separadas y se suman en "Total Cierre".
+        </div>
     </div>
 
     <!-- ============================================ -->
@@ -245,7 +259,7 @@
             </div>
             <div class="stat-box">
                 <div class="number" id="statTotalMoney">Gs. 0</div>
-                <div class="label">💰 Dinero Total</div>
+                <div class="label">💰 Dinero Total (sin cierres)</div>
             </div>
             <div class="stat-box">
                 <div class="number" id="statTotalPoints">0</div>
@@ -254,6 +268,10 @@
             <div class="stat-box">
                 <div class="number" id="statTotalFichas">0</div>
                 <div class="label">🎴 Fichas Consumidas</div>
+            </div>
+            <div class="stat-box" style="border-left-color: #ff9800;">
+                <div class="number" id="statTotalCierres">Gs. 0</div>
+                <div class="label">💰 Total Cierres</div>
             </div>
         </div>
 
@@ -367,9 +385,9 @@
     // 2. ESTADO GLOBAL
     // ============================================================
     const estado = {
-        carritos: {},      // { sucursal: [items] }
-        historial: {},     // { sucursal: [items del historial] }
-        todosItems: [],    // Todos los items (carrito + historial) con sucursal
+        carritos: {},
+        historial: {},
+        todosItems: [],
         datosFiltrados: [],
         ultimaActualizacion: null
     };
@@ -383,7 +401,6 @@
             const db = getDatabase(app);
             const dbRef = ref(db);
             
-            // Cargar carrito
             const cartSnap = await get(child(dbRef, 'carrito'));
             let carritoItems = [];
             if (cartSnap.exists()) {
@@ -395,12 +412,10 @@
                 }));
             }
 
-            // Cargar historial
             const histSnap = await get(child(dbRef, 'historial_ventas'));
             let historialItems = [];
             if (histSnap.exists()) {
                 const data = histSnap.val();
-                // El historial tiene una estructura: { key: { ventas: [...], totalVentas, totalDinero, ... } }
                 Object.entries(data).forEach(([key, registro]) => {
                     if (registro.ventas && Array.isArray(registro.ventas)) {
                         registro.ventas.forEach(venta => {
@@ -409,7 +424,6 @@
                                 firebaseKey: key,
                                 fuente: 'historial',
                                 fechaEliminacion: registro.fechaEliminacion || venta.fecha,
-                                // Preservar información del registro
                                 _registroTotal: registro.totalDinero || 0,
                                 _registroVentas: registro.totalVentas || 0
                             });
@@ -435,20 +449,16 @@
         const promesas = sucursalesConfig.map(s => cargarDatosDeSucursal(s.nombre, s.config));
         const resultados = await Promise.all(promesas);
         
-        // Guardar datos por separado
         resultados.forEach(r => {
             estado.carritos[r.nombre] = r.carrito || [];
             estado.historial[r.nombre] = r.historial || [];
         });
 
-        // Construir lista unificada de todos los items
         estado.todosItems = [];
         for (let sucursal of Object.keys(estado.carritos)) {
-            // Items del carrito
             estado.carritos[sucursal].forEach(item => {
                 estado.todosItems.push({ ...item, sucursal, fuente: 'carrito' });
             });
-            // Items del historial
             estado.historial[sucursal].forEach(item => {
                 estado.todosItems.push({ ...item, sucursal, fuente: 'historial' });
             });
@@ -457,7 +467,6 @@
         estado.ultimaActualizacion = new Date();
         document.getElementById('lastUpdate').textContent = `✅ Actualizado: ${estado.ultimaActualizacion.toLocaleString()}`;
         
-        // Renderizar
         renderCarritos();
         actualizarPreviewPDF();
         aplicarFiltros();
@@ -465,22 +474,34 @@
     }
 
     // ============================================================
-    // 4. ESTADÍSTICAS RÁPIDAS
+    // 4. ESTADÍSTICAS RÁPIDAS (CORREGIDO - SIN CIERRES EN EL TOTAL)
     // ============================================================
     function actualizarEstadisticasRapidas(items) {
+        // Excluir cierres del total de dinero
+        const itemsSinCierres = items.filter(item => 
+            item.code !== '000-09' && item.code !== '000-10'
+        );
+        
         const totalItems = items.length;
-        const totalMoney = items.reduce((sum, i) => sum + (i.money || 0), 0);
+        const totalMoney = itemsSinCierres.reduce((sum, i) => sum + (i.money || 0), 0);
         const totalPoints = items.reduce((sum, i) => sum + (i.points || 0), 0);
         const totalFichas = items.reduce((sum, i) => sum + (Math.abs(i.fichaConsumption || 0)), 0);
+        
+        // Total de cierres
+        const cierres = items.filter(item => 
+            item.code === '000-09' || item.code === '000-10'
+        );
+        const totalCierres = cierres.reduce((sum, i) => sum + (i.money || 0), 0);
 
         document.getElementById('statTotalItems').textContent = totalItems.toLocaleString();
         document.getElementById('statTotalMoney').textContent = `Gs. ${totalMoney.toLocaleString()}`;
         document.getElementById('statTotalPoints').textContent = totalPoints.toLocaleString();
         document.getElementById('statTotalFichas').textContent = totalFichas.toLocaleString();
+        document.getElementById('statTotalCierres').textContent = `Gs. ${totalCierres.toLocaleString()}`;
     }
 
     // ============================================================
-    // 5. RENDERIZADO DE CARRITOS ACTUALES
+    // 5. RENDERIZADO DE CARRITOS ACTUALES (CORREGIDO)
     // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
@@ -532,10 +553,10 @@
     }
 
     // ============================================================
-    // 6. FUNCIONES DE CÁLCULO ESTADÍSTICO
+    // 6. FUNCIONES DE CÁLCULO ESTADÍSTICO (CORREGIDO)
     // ============================================================
     function calcularEstadisticas(items) {
-        let totalMonto = 0;
+        let totalMonto = 0;        // NO incluye cierres
         let cierreEfectivo = 0;
         let cierreBancard = 0;
         let fichasMonto = 0;
@@ -557,11 +578,20 @@
             const code = item.code || '';
             const unidades = item.unidades || 1;
             
+            // Cierres (000-09 y 000-10) NO se suman al totalMonto
+            if (code === '000-09') {
+                cierreEfectivo += money;
+                return; // Salir para no sumar al totalMonto
+            }
+            if (code === '000-10') {
+                cierreBancard += money;
+                return; // Salir para no sumar al totalMonto
+            }
+
+            // Solo sumar al totalMonto si NO es cierre
             totalMonto += money;
 
-            if (code === '000-09') cierreEfectivo += money;
-            if (code === '000-10') cierreBancard += money;
-
+            // Clasificación de productos (excluyendo cierres)
             if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
                 if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) {
                     fichasMonto += money;
@@ -645,7 +675,7 @@
     }
 
     // ============================================================
-    // 7. FILTROS AVANZADOS (CON HISTORIAL)
+    // 7. FILTROS AVANZADOS (CORREGIDO - CIERRES IDENTIFICADOS)
     // ============================================================
     function parseFecha(fechaStr) {
         if (!fechaStr) return null;
@@ -653,8 +683,6 @@
         
         try {
             let limpio = fechaStr.trim();
-            
-            // Si tiene formato "dd/mm/yyyy" o "dd/mm/yyyy hh:mm:ss"
             const partes = limpio.split(' ');
             const fechaPart = partes[0];
             const partesFecha = fechaPart.split('/');
@@ -683,26 +711,21 @@
         const tipoOperacion = document.getElementById('filtroTipoOperacion').value;
         const fuenteFiltro = document.getElementById('filtroFuente').value;
 
-        // Seleccionar items según la fuente
         let itemsBase = [];
         if (fuenteFiltro === 'carrito') {
-            // Solo carrito
             for (let [sucursal, items] of Object.entries(estado.carritos)) {
                 items.forEach(item => itemsBase.push({ ...item, sucursal, fuente: 'carrito' }));
             }
         } else if (fuenteFiltro === 'historial') {
-            // Solo historial
             for (let [sucursal, items] of Object.entries(estado.historial)) {
                 items.forEach(item => itemsBase.push({ ...item, sucursal, fuente: 'historial' }));
             }
         } else {
-            // Todos (carrito + historial)
             itemsBase = [...estado.todosItems];
         }
 
         let filtrados = itemsBase;
 
-        // Filtro de fecha
         if (fechaDesde) {
             const desde = new Date(fechaDesde);
             desde.setHours(0, 0, 0, 0);
@@ -723,7 +746,6 @@
             });
         }
 
-        // Filtro de código
         if (codigoFiltro) {
             const codigoLower = codigoFiltro.toLowerCase();
             const esPrefijo = codigoLower.endsWith('-');
@@ -738,7 +760,6 @@
             });
         }
 
-        // Filtro de tipo de operación
         if (tipoOperacion !== 'todos') {
             filtrados = filtrados.filter(item => {
                 switch(tipoOperacion) {
@@ -780,10 +801,18 @@
             return;
         }
 
-        // Calcular estadísticas
-        const totalMoney = items.reduce((sum, i) => sum + (i.money || 0), 0);
+        // Calcular estadísticas (excluyendo cierres del total)
+        const itemsSinCierres = items.filter(item => 
+            item.code !== '000-09' && item.code !== '000-10'
+        );
+        const totalMoney = itemsSinCierres.reduce((sum, i) => sum + (i.money || 0), 0);
         const totalPoints = items.reduce((sum, i) => sum + (i.points || 0), 0);
         const totalFichas = items.reduce((sum, i) => sum + (Math.abs(i.fichaConsumption || 0)), 0);
+        
+        const cierres = items.filter(item => 
+            item.code === '000-09' || item.code === '000-10'
+        );
+        const totalCierres = cierres.reduce((sum, i) => sum + (i.money || 0), 0);
         
         const tipos = {};
         const fuentes = {};
@@ -791,7 +820,7 @@
             let tipo = 'Venta';
             if (i.esMovimiento) tipo = 'Movimiento';
             else if (i.esFichaGratis) tipo = 'Ficha Gratis';
-            else if (i.esCierre) tipo = 'Cierre';
+            else if (i.esCierre || i.code === '000-09' || i.code === '000-10') tipo = '💰 Cierre';
             tipos[tipo] = (tipos[tipo] || 0) + 1;
             
             const fuente = i.fuente || 'desconocido';
@@ -800,7 +829,8 @@
 
         let html = `<div class="filter-summary">
             <span><strong>🔍 ${items.length}</strong> items encontrados</span>
-            <span class="filter-tag">💰 Total: Gs. ${totalMoney.toLocaleString()}</span>
+            <span class="filter-tag">💰 Total (sin cierres): Gs. ${totalMoney.toLocaleString()}</span>
+            <span class="filter-tag" style="background:#fff3e0;">💰 Total Cierres: Gs. ${totalCierres.toLocaleString()}</span>
             <span class="filter-tag">🎯 Puntos: ${totalPoints.toLocaleString()}</span>
             <span class="filter-tag">🎴 Fichas: ${totalFichas.toLocaleString()}</span>
             ${Object.entries(tipos).map(([tipo, count]) => 
@@ -832,13 +862,15 @@
         const mostrar = items.slice(0, 100);
         mostrar.forEach(item => {
             let tipo = '🛒 Venta';
+            const esCierre = item.esCierre || item.code === '000-09' || item.code === '000-10';
             if (item.esMovimiento) tipo = '🔄 Movimiento';
             else if (item.esFichaGratis) tipo = '🎁 Gratis';
-            else if (item.esCierre) tipo = '💰 Cierre';
+            else if (esCierre) tipo = '💰 Cierre';
             
             const fuente = item.fuente === 'historial' ? '📜 Historial' : '🛒 Carrito';
+            const claseCierre = esCierre ? 'cierre-item' : '';
             
-            html += `<tr>
+            html += `<tr class="${claseCierre}">
                 <td><strong>${item.sucursal || '-'}</strong></td>
                 <td>${fuente}</td>
                 <td>${item.code || '-'}</td>
@@ -872,7 +904,7 @@
     };
 
     // ============================================================
-    // 8. GENERAR REPORTE PDF (con historial)
+    // 8. GENERAR REPORTE PDF
     // ============================================================
     function obtenerDatosParaPDF() {
         const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
@@ -882,7 +914,6 @@
         let totalGeneral = 0;
 
         orden.forEach(nombre => {
-            // Para el PDF, usamos SOLO el carrito actual (como en el requerimiento original)
             const items = estado.carritos[nombre] || [];
             const stats = calcularEstadisticas(items);
             filas.push({
@@ -1005,9 +1036,8 @@
     // 10. INICIALIZACIÓN
     // ============================================================
     cargarTodosLosDatos();
-    setInterval(cargarTodosLosDatos, 60000); // Cada 60 segundos
+    setInterval(cargarTodosLosDatos, 60000);
 
-    // Configurar fechas iniciales (últimos 7 días)
     const hoy = new Date();
     const hace7Dias = new Date();
     hace7Dias.setDate(hoy.getDate() - 7);
