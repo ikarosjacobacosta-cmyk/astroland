@@ -1,1445 +1,1007 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>ASTROLAND - Panel Unificado</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<style>
-* { margin:0; padding:0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 20px; }
-.container { max-width: 1400px; margin: 0 auto; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Sucursales - Firebase Completo</title>
+    
+    <!-- ========================================== -->
+    <!-- CONFIGURACIÓN 1: FIREBASE SDKs            -->
+    <!-- ========================================== -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ========================================== */
+        /* CONFIGURACIÓN 2: ESTILOS COMPLETOS        */
+        /* ========================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-.header { text-align: center; margin-bottom: 30px; }
-.header h1 { font-size: 1.8rem; margin-bottom: 5px; color: #1a1a2e; }
-.header .subtitle { color: #666; font-size: 0.9rem; }
-.badges { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 15px; }
-.badge { background: white; padding: 6px 14px; border-radius: 25px; font-size: 0.8rem; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-.badge.laureles { border-left: 4px solid #2196F3; }
-.badge.elisa { border-left: 4px solid #9c27b0; }
-.badge.lambare { border-left: 4px solid #ff9800; }
-.badge.morra { border-left: 4px solid #4caf50; }
+        body {
+            background: #f0f2f5;
+            padding: 20px;
+        }
 
-.filtro-fechas {
-  background: white;
-  border-radius: 12px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  align-items: flex-end;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.filtro-fechas label { font-size: 0.8rem; color: #666; }
-.filtro-fechas input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
-.filtro-fechas button { padding: 8px 20px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; min-height: 44px; }
-.filtro-fechas button:hover { background: #1976D2; }
-.filtro-fechas .limpiar-btn { background: #ff9800; }
-.filtro-fechas .limpiar-btn:hover { background: #e68900; }
-.filtro-fechas .reporte-btn { background: #9c27b0; }
-.filtro-fechas .reporte-btn:hover { background: #7b1fa2; }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 30px; }
-.stat-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-.stat-card .label { font-size: 0.7rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
-.stat-card .value { font-size: 1.3rem; font-weight: bold; }
-.stat-card.dinero .value { color: #2e7d32; }
-.stat-card.puntos .value { color: #1565c0; }
-.stat-card.fichas .value { color: #e65100; }
-.stat-card.cierre .value { color: #6a1b9a; }
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
 
-.sucursales-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-@media (max-width: 900px) { .sucursales-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 500px) { .sucursales-grid { grid-template-columns: 1fr; } }
-.suc-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 4px solid; }
-.suc-card.laureles { border-top-color: #2196F3; }
-.suc-card.elisa { border-top-color: #9c27b0; }
-.suc-card.lambare { border-top-color: #ff9800; }
-.suc-card.morra { border-top-color: #4caf50; }
-.suc-card h4 { font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: opacity 0.2s; }
-.suc-card h4:hover { opacity: 0.7; text-decoration: underline; }
-.suc-card .item { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.75rem; padding: 4px 0; border-bottom: 1px dashed #eee; }
-.suc-card .item .label { color: #666; }
-.suc-card .item .amount { font-weight: bold; }
-.suc-card .sub-section { margin-top: 10px; padding-top: 8px; border-top: 2px solid #ddd; }
-.suc-card .sub-label { font-size: 0.7rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
-.suc-card .sub-item { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.7rem; padding: 2px 0; }
-.suc-card .sub-item .label { color: #666; }
-.suc-card .sub-item .amount { font-weight: bold; }
-.suc-card .maquina-item { margin-bottom: 8px; padding: 6px 0; border-left: 2px solid #2196F3; padding-left: 8px; margin-left: 4px; }
-.suc-card .maquina-item .label { color: #1976D2; font-weight: 600; margin-bottom: 6px; display: block; }
-.suc-card .maquina-item .amount { font-family: monospace; font-size: 0.75rem; display: flex; flex-wrap: wrap; gap: 8px; }
+        h1 {
+            color: #1a237e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 28px;
+        }
 
-.tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-.tab-btn { padding: 10px 25px; border: none; background: #e0e0e0; border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; min-height: 44px; }
-.tab-btn.active { background: #2196F3; color: white; }
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            font-weight: normal;
+            margin-left: 10px;
+        }
 
-.stock-grid { display: grid; gap: 15px; }
-@media (min-width: 1200px) { .stock-grid { grid-template-columns: repeat(5, 1fr); } }
-@media (min-width: 768px) and (max-width: 1199px) { .stock-grid { grid-template-columns: repeat(4, 1fr); } }
-@media (max-width: 767px) { .stock-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; } }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
 
-.stock-card {
-  background: white;
-  border-radius: 12px;
-  padding: 12px;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid #eee;
-}
-.stock-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.stock-card img {
-  width: 100%;
-  aspect-ratio: 1/1;
-  object-fit: contain;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border: 1px solid #eaeaea;
-  margin-bottom: 10px;
-}
-.stock-card .img-placeholder {
-  width: 100%;
-  aspect-ratio: 1/1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  font-size: 0.8rem;
-  font-weight: bold;
-  border-radius: 8px;
-  margin-bottom: 10px;
-}
-.stock-card .codigo { 
-  font-weight: 700; 
-  font-size: 0.85rem; 
-  color: #1976D2; 
-  margin-bottom: 8px;
-  letter-spacing: 0.3px;
-}
-.stock-card .stock-total { 
-  font-weight: 800; 
-  font-size: 1rem; 
-  display: inline-block; 
-  padding: 4px 12px; 
-  border-radius: 20px; 
-  margin: 5px 0;
-}
-.stock-card .stock-bajo { background: #ffebee; color: #f44336; }
-.stock-card .stock-medio { background: #fff3e0; color: #ff9800; }
-.stock-card .stock-normal { background: #e8f5e9; color: #2e7d32; }
+        /* ========================================== */
+        /* CONFIGURACIÓN 3: PANEL DE FILTROS        */
+        /* ========================================== */
+        .filters-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid #e0e0e0;
+        }
 
-.stock-sucursales {
-  margin-top: 10px;
-  font-size: 0.7rem;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 10px;
-}
-.stock-sucursales span {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-weight: 600;
-}
-.stock-sucursales .laureles { background: #e3f2fd; color: #1976D2; }
-.stock-sucursales .elisa { background: #f3e5f5; color: #9c27b0; }
-.stock-sucursales .lambare { background: #fff3e0; color: #ff9800; }
-.stock-sucursales .morra { background: #e8f5e9; color: #4caf50; }
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
 
-.contadores-container {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.contadores-filtros {
-  display: flex;
-  gap: 15px;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #eee;
-}
-.contadores-filtros label {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 0.8rem;
-  color: #666;
-}
-.contadores-filtros input {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-.contadores-filtros button {
-  padding: 8px 20px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  min-height: 44px;
-}
-.contadores-filtros button:hover { background: #45a049; }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
 
-.contadores-tabla {
-  overflow-x: auto;
-}
-.contadores-tabla table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8rem;
-}
-.contadores-tabla th, .contadores-tabla td {
-  padding: 12px 8px;
-  text-align: center;
-  border: 1px solid #ddd;
-}
-.contadores-tabla th {
-  background: #1a1a2e;
-  color: white;
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-}
-.contadores-tabla tr:hover {
-  background: #f5f5f5;
-}
-.contadores-tabla .maquina-nombre {
-  font-weight: bold;
-  text-align: left;
-}
-.contadores-tabla .positivo {
-  color: #4CAF50;
-  font-weight: bold;
-}
-.contadores-tabla .negativo {
-  color: #f44336;
-}
-.contadores-resumen {
-  margin-top: 20px;
-  padding: 15px;
-  background: #e3f2fd;
-  border-radius: 10px;
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-.contadores-resumen-item {
-  text-align: center;
-}
-.contadores-resumen-item .label {
-  font-size: 0.7rem;
-  color: #666;
-  text-transform: uppercase;
-}
-.contadores-resumen-item .value {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #1976D2;
-}
+        .filter-group label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-.ventas-table { background: white; border-radius: 12px; overflow-x: auto; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-.ventas-table table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
-.ventas-table th, .ventas-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #eee; }
-.ventas-table th { background: #1a1a2e; color: white; position: sticky; top: 0; }
+        .filter-group label i {
+            color: #1a237e;
+            width: 16px;
+        }
 
-.loading { text-align: center; padding: 40px; color: #666; }
-.update-info { text-align: center; margin-top: 20px; font-size: 0.7rem; color: #999; }
-.refresh-btn { background: #2196F3; color: white; border: none; border-radius: 20px; padding: 5px 15px; margin-left: 10px; cursor: pointer; min-height: 44px; }
-footer { text-align: center; padding: 20px; margin-top: 30px; color: #999; font-size: 0.7rem; border-top: 1px solid #ddd; }
+        .filter-group input,
+        .filter-group select {
+            padding: 10px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
 
-#stockContainer, #contadoresContainer { display: block; }
-#searchContainer { display: none; }
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: #1a237e;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+        }
 
-@media (max-width: 600px) {
-  body { padding: 10px; }
-  .stat-card .value { font-size: 1rem; }
-  .tab-btn { padding: 6px 15px; font-size: 0.75rem; }
-  .ventas-table th, .ventas-table td { font-size: 0.65rem; padding: 6px 3px; }
-  .filtro-fechas { flex-direction: column; align-items: stretch; }
-  .filtro-fechas label { display: flex; flex-direction: column; gap: 5px; }
-  .filtro-fechas input { width: 100%; }
-  .stock-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  .contadores-tabla th, .contadores-tabla td { font-size: 0.7rem; padding: 8px 4px; }
-  .suc-card .maquina-item .amount span { display: inline-block; margin-bottom: 4px; }
-}
-</style>
+        .filter-group input[type="date"] {
+            cursor: pointer;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* ========================================== */
+        /* CONFIGURACIÓN 4: BOTONES                 */
+        /* ========================================== */
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #1a237e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0d1452;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(26, 35, 126, 0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        /* ========================================== */
+        /* CONFIGURACIÓN 5: ESTADÍSTICAS            */
+        /* ========================================== */
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #1a237e;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .stat-card .stat-value {
+            font-weight: bold;
+            color: #1a237e;
+            font-size: 22px;
+            margin-top: 4px;
+        }
+
+        /* ========================================== */
+        /* CONFIGURACIÓN 6: FILTROS ACTIVOS         */
+        /* ========================================== */
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e8eaf6;
+            border-radius: 6px;
+            min-height: 40px;
+            align-items: center;
+        }
+
+        .filter-tag {
+            background: #1a237e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-tag i {
+            cursor: pointer;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .filter-tag i:hover {
+            opacity: 1;
+        }
+
+        /* ========================================== */
+        /* CONFIGURACIÓN 7: TABLA                   */
+        /* ========================================== */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 14px;
+        }
+
+        th {
+            background: #1a237e;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* ========================================== */
+        /* CONFIGURACIÓN 8: BADGES                  */
+        /* ========================================== */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-venta { background: #d4edda; color: #155724; }
+        .badge-punto { background: #fff3cd; color: #856404; }
+        .badge-movimiento { background: #cce5ff; color: #004085; }
+        .badge-stock { background: #e2e3e5; color: #383d41; }
+        .badge-maquina { background: #f8d7da; color: #721c24; }
+        .badge-activo { background: #d4edda; color: #155724; }
+        .badge-inactivo { background: #f8d7da; color: #721c24; }
+
+        /* ========================================== */
+        /* CONFIGURACIÓN 9: ESTADOS                  */
+        /* ========================================== */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #1a237e;
+            font-size: 18px;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+        }
+
+        /* ========================================== */
+        /* CONFIGURACIÓN 10: RESPONSIVE             */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
 </head>
 <body>
+
 <div class="container">
-  <div class="header">
-    <h1>📊 ASTROLAND - Panel Unificado</h1>
-    <p class="subtitle">Stock + Estadísticas de ventas + Contadores de Máquinas | 4 sucursales</p>
-    <div class="badges">
-      <div class="badge laureles">🏢 Los Laureles</div>
-      <div class="badge elisa">🏢 Villa Elisa</div>
-      <div class="badge lambare">🏢 Lambare</div>
-      <div class="badge morra">🏢 Villa Morra</div>
+    <!-- ========================================== -->
+    <!-- HEADER                                      -->
+    <!-- ========================================== -->
+    <div class="header">
+        <h1>
+            🏢 Gestión de Sucursales
+            <span class="subtitle">Filtros avanzados con Firebase</span>
+        </h1>
+        <div class="header-actions">
+            <button class="btn btn-success" onclick="recargarDatos()">
+                <i class="fas fa-sync-alt"></i> Recargar
+            </button>
+            <button class="btn btn-warning" onclick="exportarDatos()">
+                <i class="fas fa-file-excel"></i> Exportar
+            </button>
+        </div>
     </div>
-  </div>
+    
+    <!-- ========================================== -->
+    <!-- PANEL DE FILTROS                           -->
+    <!-- ========================================== -->
+    <div class="filters-panel">
+        <div class="filters-grid">
+            <!-- Filtro 1: Rango de Fechas -->
+            <div class="filter-group">
+                <label><i class="fas fa-calendar-alt"></i> Fecha Inicio</label>
+                <input type="date" id="filterFechaInicio">
+            </div>
+            
+            <div class="filter-group">
+                <label><i class="fas fa-calendar-alt"></i> Fecha Fin</label>
+                <input type="date" id="filterFechaFin">
+            </div>
 
-  <div class="filtro-fechas" id="filtroFechas">
-    <label>📅 Desde: <input type="date" id="fechaDesde" value=""></label>
-    <label>📅 Hasta: <input type="date" id="fechaHasta" value=""></label>
-    <button id="btnFiltrar">🔍 Filtrar por fechas</button>
-    <button class="limpiar-btn" id="btnLimpiar">🗑️ Mostrar carritos actuales</button>
-    <button class="reporte-btn" id="btnReporte">📄 Generar Reporte PDF</button>
-  </div>
+            <!-- Filtro 2: Código de Producto -->
+            <div class="filter-group">
+                <label><i class="fas fa-barcode"></i> Código Producto</label>
+                <input type="text" id="filterCodigoProducto" placeholder="Ej: 020-00">
+            </div>
 
-  <div class="stats-grid" id="statsVentas">
-    <div class="stat-card dinero"><div class="label">💰 Ventas</div><div class="value" id="totalVentas">-</div></div>
-    <div class="stat-card dinero"><div class="label">💵 Efectivo</div><div class="value" id="totalEfectivo">-</div></div>
-    <div class="stat-card dinero"><div class="label">💳 Tarjeta</div><div class="value" id="totalTarjeta">-</div></div>
-    <div class="stat-card cierre"><div class="label">💰 Total Cierre</div><div class="value" id="totalCierre">-</div></div>
-    <div class="stat-card puntos"><div class="label">🎯 Puntos</div><div class="value" id="totalPuntos">-</div></div>
-    <div class="stat-card fichas"><div class="label">🎴 Fichas</div><div class="value" id="totalFichas">-</div></div>
-    <div class="stat-card ventas"><div class="label">🛒 Operaciones</div><div class="value" id="totalOperaciones">-</div></div>
-  </div>
+            <!-- Filtro 3: Tipo de Operación -->
+            <div class="filter-group">
+                <label><i class="fas fa-exchange-alt"></i> Tipo Operación</label>
+                <select id="filterTipoOperacion">
+                    <option value="">Todos</option>
+                    <option value="venta">💲 Venta</option>
+                    <option value="punto">⭐ Puntos</option>
+                    <option value="movimiento">🔄 Movimiento</option>
+                </select>
+            </div>
 
-  <div class="sucursales-grid" id="sucursalesGrid"></div>
+            <!-- Filtro 4: Tipo de Movimiento -->
+            <div class="filter-group">
+                <label><i class="fas fa-cogs"></i> Tipo Movimiento</label>
+                <select id="filterTipoMovimiento">
+                    <option value="">Todos</option>
+                    <option value="stock">📦 Stock</option>
+                    <option value="maquina1">🖥️ Máquina 1</option>
+                    <option value="maquina2">🖥️ Máquina 2</option>
+                    <option value="maquina3">🖥️ Máquina 3</option>
+                    <option value="maquina4">🖥️ Máquina 4</option>
+                    <option value="maquina5">🖥️ Máquina 5</option>
+                </select>
+            </div>
 
-  <div class="tabs">
-    <button class="tab-btn active" id="tabStockBtn">📦 Stock</button>
-    <button class="tab-btn" id="tabVentasBtn">🛒 Historial</button>
-    <button class="tab-btn" id="tabContadoresBtn">📊 Contadores Máquinas</button>
-  </div>
+            <!-- Filtro 5: Sucursal -->
+            <div class="filter-group">
+                <label><i class="fas fa-store"></i> Sucursal</label>
+                <select id="filterSucursal">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+        </div>
 
-  <div id="tabStock" class="tab-content" style="display:none;">
-    <div id="stockContainer"></div>
-  </div>
-
-  <div id="tabVentas" class="tab-content" style="display:none;">
-    <div class="ventas-table"><div class="loading">🔄 Cargando historial...</div></div>
-  </div>
-
-  <div id="tabContadores" class="tab-content" style="display:none;">
-    <div class="contadores-container">
-      <div class="contadores-filtros">
-        <label>📅 Fecha Inicial: <input type="date" id="contadorFechaInicio" value=""></label>
-        <label>📅 Fecha Final: <input type="date" id="contadorFechaFin" value=""></label>
-        <button id="btnCalcularContadores">🔄 Calcular Diferencias</button>
-      </div>
-      <div id="contadoresResultados">
-        <div class="loading">📊 Selecciona un rango de fechas para ver las diferencias de contadores</div>
-      </div>
+        <!-- Botones de acción -->
+        <div class="filter-actions">
+            <button class="btn btn-primary" onclick="aplicarFiltros()">
+                <i class="fas fa-search"></i> Filtrar
+            </button>
+            <button class="btn btn-secondary" onclick="limpiarFiltros()">
+                <i class="fas fa-undo"></i> Limpiar
+            </button>
+            <button class="btn btn-danger" onclick="verConfiguracion()">
+                <i class="fas fa-cog"></i> Configuración
+            </button>
+        </div>
     </div>
-  </div>
 
-  <div class="update-info">
-    <span>🔄 Actualización automática cada 30 segundos (solo cuando no hay filtros activos)</span>
-    <span id="lastUpdate"></span>
-    <button class="refresh-btn" id="btnActualizar">⟳ Actualizar</button>
-  </div>
+    <!-- ========================================== -->
+    <!-- FILTROS ACTIVOS                            -->
+    <!-- ========================================== -->
+    <div class="active-filters" id="activeFilters">
+        <span style="color: #666; font-size: 13px;">No hay filtros activos</span>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- ESTADÍSTICAS                               -->
+    <!-- ========================================== -->
+    <div class="stats" id="statsContainer">
+        <div class="stat-card">
+            <div class="stat-label">📊 Total Registros</div>
+            <div class="stat-value" id="totalRegistros">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">💲 Ventas</div>
+            <div class="stat-value" id="totalVentas">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">⭐ Puntos</div>
+            <div class="stat-value" id="totalPuntos">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">🔄 Movimientos</div>
+            <div class="stat-value" id="totalMovimientos">0</div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TABLA DE DATOS                            -->
+    <!-- ========================================== -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Sucursal</th>
+                    <th>Código Producto</th>
+                    <th>Producto</th>
+                    <th>Operación</th>
+                    <th>Tipo Movimiento</th>
+                    <th>Cantidad</th>
+                    <th>Valor</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="datosBody">
+                <tr>
+                    <td colspan="10" class="loading">Cargando datos desde Firebase...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<footer>© 2026 ASTROLAND - Panel Unificado</footer>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-
-  const sucursales = [
-    { 
-      nombre: "Los Laureles", 
-      clave: "laureles", 
-      color: "#2196F3", 
-      bg: "#e3f2fd",
-      url: "sucursales/los_laureles.html",
-      config: { 
-        apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w", 
-        authDomain: "los-laureles-49117.firebaseapp.com",
-        databaseURL: "https://los-laureles-49117-default-rtdb.firebaseio.com",
-        projectId: "los-laureles-49117", 
-        storageBucket: "los-laureles-49117.firebasestorage.app", 
-        messagingSenderId: "523096933391", 
-        appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a" 
-      } 
-    },
-    { 
-      nombre: "Villa Elisa", 
-      clave: "elisa", 
-      color: "#9c27b0", 
-      bg: "#f3e5f5",
-      url: "sucursales/villa_elisa.html",
-      config: { 
-        apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ", 
-        authDomain: "villa-elisa-3adbe.firebaseapp.com",
-        databaseURL: "https://villa-elisa-3adbe-default-rtdb.firebaseio.com",
-        projectId: "villa-elisa-3adbe", 
-        storageBucket: "villa-elisa-3adbe.firebasestorage.app", 
-        messagingSenderId: "147294403718", 
-        appId: "1:147294403718:web:96d8289e6d3d3c7ce72507" 
-      } 
-    },
-    { 
-      nombre: "Lambare", 
-      clave: "lambare", 
-      color: "#ff9800", 
-      bg: "#fff3e0",
-      url: "sucursales/lambare.html",
-      config: { 
-        apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY", 
-        authDomain: "lambare-85124.firebaseapp.com",
-        databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
-        projectId: "lambare-85124", 
-        storageBucket: "lambare-85124.firebasestorage.app", 
-        messagingSenderId: "683666735879", 
-        appId: "1:683666735879:web:c654add46d1dad6160bba2" 
-      } 
-    },
-    { 
-      nombre: "Villa Morra", 
-      clave: "morra", 
-      color: "#4caf50", 
-      bg: "#e8f5e9",
-      url: "sucursales/villa_morra.html",
-      config: { 
-        apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc", 
-        authDomain: "villa-morra.firebaseapp.com",
-        databaseURL: "https://villa-morra-default-rtdb.firebaseio.com",
-        projectId: "villa-morra", 
-        storageBucket: "villa-morra.firebasestorage.app", 
-        messagingSenderId: "184849063287", 
-        appId: "1:184849063287:web:15f360231ade1b85ab5572" 
-      } 
-    }
-  ];
-
-  const apps = {};
-  const dbs = {};
-
-  sucursales.forEach(suc => {
-    try {
-      if (!apps[suc.clave]) {
-        apps[suc.clave] = initializeApp(suc.config, suc.clave);
-        dbs[suc.clave] = getDatabase(apps[suc.clave]);
-        console.log(`✅ Inicializada: ${suc.nombre}`);
-      }
-    } catch(e) { 
-      console.warn(`Error inicializando ${suc.nombre}:`, e);
-    }
-  });
-
-  const FECHA_CAMBIO = new Date(2026, 3, 4).getTime();
-
-  const CODIGOS_COMPLETOS = [
-    '000-00', '000-01', '000-02', '000-03', '000-04', '000-05', '000-06', '000-07', '000-08', '000-09', '000-10',
-    '005-00', '020-00', '020-01', '020-02', '020-03', '020-04', '020-05', '020-06', '020-07', '020-08', '020-09',
-    '020-10', '020-11', '020-12', '020-13', '020-14', '020-15', '020-16', '020-17', '020-18', '020-19', '020-20',
-    '020-21', '020-22', '020-23', '020-24', '020-25', '020-26', '020-27', '020-28', '020-29', '020-30', '020-31',
-    '020-32', '020-33', '020-34', '020-35', '020-36', '020-37', '020-38', '020-39', '020-40', '020-41', '020-42',
-    '020-43', '020-44', '020-45', '020-46', '020-47', '020-48', '020-49', '020-50', '020-51', '020-52', '020-53',
-    '020-54', '020-55', '020-56', '020-57', '020-58', '020-59', '020-60', '020-61', '020-62', '020-63', '020-64',
-    '020-65', '020-66', '020-67', '035-00', '035-01', '035-02', '035-03', '035-04', '035-05', '035-06', '035-07',
-    '035-08', '035-09', '035-10', '035-11', '035-12', '035-13', '035-14', '035-15', '035-16', '035-17', '035-18',
-    '035-19', '035-20', '035-21', '035-22', '035-23', '035-24', '035-25', '035-26', '035-27', '035-28', '035-29',
-    '035-30', '035-31', '035-32', '035-33', '035-34', '035-35', '035-36', '035-37', '035-38', '035-39', '035-40',
-    '035-41', '035-42', '035-43', '035-44', '035-45', '035-46', '035-47', '035-48', '035-49', '035-50', '035-51',
-    '035-52', '035-53', '035-54', '035-55', '035-56', '035-57', '035-58', '035-59', '035-60', '035-61', '035-62',
-    '035-63', '035-64', '035-65', '035-66', '035-67', '035-68', '035-69', '035-70', '035-71', '050-00', '050-01',
-    '050-02', '050-03', '050-04', '050-05', '050-06', '050-07', '050-08', '050-09', '050-10', '050-11', '050-12',
-    '050-13', '050-14', '050-15', '050-16', '050-17', '050-18', '050-19', '050-20', '050-21', '050-22', '050-23',
-    '050-24', '050-25', '050-26', '050-27', '050-28', '050-29', '050-30', '050-31', '050-32', '050-33', '050-34',
-    '050-35', '050-36', '050-37', '050-38', '050-39', '050-40', '050-41', '050-42', '050-43', '050-44', '050-45',
-    '050-46', '050-47', '050-48', '050-49', '050-50', '050-51', '050-52', '050-53', '075-00', '075-01', '075-02',
-    '075-03', '075-04', '075-05', '075-06', '075-07', '075-08', '075-09', '075-10', '075-11', '075-12', '075-13',
-    '075-14', '075-15', '075-16', '075-17', '075-18', '075-19', '075-20', '075-21', '075-22', '075-23', '075-24',
-    '075-25', '075-26', '075-27', '075-28', '075-29', '075-30', '075-31', '075-32', '075-33', '075-34', '075-35',
-    '075-36', '075-37', '075-38', '075-39', '075-40', '075-41', '075-42', '075-43', '075-44', '075-45', '075-46',
-    '075-47', '075-48', '075-49', '075-50', '075-51', '100-00', '100-01', '100-02', '100-03', '100-04', '100-05',
-    '100-06', '100-07', '100-08', '100-09', '100-10', '100-11', '100-12', '100-13', '100-14', '100-15', '100-16',
-    '100-17', '100-18', '100-19', '100-20', '100-21', '100-22', '100-23', '100-24', '100-25', '100-26', '100-27',
-    '100-28', '100-29', '150-00', '150-01', '150-02', '150-03', '150-04', '150-05', '150-06', '150-07', '150-08',
-    '150-09', '150-10', '150-11', '150-12', '150-13', '150-14', '150-15', '150-16', '150-17', '150-18', '150-19',
-    '150-20', '150-21', '150-22', '150-23', '150-24', '150-25', '150-26', '150-27', '150-28', '150-29', '150-30',
-    '150-31', '150-32', '150-33', '150-34', '150-35', '150-36', '150-37', '150-38', '150-39', '180-00', '200-00',
-    '200-01', '200-02', '200-03', '200-04', '200-05', '200-06', '200-07', '200-08', '200-09', '200-10', '200-11',
-    '200-12', '200-13', '200-14', '200-15', '200-16', '200-17', '200-18', '200-19', '200-20', '200-21', '200-22',
-    '200-23', '200-24', '200-25', '200-26', '200-27', '200-28', '200-29', '200-30', '200-31', '200-32', '200-33',
-    '200-34', '200-35', '200-36', '200-37', '220-00', '220-01', '220-02', '220-03', '220-04', '220-05', '220-06',
-    '220-07', '250-00', '250-01', '250-02', '250-03', '350-00', '420-00', '420-01', '420-02', '800-00', '800-01'
-  ];
-
-  function getProductStock(stockData, code) {
-    const fichasConsumo = { '000-01': 3, '000-02': 9, '000-03': 20, '000-04': 30 };
-    if (fichasConsumo[code]) {
-      const fichaStock = stockData['000-00'] ?? 0;
-      return Math.floor(fichaStock / fichasConsumo[code]);
-    }
-    return stockData[code] ?? 0;
-  }
-
-  async function obtenerStock(db) { try { return (await get(ref(db, 'stock'))).val() || {}; } catch { return {}; } }
-  
-  async function obtenerCarrito(db) { 
-    try { 
-      const snapshot = await get(ref(db, 'carrito'));
-      const data = snapshot.val();
-      if (!data) return [];
-      return Object.values(data);
-    } catch(e) { 
-      console.error("Error obteniendo carrito:", e);
-      return []; 
-    }
-  }
-  
-  async function obtenerHistorial(db) { 
-    try { 
-      const snapshot = await get(ref(db, 'historial_ventas'));
-      const data = snapshot.val();
-      if (!data) return [];
-      const historialArray = Object.values(data);
-      const todasLasVentas = [];
-      for (const registro of historialArray) {
-        if (registro.ventas && Array.isArray(registro.ventas)) {
-          const fechaEliminacion = registro.timestamp || new Date(registro.fechaEliminacion).getTime();
-          for (const venta of registro.ventas) {
-            todasLasVentas.push({ ...venta, timestampEliminacion: fechaEliminacion, esHistorial: true });
-          }
-        }
-      }
-      return todasLasVentas;
-    } catch(e) { 
-      console.error("Error en obtenerHistorial:", e);
-      return []; 
-    }
-  }
-
-  async function obtenerContadores(db) {
-    try {
-      const snapshot = await get(ref(db, 'contadores_maquinas'));
-      return snapshot.val() || {};
-    } catch(e) {
-      console.error("Error al obtener contadores:", e);
-      return {};
-    }
-  }
-
-  let todosLosProductos = [];
-  let todasLasVentas = [];
-  let todoHistorial = [];
-  let ventasActualesParaReporte = [];
-  let tabActual = 'ventas';
-  let fechaDesde = null;
-  let fechaHasta = null;
-  let contadoresGlobales = {};
-
-  const colores = ['linear-gradient(135deg, #667eea, #764ba2)', 'linear-gradient(135deg, #f093fb, #f5576c)', 'linear-gradient(135deg, #4facfe, #00f2fe)', 'linear-gradient(135deg, #43e97b, #38f9d7)', 'linear-gradient(135deg, #fa709a, #fee140)'];
-  function getColorIndex(code) { return code.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % colores.length; }
-  function getImagenHtml(code) { 
-      const idx = getColorIndex(code);
-      return `<img src="imagenes/${code}.jpg" alt="${code}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width:100%; aspect-ratio:1/1; object-fit:contain; background:#f9f9f9; border-radius:8px; margin-bottom:8px;"><div class="img-placeholder" style="background:${colores[idx]}; display:none;">${code.replace('-', ' ')}</div>`; 
-  }
-
-  function clasificar(code, fechaEliminacion) {
-    if (code === '000-07') return 'pulseras';
-    if (code === '000-08') return 'billar';
-    if (code === '000-05') return fechaEliminacion < FECHA_CAMBIO ? 'pulseras' : 'error';
-    if (code === '000-06') return fechaEliminacion < FECHA_CAMBIO ? 'billar' : 'capsulas';
-    return 'normal';
-  }
-
-  function esJuguete(code) {
-    if (!code) return false;
-    const match = code.match(/^(\d+)-/);
-    if (!match) return false;
-    const num = parseInt(match[1]);
-    const especiales = ['000-05', '000-06', '000-07', '000-08', '000-09', '000-10'];
-    if (especiales.includes(code)) return false;
-    return num >= 5 && num !== 0;
-  }
-
-  function getFichasStats(ventas) {
-    let unitarias = 0, combo30 = 0, combo60 = 0, combo120 = 0, combo180 = 0;
-    for (const v of ventas) {
-      if (v.esFichaGratis) continue;
-      if (v.code === '000-00') unitarias++;
-      else if (v.code === '000-01') combo30++;
-      else if (v.code === '000-02') combo60++;
-      else if (v.code === '000-03') combo120++;
-      else if (v.code === '000-04') combo180++;
-    }
-    return { unitarias, combo30, combo60, combo120, combo180 };
-  }
-
-  async function cargarTodo() {
-    console.log("🔄 Cargando todos los datos...");
-    
-    try {
-      const stocks = {};
-      for (const suc of sucursales) {
-        stocks[suc.clave] = await obtenerStock(dbs[suc.clave]);
-      }
-      
-      todosLosProductos = [];
-      for (const code of CODIGOS_COMPLETOS) {
-        let total = 0;
-        const stocksObj = {};
-        for (const suc of sucursales) {
-          const cant = getProductStock(stocks[suc.clave], code);
-          stocksObj[suc.clave] = cant;
-          total += cant;
-        }
-        if (total > 0) {
-          todosLosProductos.push({ code, stocks: stocksObj, total });
-        }
-      }
-      todosLosProductos.sort((a,b) => a.code.localeCompare(b.code));
-      console.log("✅ Stock cargado:", todosLosProductos.length, "productos");
-    } catch(e) { console.error(e); }
-    
-    try {
-      contadoresGlobales = {};
-      for (const suc of sucursales) {
-        contadoresGlobales[suc.clave] = await obtenerContadores(dbs[suc.clave]);
-      }
-      console.log("✅ Contadores cargados");
-    } catch(e) { console.error(e); }
-    
-    document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
-  }
-
-  async function cargarVentasCarrito() {
-    try {
-      console.log("🔄 Cargando ventas de carritos...");
-      const ventasTemp = [];
-      for (const suc of sucursales) {
-        const ventas = await obtenerCarrito(dbs[suc.clave]);
-        console.log(`📦 ${suc.nombre}: ${ventas.length} ventas en carrito`);
-        ventas.forEach(v => {
-          const timestamp = v.timestampCompleto || new Date(v.fecha + ' ' + v.hora).getTime();
-          ventasTemp.push({ ...v, sucursal: suc.nombre, sucursalClave: suc.clave, timestamp: timestamp });
-        });
-      }
-      todasLasVentas = ventasTemp;
-      todasLasVentas.sort((a,b) => b.timestamp - a.timestamp);
-      console.log(`✅ Total ventas en carritos: ${todasLasVentas.length}`);
-      return todasLasVentas;
-    } catch(e) { 
-      console.error("Error cargando ventas:", e);
-      return [];
-    }
-  }
-
-  async function cargarHistorial() {
-    try {
-      console.log("🔄 Cargando historial...");
-      const historialTemp = [];
-      for (const suc of sucursales) {
-        const historial = await obtenerHistorial(dbs[suc.clave]);
-        console.log(`📜 ${suc.nombre}: ${historial.length} ventas en historial`);
-        historial.forEach(v => { 
-          historialTemp.push({ ...v, sucursal: suc.nombre, sucursalClave: suc.clave, esHistorial: true }); 
-        });
-      }
-      todoHistorial = historialTemp;
-      todoHistorial.sort((a,b) => (b.timestampEliminacion||0) - (a.timestampEliminacion||0));
-      console.log(`✅ Total ventas en historial: ${todoHistorial.length}`);
-      return todoHistorial;
-    } catch(e) { 
-      console.error(e);
-      return [];
-    }
-  }
-
-  function renderizarStock() {
-      const container = document.getElementById('stockContainer');
-      if (!container) return;
-      
-      const categorias = {};
-      for (const prod of todosLosProductos) {
-          const catKey = prod.code.substring(0, 3);
-          if (!categorias[catKey]) categorias[catKey] = [];
-          categorias[catKey].push(prod);
-      }
-      
-      const categoriasOrdenadas = Object.keys(categorias).sort((a,b) => {
-          const numA = parseInt(a);
-          const numB = parseInt(b);
-          if (isNaN(numA)) return 1;
-          if (isNaN(numB)) return -1;
-          return numA - numB;
-      });
-      
-      let html = '';
-      for (const catKey of categoriasOrdenadas) {
-          const productos = categorias[catKey];
-          const totalCat = productos.reduce((sum, p) => sum + p.total, 0);
-          
-          let nombreCat = `${catKey} puntos`;
-          if (catKey === '000') nombreCat = '000 puntos';
-          
-          html += `<div class="stock-category" style="margin-bottom: 35px;">
-                      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 15px; border-left: 5px solid #2196F3; padding-left: 12px;">
-                          <h3 style="font-size: 1.3rem; color: #1a1a2e; margin: 0;">🎯 ${nombreCat}</h3>
-                          <span style="background: #e0e0e0; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; color: #555;">📦 ${totalCat}</span>
-                      </div>
-                      <div class="stock-grid">`;
-          
-          for (const prod of productos) {
-              let stockClass = 'stock-normal';
-              if (prod.total < 5) stockClass = 'stock-bajo';
-              else if (prod.total < 20) stockClass = 'stock-medio';
-              
-              const sucHtml = sucursales.map(suc => `<span class="${suc.clave}" style="display: inline-block; padding: 3px 10px; border-radius: 20px; font-weight: 600; background: ${suc.bg}; color: ${suc.color};">${prod.stocks[suc.clave] || 0}</span>`).join('');
-              
-              html += `<div class="stock-card">
-                          ${getImagenHtml(prod.code)}
-                          <div class="codigo">${prod.code}</div>
-                          <div class="stock-total ${stockClass}">📦 ${prod.total}</div>
-                          <div class="stock-sucursales" style="margin-top: 10px; font-size: 0.7rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; border-top: 1px solid #f0f0f0; padding-top: 10px;">${sucHtml}</div>
-                        </div>`;
-          }
-          html += `</div></div>`;
-      }
-      
-      if (todosLosProductos.length === 0) {
-          html = '<div class="loading">📦 No hay productos con stock disponible</div>';
-      }
-      
-      container.innerHTML = html;
-  }
-
-  function calcularDiferenciasContadores() {
-    const fechaInicio = document.getElementById('contadorFechaInicio').value;
-    const fechaFin = document.getElementById('contadorFechaFin').value;
-    
-    if (!fechaInicio || !fechaFin) {
-      document.getElementById('contadoresResultados').innerHTML = '<div class="loading">📊 Selecciona un rango de fechas para ver las diferencias de contadores</div>';
-      return;
-    }
-    
-    const todasLasFechas = new Set();
-    for (const sucClave in contadoresGlobales) {
-      const maquinas = contadoresGlobales[sucClave];
-      for (const maquina in maquinas) {
-        for (const fecha in maquinas[maquina]) {
-          todasLasFechas.add(fecha);
-        }
-      }
-    }
-    
-    const fechasOrdenadas = Array.from(todasLasFechas).sort();
-    const fechaInicioObj = new Date(fechaInicio);
-    const fechaFinObj = new Date(fechaFin);
-    
-    let lecturaAnterior = null;
-    let lecturaFinal = null;
-    
-    for (const fecha of fechasOrdenadas) {
-      const fechaObj = new Date(fecha);
-      if (fechaObj <= fechaInicioObj) {
-        lecturaAnterior = fecha;
-      }
-      if (fechaObj <= fechaFinObj) {
-        lecturaFinal = fecha;
-      }
-    }
-    
-    if (!lecturaAnterior) lecturaAnterior = fechasOrdenadas[0];
-    
-    if (!lecturaAnterior || !lecturaFinal || lecturaAnterior === lecturaFinal) {
-      document.getElementById('contadoresResultados').innerHTML = '<div class="loading">⚠️ No hay suficientes lecturas de contadores en el rango seleccionado.</div>';
-      return;
-    }
-    
-    const resultados = [];
-    let totalFichasGenerales = 0;
-    let totalPremiosGenerales = 0;
-    let totalFichasReales = 0;
-    let totalPremiosReales = 0;
-    
-    for (const suc of sucursales) {
-      const maquinasSuc = contadoresGlobales[suc.clave] || {};
-      
-      for (let i = 1; i <= 20; i++) {
-        const maquinaKey = `maq${i.toString().padStart(2, '0')}`;
-        const datosMaquina = maquinasSuc[maquinaKey] || {};
-        
-        const datosAnterior = datosMaquina[lecturaAnterior] || { fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0 };
-        const datosFinal = datosMaquina[lecturaFinal] || { fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0 };
-        
-        const fichasBruto = (datosFinal.fichas || 0) - (datosAnterior.fichas || 0);
-        const premiosBruto = (datosFinal.premios || 0) - (datosAnterior.premios || 0);
-        const fichasPrueba = (datosFinal.fichasPrueba || 0) - (datosAnterior.fichasPrueba || 0);
-        const premiosPrueba = (datosFinal.premiosPrueba || 0) - (datosAnterior.premiosPrueba || 0);
-        
-        const fichasReales = fichasBruto - fichasPrueba;
-        const premiosReales = premiosBruto - premiosPrueba;
-        
-        if (fichasBruto !== 0 || premiosBruto !== 0) {
-          resultados.push({
-            sucursal: suc.nombre,
-            maquina: i,
-            fichasBruto,
-            premiosBruto,
-            fichasPrueba,
-            premiosPrueba,
-            fichasReales,
-            premiosReales
-          });
-          
-          totalFichasGenerales += fichasBruto;
-          totalPremiosGenerales += premiosBruto;
-          totalFichasReales += fichasReales;
-          totalPremiosReales += premiosReales;
-        }
-      }
-    }
-    
-    let html = `
-      <div class="contadores-resumen">
-        <div class="contadores-resumen-item"><div class="label">📅 Período</div><div class="value">${lecturaAnterior} → ${lecturaFinal}</div></div>
-        <div class="contadores-resumen-item"><div class="label">🎴 Total Fichas (Bruto)</div><div class="value">${totalFichasGenerales.toLocaleString()}</div></div>
-        <div class="contadores-resumen-item"><div class="label">🏆 Total Premios (Bruto)</div><div class="value">${totalPremiosGenerales.toLocaleString()}</div></div>
-        <div class="contadores-resumen-item"><div class="label">✅ Fichas REALES</div><div class="value" style="color:#4CAF50;">${totalFichasReales.toLocaleString()}</div></div>
-        <div class="contadores-resumen-item"><div class="label">✅ Premios REALES</div><div class="value" style="color:#4CAF50;">${totalPremiosReales.toLocaleString()}</div></div>
-      </div>
-      <div class="contadores-tabla">
-        <table>
-          <thead>汽<th>Sucursal</th><th>Máquina</th><th>🎴 Fichas</th><th>🏆 Premios</th><th>✅ Fichas Reales</th><th>✅ Premios Reales</th>}</thead>
-          <tbody>`;
-    
-    for (const r of resultados) {
-      html += `<tr>
-        <td>${r.sucursal}</td>
-        <td class="maquina-nombre">🖥️ Máquina ${r.maquina}</td>
-        <td class="${r.fichasBruto >= 0 ? 'positivo' : 'negativo'}">${r.fichasBruto.toLocaleString()}</td>
-        <td class="${r.premiosBruto >= 0 ? 'positivo' : 'negativo'}">${r.premiosBruto.toLocaleString()}</td>
-        <td class="positivo" style="font-weight:bold;">${r.fichasReales.toLocaleString()}</td>
-        <td class="positivo" style="font-weight:bold;">${r.premiosReales.toLocaleString()}</td>
-      </tr>`;
-    }
-    
-    if (resultados.length === 0) {
-      html += `<tr><td colspan="6" style="text-align:center;">📭 No hay movimientos registrados</td></tr>`;
-    }
-    
-    html += `</tbody>}</div>`;
-    document.getElementById('contadoresResultados').innerHTML = html;
-  }
-
-  function mostrarCarritosActuales() {
-    console.log("Mostrando carritos actuales, ventas:", todasLasVentas.length);
-    
-    document.getElementById('fechaDesde').value = '';
-    document.getElementById('fechaHasta').value = '';
-    sessionStorage.removeItem('filtroDesde');
-    sessionStorage.removeItem('filtroHasta');
-    fechaDesde = null;
-    fechaHasta = null;
-    
-    if (todasLasVentas && todasLasVentas.length > 0) {
-      actualizarEstadisticas(todasLasVentas);
-      renderizarTablaVentas(todasLasVentas);
-      ventasActualesParaReporte = [...todasLasVentas];
-    } else {
-      actualizarEstadisticas([]);
-      document.querySelector('#tabVentas .ventas-table').innerHTML = '<div class="loading">📭 No hay ventas en los carritos actuales</div>';
-      ventasActualesParaReporte = [];
-    }
-  }
-
-  function actualizarEstadisticas(ventas) {
-    console.log("Actualizando estadísticas con", ventas.length, "ventas");
-    
-    if (!ventas) ventas = [];
-    
-    const normales = ventas.filter(v => v && !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
-    const cierresEfectivo = ventas.filter(v => v && v.code === '000-09');
-    const cierresTarjeta = ventas.filter(v => v && v.code === '000-10');
-    
-    const totalVentas = normales.reduce((s,v)=>s+(v.money||0),0);
-    const totalEfectivo = cierresEfectivo.reduce((s,v)=>s+(v.money||0),0);
-    const totalTarjeta = cierresTarjeta.reduce((s,v)=>s+(v.money||0),0);
-    const totalCierre = totalEfectivo + totalTarjeta;
-    const totalPuntos = ventas.reduce((s,v)=>s+(v?.points||0),0);
-    const totalFichas = normales.filter(v=> v?.fichaConsumption > 0 && !v?.esFichaGratis).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0);
-    const totalOperaciones = ventas.length;
-    
-    document.getElementById('totalVentas').textContent = totalVentas.toLocaleString();
-    document.getElementById('totalEfectivo').textContent = totalEfectivo.toLocaleString();
-    document.getElementById('totalTarjeta').textContent = totalTarjeta.toLocaleString();
-    document.getElementById('totalCierre').textContent = totalCierre.toLocaleString();
-    document.getElementById('totalPuntos').textContent = totalPuntos.toLocaleString();
-    document.getElementById('totalFichas').textContent = totalFichas.toLocaleString();
-    document.getElementById('totalOperaciones').textContent = totalOperaciones.toLocaleString();
-
-    const sucStats = {};
-    for (const suc of sucursales) {
-        sucStats[suc.clave] = {
-            operaciones: 0, ventas: 0, efectivo: 0, tarjeta: 0, cierre: 0,
-            juguetesMonto: 0, puntos: 0, fichasMonto: 0, fichasCantidad: 0,
-            pulseras: 0, billar: 0, capsulas: 0, error: 0,
-            unitarias: 0, combo30: 0, combo60: 0, combo120: 0, combo180: 0,
-            movimientosStock: {}, movimientosMaquinas: {}
-        };
-    }
-    
-    for (const suc of sucursales) {
-        const vSuc = ventas.filter(v => v && v.sucursalClave === suc.clave);
-        const vNorm = vSuc.filter(v => !v.esCierre && v.code !== '000-09' && v.code !== '000-10' && !v.esMovimiento);
-        const vMov = vSuc.filter(v => v.esMovimiento === true);
-        const cEfectivo = vSuc.filter(v => v.code === '000-09');
-        const cTarjeta = vSuc.filter(v => v.code === '000-10');
-        
-        let pulseras = 0, billar = 0, capsulas = 0, error = 0;
-        let juguetesMonto = 0;
-        
-        for (const v of vNorm) {
-            const fecha = v.timestampEliminacion || v.timestamp || Date.now();
-            const tipo = clasificar(v.code, fecha);
-            if (tipo === 'pulseras') pulseras += v.money || 0;
-            if (tipo === 'billar') billar += v.money || 0;
-            if (tipo === 'capsulas') capsulas += Math.abs(v.fichaConsumption || 0);
-            if (tipo === 'error') error += Math.abs(v.fichaConsumption || 0);
-            if (esJuguete(v.code)) juguetesMonto += v.money || 0;
-        }
-        
-        const fichasStats = getFichasStats(vNorm);
-        
-        const movimientosStock = {};
-        for (const v of vMov) {
-            const esMaquinaMovimiento = v.destinoMovimiento && v.destinoMovimiento.startsWith('maq');
-            if (!esMaquinaMovimiento) {
-                const code = v.code;
-                if (!movimientosStock[code]) movimientosStock[code] = { agregar: 0, quitar: 0, neto: 0 };
-                if (v.tipoMovimiento === 'agregar') movimientosStock[code].agregar += (v.unidades || 1);
-                else if (v.tipoMovimiento === 'quitar') movimientosStock[code].quitar += (v.unidades || 1);
-                movimientosStock[code].neto = movimientosStock[code].agregar - movimientosStock[code].quitar;
-            }
-        }
-        
-        const movimientosMaquinas = {};
-        for (const v of vMov) {
-            const destino = v.destinoMovimiento;
-            if (destino && destino.startsWith('maq')) {
-                const code = v.code;
-                if (!movimientosMaquinas[destino]) movimientosMaquinas[destino] = {};
-                if (!movimientosMaquinas[destino][code]) movimientosMaquinas[destino][code] = { agregar: 0, quitar: 0, neto: 0 };
-                if (v.tipoMovimiento === 'agregar') movimientosMaquinas[destino][code].agregar += (v.unidades || 1);
-                else if (v.tipoMovimiento === 'quitar') movimientosMaquinas[destino][code].quitar += (v.unidades || 1);
-                movimientosMaquinas[destino][code].neto = movimientosMaquinas[destino][code].agregar - movimientosMaquinas[destino][code].quitar;
-            }
-        }
-        
-        sucStats[suc.clave] = {
-            operaciones: vSuc.length,
-            ventas: vNorm.reduce((s,v)=>s+(v.money||0),0),
-            efectivo: cEfectivo.reduce((s,v)=>s+(v.money||0),0),
-            tarjeta: cTarjeta.reduce((s,v)=>s+(v.money||0),0),
-            cierre: cEfectivo.reduce((s,v)=>s+(v.money||0),0) + cTarjeta.reduce((s,v)=>s+(v.money||0),0),
-            juguetesMonto: juguetesMonto,
-            puntos: vSuc.reduce((s,v)=>s+(v.points||0),0),
-            fichasMonto: vNorm.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+(v.money||0),0),
-            fichasCantidad: vNorm.filter(v=> v.fichaConsumption > 0 && !v.esFichaGratis).reduce((s,v)=>s+Math.abs(v.fichaConsumption||0),0),
-            pulseras, billar, capsulas, error,
-            unitarias: fichasStats.unitarias,
-            combo30: fichasStats.combo30,
-            combo60: fichasStats.combo60,
-            combo120: fichasStats.combo120,
-            combo180: fichasStats.combo180,
-            movimientosStock: movimientosStock || {},
-            movimientosMaquinas: movimientosMaquinas || {}
-        };
-    }
-    
-    const sucHtml = sucursales.map(suc => {
-        const s = sucStats[suc.clave];
-        
-        let extras = '';
-        if (suc.clave === 'laureles') {
-            extras = `<div class="item"><span class="label">💫 Pulseras:</span><span class="amount">Gs. ${(s.pulseras||0).toLocaleString()}</span></div>
-                      <div class="item"><span class="label">🎱 Billar:</span><span class="amount">Gs. ${(s.billar||0).toLocaleString()}</span></div>`;
-        }
-        
-        let stockMovHtml = '';
-        const stockMovs = (s.movimientosStock && typeof s.movimientosStock === 'object') ? s.movimientosStock : {};
-        if (Object.keys(stockMovs).length === 0) {
-            stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
-        } else {
-            stockMovHtml = Object.entries(stockMovs).map(([code, datos]) => {
-                if (!datos) return '';
-                return `<div class="sub-item"><span class="label">${code}:</span><span class="amount">+${datos.agregar || 0}/-${datos.quitar || 0} = ${(datos.neto || 0) >= 0 ? '+' : ''}${datos.neto || 0}</span></div>`;
-            }).filter(html => html !== '').join('');
-            if (stockMovHtml === '') stockMovHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
-        }
-        
-        // MOVIMIENTOS DE MÁQUINAS - SOLO MUESTRA MÁQUINAS CON MOVIMIENTOS
-        let maquinasHtml = '';
-        const maquinasMovs = (s.movimientosMaquinas && typeof s.movimientosMaquinas === 'object') ? s.movimientosMaquinas : {};
-        let tieneMovimientos = false;
-        
-        for (let i = 1; i <= 20; i++) {
-            const maquinaKey = `maq${i}`;
-            const movsPorMaquina = maquinasMovs[maquinaKey] || {};
-            const productosKeys = Object.keys(movsPorMaquina);
-            
-            if (productosKeys.length > 0) {
-                tieneMovimientos = true;
-                const productosHtml = productosKeys.map(code => {
-                    const datos = movsPorMaquina[code];
-                    if (!datos) return '';
-                    const agregar = datos.agregar || 0;
-                    const quitar = datos.quitar || 0;
-                    const neto = (datos.neto || 0);
-                    return `<span style="display:inline-block; margin-right:12px; margin-bottom:4px; background:#e3f2fd; padding:2px 8px; border-radius:12px;">
-                                <strong style="color:#1976D2;">${code}</strong>: +${agregar}/-${quitar} = ${neto >= 0 ? '+' : ''}${neto}
-                            </span>`;
-                }).filter(html => html !== '').join('');
-                
-                maquinasHtml += `<div class="maquina-item" style="margin-bottom:8px;">
-                                    <span class="label" style="font-weight:bold; color:#1976D2;">⚙️ Máquina ${i}:</span>
-                                    <div class="amount" style="margin-top:4px; display: flex; flex-wrap: wrap; gap: 6px;">${productosHtml}</div>
-                                 </div>`;
-            }
-        }
-        
-        if (!tieneMovimientos) {
-            maquinasHtml = `<div class="sub-item"><span class="label">Sin movimientos</span><span class="amount">-</span></div>`;
-        }
-        
-        return `<div class="suc-card ${suc.clave}">
-            <h4 onclick="window.open('${suc.url}', '_blank')" style="cursor:pointer;">
-                <span style="color:${suc.color}">🏢</span> ${suc.nombre}
-            </h4>
-            <div class="item"><span class="label">📋 Operaciones:</span><span class="amount">${s.operaciones}</span></div>
-            <div class="item"><span class="label">💰 Ventas:</span><span class="amount">Gs. ${s.ventas.toLocaleString()}</span></div>
-            <div class="item"><span class="label">💵 Efectivo:</span><span class="amount">Gs. ${s.efectivo.toLocaleString()}</span></div>
-            <div class="item"><span class="label">💳 Tarjeta:</span><span class="amount">Gs. ${s.tarjeta.toLocaleString()}</span></div>
-            <div class="item"><span class="label">💰 Total Cierre:</span><span class="amount">Gs. ${s.cierre.toLocaleString()}</span></div>
-            <div class="item"><span class="label">🎁 Juguetes:</span><span class="amount">Gs. ${s.juguetesMonto.toLocaleString()}</span></div>
-            ${extras}
-            <div class="item"><span class="label">🎯 Puntos:</span><span class="amount">${s.puntos.toLocaleString()}</span></div>
-            <div class="item"><span class="label">🎴 Fichas (monto):</span><span class="amount">Gs. ${s.fichasMonto.toLocaleString()}</span></div>
-            <div class="item"><span class="label">🎴 Fichas (cantidad):</span><span class="amount">${s.fichasCantidad.toLocaleString()}</span></div>
-            <div class="sub-section"><div class="sub-label">📊 Detalle de Fichas:</div>
-                <div class="sub-item"><span class="label">🎴 Unitarias (000-00):</span><span class="amount">${s.unitarias.toLocaleString()} veces</span></div>
-                <div class="sub-item"><span class="label">🎴 Combo 30mil (000-01):</span><span class="amount">${s.combo30.toLocaleString()} veces</span></div>
-                <div class="sub-item"><span class="label">🎴 Combo 60mil (000-02):</span><span class="amount">${s.combo60.toLocaleString()} veces</span></div>
-                <div class="sub-item"><span class="label">🎴 Combo 120mil (000-03):</span><span class="amount">${s.combo120.toLocaleString()} veces</span></div>
-                <div class="sub-item"><span class="label">🎴 Combo 180mil (000-04):</span><span class="amount">${s.combo180.toLocaleString()} veces</span></div>
-            </div>
-            <div class="sub-section"><div class="sub-label">📦 Movimientos de Stock (por código):</div>${stockMovHtml}</div>
-            <div class="sub-section"><div class="sub-label">🎰 Movimientos de Máquinas:</div>${maquinasHtml}</div>
-            <div class="sub-section"><div class="sub-label">🔴 Error (000-05):</div><div class="item"><span class="label">Fichas:</span><span class="amount">${s.error.toLocaleString()}</span></div></div>
-            <div class="sub-section"><div class="sub-label">🎴 Cápsulas (000-06):</div><div class="item"><span class="label">Fichas:</span><span class="amount">${s.capsulas.toLocaleString()}</span></div></div>
-        </div>`;
-    }).join('');
-    
-    document.getElementById('sucursalesGrid').innerHTML = sucHtml;
-    console.log("✅ Sucursales actualizadas");
-  }
-
-  function renderizarTablaVentas(ventas) {
-    const html = `<table><thead><tr><th>Sucursal</th><th>Producto</th><th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha/Hora</th></tr></thead><tbody>${
-      ventas.slice(0, 300).map(v => {
-        const suc = sucursales.find(s=>s.nombre===v.sucursal);
-        const fechaStr = v.timestampEliminacion ? new Date(v.timestampEliminacion).toLocaleString() : 
-                         (v.timestamp ? new Date(v.timestamp).toLocaleString() : (v.fecha+' '+v.hora));
-        let fichasDisplay = '-';
-        if (v.esMovimiento) {
-          fichasDisplay = v.tipoMovimiento === 'agregar' ? `+${v.unidades}` : `-${v.unidades}`;
-        } else if (v.fichaConsumption) {
-          fichasDisplay = Math.abs(v.fichaConsumption);
-        }
-        return `<tr>
-          <td style="color:${suc?.color||'#333'}">${v.sucursal}</td>
-          <td>${v.name || v.code}</td>
-          <td>${(v.points||0).toLocaleString()}</td>
-          <td>Gs. ${(v.money||0).toLocaleString()}</td>
-          <td>${fichasDisplay}</td>
-          <td style="font-size:0.7rem;">${fechaStr}</td>
-        </tr>`;
-      }).join('')}${ventas.length===0 ? '<tr><td colspan="6">📭 No hay ventas</td>' : ''}</tbody>}</div>`;
-    document.querySelector('#tabVentas .ventas-table').innerHTML = html;
-  }
-
-  function aplicarFiltroConValores(desde, hasta) {
-    console.log("🔍 Aplicando filtro:", { desde, hasta });
-    
-    let todas = [...todasLasVentas, ...todoHistorial];
-    
-    const ventasFiltradas = todas.filter(v => {
-      let ts = v.timestampEliminacion || v.timestamp;
-      if (!ts && v.fecha) {
-        const partes = v.fecha.split('/');
-        if (partes.length === 3) {
-          ts = new Date(`${partes[2]}-${partes[1]}-${partes[0]}`).getTime();
-        }
-      }
-      if (!ts) return false;
-      if (desde && ts < desde) return false;
-      if (hasta && ts > hasta) return false;
-      return true;
-    });
-    
-    ventasFiltradas.sort((a,b) => (b.timestampEliminacion || b.timestamp || 0) - (a.timestampEliminacion || a.timestamp || 0));
-    
-    console.log(`📊 Ventas filtradas: ${ventasFiltradas.length}`);
-    
-    ventasActualesParaReporte = [...ventasFiltradas];
-    actualizarEstadisticas(ventasFiltradas);
-    renderizarTablaVentas(ventasFiltradas);
-  }
-
-  function aplicarFiltro() {
-    const desdeInput = document.getElementById('fechaDesde').value;
-    const hastaInput = document.getElementById('fechaHasta').value;
-    
-    console.log("🔍 Aplicando filtro de fechas:", { desdeInput, hastaInput });
-    
-    if (desdeInput) sessionStorage.setItem('filtroDesde', desdeInput);
-    else sessionStorage.removeItem('filtroDesde');
-    
-    if (hastaInput) sessionStorage.setItem('filtroHasta', hastaInput);
-    else sessionStorage.removeItem('filtroHasta');
-    
-    fechaDesde = desdeInput ? new Date(desdeInput).setHours(0,0,0,0) : null;
-    fechaHasta = hastaInput ? new Date(hastaInput).setHours(23,59,59,999) : null;
-    
-    aplicarFiltroConValores(fechaDesde, fechaHasta);
-  }
-
-  function limpiarFiltro() {
-    console.log("🗑️ Limpiando filtro y mostrando carritos actuales...");
-    
-    document.getElementById('fechaDesde').value = '';
-    document.getElementById('fechaHasta').value = '';
-    
-    sessionStorage.removeItem('filtroDesde');
-    sessionStorage.removeItem('filtroHasta');
-    
-    fechaDesde = null;
-    fechaHasta = null;
-    
-    cargarVentasCarrito().then(() => {
-      console.log("✅ Ventas recargadas, total:", todasLasVentas.length);
-      actualizarEstadisticas(todasLasVentas);
-      renderizarTablaVentas(todasLasVentas);
-      ventasActualesParaReporte = [...todasLasVentas];
-    }).catch(error => {
-      console.error("Error al recargar ventas:", error);
-    });
-  }
-
-  async function generarReportePDF() {
-    const { jsPDF } = window.jspdf;
-    
-    // Usar las ventas filtradas actuales para el reporte
-    let ventasParaReporte = ventasActualesParaReporte;
-    if (!ventasParaReporte || ventasParaReporte.length === 0) {
-        ventasParaReporte = [...todasLasVentas, ...todoHistorial];
-    }
-    
-    // Calcular totales por sucursal (solo ventas de cierre: efectivo y tarjeta)
-    const ventasCierre = ventasParaReporte.filter(v => v.code === '000-09' || v.code === '000-10');
-    
-    // Crear objeto con datos por sucursal
-    const datosSucursales = [
-        { nombre: "Villa Morra", efectivo: 0, pos: 0, total: 0 },
-        { nombre: "Los Laureles", efectivo: 0, pos: 0, total: 0 },
-        { nombre: "Lambare", efectivo: 0, pos: 0, total: 0 },
-        { nombre: "Villa Elisa", efectivo: 0, pos: 0, total: 0 }
-    ];
-    
-    // Mapear nombres a índices
-    const nombreToIndex = {
-        "Villa Morra": 0,
-        "Los Laureles": 1,
-        "Lambare": 2,
-        "Villa Elisa": 3
+<!-- ========================================== -->
+<!-- CONFIGURACIÓN 11: JAVASCRIPT COMPLETO     -->
+<!-- ========================================== -->
+<script>
+    // ==========================================
+    // CONFIGURACIÓN 11.1: FIREBASE
+    // ==========================================
+    // 🔥 REEMPLAZA ESTOS VALORES CON LOS TUYOS 🔥
+    const firebaseConfig = {
+        apiKey: "AIzaSyDEFAULT_KEY_REEMPLAZA_AQUI",
+        authDomain: "tu-proyecto.firebaseapp.com",
+        projectId: "tu-proyecto-id",
+        storageBucket: "tu-proyecto.appspot.com",
+        messagingSenderId: "123456789012",
+        appId: "1:123456789012:web:abcdef123456"
     };
-    
-    // Sumar los montos de cierre por sucursal
-    for (const venta of ventasCierre) {
-        const idx = nombreToIndex[venta.sucursal];
-        if (idx !== undefined) {
-            if (venta.code === '000-09') { // Efectivo
-                datosSucursales[idx].efectivo += (venta.money || 0);
-                datosSucursales[idx].total += (venta.money || 0);
-            } else if (venta.code === '000-10') { // Tarjeta / POS
-                datosSucursales[idx].pos += (venta.money || 0);
-                datosSucursales[idx].total += (venta.money || 0);
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Configuración adicional de Firestore
+    const settings = {
+        timestampsInSnapshots: true,
+        merge: true
+    };
+    db.settings(settings);
+
+    console.log('✅ Firebase inicializado correctamente');
+    console.log('📁 Proyecto:', firebaseConfig.projectId);
+
+    // ==========================================
+    // CONFIGURACIÓN 11.2: VARIABLES GLOBALES
+    // ==========================================
+    let todosLosDatos = [];
+    let datosFiltrados = [];
+    let filtrosActivos = {};
+    let coleccionActiva = 'sucursales'; // Cambiar según necesidad
+
+    // ==========================================
+    // CONFIGURACIÓN 11.3: FUNCIONES PRINCIPALES
+    // ==========================================
+
+    /**
+     * Cargar datos desde Firebase
+     * Lee la colección 'sucursales' y muestra los datos
+     */
+    async function cargarDatos() {
+        try {
+            const tbody = document.getElementById('datosBody');
+            tbody.innerHTML = `<tr><td colspan="10" class="loading">🔄 Cargando datos desde Firebase...</td></tr>`;
+
+            console.log('📡 Conectando a Firebase...');
+            
+            // 🔥 OBTENER DATOS DE LA COLECCIÓN 'sucursales'
+            const snapshot = await db.collection('sucursales').get();
+            
+            if (snapshot.empty) {
+                console.warn('⚠️ No hay documentos en la colección');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="empty-state">
+                            <i class="fas fa-store" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+                            📭 No hay sucursales registradas en Firebase
+                            <br><br>
+                            <small>Agrega documentos en la colección 'sucursales'</small>
+                        </td>
+                    </tr>
+                `;
+                return;
             }
+
+            console.log(`📊 Documentos encontrados: ${snapshot.size}`);
+
+            todosLosDatos = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                
+                // Mapeo flexible de campos
+                const registro = {
+                    id: doc.id,
+                    fecha: data.fecha || data.fechaRegistro || new Date().toISOString().split('T')[0],
+                    sucursal: data.nombre || data.sucursal || data.nombreSucursal || 'Sin nombre',
+                    codigoProducto: data.codigoProducto || data.codigo || data.codigoProd || '000-00',
+                    producto: data.producto || data.nombreProducto || data.descripcion || 'Sin producto',
+                    operacion: data.operacion || data.tipo || data.tipoOperacion || 'venta',
+                    tipoMovimiento: data.tipoMovimiento || data.movimiento || data.tipoMov || 'stock',
+                    cantidad: data.cantidad || data.cant || 0,
+                    valor: data.valor || data.precio || data.monto || 0,
+                    estado: data.estado || data.estatus || 'activo'
+                };
+                
+                todosLosDatos.push(registro);
+            });
+
+            console.log(`✅ Datos cargados: ${todosLosDatos.length} registros`);
+            console.log('📋 Primer registro:', todosLosDatos[0]);
+
+            // Cargar opciones de sucursales
+            cargarOpcionesSucursales();
+            
+            // Aplicar filtros iniciales (mostrar todos)
+            aplicarFiltros();
+            
+        } catch (error) {
+            console.error('❌ Error al cargar datos:', error);
+            console.error('Detalles:', error.message);
+            
+            document.getElementById('datosBody').innerHTML = `
+                <tr>
+                    <td colspan="10" style="color: red; text-align: center; padding: 30px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                        ❌ Error al cargar los datos: ${error.message}
+                        <br><br>
+                        <small>
+                            🔧 Verifica:<br>
+                            1. Credenciales de Firebase (apiKey, projectId)<br>
+                            2. Conexión a internet<br>
+                            3. Reglas de seguridad de Firestore<br>
+                            4. Que la colección 'sucursales' exista
+                        </small>
+                    </td>
+                </tr>
+            `;
         }
     }
-    
-    // Calcular totales generales
-    let totalEfectivoGeneral = 0;
-    let totalPosGeneral = 0;
-    let totalGeneral = 0;
-    for (const suc of datosSucursales) {
-        totalEfectivoGeneral += suc.efectivo;
-        totalPosGeneral += suc.pos;
-        totalGeneral += suc.total;
+
+    /**
+     * Cargar opciones de sucursales desde los datos
+     */
+    function cargarOpcionesSucursales() {
+        const sucursales = [...new Set(todosLosDatos.map(d => d.sucursal))].sort();
+        const selectSucursal = document.getElementById('filterSucursal');
+        
+        selectSucursal.innerHTML = '<option value="">Todas las sucursales</option>';
+        
+        sucursales.forEach(suc => {
+            const option = document.createElement('option');
+            option.value = suc;
+            option.textContent = suc;
+            selectSucursal.appendChild(option);
+        });
+        
+        console.log(`🏢 Sucursales disponibles: ${sucursales.length}`);
     }
-    
-    // Obtener rango de fechas para mostrar
-    const desdeInput = document.getElementById('fechaDesde').value;
-    const hastaInput = document.getElementById('fechaHasta').value;
-    let rangoFechas = '';
-    if (desdeInput && hastaInput) {
-        rangoFechas = `${desdeInput.split('-').reverse().join('/')} al ${hastaInput.split('-').reverse().join('/')}`;
-    } else if (desdeInput) {
-        rangoFechas = `Desde ${desdeInput.split('-').reverse().join('/')}`;
-    } else if (hastaInput) {
-        rangoFechas = `Hasta ${hastaInput.split('-').reverse().join('/')}`;
-    } else {
-        rangoFechas = 'Todos los registros';
-    }
-    
-    // Fecha y hora actual para impresión
-    const fechaHoraImpresion = new Date().toLocaleString('es-PY', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-    });
-    
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-    
-    // Fondo blanco
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
-    
-    // Título grande en rojo carmesí y negrita
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(28);
-    doc.setTextColor(220, 20, 60); // Carmesí
-    doc.text('ASTROLAND', pageWidth / 2, 25, { align: 'center' });
-    
-    // Subtítulo azul francia negrita
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(0, 85, 164); // Azul Francia
-    doc.text('IN GOD WE TRUST', pageWidth / 2, 38, { align: 'center' });
-    
-    // Línea separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.3);
-    doc.line(20, 45, pageWidth - 20, 45);
-    
-    // Rango de fechas
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(0, 85, 164);
-    doc.text(`RANGO DE FECHAS: ${rangoFechas}`, pageWidth / 2, 55, { align: 'center' });
-    
-    // Fecha y hora de impresión
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Fecha/Hora de impresión: ${fechaHoraImpresion}`, pageWidth / 2, 63, { align: 'center' });
-    
-    // Tabla de 4 columnas
-    const tableHeaders = [['Sucursal', 'Efectivo (Gs.)', 'POS (Gs.)', 'Total (Gs.)']];
-    const tableRows = [];
-    
-    // Agregar filas de sucursales en el orden solicitado
-    const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambare", "Villa Elisa"];
-    for (const nombre of ordenSucursales) {
-        const suc = datosSucursales.find(s => s.nombre === nombre);
-        if (suc) {
-            tableRows.push([
-                suc.nombre,
-                suc.efectivo.toLocaleString(),
-                suc.pos.toLocaleString(),
-                suc.total.toLocaleString()
-            ]);
-        }
-    }
-    
-    // Agregar fila de total
-    tableRows.push(['TOTAL', totalEfectivoGeneral.toLocaleString(), totalPosGeneral.toLocaleString(), totalGeneral.toLocaleString()]);
-    
-    // Colores personalizados
-    const amarilloRutilante = [255, 215, 0]; // RGB para amarillo rutilante
-    const azulFrancia = [0, 85, 164];
-    
-    doc.autoTable({
-        head: tableHeaders,
-        body: tableRows,
-        startY: 72,
-        theme: 'grid',
-        styles: {
-            fontSize: 12,
-            cellPadding: 6,
-            textColor: azulFrancia,
-            lineColor: [180, 180, 180],
-            lineWidth: 0.3,
-            valign: 'middle',
-            halign: 'center',
-            fontStyle: 'bold'
-        },
-        headStyles: {
-            fillColor: amarilloRutilante,
-            textColor: azulFrancia,
-            fontStyle: 'bold',
-            fontSize: 12,
-            halign: 'center'
-        },
-        bodyStyles: {
-            fillColor: [255, 255, 255],
-            textColor: azulFrancia,
-            fontStyle: 'bold'
-        },
-        columnStyles: {
-            0: { halign: 'left', cellWidth: 65 },
-            1: { halign: 'right', cellWidth: 55 },
-            2: { halign: 'right', cellWidth: 55 },
-            3: { halign: 'right', cellWidth: 55 }
-        },
-        margin: { left: 20, right: 20 },
-        didDrawCell: function(data) {
-            // Pintar la última fila (TOTAL) de amarillo rutilante
-            if (data.row.index === tableRows.length - 1) {
-                doc.setFillColor(amarilloRutilante[0], amarilloRutilante[1], amarilloRutilante[2]);
-                doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(12);
-                doc.setTextColor(azulFrancia[0], azulFrancia[1], azulFrancia[2]);
-                doc.text(data.cell.raw, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2, { align: 'center', baseline: 'middle' });
+
+    /**
+     * Aplicar todos los filtros a los datos
+     */
+    function aplicarFiltros() {
+        const fechaInicio = document.getElementById('filterFechaInicio').value;
+        const fechaFin = document.getElementById('filterFechaFin').value;
+        const codigoProducto = document.getElementById('filterCodigoProducto').value.trim().toUpperCase();
+        const tipoOperacion = document.getElementById('filterTipoOperacion').value;
+        const tipoMovimiento = document.getElementById('filterTipoMovimiento').value;
+        const sucursal = document.getElementById('filterSucursal').value;
+
+        // Resetear filtros activos
+        filtrosActivos = {};
+
+        // Aplicar filtros
+        datosFiltrados = todosLosDatos.filter(item => {
+            // Filtro por fecha inicio
+            if (fechaInicio && item.fecha < fechaInicio) {
+                return false;
             }
+            
+            // Filtro por fecha fin
+            if (fechaFin && item.fecha > fechaFin) {
+                return false;
+            }
+            
+            // Filtro por código de producto (búsqueda parcial)
+            if (codigoProducto && !item.codigoProducto.toUpperCase().includes(codigoProducto)) {
+                return false;
+            }
+            
+            // Filtro por tipo de operación
+            if (tipoOperacion && item.operacion !== tipoOperacion) {
+                return false;
+            }
+            
+            // Filtro por tipo de movimiento
+            if (tipoMovimiento && item.tipoMovimiento !== tipoMovimiento) {
+                return false;
+            }
+            
+            // Filtro por sucursal
+            if (sucursal && item.sucursal !== sucursal) {
+                return false;
+            }
+            
+            return true;
+        });
+
+        // Registrar filtros activos
+        if (fechaInicio) filtrosActivos['Fecha Inicio'] = fechaInicio;
+        if (fechaFin) filtrosActivos['Fecha Fin'] = fechaFin;
+        if (codigoProducto) filtrosActivos['Código'] = codigoProducto;
+        if (tipoOperacion) filtrosActivos['Operación'] = tipoOperacion;
+        if (tipoMovimiento) filtrosActivos['Movimiento'] = tipoMovimiento;
+        if (sucursal) filtrosActivos['Sucursal'] = sucursal;
+
+        console.log(`🎯 Filtros aplicados: ${Object.keys(filtrosActivos).length}`);
+        console.log(`📊 Resultados: ${datosFiltrados.length} registros`);
+
+        renderizarTabla();
+        actualizarEstadisticas();
+        mostrarFiltrosActivos();
+    }
+
+    /**
+     * Mostrar filtros activos como tags
+     */
+    function mostrarFiltrosActivos() {
+        const container = document.getElementById('activeFilters');
+        const keys = Object.keys(filtrosActivos);
+        
+        if (keys.length === 0) {
+            container.innerHTML = '<span style="color: #666; font-size: 13px;">No hay filtros activos</span>';
+            return;
         }
+
+        const labels = {
+            'Fecha Inicio': '📅 Desde',
+            'Fecha Fin': '📅 Hasta',
+            'Código': '🔢 Código',
+            'Operación': '🔄 Operación',
+            'Movimiento': '⚙️ Movimiento',
+            'Sucursal': '🏢 Sucursal'
+        };
+
+        let html = '';
+        keys.forEach(key => {
+            const value = filtrosActivos[key];
+            const label = labels[key] || key;
+            
+            html += `
+                <span class="filter-tag">
+                    ${label}: ${value}
+                    <i class="fas fa-times" onclick="eliminarFiltro('${key}')"></i>
+                </span>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    /**
+     * Eliminar un filtro específico
+     */
+    function eliminarFiltro(key) {
+        const map = {
+            'Fecha Inicio': 'filterFechaInicio',
+            'Fecha Fin': 'filterFechaFin',
+            'Código': 'filterCodigoProducto',
+            'Operación': 'filterTipoOperacion',
+            'Movimiento': 'filterTipoMovimiento',
+            'Sucursal': 'filterSucursal'
+        };
+        
+        if (map[key]) {
+            document.getElementById(map[key]).value = '';
+            aplicarFiltros();
+        }
+    }
+
+    /**
+     * Limpiar todos los filtros
+     */
+    function limpiarFiltros() {
+        document.getElementById('filterFechaInicio').value = '';
+        document.getElementById('filterFechaFin').value = '';
+        document.getElementById('filterCodigoProducto').value = '';
+        document.getElementById('filterTipoOperacion').value = '';
+        document.getElementById('filterTipoMovimiento').value = '';
+        document.getElementById('filterSucursal').value = '';
+        aplicarFiltros();
+    }
+
+    /**
+     * Renderizar la tabla con los datos filtrados
+     */
+    function renderizarTabla() {
+        const tbody = document.getElementById('datosBody');
+        
+        if (datosFiltrados.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="empty-state">
+                        <i class="fas fa-search" style="font-size: 40px; display: block; margin-bottom: 10px;"></i>
+                        No se encontraron registros con los filtros aplicados
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        datosFiltrados.forEach((item, index) => {
+            // Badge según operación
+            const badgeOperacion = {
+                'venta': 'badge-venta',
+                'punto': 'badge-punto',
+                'movimiento': 'badge-movimiento'
+            }[item.operacion] || '';
+
+            // Badge según tipo de movimiento
+            const badgeMovimiento = item.tipoMovimiento.includes('maquina') ? 'badge-maquina' : 'badge-stock';
+
+            // Badge según estado
+            const badgeEstado = item.estado === 'activo' ? 'badge-activo' : 'badge-inactivo';
+
+            html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${formatFecha(item.fecha)}</td>
+                    <td><strong>${item.sucursal}</strong></td>
+                    <td><code style="background: #f4f4f4; padding: 2px 8px; border-radius: 4px;">${item.codigoProducto}</code></td>
+                    <td>${item.producto}</td>
+                    <td><span class="badge ${badgeOperacion}">${item.operacion}</span></td>
+                    <td><span class="badge ${badgeMovimiento}">${item.tipoMovimiento}</span></td>
+                    <td>${item.cantidad}</td>
+                    <td>${item.valor > 0 ? '$' + item.valor.toLocaleString() : '-'}</td>
+                    <td><span class="badge ${badgeEstado}">${item.estado}</span></td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    /**
+     * Formatear fecha para mostrar
+     */
+    function formatFecha(fecha) {
+        if (!fecha) return '-';
+        try {
+            const partes = fecha.split('-');
+            if (partes.length === 3) {
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            }
+            return fecha;
+        } catch {
+            return fecha;
+        }
+    }
+
+    /**
+     * Actualizar estadísticas
+     */
+    function actualizarEstadisticas() {
+        document.getElementById('totalRegistros').textContent = datosFiltrados.length;
+        document.getElementById('totalVentas').textContent = datosFiltrados.filter(d => d.operacion === 'venta').length;
+        document.getElementById('totalPuntos').textContent = datosFiltrados.filter(d => d.operacion === 'punto').length;
+        document.getElementById('totalMovimientos').textContent = datosFiltrados.filter(d => d.operacion === 'movimiento').length;
+    }
+
+    /**
+     * Exportar datos a CSV
+     */
+    function exportarDatos() {
+        if (datosFiltrados.length === 0) {
+            alert('⚠️ No hay datos para exportar');
+            return;
+        }
+
+        const headers = ['Fecha', 'Sucursal', 'Código Producto', 'Producto', 'Operación', 'Tipo Movimiento', 'Cantidad', 'Valor', 'Estado'];
+        let csvContent = headers.join(',') + '\n';
+        
+        datosFiltrados.forEach(item => {
+            csvContent += [
+                item.fecha,
+                `"${item.sucursal}"`,
+                `"${item.codigoProducto}"`,
+                `"${item.producto}"`,
+                item.operacion,
+                item.tipoMovimiento,
+                item.cantidad,
+                item.valor,
+                item.estado
+            ].join(',') + '\n';
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `sucursales_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        
+        console.log(`📥 Exportados ${datosFiltrados.length} registros`);
+    }
+
+    /**
+     * Recargar datos desde Firebase
+     */
+    function recargarDatos() {
+        console.log('🔄 Recargando datos...');
+        cargarDatos();
+    }
+
+    /**
+     * Mostrar configuración actual
+     */
+    function verConfiguracion() {
+        alert(
+            '🔧 CONFIGURACIÓN ACTUAL\n\n' +
+            `📁 Proyecto: ${firebaseConfig.projectId}\n` +
+            `📊 Colección: ${coleccionActiva}\n` +
+            `📝 Total registros: ${todosLosDatos.length}\n` +
+            `🎯 Filtros activos: ${Object.keys(filtrosActivos).length}\n\n` +
+            '✅ Firebase conectado correctamente'
+        );
+    }
+
+    // ==========================================
+    // CONFIGURACIÓN 11.4: EVENTOS Y INICIO
+    // ==========================================
+
+    /**
+     * Configurar eventos y cargar datos al iniciar
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Iniciando aplicación...');
+        cargarDatos();
+        
+        // Filtrar al presionar Enter en cualquier input
+        document.querySelectorAll('.filter-group input').forEach(el => {
+            el.addEventListener('keypress', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    aplicarFiltros();
+                }
+            });
+        });
+
+        // Filtrar al cambiar cualquier select
+        document.querySelectorAll('.filter-group select').forEach(el => {
+            el.addEventListener('change', aplicarFiltros);
+        });
+
+        console.log('✅ Aplicación lista');
     });
-    
-    // Pie de página - obtener posición Y final de la tabla
-    const finalY = doc.lastAutoTable.finalY || 120;
-    
-    // Pie de página: centro "GRACIAS DIOS NUESTRO", derecha "Pág. 1 de 1"
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(azulFrancia[0], azulFrancia[1], azulFrancia[2]);
-    
-    // Centro
-    doc.text('GRACIAS DIOS NUESTRO', pageWidth / 2, finalY + 12, { align: 'center' });
-    // Derecha
-    doc.text('Pág. 1 de 1', pageWidth - 20, finalY + 12, { align: 'right' });
-    
-    const fileName = `ASTROLAND_Reporte_${rangoFechas.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    doc.save(fileName);
-    console.log("✅ PDF generado correctamente");
-  }
 
-  function mostrarTab(tab) {
-    tabActual = tab;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    
-    document.getElementById('tabStock').style.display = 'none';
-    document.getElementById('tabVentas').style.display = 'none';
-    document.getElementById('tabContadores').style.display = 'none';
-    
-    if (tab === 'stock') {
-      document.getElementById('tabStockBtn').classList.add('active');
-      document.getElementById('tabStock').style.display = 'block';
-      renderizarStock();
-    } else if (tab === 'ventas') {
-      document.getElementById('tabVentasBtn').classList.add('active');
-      document.getElementById('tabVentas').style.display = 'block';
-      const desde = sessionStorage.getItem('filtroDesde');
-      const hasta = sessionStorage.getItem('filtroHasta');
-      if (desde || hasta) {
-        const fDesde = desde ? new Date(desde).setHours(0,0,0,0) : null;
-        const fHasta = hasta ? new Date(hasta).setHours(23,59,59,999) : null;
-        aplicarFiltroConValores(fDesde, fHasta);
-      } else {
-        mostrarCarritosActuales();
-      }
-    } else if (tab === 'contadores') {
-      document.getElementById('tabContadoresBtn').classList.add('active');
-      document.getElementById('tabContadores').style.display = 'block';
-      const hoy = new Date();
-      const hace30Dias = new Date();
-      hace30Dias.setDate(hoy.getDate() - 30);
-      if (!document.getElementById('contadorFechaInicio').value) {
-        document.getElementById('contadorFechaInicio').value = hace30Dias.toISOString().split('T')[0];
-        document.getElementById('contadorFechaFin').value = hoy.toISOString().split('T')[0];
-      }
-      calcularDiferenciasContadores();
-    }
-  }
+    // ==========================================
+    // CONFIGURACIÓN 11.5: MANEJO DE ERRORES
+    // ==========================================
 
-  // Event Listeners
-  document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
-  document.getElementById('btnLimpiar').addEventListener('click', limpiarFiltro);
-  document.getElementById('btnReporte').addEventListener('click', generarReportePDF);
-  document.getElementById('btnActualizar').addEventListener('click', async () => {
-    await cargarVentasCarrito();
-    if (tabActual === 'ventas') {
-      const desde = sessionStorage.getItem('filtroDesde');
-      const hasta = sessionStorage.getItem('filtroHasta');
-      if (desde || hasta) {
-        aplicarFiltro();
-      } else {
-        mostrarCarritosActuales();
-      }
-    } else if (tabActual === 'stock') {
-      renderizarStock();
-    } else if (tabActual === 'contadores') {
-      calcularDiferenciasContadores();
-    }
-  });
-  document.getElementById('tabStockBtn').addEventListener('click', () => mostrarTab('stock'));
-  document.getElementById('tabVentasBtn').addEventListener('click', () => mostrarTab('ventas'));
-  document.getElementById('tabContadoresBtn').addEventListener('click', () => mostrarTab('contadores'));
-  document.getElementById('btnCalcularContadores').addEventListener('click', calcularDiferenciasContadores);
+    // Capturar errores globales
+    window.addEventListener('error', function(e) {
+        console.error('❌ Error global:', e.message);
+    });
 
-  if (sessionStorage.getItem('filtroDesde')) {
-    document.getElementById('fechaDesde').value = sessionStorage.getItem('filtroDesde');
-  }
-  if (sessionStorage.getItem('filtroHasta')) {
-    document.getElementById('fechaHasta').value = sessionStorage.getItem('filtroHasta');
-  }
+    // ==========================================
+    // CONFIGURACIÓN 11.6: EXPOSICIÓN DE FUNCIONES
+    // ==========================================
 
-  async function iniciar() {
-    console.log("🚀 Iniciando carga inicial...");
-    await cargarTodo();
-    await cargarVentasCarrito();
-    await cargarHistorial();
-    console.log("✅ Datos cargados, total ventas en carritos:", todasLasVentas.length);
-    console.log("✅ Historial cargado, total:", todoHistorial.length);
-    
-    mostrarTab('ventas');
-  }
-  
-  iniciar();
-  
-  setInterval(() => {
-    const tieneFiltro = sessionStorage.getItem('filtroDesde') || sessionStorage.getItem('filtroHasta');
-    if (!tieneFiltro && tabActual === 'ventas') {
-      console.log("🔄 Auto-actualización sin filtros...");
-      cargarVentasCarrito().then(() => {
-        mostrarCarritosActuales();
-      });
-    } else if (!tieneFiltro && tabActual === 'stock') {
-      cargarTodo().then(() => renderizarStock());
-    } else if (!tieneFiltro && tabActual === 'contadores') {
-      calcularDiferenciasContadores();
-    }
-    document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleTimeString('es-PY')}`;
-  }, 30000);
+    // Hacer funciones accesibles globalmente
+    window.aplicarFiltros = aplicarFiltros;
+    window.limpiarFiltros = limpiarFiltros;
+    window.eliminarFiltro = eliminarFiltro;
+    window.exportarDatos = exportarDatos;
+    window.recargarDatos = recargarDatos;
+    window.verConfiguracion = verConfiguracion;
+
+    console.log('✅ Todas las funciones están listas');
 </script>
+
 </body>
 </html>
