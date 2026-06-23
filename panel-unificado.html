@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel de Control ASTROLAND</title>
+    <title>Panel de Control ASTROLAND - Con Historial</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
-        /* Estilos Generales y Reset */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -16,12 +15,8 @@
             color: #333;
             padding: 20px;
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1400px; margin: 0 auto; }
 
-        /* Encabezado */
         .header {
             display: flex;
             justify-content: space-between;
@@ -34,15 +29,8 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        .header h1 {
-            color: #1a237e;
-            font-size: 1.8rem;
-        }
-        .header h1 small {
-            font-size: 0.8rem;
-            font-weight: normal;
-            color: #666;
-        }
+        .header h1 { color: #1a237e; font-size: 1.8rem; }
+        .header h1 small { font-size: 0.8rem; font-weight: normal; color: #666; }
         .last-update {
             font-size: 0.85rem;
             color: #666;
@@ -51,7 +39,6 @@
             border-radius: 30px;
         }
 
-        /* Secciones y Tarjetas */
         .card {
             background: white;
             border-radius: 15px;
@@ -77,10 +64,7 @@
             border-radius: 20px;
         }
 
-        /* Tablas */
-        .table-responsive {
-            overflow-x: auto;
-        }
+        .table-responsive { overflow-x: auto; }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -98,20 +82,13 @@
             text-align: center;
             border-bottom: 1px solid #e8eaf6;
         }
-        tr:hover td {
-            background: #f5f8ff;
-        }
+        tr:hover td { background: #f5f8ff; }
         .total-row td {
             background: #fff3e0 !important;
             font-weight: bold;
             border-top: 2px solid #ff9800;
         }
-        .highlight-row td {
-            background: #fff9c4 !important;
-            font-weight: bold;
-        }
 
-        /* Filtros */
         .filter-grid {
             display: flex;
             flex-wrap: wrap;
@@ -154,19 +131,27 @@
         .btn-success:hover { background: #388E3C; }
         .btn-warning { background: #ff9800; color: white; }
         .btn-warning:hover { background: #e68900; }
-        .btn-danger { background: #f44336; color: white; }
-        .btn-danger:hover { background: #c62828; }
         .btn-outline { background: transparent; color: #1a237e; border: 2px solid #1a237e; }
         .btn-outline:hover { background: #1a237e; color: white; }
 
-        /* Utilidades */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        .mt-20 { margin-top: 20px; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .filter-summary {
+            background: #e8eaf6;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .filter-tag {
+            background: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid #ccc;
+        }
 
-        /* Loading */
         .loader {
             border: 4px solid #f3f3f3;
             border-radius: 50%;
@@ -178,34 +163,34 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Responsive */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #1a237e;
+        }
+        .stat-box .number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #1a237e;
+        }
+        .stat-box .label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
         @media (max-width: 768px) {
-            .grid-2 { grid-template-columns: 1fr; }
             .header { flex-direction: column; align-items: stretch; text-align: center; }
             .filter-grid { flex-direction: column; }
             .filter-group input, .filter-group select { min-width: 100%; }
-        }
-
-        /* Estilo para el resumen de filtros */
-        .filter-summary {
-            background: #e8eaf6;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-        }
-        .filter-summary strong {
-            color: #1a237e;
-        }
-        .filter-tag {
-            background: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            border: 1px solid #ccc;
         }
     </style>
 </head>
@@ -214,12 +199,12 @@
 <div class="container">
     <!-- ENCABEZADO -->
     <div class="header">
-        <h1>🎯 ASTROLAND <small>Panel de Control Unificado</small></h1>
+        <h1>🎯 ASTROLAND <small>Panel de Control - Con Historial</small></h1>
         <span class="last-update" id="lastUpdate">🔄 Actualizando...</span>
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÓN 1: CARRITOS ACTUALES POR SUCURSAL     -->
+    <!-- SECCIÓN 1: CARRITOS ACTUALES                 -->
     <!-- ============================================ -->
     <div class="card">
         <h2>🛒 Carritos Actuales <span class="badge" id="totalItemsBadge">0 items</span></h2>
@@ -247,10 +232,31 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÓN 2: FILTROS AVANZADOS                 -->
+    <!-- SECCIÓN 2: FILTROS AVANZADOS (CON HISTORIAL) -->
     <!-- ============================================ -->
     <div class="card">
-        <h2>🔍 Filtros Avanzados <span class="badge">Análisis de Datos</span></h2>
+        <h2>🔍 Filtros Avanzados <span class="badge">Carrito + Historial</span></h2>
+        
+        <!-- Estadísticas rápidas -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-box">
+                <div class="number" id="statTotalItems">0</div>
+                <div class="label">📦 Total Items</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="statTotalMoney">Gs. 0</div>
+                <div class="label">💰 Dinero Total</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="statTotalPoints">0</div>
+                <div class="label">🎯 Puntos</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="statTotalFichas">0</div>
+                <div class="label">🎴 Fichas Consumidas</div>
+            </div>
+        </div>
+
         <div class="filter-grid">
             <div class="filter-group">
                 <label>📅 Desde</label>
@@ -278,6 +284,14 @@
                 </select>
             </div>
             <div class="filter-group">
+                <label>📂 Fuente</label>
+                <select id="filtroFuente">
+                    <option value="todos">📊 Todas</option>
+                    <option value="carrito">🛒 Carrito Actual</option>
+                    <option value="historial">📜 Historial</option>
+                </select>
+            </div>
+            <div class="filter-group">
                 <label>&nbsp;</label>
                 <button class="btn btn-primary" onclick="aplicarFiltros()">🔍 Aplicar Filtros</button>
                 <button class="btn btn-outline" onclick="limpiarFiltros()">🗑️ Limpiar</button>
@@ -293,7 +307,7 @@
     <!-- ============================================ -->
     <div class="card">
         <h2>📄 Generar Reporte PDF <span class="badge">Resumen Ejecutivo</span></h2>
-        <div class="flex">
+        <div class="flex" style="display:flex; gap:10px; flex-wrap:wrap;">
             <button class="btn btn-success" onclick="generarPDF()">📥 Descargar PDF</button>
             <span style="font-size:0.85rem; color:#666;">Reporte con datos del día actual</span>
         </div>
@@ -353,10 +367,11 @@
     // 2. ESTADO GLOBAL
     // ============================================================
     const estado = {
-        carritos: {}, // { sucursal: [items] }
+        carritos: {},      // { sucursal: [items] }
+        historial: {},     // { sucursal: [items del historial] }
+        todosItems: [],    // Todos los items (carrito + historial) con sucursal
         datosFiltrados: [],
-        ultimaActualizacion: null,
-        todasLasSucursales: sucursalesConfig.map(s => s.nombre)
+        ultimaActualizacion: null
     };
 
     // ============================================================
@@ -368,16 +383,49 @@
             const db = getDatabase(app);
             const dbRef = ref(db);
             
+            // Cargar carrito
             const cartSnap = await get(child(dbRef, 'carrito'));
-            let items = [];
+            let carritoItems = [];
             if (cartSnap.exists()) {
                 const data = cartSnap.val();
-                items = Object.entries(data).map(([k, v]) => ({ ...v, firebaseKey: k }));
+                carritoItems = Object.entries(data).map(([k, v]) => ({ 
+                    ...v, 
+                    firebaseKey: k,
+                    fuente: 'carrito'
+                }));
             }
-            return { nombre, items };
+
+            // Cargar historial
+            const histSnap = await get(child(dbRef, 'historial_ventas'));
+            let historialItems = [];
+            if (histSnap.exists()) {
+                const data = histSnap.val();
+                // El historial tiene una estructura: { key: { ventas: [...], totalVentas, totalDinero, ... } }
+                Object.entries(data).forEach(([key, registro]) => {
+                    if (registro.ventas && Array.isArray(registro.ventas)) {
+                        registro.ventas.forEach(venta => {
+                            historialItems.push({
+                                ...venta,
+                                firebaseKey: key,
+                                fuente: 'historial',
+                                fechaEliminacion: registro.fechaEliminacion || venta.fecha,
+                                // Preservar información del registro
+                                _registroTotal: registro.totalDinero || 0,
+                                _registroVentas: registro.totalVentas || 0
+                            });
+                        });
+                    }
+                });
+            }
+
+            return { 
+                nombre, 
+                carrito: carritoItems, 
+                historial: historialItems 
+            };
         } catch (error) {
             console.error(`Error cargando ${nombre}:`, error);
-            return { nombre, items: [], error: error.message };
+            return { nombre, carrito: [], historial: [], error: error.message };
         }
     }
 
@@ -387,20 +435,52 @@
         const promesas = sucursalesConfig.map(s => cargarDatosDeSucursal(s.nombre, s.config));
         const resultados = await Promise.all(promesas);
         
+        // Guardar datos por separado
         resultados.forEach(r => {
-            estado.carritos[r.nombre] = r.items || [];
+            estado.carritos[r.nombre] = r.carrito || [];
+            estado.historial[r.nombre] = r.historial || [];
         });
-        
+
+        // Construir lista unificada de todos los items
+        estado.todosItems = [];
+        for (let sucursal of Object.keys(estado.carritos)) {
+            // Items del carrito
+            estado.carritos[sucursal].forEach(item => {
+                estado.todosItems.push({ ...item, sucursal, fuente: 'carrito' });
+            });
+            // Items del historial
+            estado.historial[sucursal].forEach(item => {
+                estado.todosItems.push({ ...item, sucursal, fuente: 'historial' });
+            });
+        }
+
         estado.ultimaActualizacion = new Date();
         document.getElementById('lastUpdate').textContent = `✅ Actualizado: ${estado.ultimaActualizacion.toLocaleString()}`;
         
+        // Renderizar
         renderCarritos();
         actualizarPreviewPDF();
         aplicarFiltros();
+        actualizarEstadisticasRapidas(estado.todosItems);
     }
 
     // ============================================================
-    // 4. RENDERIZADO DE CARRITOS ACTUALES
+    // 4. ESTADÍSTICAS RÁPIDAS
+    // ============================================================
+    function actualizarEstadisticasRapidas(items) {
+        const totalItems = items.length;
+        const totalMoney = items.reduce((sum, i) => sum + (i.money || 0), 0);
+        const totalPoints = items.reduce((sum, i) => sum + (i.points || 0), 0);
+        const totalFichas = items.reduce((sum, i) => sum + (Math.abs(i.fichaConsumption || 0)), 0);
+
+        document.getElementById('statTotalItems').textContent = totalItems.toLocaleString();
+        document.getElementById('statTotalMoney').textContent = `Gs. ${totalMoney.toLocaleString()}`;
+        document.getElementById('statTotalPoints').textContent = totalPoints.toLocaleString();
+        document.getElementById('statTotalFichas').textContent = totalFichas.toLocaleString();
+    }
+
+    // ============================================================
+    // 5. RENDERIZADO DE CARRITOS ACTUALES
     // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
@@ -431,7 +511,7 @@
             </tr>`;
         });
 
-        const totalStats = calcularEstadisticasTotales(ordenSucursales);
+        const totalStats = calcularEstadisticasTotales(ordenSucursales, 'carrito');
         html += `<tr class="total-row">
             <td><strong>TOTAL GENERAL</strong></td>
             <td>${totalStats.totalMonto.toLocaleString()}</td>
@@ -452,7 +532,7 @@
     }
 
     // ============================================================
-    // 5. FUNCIONES DE CÁLCULO ESTADÍSTICO
+    // 6. FUNCIONES DE CÁLCULO ESTADÍSTICO
     // ============================================================
     function calcularEstadisticas(items) {
         let totalMonto = 0;
@@ -509,7 +589,7 @@
         };
     }
 
-    function calcularEstadisticasTotales(sucursales) {
+    function calcularEstadisticasTotales(sucursales, fuente = null) {
         const total = {
             totalMonto: 0,
             cierreEfectivo: 0,
@@ -523,7 +603,15 @@
         };
 
         sucursales.forEach(nombre => {
-            const items = estado.carritos[nombre] || [];
+            let items = [];
+            if (fuente === 'carrito') {
+                items = estado.carritos[nombre] || [];
+            } else if (fuente === 'historial') {
+                items = estado.historial[nombre] || [];
+            } else {
+                items = [...(estado.carritos[nombre] || []), ...(estado.historial[nombre] || [])];
+            }
+            
             const stats = calcularEstadisticas(items);
             total.totalMonto += stats.totalMonto;
             total.cierreEfectivo += stats.cierreEfectivo;
@@ -557,22 +645,14 @@
     }
 
     // ============================================================
-    // 6. FILTROS AVANZADOS (CORREGIDO)
+    // 7. FILTROS AVANZADOS (CON HISTORIAL)
     // ============================================================
     function parseFecha(fechaStr) {
         if (!fechaStr) return null;
-        
-        // Si es string vacío o solo espacios
-        if (typeof fechaStr === 'string' && fechaStr.trim() === '') return null;
+        if (typeof fechaStr === 'number') return new Date(fechaStr);
         
         try {
-            // Limpiar el string
             let limpio = fechaStr.trim();
-            
-            // Si ya es un timestamp (número), convertirlo
-            if (typeof fechaStr === 'number') {
-                return new Date(fechaStr);
-            }
             
             // Si tiene formato "dd/mm/yyyy" o "dd/mm/yyyy hh:mm:ss"
             const partes = limpio.split(' ');
@@ -581,19 +661,17 @@
             
             if (partesFecha.length === 3) {
                 const dia = parseInt(partesFecha[0]);
-                const mes = parseInt(partesFecha[1]) - 1; // Meses en JS son 0-indexados
+                const mes = parseInt(partesFecha[1]) - 1;
                 const anio = parseInt(partesFecha[2]);
                 return new Date(anio, mes, dia);
             }
             
-            // Si tiene formato ISO "yyyy-mm-dd"
             if (limpio.includes('-')) {
                 return new Date(limpio);
             }
             
             return null;
         } catch (error) {
-            console.warn('Error parseando fecha:', fechaStr, error);
             return null;
         }
     }
@@ -603,25 +681,34 @@
         const fechaHasta = document.getElementById('filtroFechaHasta').value;
         const codigoFiltro = document.getElementById('filtroCodigo').value.trim();
         const tipoOperacion = document.getElementById('filtroTipoOperacion').value;
+        const fuenteFiltro = document.getElementById('filtroFuente').value;
 
-        // Recolectar todos los items de todas las sucursales
-        let todosItems = [];
-        for (let [sucursal, items] of Object.entries(estado.carritos)) {
-            items.forEach(item => {
-                todosItems.push({ ...item, sucursal });
-            });
+        // Seleccionar items según la fuente
+        let itemsBase = [];
+        if (fuenteFiltro === 'carrito') {
+            // Solo carrito
+            for (let [sucursal, items] of Object.entries(estado.carritos)) {
+                items.forEach(item => itemsBase.push({ ...item, sucursal, fuente: 'carrito' }));
+            }
+        } else if (fuenteFiltro === 'historial') {
+            // Solo historial
+            for (let [sucursal, items] of Object.entries(estado.historial)) {
+                items.forEach(item => itemsBase.push({ ...item, sucursal, fuente: 'historial' }));
+            }
+        } else {
+            // Todos (carrito + historial)
+            itemsBase = [...estado.todosItems];
         }
 
-        // Aplicar filtros
-        let filtrados = todosItems;
+        let filtrados = itemsBase;
 
-        // Filtro de fecha - CORREGIDO
+        // Filtro de fecha
         if (fechaDesde) {
             const desde = new Date(fechaDesde);
             desde.setHours(0, 0, 0, 0);
             filtrados = filtrados.filter(item => {
-                const fechaItem = parseFecha(item.fecha);
-                if (!fechaItem) return true; // Si no tiene fecha, lo dejamos pasar
+                const fechaItem = parseFecha(item.fecha || item.fechaEliminacion);
+                if (!fechaItem) return true;
                 return fechaItem >= desde;
             });
         }
@@ -630,13 +717,13 @@
             const hasta = new Date(fechaHasta);
             hasta.setHours(23, 59, 59, 999);
             filtrados = filtrados.filter(item => {
-                const fechaItem = parseFecha(item.fecha);
+                const fechaItem = parseFecha(item.fecha || item.fechaEliminacion);
                 if (!fechaItem) return true;
                 return fechaItem <= hasta;
             });
         }
 
-        // Filtro de código - CORREGIDO
+        // Filtro de código
         if (codigoFiltro) {
             const codigoLower = codigoFiltro.toLowerCase();
             const esPrefijo = codigoLower.endsWith('-');
@@ -651,7 +738,7 @@
             });
         }
 
-        // Filtro de tipo de operación - CORREGIDO Y MEJORADO
+        // Filtro de tipo de operación
         if (tipoOperacion !== 'todos') {
             filtrados = filtrados.filter(item => {
                 switch(tipoOperacion) {
@@ -677,6 +764,7 @@
 
         estado.datosFiltrados = filtrados;
         renderResultadosFiltrados(filtrados);
+        actualizarEstadisticasRapidas(filtrados);
     };
 
     function renderResultadosFiltrados(items) {
@@ -692,38 +780,48 @@
             return;
         }
 
-        // Calcular estadísticas de los filtrados
+        // Calcular estadísticas
         const totalMoney = items.reduce((sum, i) => sum + (i.money || 0), 0);
         const totalPoints = items.reduce((sum, i) => sum + (i.points || 0), 0);
+        const totalFichas = items.reduce((sum, i) => sum + (Math.abs(i.fichaConsumption || 0)), 0);
+        
         const tipos = {};
+        const fuentes = {};
         items.forEach(i => {
             let tipo = 'Venta';
             if (i.esMovimiento) tipo = 'Movimiento';
             else if (i.esFichaGratis) tipo = 'Ficha Gratis';
             else if (i.esCierre) tipo = 'Cierre';
             tipos[tipo] = (tipos[tipo] || 0) + 1;
+            
+            const fuente = i.fuente || 'desconocido';
+            fuentes[fuente] = (fuentes[fuente] || 0) + 1;
         });
 
-        // Mostrar resumen
         let html = `<div class="filter-summary">
             <span><strong>🔍 ${items.length}</strong> items encontrados</span>
             <span class="filter-tag">💰 Total: Gs. ${totalMoney.toLocaleString()}</span>
             <span class="filter-tag">🎯 Puntos: ${totalPoints.toLocaleString()}</span>
+            <span class="filter-tag">🎴 Fichas: ${totalFichas.toLocaleString()}</span>
             ${Object.entries(tipos).map(([tipo, count]) => 
                 `<span class="filter-tag">${tipo}: ${count}</span>`
             ).join('')}
+            ${Object.entries(fuentes).map(([fuente, count]) => 
+                `<span class="filter-tag">📂 ${fuente}: ${count}</span>`
+            ).join('')}
         </div>`;
 
-        // Tabla de resultados
         html += `<div class="table-responsive">
             <table>
                 <thead>
                     <tr>
                         <th>Sucursal</th>
+                        <th>Fuente</th>
                         <th>Código</th>
                         <th>Producto</th>
                         <th>Puntos</th>
                         <th>Dinero (Gs.)</th>
+                        <th>Fichas</th>
                         <th>Fecha</th>
                         <th>Hora</th>
                         <th>Tipo</th>
@@ -731,7 +829,6 @@
                 </thead>
                 <tbody>`;
 
-        // Limitar a 100 items para no sobrecargar
         const mostrar = items.slice(0, 100);
         mostrar.forEach(item => {
             let tipo = '🛒 Venta';
@@ -739,20 +836,24 @@
             else if (item.esFichaGratis) tipo = '🎁 Gratis';
             else if (item.esCierre) tipo = '💰 Cierre';
             
+            const fuente = item.fuente === 'historial' ? '📜 Historial' : '🛒 Carrito';
+            
             html += `<tr>
                 <td><strong>${item.sucursal || '-'}</strong></td>
+                <td>${fuente}</td>
                 <td>${item.code || '-'}</td>
                 <td>${item.name || '-'}</td>
                 <td>${(item.points || 0).toLocaleString()}</td>
                 <td>${(item.money || 0).toLocaleString()}</td>
-                <td>${item.fecha || '-'}</td>
+                <td>${Math.abs(item.fichaConsumption || 0)}</td>
+                <td>${item.fecha || item.fechaEliminacion || '-'}</td>
                 <td>${item.hora || '-'}</td>
                 <td>${tipo}</td>
             </tr>`;
         });
 
         if (items.length > 100) {
-            html += `<tr><td colspan="8" class="text-center" style="color:#888; padding:15px;">
+            html += `<tr><td colspan="10" class="text-center" style="color:#888; padding:15px;">
                 ... y ${items.length - 100} items más
             </td></tr>`;
         }
@@ -766,11 +867,12 @@
         document.getElementById('filtroFechaHasta').value = '';
         document.getElementById('filtroCodigo').value = '';
         document.getElementById('filtroTipoOperacion').value = 'todos';
+        document.getElementById('filtroFuente').value = 'todos';
         aplicarFiltros();
     };
 
     // ============================================================
-    // 7. GENERAR REPORTE PDF
+    // 8. GENERAR REPORTE PDF (con historial)
     // ============================================================
     function obtenerDatosParaPDF() {
         const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
@@ -780,6 +882,7 @@
         let totalGeneral = 0;
 
         orden.forEach(nombre => {
+            // Para el PDF, usamos SOLO el carrito actual (como en el requerimiento original)
             const items = estado.carritos[nombre] || [];
             const stats = calcularEstadisticas(items);
             filas.push({
@@ -803,7 +906,6 @@
 
         doc.setFont("Times", "Roman");
 
-        // Encabezado
         doc.setFontSize(22);
         doc.setTextColor(0, 0, 139);
         doc.setFont("Times", "bold");
@@ -877,7 +979,7 @@
     };
 
     // ============================================================
-    // 8. VISTA PREVIA DEL PDF
+    // 9. VISTA PREVIA DEL PDF
     // ============================================================
     function actualizarPreviewPDF() {
         const { filas, totalEfectivo, totalBancard, totalGeneral } = obtenerDatosParaPDF();
@@ -900,19 +1002,20 @@
     }
 
     // ============================================================
-    // 9. INICIALIZACIÓN
+    // 10. INICIALIZACIÓN
     // ============================================================
     cargarTodosLosDatos();
-    setInterval(cargarTodosLosDatos, 30000);
+    setInterval(cargarTodosLosDatos, 60000); // Cada 60 segundos
 
-    // Configurar fechas iniciales
+    // Configurar fechas iniciales (últimos 7 días)
     const hoy = new Date();
     const hace7Dias = new Date();
     hace7Dias.setDate(hoy.getDate() - 7);
     document.getElementById('filtroFechaDesde').value = hace7Dias.toISOString().split('T')[0];
     document.getElementById('filtroFechaHasta').value = hoy.toISOString().split('T')[0];
 
-    console.log('✅ Panel de Control ASTROLAND cargado correctamente.');
+    console.log('✅ Panel de Control ASTROLAND con Historial cargado correctamente.');
+    console.log(`📊 Items cargados: ${estado.todosItems.length} (Carrito + Historial)`);
 </script>
 
 </body>
