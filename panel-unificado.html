@@ -185,6 +185,28 @@
             .filter-grid { flex-direction: column; }
             .filter-group input, .filter-group select { min-width: 100%; }
         }
+
+        /* Estilo para el resumen de filtros */
+        .filter-summary {
+            background: #e8eaf6;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .filter-summary strong {
+            color: #1a237e;
+        }
+        .filter-tag {
+            background: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
@@ -245,12 +267,14 @@
             <div class="filter-group">
                 <label>📋 Tipo de Operación</label>
                 <select id="filtroTipoOperacion">
-                    <option value="todos">Todos</option>
-                    <option value="venta">Venta</option>
-                    <option value="puntos">Puntos</option>
-                    <option value="movimiento">Movimiento</option>
-                    <option value="stock">Stock</option>
-                    <option value="maquina">Máquina</option>
+                    <option value="todos">📊 Todos</option>
+                    <option value="venta">🛒 Venta</option>
+                    <option value="puntos">🎯 Puntos</option>
+                    <option value="movimiento">🔄 Movimiento</option>
+                    <option value="stock">📦 Stock</option>
+                    <option value="maquina">🖥️ Máquina</option>
+                    <option value="fichas_gratis">🎁 Fichas Gratis</option>
+                    <option value="cierres">💰 Cierres</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -259,7 +283,7 @@
                 <button class="btn btn-outline" onclick="limpiarFiltros()">🗑️ Limpiar</button>
             </div>
         </div>
-        <div id="resultadosFiltrados" class="mt-20 table-responsive">
+        <div id="resultadosFiltrados" class="mt-20">
             <p class="text-center" style="color:#888;">Aplica filtros para ver los resultados detallados.</p>
         </div>
     </div>
@@ -344,7 +368,6 @@
             const db = getDatabase(app);
             const dbRef = ref(db);
             
-            // Obtener carrito
             const cartSnap = await get(child(dbRef, 'carrito'));
             let items = [];
             if (cartSnap.exists()) {
@@ -371,31 +394,26 @@
         estado.ultimaActualizacion = new Date();
         document.getElementById('lastUpdate').textContent = `✅ Actualizado: ${estado.ultimaActualizacion.toLocaleString()}`;
         
-        // Renderizar todo
         renderCarritos();
         actualizarPreviewPDF();
-        aplicarFiltros(); // Aplica filtros por defecto (todos)
+        aplicarFiltros();
     }
 
     // ============================================================
-    // 4. RENDERIZADO DE CARRITOS ACTUALES (PUNTO 1)
+    // 4. RENDERIZADO DE CARRITOS ACTUALES
     // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
         let html = '';
-        let totalGeneral = 0;
         let totalItems = 0;
 
-        // Orden fijo de sucursales
         const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
 
         ordenSucursales.forEach(sucursal => {
             const items = estado.carritos[sucursal] || [];
             totalItems += items.length;
             
-            // Calcular métricas
             const stats = calcularEstadisticas(items);
-            totalGeneral += stats.totalMonto;
 
             html += `<tr>
                 <td><strong>${sucursal}</strong></td>
@@ -413,7 +431,6 @@
             </tr>`;
         });
 
-        // Fila de totales
         const totalStats = calcularEstadisticasTotales(ordenSucursales);
         html += `<tr class="total-row">
             <td><strong>TOTAL GENERAL</strong></td>
@@ -446,13 +463,13 @@
         let pulserasMonto = 0;
         let billarMonto = 0;
         let detalleFichas = {
-            '000-00': 0, // unitarias
-            '000-01': 0, // combo 30k
-            '000-02': 0, // combo 60k
-            '000-03': 0, // combo 120k
-            '000-04': 0, // combo 180k
-            '000-05': 0, // error
-            '000-06': 0  // cápsulas
+            '000-00': 0,
+            '000-01': 0,
+            '000-02': 0,
+            '000-03': 0,
+            '000-04': 0,
+            '000-05': 0,
+            '000-06': 0
         };
 
         items.forEach(item => {
@@ -460,29 +477,21 @@
             const code = item.code || '';
             const unidades = item.unidades || 1;
             
-            // Monto total
             totalMonto += money;
 
-            // Cierres
             if (code === '000-09') cierreEfectivo += money;
             if (code === '000-10') cierreBancard += money;
 
-            // Clasificación por código
             if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
-                // Fichas: 000-00 a 000-04
                 if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) {
                     fichasMonto += money;
                 }
-                // Pulseras: 000-07
                 if (code === '000-07') pulserasMonto += money;
-                // Billar: 000-08
                 if (code === '000-08') billarMonto += money;
-                // Detalle de fichas
                 if (detalleFichas.hasOwnProperty(code)) {
                     detalleFichas[code] += unidades;
                 }
-            } else if (parseInt(code.substring(0,3)) >= 5) {
-                // Juguetes: cualquier código >= 005-00
+            } else if (code && parseInt(code.substring(0,3)) >= 5) {
                 juguetesMonto += money;
             }
         });
@@ -548,8 +557,47 @@
     }
 
     // ============================================================
-    // 6. FILTROS AVANZADOS (PUNTO 2)
+    // 6. FILTROS AVANZADOS (CORREGIDO)
     // ============================================================
+    function parseFecha(fechaStr) {
+        if (!fechaStr) return null;
+        
+        // Si es string vacío o solo espacios
+        if (typeof fechaStr === 'string' && fechaStr.trim() === '') return null;
+        
+        try {
+            // Limpiar el string
+            let limpio = fechaStr.trim();
+            
+            // Si ya es un timestamp (número), convertirlo
+            if (typeof fechaStr === 'number') {
+                return new Date(fechaStr);
+            }
+            
+            // Si tiene formato "dd/mm/yyyy" o "dd/mm/yyyy hh:mm:ss"
+            const partes = limpio.split(' ');
+            const fechaPart = partes[0];
+            const partesFecha = fechaPart.split('/');
+            
+            if (partesFecha.length === 3) {
+                const dia = parseInt(partesFecha[0]);
+                const mes = parseInt(partesFecha[1]) - 1; // Meses en JS son 0-indexados
+                const anio = parseInt(partesFecha[2]);
+                return new Date(anio, mes, dia);
+            }
+            
+            // Si tiene formato ISO "yyyy-mm-dd"
+            if (limpio.includes('-')) {
+                return new Date(limpio);
+            }
+            
+            return null;
+        } catch (error) {
+            console.warn('Error parseando fecha:', fechaStr, error);
+            return null;
+        }
+    }
+
     window.aplicarFiltros = function() {
         const fechaDesde = document.getElementById('filtroFechaDesde').value;
         const fechaHasta = document.getElementById('filtroFechaHasta').value;
@@ -567,46 +615,62 @@
         // Aplicar filtros
         let filtrados = todosItems;
 
-        // Filtro de fecha
+        // Filtro de fecha - CORREGIDO
         if (fechaDesde) {
             const desde = new Date(fechaDesde);
-            desde.setHours(0,0,0,0);
+            desde.setHours(0, 0, 0, 0);
             filtrados = filtrados.filter(item => {
-                const fechaItem = item.fecha ? parseFecha(item.fecha) : null;
-                return fechaItem && fechaItem >= desde;
+                const fechaItem = parseFecha(item.fecha);
+                if (!fechaItem) return true; // Si no tiene fecha, lo dejamos pasar
+                return fechaItem >= desde;
             });
         }
+        
         if (fechaHasta) {
             const hasta = new Date(fechaHasta);
-            hasta.setHours(23,59,59,999);
+            hasta.setHours(23, 59, 59, 999);
             filtrados = filtrados.filter(item => {
-                const fechaItem = item.fecha ? parseFecha(item.fecha) : null;
-                return fechaItem && fechaItem <= hasta;
+                const fechaItem = parseFecha(item.fecha);
+                if (!fechaItem) return true;
+                return fechaItem <= hasta;
             });
         }
 
-        // Filtro de código
+        // Filtro de código - CORREGIDO
         if (codigoFiltro) {
+            const codigoLower = codigoFiltro.toLowerCase();
+            const esPrefijo = codigoLower.endsWith('-');
+            const prefijoLimpio = esPrefijo ? codigoLower.slice(0, -1) : codigoLower;
+
             filtrados = filtrados.filter(item => {
-                const code = item.code || '';
-                // Si termina en guión (ej: "005-"), busca por prefijo
-                if (codigoFiltro.endsWith('-')) {
-                    return code.startsWith(codigoFiltro);
+                const code = (item.code || '').toLowerCase();
+                if (esPrefijo) {
+                    return code.startsWith(prefijoLimpio);
                 }
-                return code === codigoFiltro;
+                return code === codigoLower;
             });
         }
 
-        // Filtro de tipo de operación
+        // Filtro de tipo de operación - CORREGIDO Y MEJORADO
         if (tipoOperacion !== 'todos') {
             filtrados = filtrados.filter(item => {
                 switch(tipoOperacion) {
-                    case 'venta': return !item.esMovimiento && !item.esFichaGratis && !item.esCierre;
-                    case 'puntos': return (item.points || 0) > 0;
-                    case 'movimiento': return item.esMovimiento === true;
-                    case 'stock': return item.esMovimiento && item.destinoMovimiento === 'stock';
-                    case 'maquina': return item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento.startsWith('maq');
-                    default: return true;
+                    case 'venta': 
+                        return !item.esMovimiento && !item.esFichaGratis && !item.esCierre && (item.money || 0) > 0;
+                    case 'puntos': 
+                        return (item.points || 0) > 0;
+                    case 'movimiento': 
+                        return item.esMovimiento === true;
+                    case 'stock': 
+                        return item.esMovimiento && item.destinoMovimiento === 'stock';
+                    case 'maquina': 
+                        return item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento.startsWith('maq');
+                    case 'fichas_gratis':
+                        return item.esFichaGratis === true;
+                    case 'cierres':
+                        return item.esCierre === true || item.code === '000-09' || item.code === '000-10';
+                    default: 
+                        return true;
                 }
             });
         }
@@ -615,57 +679,68 @@
         renderResultadosFiltrados(filtrados);
     };
 
-    function parseFecha(fechaStr) {
-        // Formato esperado: "dd/mm/yyyy" o "dd/mm/yyyy hh:mm:ss"
-        if (!fechaStr) return null;
-        const partes = fechaStr.split(' ');
-        const fechaPart = partes[0];
-        const partesFecha = fechaPart.split('/');
-        if (partesFecha.length !== 3) return null;
-        // Meses en JS son 0-indexados
-        return new Date(parseInt(partesFecha[2]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[0]));
-    }
-
     function renderResultadosFiltrados(items) {
         const container = document.getElementById('resultadosFiltrados');
+        
         if (items.length === 0) {
-            container.innerHTML = '<p class="text-center" style="color:#888;">No se encontraron resultados con los filtros aplicados.</p>';
+            container.innerHTML = `
+                <div class="filter-summary">
+                    <span>🔍 <strong>0</strong> resultados encontrados</span>
+                </div>
+                <p class="text-center" style="color:#888; padding:20px;">No se encontraron resultados con los filtros aplicados.</p>
+            `;
             return;
         }
 
-        // Mostrar resumen de filtros
-        let html = `<div style="background:#e8eaf6; padding:10px; border-radius:8px; margin-bottom:15px;">
-            <strong>🔍 Resultados:</strong> ${items.length} items encontrados.
-            ${document.getElementById('filtroCodigo').value ? ` | Código: ${document.getElementById('filtroCodigo').value}` : ''}
-            ${document.getElementById('filtroFechaDesde').value ? ` | Desde: ${document.getElementById('filtroFechaDesde').value}` : ''}
-            ${document.getElementById('filtroFechaHasta').value ? ` | Hasta: ${document.getElementById('filtroFechaHasta').value}` : ''}
-            ${document.getElementById('filtroTipoOperacion').value !== 'todos' ? ` | Tipo: ${document.getElementById('filtroTipoOperacion').value}` : ''}
+        // Calcular estadísticas de los filtrados
+        const totalMoney = items.reduce((sum, i) => sum + (i.money || 0), 0);
+        const totalPoints = items.reduce((sum, i) => sum + (i.points || 0), 0);
+        const tipos = {};
+        items.forEach(i => {
+            let tipo = 'Venta';
+            if (i.esMovimiento) tipo = 'Movimiento';
+            else if (i.esFichaGratis) tipo = 'Ficha Gratis';
+            else if (i.esCierre) tipo = 'Cierre';
+            tipos[tipo] = (tipos[tipo] || 0) + 1;
+        });
+
+        // Mostrar resumen
+        let html = `<div class="filter-summary">
+            <span><strong>🔍 ${items.length}</strong> items encontrados</span>
+            <span class="filter-tag">💰 Total: Gs. ${totalMoney.toLocaleString()}</span>
+            <span class="filter-tag">🎯 Puntos: ${totalPoints.toLocaleString()}</span>
+            ${Object.entries(tipos).map(([tipo, count]) => 
+                `<span class="filter-tag">${tipo}: ${count}</span>`
+            ).join('')}
         </div>`;
 
         // Tabla de resultados
-        html += `<table>
-            <thead>
-                <tr>
-                    <th>Sucursal</th>
-                    <th>Código</th>
-                    <th>Producto</th>
-                    <th>Puntos</th>
-                    <th>Dinero (Gs.)</th>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Tipo</th>
-                </tr>
-            </thead>
-            <tbody>`;
+        html += `<div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sucursal</th>
+                        <th>Código</th>
+                        <th>Producto</th>
+                        <th>Puntos</th>
+                        <th>Dinero (Gs.)</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>`;
 
         // Limitar a 100 items para no sobrecargar
         const mostrar = items.slice(0, 100);
         mostrar.forEach(item => {
-            const tipo = item.esMovimiento ? '🔄 Movimiento' :
-                        item.esFichaGratis ? '🎁 Gratis' :
-                        item.esCierre ? '💰 Cierre' : '🛒 Venta';
+            let tipo = '🛒 Venta';
+            if (item.esMovimiento) tipo = '🔄 Movimiento';
+            else if (item.esFichaGratis) tipo = '🎁 Gratis';
+            else if (item.esCierre) tipo = '💰 Cierre';
+            
             html += `<tr>
-                <td>${item.sucursal || '-'}</td>
+                <td><strong>${item.sucursal || '-'}</strong></td>
                 <td>${item.code || '-'}</td>
                 <td>${item.name || '-'}</td>
                 <td>${(item.points || 0).toLocaleString()}</td>
@@ -677,10 +752,12 @@
         });
 
         if (items.length > 100) {
-            html += `<tr><td colspan="8" class="text-center" style="color:#888;">... y ${items.length - 100} items más</td></tr>`;
+            html += `<tr><td colspan="8" class="text-center" style="color:#888; padding:15px;">
+                ... y ${items.length - 100} items más
+            </td></tr>`;
         }
 
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
         container.innerHTML = html;
     }
 
@@ -693,10 +770,9 @@
     };
 
     // ============================================================
-    // 7. GENERAR REPORTE PDF (PUNTO 3)
+    // 7. GENERAR REPORTE PDF
     // ============================================================
     function obtenerDatosParaPDF() {
-        // Usar los datos de los carritos actuales
         const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
         const filas = [];
         let totalEfectivo = 0;
@@ -725,28 +801,24 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
 
-        // Fuente Times New Roman
         doc.setFont("Times", "Roman");
 
         // Encabezado
         doc.setFontSize(22);
-        doc.setTextColor(0, 0, 139); // Azul Francia
+        doc.setTextColor(0, 0, 139);
         doc.setFont("Times", "bold");
         doc.text("ASTROLAND", 105, 25, { align: 'center' });
         doc.setFontSize(14);
         doc.text("IN GOD WE TRUST", 105, 35, { align: 'center' });
 
-        // Línea separadora
         doc.setDrawColor(0);
         doc.line(20, 40, 190, 40);
 
-        // Fecha del reporte
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.setFont("Times", "normal");
         doc.text(`Reporte generado: ${new Date().toLocaleString()}`, 20, 50);
 
-        // Datos de la tabla
         const tableHeaders = [["Sucursal", "Efectivo", "Bancard", "Total"]];
         const tableRows = filas.map(f => [
             f.sucursal,
@@ -755,10 +827,8 @@
             f.total.toLocaleString()
         ]);
 
-        // Agregar fila de total
         tableRows.push(["Total", totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), totalGeneral.toLocaleString()]);
 
-        // Generar tabla con autoTable
         doc.autoTable({
             head: tableHeaders,
             body: tableRows,
@@ -767,12 +837,12 @@
             styles: {
                 font: 'Times',
                 fontSize: 14,
-                textColor: [0, 0, 139], // Azul Francia
+                textColor: [0, 0, 139],
                 lineColor: [0, 0, 0],
                 lineWidth: 0.5,
             },
             headStyles: {
-                fillColor: [255, 215, 0], // Amarillo rutilante
+                fillColor: [255, 215, 0],
                 textColor: [0, 0, 0],
                 fontSize: 14,
                 fontStyle: 'bold',
@@ -789,12 +859,11 @@
                 fontStyle: 'bold',
                 halign: 'center'
             },
-            foot: tableRows.slice(-1).map(row => row), // Última fila como pie
+            foot: tableRows.slice(-1).map(row => row),
             margin: { left: 20, right: 20 },
             tableWidth: 'auto'
         });
 
-        // Pie de página
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -804,12 +873,11 @@
             doc.text(`Hoja ${i} / ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 15);
         }
 
-        // Guardar PDF
         doc.save('ASTROLAND_Reporte_Diario.pdf');
     };
 
     // ============================================================
-    // 8. VISTA PREVIA DEL PDF (PUNTO 3)
+    // 8. VISTA PREVIA DEL PDF
     // ============================================================
     function actualizarPreviewPDF() {
         const { filas, totalEfectivo, totalBancard, totalGeneral } = obtenerDatosParaPDF();
@@ -826,7 +894,7 @@
         html += `
             <tr class="total-row"><td><strong>Total</strong></td><td><strong>Gs. ${totalEfectivo.toLocaleString()}</strong></td><td><strong>Gs. ${totalBancard.toLocaleString()}</strong></td><td><strong>Gs. ${totalGeneral.toLocaleString()}</strong></td></tr>
         </tbody></table>
-        <p style="margin-top:10px; font-size:0.85rem; color:#666;">📄 Este es el contenido que se incluirá en el PDF. Fuente: Times New Roman, Azul Francia.</p>
+        <p style="margin-top:10px; font-size:0.85rem; color:#666;">📄 Este es el contenido que se incluirá en el PDF.</p>
         `;
         container.innerHTML = html;
     }
@@ -834,13 +902,10 @@
     // ============================================================
     // 9. INICIALIZACIÓN
     // ============================================================
-    // Cargar datos al iniciar
     cargarTodosLosDatos();
-
-    // Actualizar cada 30 segundos
     setInterval(cargarTodosLosDatos, 30000);
 
-    // Configurar fechas iniciales (últimos 7 días)
+    // Configurar fechas iniciales
     const hoy = new Date();
     const hace7Dias = new Date();
     hace7Dias.setDate(hoy.getDate() - 7);
