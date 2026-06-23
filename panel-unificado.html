@@ -2,1005 +2,852 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Sucursales - Firebase Completo</title>
-    
-    <!-- ========================================== -->
-    <!-- CONFIGURACIÓN 1: FIREBASE SDKs            -->
-    <!-- ========================================== -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel de Control ASTROLAND</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
-        /* ========================================== */
-        /* CONFIGURACIÓN 2: ESTILOS COMPLETOS        */
-        /* ========================================== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
+        /* Estilos Generales y Reset */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background: #f0f2f5;
+            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #f4f7fc;
+            color: #333;
             padding: 20px;
         }
-
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        /* HEADER */
+        /* Encabezado */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             margin-bottom: 25px;
             flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        h1 {
-            color: #1a237e;
-            display: flex;
-            align-items: center;
             gap: 10px;
-            font-size: 28px;
         }
-
-        .subtitle {
-            color: #666;
-            font-size: 14px;
+        .header h1 {
+            color: #1a237e;
+            font-size: 1.8rem;
+        }
+        .header h1 small {
+            font-size: 0.8rem;
             font-weight: normal;
-            margin-left: 10px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        /* ========================================== */
-        /* CONFIGURACIÓN 3: PANEL DE FILTROS        */
-        /* ========================================== */
-        .filters-panel {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .filter-group label {
-            font-weight: 600;
-            font-size: 13px;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .filter-group label i {
-            color: #1a237e;
-            width: 16px;
-        }
-
-        .filter-group input,
-        .filter-group select {
-            padding: 10px 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.3s;
-            background: white;
-        }
-
-        .filter-group input:focus,
-        .filter-group select:focus {
-            border-color: #1a237e;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
-        }
-
-        .filter-group input[type="date"] {
-            cursor: pointer;
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-top: 10px;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        /* ========================================== */
-        /* CONFIGURACIÓN 4: BOTONES                 */
-        /* ========================================== */
-        .btn {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: #1a237e;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #0d1452;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(26, 35, 126, 0.3);
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #333;
-        }
-
-        .btn-warning:hover {
-            background: #e0a800;
-        }
-
-        /* ========================================== */
-        /* CONFIGURACIÓN 5: ESTADÍSTICAS            */
-        /* ========================================== */
-        .stats {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .stat-card {
-            background: #f8f9fa;
-            padding: 12px 20px;
-            border-radius: 8px;
-            border-left: 4px solid #1a237e;
-            flex: 1;
-            min-width: 120px;
-        }
-
-        .stat-card .stat-label {
-            font-size: 12px;
             color: #666;
-            text-transform: uppercase;
         }
-
-        .stat-card .stat-value {
-            font-weight: bold;
-            color: #1a237e;
-            font-size: 22px;
-            margin-top: 4px;
-        }
-
-        /* ========================================== */
-        /* CONFIGURACIÓN 6: FILTROS ACTIVOS         */
-        /* ========================================== */
-        .active-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
-            padding: 10px;
+        .last-update {
+            font-size: 0.85rem;
+            color: #666;
             background: #e8eaf6;
-            border-radius: 6px;
-            min-height: 40px;
-            align-items: center;
+            padding: 8px 15px;
+            border-radius: 30px;
         }
 
-        .filter-tag {
-            background: #1a237e;
-            color: white;
-            padding: 4px 12px;
+        /* Secciones y Tarjetas */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+        .card h2 {
+            font-size: 1.4rem;
+            color: #1a237e;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e8eaf6;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 .badge {
+            font-size: 0.7rem;
+            background: #e8eaf6;
+            color: #333;
+            padding: 2px 10px;
             border-radius: 20px;
-            font-size: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
         }
 
-        .filter-tag i {
-            cursor: pointer;
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        .filter-tag i:hover {
-            opacity: 1;
-        }
-
-        /* ========================================== */
-        /* CONFIGURACIÓN 7: TABLA                   */
-        /* ========================================== */
-        .table-container {
+        /* Tablas */
+        .table-responsive {
             overflow-x: auto;
-            margin-top: 10px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            font-size: 14px;
+            font-size: 0.9rem;
         }
-
         th {
             background: #1a237e;
             color: white;
-            padding: 12px 15px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            padding: 12px 8px;
+            text-align: center;
             white-space: nowrap;
         }
-
         td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e0e0e0;
-            vertical-align: middle;
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #e8eaf6;
+        }
+        tr:hover td {
+            background: #f5f8ff;
+        }
+        .total-row td {
+            background: #fff3e0 !important;
+            font-weight: bold;
+            border-top: 2px solid #ff9800;
+        }
+        .highlight-row td {
+            background: #fff9c4 !important;
+            font-weight: bold;
         }
 
-        tr:hover {
-            background: #f8f9fa;
+        /* Filtros */
+        .filter-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px 25px;
+            align-items: flex-end;
         }
-
-        /* ========================================== */
-        /* CONFIGURACIÓN 8: BADGES                  */
-        /* ========================================== */
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .filter-group label {
+            font-size: 0.8rem;
             font-weight: 600;
-            text-transform: uppercase;
+            color: #555;
         }
-
-        .badge-venta { background: #d4edda; color: #155724; }
-        .badge-punto { background: #fff3cd; color: #856404; }
-        .badge-movimiento { background: #cce5ff; color: #004085; }
-        .badge-stock { background: #e2e3e5; color: #383d41; }
-        .badge-maquina { background: #f8d7da; color: #721c24; }
-        .badge-activo { background: #d4edda; color: #155724; }
-        .badge-inactivo { background: #f8d7da; color: #721c24; }
-
-        /* ========================================== */
-        /* CONFIGURACIÓN 9: ESTADOS                  */
-        /* ========================================== */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
+        .filter-group input, .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            min-width: 150px;
+            background: white;
         }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #1a237e;
-            font-size: 18px;
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
+        .btn-primary { background: #1a237e; color: white; }
+        .btn-primary:hover { background: #0d1445; transform: scale(1.02); }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-success:hover { background: #388E3C; }
+        .btn-warning { background: #ff9800; color: white; }
+        .btn-warning:hover { background: #e68900; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-danger:hover { background: #c62828; }
+        .btn-outline { background: transparent; color: #1a237e; border: 2px solid #1a237e; }
+        .btn-outline:hover { background: #1a237e; color: white; }
 
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
+        /* Utilidades */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .mt-20 { margin-top: 20px; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        /* Loading */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #1a237e;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
         }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        @keyframes dots {
-            0% { content: ''; }
-            25% { content: '.'; }
-            50% { content: '..'; }
-            75% { content: '...'; }
-        }
-
-        /* ========================================== */
-        /* CONFIGURACIÓN 10: RESPONSIVE             */
-        /* ========================================== */
+        /* Responsive */
         @media (max-width: 768px) {
-            .filters-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .filter-actions {
-                flex-direction: column;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .stats {
-                flex-direction: column;
-            }
-
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
+            .grid-2 { grid-template-columns: 1fr; }
+            .header { flex-direction: column; align-items: stretch; text-align: center; }
+            .filter-grid { flex-direction: column; }
+            .filter-group input, .filter-group select { min-width: 100%; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- ========================================== -->
-    <!-- HEADER                                      -->
-    <!-- ========================================== -->
+    <!-- ENCABEZADO -->
     <div class="header">
-        <h1>
-            🏢 Gestión de Sucursales
-            <span class="subtitle">Filtros avanzados con Firebase</span>
-        </h1>
-        <div class="header-actions">
-            <button class="btn btn-success" onclick="recargarDatos()">
-                <i class="fas fa-sync-alt"></i> Recargar
-            </button>
-            <button class="btn btn-warning" onclick="exportarDatos()">
-                <i class="fas fa-file-excel"></i> Exportar
-            </button>
+        <h1>🎯 ASTROLAND <small>Panel de Control Unificado</small></h1>
+        <span class="last-update" id="lastUpdate">🔄 Actualizando...</span>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SECCIÓN 1: CARRITOS ACTUALES POR SUCURSAL     -->
+    <!-- ============================================ -->
+    <div class="card">
+        <h2>🛒 Carritos Actuales <span class="badge" id="totalItemsBadge">0 items</span></h2>
+        <div class="table-responsive">
+            <table id="carritosTable">
+                <thead>
+                    <tr>
+                        <th>Sucursal</th>
+                        <th>Monto Total (Gs.)</th>
+                        <th>Cierre Efectivo (000-09)</th>
+                        <th>Cierre Bancard (000-10)</th>
+                        <th>Total Cierre</th>
+                        <th>Fichas (Gs.)</th>
+                        <th>Juguetes (Gs.)</th>
+                        <th>Pulseras (Gs.)</th>
+                        <th>Billar (Gs.)</th>
+                        <th>Detalle Fichas</th>
+                    </tr>
+                </thead>
+                <tbody id="carritosBody">
+                    <tr><td colspan="10" class="text-center"><div class="loader"></div></td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
-    
-    <!-- ========================================== -->
-    <!-- PANEL DE FILTROS                           -->
-    <!-- ========================================== -->
-    <div class="filters-panel">
-        <div class="filters-grid">
-            <!-- Filtro 1: Rango de Fechas -->
-            <div class="filter-group">
-                <label><i class="fas fa-calendar-alt"></i> Fecha Inicio</label>
-                <input type="date" id="filterFechaInicio">
-            </div>
-            
-            <div class="filter-group">
-                <label><i class="fas fa-calendar-alt"></i> Fecha Fin</label>
-                <input type="date" id="filterFechaFin">
-            </div>
 
-            <!-- Filtro 2: Código de Producto -->
+    <!-- ============================================ -->
+    <!-- SECCIÓN 2: FILTROS AVANZADOS                 -->
+    <!-- ============================================ -->
+    <div class="card">
+        <h2>🔍 Filtros Avanzados <span class="badge">Análisis de Datos</span></h2>
+        <div class="filter-grid">
             <div class="filter-group">
-                <label><i class="fas fa-barcode"></i> Código Producto</label>
-                <input type="text" id="filterCodigoProducto" placeholder="Ej: 020-00">
+                <label>📅 Desde</label>
+                <input type="date" id="filtroFechaDesde">
             </div>
-
-            <!-- Filtro 3: Tipo de Operación -->
             <div class="filter-group">
-                <label><i class="fas fa-exchange-alt"></i> Tipo Operación</label>
-                <select id="filterTipoOperacion">
-                    <option value="">Todos</option>
-                    <option value="venta">💲 Venta</option>
-                    <option value="punto">⭐ Puntos</option>
-                    <option value="movimiento">🔄 Movimiento</option>
+                <label>📅 Hasta</label>
+                <input type="date" id="filtroFechaHasta">
+            </div>
+            <div class="filter-group">
+                <label>🏷️ Código / Prefijo</label>
+                <input type="text" id="filtroCodigo" placeholder="Ej: 005-00 o 005-">
+            </div>
+            <div class="filter-group">
+                <label>📋 Tipo de Operación</label>
+                <select id="filtroTipoOperacion">
+                    <option value="todos">Todos</option>
+                    <option value="venta">Venta</option>
+                    <option value="puntos">Puntos</option>
+                    <option value="movimiento">Movimiento</option>
+                    <option value="stock">Stock</option>
+                    <option value="maquina">Máquina</option>
                 </select>
             </div>
-
-            <!-- Filtro 4: Tipo de Movimiento -->
             <div class="filter-group">
-                <label><i class="fas fa-cogs"></i> Tipo Movimiento</label>
-                <select id="filterTipoMovimiento">
-                    <option value="">Todos</option>
-                    <option value="stock">📦 Stock</option>
-                    <option value="maquina1">🖥️ Máquina 1</option>
-                    <option value="maquina2">🖥️ Máquina 2</option>
-                    <option value="maquina3">🖥️ Máquina 3</option>
-                    <option value="maquina4">🖥️ Máquina 4</option>
-                    <option value="maquina5">🖥️ Máquina 5</option>
-                </select>
-            </div>
-
-            <!-- Filtro 5: Sucursal -->
-            <div class="filter-group">
-                <label><i class="fas fa-store"></i> Sucursal</label>
-                <select id="filterSucursal">
-                    <option value="">Todas</option>
-                </select>
+                <label>&nbsp;</label>
+                <button class="btn btn-primary" onclick="aplicarFiltros()">🔍 Aplicar Filtros</button>
+                <button class="btn btn-outline" onclick="limpiarFiltros()">🗑️ Limpiar</button>
             </div>
         </div>
-
-        <!-- Botones de acción -->
-        <div class="filter-actions">
-            <button class="btn btn-primary" onclick="aplicarFiltros()">
-                <i class="fas fa-search"></i> Filtrar
-            </button>
-            <button class="btn btn-secondary" onclick="limpiarFiltros()">
-                <i class="fas fa-undo"></i> Limpiar
-            </button>
-            <button class="btn btn-danger" onclick="verConfiguracion()">
-                <i class="fas fa-cog"></i> Configuración
-            </button>
+        <div id="resultadosFiltrados" class="mt-20 table-responsive">
+            <p class="text-center" style="color:#888;">Aplica filtros para ver los resultados detallados.</p>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- FILTROS ACTIVOS                            -->
-    <!-- ========================================== -->
-    <div class="active-filters" id="activeFilters">
-        <span style="color: #666; font-size: 13px;">No hay filtros activos</span>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- ESTADÍSTICAS                               -->
-    <!-- ========================================== -->
-    <div class="stats" id="statsContainer">
-        <div class="stat-card">
-            <div class="stat-label">📊 Total Registros</div>
-            <div class="stat-value" id="totalRegistros">0</div>
+    <!-- ============================================ -->
+    <!-- SECCIÓN 3: GENERAR REPORTE PDF               -->
+    <!-- ============================================ -->
+    <div class="card">
+        <h2>📄 Generar Reporte PDF <span class="badge">Resumen Ejecutivo</span></h2>
+        <div class="flex">
+            <button class="btn btn-success" onclick="generarPDF()">📥 Descargar PDF</button>
+            <span style="font-size:0.85rem; color:#666;">Reporte con datos del día actual</span>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">💲 Ventas</div>
-            <div class="stat-value" id="totalVentas">0</div>
+        <div id="previewPDF" class="mt-20 table-responsive" style="background:#fafafa; padding:15px; border-radius:10px; border:1px dashed #ccc;">
+            <p class="text-center" style="color:#888;">Vista previa del reporte PDF</p>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">⭐ Puntos</div>
-            <div class="stat-value" id="totalPuntos">0</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">🔄 Movimientos</div>
-            <div class="stat-value" id="totalMovimientos">0</div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- TABLA DE DATOS                            -->
-    <!-- ========================================== -->
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Fecha</th>
-                    <th>Sucursal</th>
-                    <th>Código Producto</th>
-                    <th>Producto</th>
-                    <th>Operación</th>
-                    <th>Tipo Movimiento</th>
-                    <th>Cantidad</th>
-                    <th>Valor</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="datosBody">
-                <tr>
-                    <td colspan="10" class="loading">Cargando datos desde Firebase...</td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- CONFIGURACIÓN 11: JAVASCRIPT COMPLETO     -->
-<!-- ========================================== -->
-<script>
-    // ==========================================
-    // CONFIGURACIÓN 11.1: FIREBASE
-    // ==========================================
-    // 🔥 REEMPLAZA ESTOS VALORES CON LOS TUYOS 🔥
-    const firebaseConfig = {
-        apiKey: "AIzaSyDEFAULT_KEY_REEMPLAZA_AQUI",
-        authDomain: "tu-proyecto.firebaseapp.com",
-        projectId: "tu-proyecto-id",
-        storageBucket: "tu-proyecto.appspot.com",
-        messagingSenderId: "123456789012",
-        appId: "1:123456789012:web:abcdef123456"
+<script type="module">
+    // ============================================================
+    // 1. CONFIGURACIÓN DE FIREBASE PARA LAS 4 SUCURSALES
+    // ============================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+    const sucursalesConfig = [
+        { nombre: "Villa Morra", config: {
+            apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
+            authDomain: "villa-morra.firebaseapp.com",
+            databaseURL: "https://villa-morra-default-rtdb.firebaseio.com",
+            projectId: "villa-morra",
+            storageBucket: "villa-morra.firebasestorage.app",
+            messagingSenderId: "184849063287",
+            appId: "1:184849063287:web:15f360231ade1b85ab5572"
+        }},
+        { nombre: "Los Laureles", config: {
+            apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
+            authDomain: "los-laureles-49117.firebaseapp.com",
+            databaseURL: "https://los-laureles-49117-default-rtdb.firebaseio.com",
+            projectId: "los-laureles-49117",
+            storageBucket: "los-laureles-49117.firebasestorage.app",
+            messagingSenderId: "523096933391",
+            appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a"
+        }},
+        { nombre: "Lambaré", config: {
+            apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
+            authDomain: "lambare-85124.firebaseapp.com",
+            databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
+            projectId: "lambare-85124",
+            storageBucket: "lambare-85124.firebasestorage.app",
+            messagingSenderId: "683666735879",
+            appId: "1:683666735879:web:88a7f147d57165ad60bba2"
+        }},
+        { nombre: "Villa Elisa", config: {
+            apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ",
+            authDomain: "villa-elisa-3adbe.firebaseapp.com",
+            databaseURL: "https://villa-elisa-3adbe-default-rtdb.firebaseio.com",
+            projectId: "villa-elisa-3adbe",
+            storageBucket: "villa-elisa-3adbe.firebasestorage.app",
+            messagingSenderId: "147294403718",
+            appId: "1:147294403718:web:96d8289e6d3d3c7ce72507"
+        }}
+    ];
+
+    // ============================================================
+    // 2. ESTADO GLOBAL
+    // ============================================================
+    const estado = {
+        carritos: {}, // { sucursal: [items] }
+        datosFiltrados: [],
+        ultimaActualizacion: null,
+        todasLasSucursales: sucursalesConfig.map(s => s.nombre)
     };
 
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // Configuración adicional de Firestore
-    const settings = {
-        timestampsInSnapshots: true,
-        merge: true
-    };
-    db.settings(settings);
-
-    console.log('✅ Firebase inicializado correctamente');
-    console.log('📁 Proyecto:', firebaseConfig.projectId);
-
-    // ==========================================
-    // CONFIGURACIÓN 11.2: VARIABLES GLOBALES
-    // ==========================================
-    let todosLosDatos = [];
-    let datosFiltrados = [];
-    let filtrosActivos = {};
-    let coleccionActiva = 'sucursales'; // Cambiar según necesidad
-
-    // ==========================================
-    // CONFIGURACIÓN 11.3: FUNCIONES PRINCIPALES
-    // ==========================================
-
-    /**
-     * Cargar datos desde Firebase
-     * Lee la colección 'sucursales' y muestra los datos
-     */
-    async function cargarDatos() {
+    // ============================================================
+    // 3. FUNCIONES DE CARGA DE DATOS
+    // ============================================================
+    async function cargarDatosDeSucursal(nombre, config) {
         try {
-            const tbody = document.getElementById('datosBody');
-            tbody.innerHTML = `<tr><td colspan="10" class="loading">🔄 Cargando datos desde Firebase...</td></tr>`;
-
-            console.log('📡 Conectando a Firebase...');
+            const app = initializeApp(config, nombre);
+            const db = getDatabase(app);
+            const dbRef = ref(db);
             
-            // 🔥 OBTENER DATOS DE LA COLECCIÓN 'sucursales'
-            const snapshot = await db.collection('sucursales').get();
-            
-            if (snapshot.empty) {
-                console.warn('⚠️ No hay documentos en la colección');
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="10" class="empty-state">
-                            <i class="fas fa-store" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
-                            📭 No hay sucursales registradas en Firebase
-                            <br><br>
-                            <small>Agrega documentos en la colección 'sucursales'</small>
-                        </td>
-                    </tr>
-                `;
-                return;
+            // Obtener carrito
+            const cartSnap = await get(child(dbRef, 'carrito'));
+            let items = [];
+            if (cartSnap.exists()) {
+                const data = cartSnap.val();
+                items = Object.entries(data).map(([k, v]) => ({ ...v, firebaseKey: k }));
             }
-
-            console.log(`📊 Documentos encontrados: ${snapshot.size}`);
-
-            todosLosDatos = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                
-                // Mapeo flexible de campos
-                const registro = {
-                    id: doc.id,
-                    fecha: data.fecha || data.fechaRegistro || new Date().toISOString().split('T')[0],
-                    sucursal: data.nombre || data.sucursal || data.nombreSucursal || 'Sin nombre',
-                    codigoProducto: data.codigoProducto || data.codigo || data.codigoProd || '000-00',
-                    producto: data.producto || data.nombreProducto || data.descripcion || 'Sin producto',
-                    operacion: data.operacion || data.tipo || data.tipoOperacion || 'venta',
-                    tipoMovimiento: data.tipoMovimiento || data.movimiento || data.tipoMov || 'stock',
-                    cantidad: data.cantidad || data.cant || 0,
-                    valor: data.valor || data.precio || data.monto || 0,
-                    estado: data.estado || data.estatus || 'activo'
-                };
-                
-                todosLosDatos.push(registro);
-            });
-
-            console.log(`✅ Datos cargados: ${todosLosDatos.length} registros`);
-            console.log('📋 Primer registro:', todosLosDatos[0]);
-
-            // Cargar opciones de sucursales
-            cargarOpcionesSucursales();
-            
-            // Aplicar filtros iniciales (mostrar todos)
-            aplicarFiltros();
-            
+            return { nombre, items };
         } catch (error) {
-            console.error('❌ Error al cargar datos:', error);
-            console.error('Detalles:', error.message);
-            
-            document.getElementById('datosBody').innerHTML = `
-                <tr>
-                    <td colspan="10" style="color: red; text-align: center; padding: 30px;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
-                        ❌ Error al cargar los datos: ${error.message}
-                        <br><br>
-                        <small>
-                            🔧 Verifica:<br>
-                            1. Credenciales de Firebase (apiKey, projectId)<br>
-                            2. Conexión a internet<br>
-                            3. Reglas de seguridad de Firestore<br>
-                            4. Que la colección 'sucursales' exista
-                        </small>
-                    </td>
-                </tr>
-            `;
+            console.error(`Error cargando ${nombre}:`, error);
+            return { nombre, items: [], error: error.message };
         }
     }
 
-    /**
-     * Cargar opciones de sucursales desde los datos
-     */
-    function cargarOpcionesSucursales() {
-        const sucursales = [...new Set(todosLosDatos.map(d => d.sucursal))].sort();
-        const selectSucursal = document.getElementById('filterSucursal');
+    async function cargarTodosLosDatos() {
+        document.getElementById('lastUpdate').textContent = '🔄 Cargando datos...';
         
-        selectSucursal.innerHTML = '<option value="">Todas las sucursales</option>';
+        const promesas = sucursalesConfig.map(s => cargarDatosDeSucursal(s.nombre, s.config));
+        const resultados = await Promise.all(promesas);
         
-        sucursales.forEach(suc => {
-            const option = document.createElement('option');
-            option.value = suc;
-            option.textContent = suc;
-            selectSucursal.appendChild(option);
+        resultados.forEach(r => {
+            estado.carritos[r.nombre] = r.items || [];
         });
         
-        console.log(`🏢 Sucursales disponibles: ${sucursales.length}`);
+        estado.ultimaActualizacion = new Date();
+        document.getElementById('lastUpdate').textContent = `✅ Actualizado: ${estado.ultimaActualizacion.toLocaleString()}`;
+        
+        // Renderizar todo
+        renderCarritos();
+        actualizarPreviewPDF();
+        aplicarFiltros(); // Aplica filtros por defecto (todos)
     }
 
-    /**
-     * Aplicar todos los filtros a los datos
-     */
-    function aplicarFiltros() {
-        const fechaInicio = document.getElementById('filterFechaInicio').value;
-        const fechaFin = document.getElementById('filterFechaFin').value;
-        const codigoProducto = document.getElementById('filterCodigoProducto').value.trim().toUpperCase();
-        const tipoOperacion = document.getElementById('filterTipoOperacion').value;
-        const tipoMovimiento = document.getElementById('filterTipoMovimiento').value;
-        const sucursal = document.getElementById('filterSucursal').value;
+    // ============================================================
+    // 4. RENDERIZADO DE CARRITOS ACTUALES (PUNTO 1)
+    // ============================================================
+    function renderCarritos() {
+        const tbody = document.getElementById('carritosBody');
+        let html = '';
+        let totalGeneral = 0;
+        let totalItems = 0;
 
-        // Resetear filtros activos
-        filtrosActivos = {};
+        // Orden fijo de sucursales
+        const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+
+        ordenSucursales.forEach(sucursal => {
+            const items = estado.carritos[sucursal] || [];
+            totalItems += items.length;
+            
+            // Calcular métricas
+            const stats = calcularEstadisticas(items);
+            totalGeneral += stats.totalMonto;
+
+            html += `<tr>
+                <td><strong>${sucursal}</strong></td>
+                <td>${stats.totalMonto.toLocaleString()}</td>
+                <td>${stats.cierreEfectivo.toLocaleString()}</td>
+                <td>${stats.cierreBancard.toLocaleString()}</td>
+                <td>${stats.totalCierre.toLocaleString()}</td>
+                <td>${stats.fichasMonto.toLocaleString()}</td>
+                <td>${stats.juguetesMonto.toLocaleString()}</td>
+                <td>${stats.pulserasMonto.toLocaleString()}</td>
+                <td>${stats.billarMonto.toLocaleString()}</td>
+                <td style="font-size:0.75rem; text-align:left;">
+                    ${renderDetalleFichas(stats.detalleFichas)}
+                </td>
+            </tr>`;
+        });
+
+        // Fila de totales
+        const totalStats = calcularEstadisticasTotales(ordenSucursales);
+        html += `<tr class="total-row">
+            <td><strong>TOTAL GENERAL</strong></td>
+            <td>${totalStats.totalMonto.toLocaleString()}</td>
+            <td>${totalStats.cierreEfectivo.toLocaleString()}</td>
+            <td>${totalStats.cierreBancard.toLocaleString()}</td>
+            <td>${totalStats.totalCierre.toLocaleString()}</td>
+            <td>${totalStats.fichasMonto.toLocaleString()}</td>
+            <td>${totalStats.juguetesMonto.toLocaleString()}</td>
+            <td>${totalStats.pulserasMonto.toLocaleString()}</td>
+            <td>${totalStats.billarMonto.toLocaleString()}</td>
+            <td style="font-size:0.7rem; text-align:left;">
+                ${renderDetalleFichas(totalStats.detalleFichas)}
+            </td>
+        </tr>`;
+
+        tbody.innerHTML = html;
+        document.getElementById('totalItemsBadge').textContent = `${totalItems} items`;
+    }
+
+    // ============================================================
+    // 5. FUNCIONES DE CÁLCULO ESTADÍSTICO
+    // ============================================================
+    function calcularEstadisticas(items) {
+        let totalMonto = 0;
+        let cierreEfectivo = 0;
+        let cierreBancard = 0;
+        let fichasMonto = 0;
+        let juguetesMonto = 0;
+        let pulserasMonto = 0;
+        let billarMonto = 0;
+        let detalleFichas = {
+            '000-00': 0, // unitarias
+            '000-01': 0, // combo 30k
+            '000-02': 0, // combo 60k
+            '000-03': 0, // combo 120k
+            '000-04': 0, // combo 180k
+            '000-05': 0, // error
+            '000-06': 0  // cápsulas
+        };
+
+        items.forEach(item => {
+            const money = item.money || 0;
+            const code = item.code || '';
+            const unidades = item.unidades || 1;
+            
+            // Monto total
+            totalMonto += money;
+
+            // Cierres
+            if (code === '000-09') cierreEfectivo += money;
+            if (code === '000-10') cierreBancard += money;
+
+            // Clasificación por código
+            if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
+                // Fichas: 000-00 a 000-04
+                if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) {
+                    fichasMonto += money;
+                }
+                // Pulseras: 000-07
+                if (code === '000-07') pulserasMonto += money;
+                // Billar: 000-08
+                if (code === '000-08') billarMonto += money;
+                // Detalle de fichas
+                if (detalleFichas.hasOwnProperty(code)) {
+                    detalleFichas[code] += unidades;
+                }
+            } else if (parseInt(code.substring(0,3)) >= 5) {
+                // Juguetes: cualquier código >= 005-00
+                juguetesMonto += money;
+            }
+        });
+
+        return {
+            totalMonto,
+            cierreEfectivo,
+            cierreBancard,
+            totalCierre: cierreEfectivo + cierreBancard,
+            fichasMonto,
+            juguetesMonto,
+            pulserasMonto,
+            billarMonto,
+            detalleFichas
+        };
+    }
+
+    function calcularEstadisticasTotales(sucursales) {
+        const total = {
+            totalMonto: 0,
+            cierreEfectivo: 0,
+            cierreBancard: 0,
+            totalCierre: 0,
+            fichasMonto: 0,
+            juguetesMonto: 0,
+            pulserasMonto: 0,
+            billarMonto: 0,
+            detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 }
+        };
+
+        sucursales.forEach(nombre => {
+            const items = estado.carritos[nombre] || [];
+            const stats = calcularEstadisticas(items);
+            total.totalMonto += stats.totalMonto;
+            total.cierreEfectivo += stats.cierreEfectivo;
+            total.cierreBancard += stats.cierreBancard;
+            total.totalCierre += stats.totalCierre;
+            total.fichasMonto += stats.fichasMonto;
+            total.juguetesMonto += stats.juguetesMonto;
+            total.pulserasMonto += stats.pulserasMonto;
+            total.billarMonto += stats.billarMonto;
+            for (let key in total.detalleFichas) {
+                total.detalleFichas[key] += stats.detalleFichas[key] || 0;
+            }
+        });
+
+        return total;
+    }
+
+    function renderDetalleFichas(detalle) {
+        if (!detalle) return '-';
+        return `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 10px;">
+                <span>Unitarias: ${detalle['000-00']}</span>
+                <span>Combo 30k: ${detalle['000-01']}</span>
+                <span>Combo 60k: ${detalle['000-02']}</span>
+                <span>Combo 120k: ${detalle['000-03']}</span>
+                <span>Combo 180k: ${detalle['000-04']}</span>
+                <span>Error: ${detalle['000-05']}</span>
+                <span>Cápsulas: ${detalle['000-06']}</span>
+            </div>
+        `;
+    }
+
+    // ============================================================
+    // 6. FILTROS AVANZADOS (PUNTO 2)
+    // ============================================================
+    window.aplicarFiltros = function() {
+        const fechaDesde = document.getElementById('filtroFechaDesde').value;
+        const fechaHasta = document.getElementById('filtroFechaHasta').value;
+        const codigoFiltro = document.getElementById('filtroCodigo').value.trim();
+        const tipoOperacion = document.getElementById('filtroTipoOperacion').value;
+
+        // Recolectar todos los items de todas las sucursales
+        let todosItems = [];
+        for (let [sucursal, items] of Object.entries(estado.carritos)) {
+            items.forEach(item => {
+                todosItems.push({ ...item, sucursal });
+            });
+        }
 
         // Aplicar filtros
-        datosFiltrados = todosLosDatos.filter(item => {
-            // Filtro por fecha inicio
-            if (fechaInicio && item.fecha < fechaInicio) {
-                return false;
-            }
-            
-            // Filtro por fecha fin
-            if (fechaFin && item.fecha > fechaFin) {
-                return false;
-            }
-            
-            // Filtro por código de producto (búsqueda parcial)
-            if (codigoProducto && !item.codigoProducto.toUpperCase().includes(codigoProducto)) {
-                return false;
-            }
-            
-            // Filtro por tipo de operación
-            if (tipoOperacion && item.operacion !== tipoOperacion) {
-                return false;
-            }
-            
-            // Filtro por tipo de movimiento
-            if (tipoMovimiento && item.tipoMovimiento !== tipoMovimiento) {
-                return false;
-            }
-            
-            // Filtro por sucursal
-            if (sucursal && item.sucursal !== sucursal) {
-                return false;
-            }
-            
-            return true;
-        });
+        let filtrados = todosItems;
 
-        // Registrar filtros activos
-        if (fechaInicio) filtrosActivos['Fecha Inicio'] = fechaInicio;
-        if (fechaFin) filtrosActivos['Fecha Fin'] = fechaFin;
-        if (codigoProducto) filtrosActivos['Código'] = codigoProducto;
-        if (tipoOperacion) filtrosActivos['Operación'] = tipoOperacion;
-        if (tipoMovimiento) filtrosActivos['Movimiento'] = tipoMovimiento;
-        if (sucursal) filtrosActivos['Sucursal'] = sucursal;
+        // Filtro de fecha
+        if (fechaDesde) {
+            const desde = new Date(fechaDesde);
+            desde.setHours(0,0,0,0);
+            filtrados = filtrados.filter(item => {
+                const fechaItem = item.fecha ? parseFecha(item.fecha) : null;
+                return fechaItem && fechaItem >= desde;
+            });
+        }
+        if (fechaHasta) {
+            const hasta = new Date(fechaHasta);
+            hasta.setHours(23,59,59,999);
+            filtrados = filtrados.filter(item => {
+                const fechaItem = item.fecha ? parseFecha(item.fecha) : null;
+                return fechaItem && fechaItem <= hasta;
+            });
+        }
 
-        console.log(`🎯 Filtros aplicados: ${Object.keys(filtrosActivos).length}`);
-        console.log(`📊 Resultados: ${datosFiltrados.length} registros`);
+        // Filtro de código
+        if (codigoFiltro) {
+            filtrados = filtrados.filter(item => {
+                const code = item.code || '';
+                // Si termina en guión (ej: "005-"), busca por prefijo
+                if (codigoFiltro.endsWith('-')) {
+                    return code.startsWith(codigoFiltro);
+                }
+                return code === codigoFiltro;
+            });
+        }
 
-        renderizarTabla();
-        actualizarEstadisticas();
-        mostrarFiltrosActivos();
+        // Filtro de tipo de operación
+        if (tipoOperacion !== 'todos') {
+            filtrados = filtrados.filter(item => {
+                switch(tipoOperacion) {
+                    case 'venta': return !item.esMovimiento && !item.esFichaGratis && !item.esCierre;
+                    case 'puntos': return (item.points || 0) > 0;
+                    case 'movimiento': return item.esMovimiento === true;
+                    case 'stock': return item.esMovimiento && item.destinoMovimiento === 'stock';
+                    case 'maquina': return item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento.startsWith('maq');
+                    default: return true;
+                }
+            });
+        }
+
+        estado.datosFiltrados = filtrados;
+        renderResultadosFiltrados(filtrados);
+    };
+
+    function parseFecha(fechaStr) {
+        // Formato esperado: "dd/mm/yyyy" o "dd/mm/yyyy hh:mm:ss"
+        if (!fechaStr) return null;
+        const partes = fechaStr.split(' ');
+        const fechaPart = partes[0];
+        const partesFecha = fechaPart.split('/');
+        if (partesFecha.length !== 3) return null;
+        // Meses en JS son 0-indexados
+        return new Date(parseInt(partesFecha[2]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[0]));
     }
 
-    /**
-     * Mostrar filtros activos como tags
-     */
-    function mostrarFiltrosActivos() {
-        const container = document.getElementById('activeFilters');
-        const keys = Object.keys(filtrosActivos);
-        
-        if (keys.length === 0) {
-            container.innerHTML = '<span style="color: #666; font-size: 13px;">No hay filtros activos</span>';
+    function renderResultadosFiltrados(items) {
+        const container = document.getElementById('resultadosFiltrados');
+        if (items.length === 0) {
+            container.innerHTML = '<p class="text-center" style="color:#888;">No se encontraron resultados con los filtros aplicados.</p>';
             return;
         }
 
-        const labels = {
-            'Fecha Inicio': '📅 Desde',
-            'Fecha Fin': '📅 Hasta',
-            'Código': '🔢 Código',
-            'Operación': '🔄 Operación',
-            'Movimiento': '⚙️ Movimiento',
-            'Sucursal': '🏢 Sucursal'
-        };
+        // Mostrar resumen de filtros
+        let html = `<div style="background:#e8eaf6; padding:10px; border-radius:8px; margin-bottom:15px;">
+            <strong>🔍 Resultados:</strong> ${items.length} items encontrados.
+            ${document.getElementById('filtroCodigo').value ? ` | Código: ${document.getElementById('filtroCodigo').value}` : ''}
+            ${document.getElementById('filtroFechaDesde').value ? ` | Desde: ${document.getElementById('filtroFechaDesde').value}` : ''}
+            ${document.getElementById('filtroFechaHasta').value ? ` | Hasta: ${document.getElementById('filtroFechaHasta').value}` : ''}
+            ${document.getElementById('filtroTipoOperacion').value !== 'todos' ? ` | Tipo: ${document.getElementById('filtroTipoOperacion').value}` : ''}
+        </div>`;
 
-        let html = '';
-        keys.forEach(key => {
-            const value = filtrosActivos[key];
-            const label = labels[key] || key;
-            
-            html += `
-                <span class="filter-tag">
-                    ${label}: ${value}
-                    <i class="fas fa-times" onclick="eliminarFiltro('${key}')"></i>
-                </span>
-            `;
+        // Tabla de resultados
+        html += `<table>
+            <thead>
+                <tr>
+                    <th>Sucursal</th>
+                    <th>Código</th>
+                    <th>Producto</th>
+                    <th>Puntos</th>
+                    <th>Dinero (Gs.)</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Tipo</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        // Limitar a 100 items para no sobrecargar
+        const mostrar = items.slice(0, 100);
+        mostrar.forEach(item => {
+            const tipo = item.esMovimiento ? '🔄 Movimiento' :
+                        item.esFichaGratis ? '🎁 Gratis' :
+                        item.esCierre ? '💰 Cierre' : '🛒 Venta';
+            html += `<tr>
+                <td>${item.sucursal || '-'}</td>
+                <td>${item.code || '-'}</td>
+                <td>${item.name || '-'}</td>
+                <td>${(item.points || 0).toLocaleString()}</td>
+                <td>${(item.money || 0).toLocaleString()}</td>
+                <td>${item.fecha || '-'}</td>
+                <td>${item.hora || '-'}</td>
+                <td>${tipo}</td>
+            </tr>`;
         });
-        
+
+        if (items.length > 100) {
+            html += `<tr><td colspan="8" class="text-center" style="color:#888;">... y ${items.length - 100} items más</td></tr>`;
+        }
+
+        html += `</tbody></table>`;
         container.innerHTML = html;
     }
 
-    /**
-     * Eliminar un filtro específico
-     */
-    function eliminarFiltro(key) {
-        const map = {
-            'Fecha Inicio': 'filterFechaInicio',
-            'Fecha Fin': 'filterFechaFin',
-            'Código': 'filterCodigoProducto',
-            'Operación': 'filterTipoOperacion',
-            'Movimiento': 'filterTipoMovimiento',
-            'Sucursal': 'filterSucursal'
-        };
-        
-        if (map[key]) {
-            document.getElementById(map[key]).value = '';
-            aplicarFiltros();
-        }
-    }
-
-    /**
-     * Limpiar todos los filtros
-     */
-    function limpiarFiltros() {
-        document.getElementById('filterFechaInicio').value = '';
-        document.getElementById('filterFechaFin').value = '';
-        document.getElementById('filterCodigoProducto').value = '';
-        document.getElementById('filterTipoOperacion').value = '';
-        document.getElementById('filterTipoMovimiento').value = '';
-        document.getElementById('filterSucursal').value = '';
+    window.limpiarFiltros = function() {
+        document.getElementById('filtroFechaDesde').value = '';
+        document.getElementById('filtroFechaHasta').value = '';
+        document.getElementById('filtroCodigo').value = '';
+        document.getElementById('filtroTipoOperacion').value = 'todos';
         aplicarFiltros();
-    }
+    };
 
-    /**
-     * Renderizar la tabla con los datos filtrados
-     */
-    function renderizarTabla() {
-        const tbody = document.getElementById('datosBody');
-        
-        if (datosFiltrados.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="empty-state">
-                        <i class="fas fa-search" style="font-size: 40px; display: block; margin-bottom: 10px;"></i>
-                        No se encontraron registros con los filtros aplicados
-                    </td>
-                </tr>
-            `;
-            return;
-        }
+    // ============================================================
+    // 7. GENERAR REPORTE PDF (PUNTO 3)
+    // ============================================================
+    function obtenerDatosParaPDF() {
+        // Usar los datos de los carritos actuales
+        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+        const filas = [];
+        let totalEfectivo = 0;
+        let totalBancard = 0;
+        let totalGeneral = 0;
 
-        let html = '';
-        datosFiltrados.forEach((item, index) => {
-            // Badge según operación
-            const badgeOperacion = {
-                'venta': 'badge-venta',
-                'punto': 'badge-punto',
-                'movimiento': 'badge-movimiento'
-            }[item.operacion] || '';
-
-            // Badge según tipo de movimiento
-            const badgeMovimiento = item.tipoMovimiento.includes('maquina') ? 'badge-maquina' : 'badge-stock';
-
-            // Badge según estado
-            const badgeEstado = item.estado === 'activo' ? 'badge-activo' : 'badge-inactivo';
-
-            html += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${formatFecha(item.fecha)}</td>
-                    <td><strong>${item.sucursal}</strong></td>
-                    <td><code style="background: #f4f4f4; padding: 2px 8px; border-radius: 4px;">${item.codigoProducto}</code></td>
-                    <td>${item.producto}</td>
-                    <td><span class="badge ${badgeOperacion}">${item.operacion}</span></td>
-                    <td><span class="badge ${badgeMovimiento}">${item.tipoMovimiento}</span></td>
-                    <td>${item.cantidad}</td>
-                    <td>${item.valor > 0 ? '$' + item.valor.toLocaleString() : '-'}</td>
-                    <td><span class="badge ${badgeEstado}">${item.estado}</span></td>
-                </tr>
-            `;
-        });
-
-        tbody.innerHTML = html;
-    }
-
-    /**
-     * Formatear fecha para mostrar
-     */
-    function formatFecha(fecha) {
-        if (!fecha) return '-';
-        try {
-            const partes = fecha.split('-');
-            if (partes.length === 3) {
-                return `${partes[2]}/${partes[1]}/${partes[0]}`;
-            }
-            return fecha;
-        } catch {
-            return fecha;
-        }
-    }
-
-    /**
-     * Actualizar estadísticas
-     */
-    function actualizarEstadisticas() {
-        document.getElementById('totalRegistros').textContent = datosFiltrados.length;
-        document.getElementById('totalVentas').textContent = datosFiltrados.filter(d => d.operacion === 'venta').length;
-        document.getElementById('totalPuntos').textContent = datosFiltrados.filter(d => d.operacion === 'punto').length;
-        document.getElementById('totalMovimientos').textContent = datosFiltrados.filter(d => d.operacion === 'movimiento').length;
-    }
-
-    /**
-     * Exportar datos a CSV
-     */
-    function exportarDatos() {
-        if (datosFiltrados.length === 0) {
-            alert('⚠️ No hay datos para exportar');
-            return;
-        }
-
-        const headers = ['Fecha', 'Sucursal', 'Código Producto', 'Producto', 'Operación', 'Tipo Movimiento', 'Cantidad', 'Valor', 'Estado'];
-        let csvContent = headers.join(',') + '\n';
-        
-        datosFiltrados.forEach(item => {
-            csvContent += [
-                item.fecha,
-                `"${item.sucursal}"`,
-                `"${item.codigoProducto}"`,
-                `"${item.producto}"`,
-                item.operacion,
-                item.tipoMovimiento,
-                item.cantidad,
-                item.valor,
-                item.estado
-            ].join(',') + '\n';
-        });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `sucursales_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        
-        console.log(`📥 Exportados ${datosFiltrados.length} registros`);
-    }
-
-    /**
-     * Recargar datos desde Firebase
-     */
-    function recargarDatos() {
-        console.log('🔄 Recargando datos...');
-        cargarDatos();
-    }
-
-    /**
-     * Mostrar configuración actual
-     */
-    function verConfiguracion() {
-        alert(
-            '🔧 CONFIGURACIÓN ACTUAL\n\n' +
-            `📁 Proyecto: ${firebaseConfig.projectId}\n` +
-            `📊 Colección: ${coleccionActiva}\n` +
-            `📝 Total registros: ${todosLosDatos.length}\n` +
-            `🎯 Filtros activos: ${Object.keys(filtrosActivos).length}\n\n` +
-            '✅ Firebase conectado correctamente'
-        );
-    }
-
-    // ==========================================
-    // CONFIGURACIÓN 11.4: EVENTOS Y INICIO
-    // ==========================================
-
-    /**
-     * Configurar eventos y cargar datos al iniciar
-     */
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('🚀 Iniciando aplicación...');
-        cargarDatos();
-        
-        // Filtrar al presionar Enter en cualquier input
-        document.querySelectorAll('.filter-group input').forEach(el => {
-            el.addEventListener('keypress', e => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    aplicarFiltros();
-                }
+        orden.forEach(nombre => {
+            const items = estado.carritos[nombre] || [];
+            const stats = calcularEstadisticas(items);
+            filas.push({
+                sucursal: nombre,
+                efectivo: stats.cierreEfectivo,
+                bancard: stats.cierreBancard,
+                total: stats.totalCierre
             });
+            totalEfectivo += stats.cierreEfectivo;
+            totalBancard += stats.cierreBancard;
+            totalGeneral += stats.totalCierre;
         });
 
-        // Filtrar al cambiar cualquier select
-        document.querySelectorAll('.filter-group select').forEach(el => {
-            el.addEventListener('change', aplicarFiltros);
+        return { filas, totalEfectivo, totalBancard, totalGeneral };
+    }
+
+    window.generarPDF = function() {
+        const { filas, totalEfectivo, totalBancard, totalGeneral } = obtenerDatosParaPDF();
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        // Fuente Times New Roman
+        doc.setFont("Times", "Roman");
+
+        // Encabezado
+        doc.setFontSize(22);
+        doc.setTextColor(0, 0, 139); // Azul Francia
+        doc.setFont("Times", "bold");
+        doc.text("ASTROLAND", 105, 25, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text("IN GOD WE TRUST", 105, 35, { align: 'center' });
+
+        // Línea separadora
+        doc.setDrawColor(0);
+        doc.line(20, 40, 190, 40);
+
+        // Fecha del reporte
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.setFont("Times", "normal");
+        doc.text(`Reporte generado: ${new Date().toLocaleString()}`, 20, 50);
+
+        // Datos de la tabla
+        const tableHeaders = [["Sucursal", "Efectivo", "Bancard", "Total"]];
+        const tableRows = filas.map(f => [
+            f.sucursal,
+            f.efectivo.toLocaleString(),
+            f.bancard.toLocaleString(),
+            f.total.toLocaleString()
+        ]);
+
+        // Agregar fila de total
+        tableRows.push(["Total", totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), totalGeneral.toLocaleString()]);
+
+        // Generar tabla con autoTable
+        doc.autoTable({
+            head: tableHeaders,
+            body: tableRows,
+            startY: 60,
+            theme: 'plain',
+            styles: {
+                font: 'Times',
+                fontSize: 14,
+                textColor: [0, 0, 139], // Azul Francia
+                lineColor: [0, 0, 0],
+                lineWidth: 0.5,
+            },
+            headStyles: {
+                fillColor: [255, 215, 0], // Amarillo rutilante
+                textColor: [0, 0, 0],
+                fontSize: 14,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: {
+                fontSize: 14,
+                halign: 'center'
+            },
+            footStyles: {
+                fillColor: [255, 215, 0],
+                textColor: [0, 0, 0],
+                fontSize: 14,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            foot: tableRows.slice(-1).map(row => row), // Última fila como pie
+            margin: { left: 20, right: 20 },
+            tableWidth: 'auto'
         });
 
-        console.log('✅ Aplicación lista');
-    });
+        // Pie de página
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text("Gracias Dios nuestro", 20, doc.internal.pageSize.height - 15);
+            doc.text(`Hoja ${i} / ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 15);
+        }
 
-    // ==========================================
-    // CONFIGURACIÓN 11.5: MANEJO DE ERRORES
-    // ==========================================
+        // Guardar PDF
+        doc.save('ASTROLAND_Reporte_Diario.pdf');
+    };
 
-    // Capturar errores globales
-    window.addEventListener('error', function(e) {
-        console.error('❌ Error global:', e.message);
-    });
+    // ============================================================
+    // 8. VISTA PREVIA DEL PDF (PUNTO 3)
+    // ============================================================
+    function actualizarPreviewPDF() {
+        const { filas, totalEfectivo, totalBancard, totalGeneral } = obtenerDatosParaPDF();
+        const container = document.getElementById('previewPDF');
+        
+        let html = `
+            <table>
+                <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
+                <tbody>
+        `;
+        filas.forEach(f => {
+            html += `<tr><td>${f.sucursal}</td><td>Gs. ${f.efectivo.toLocaleString()}</td><td>Gs. ${f.bancard.toLocaleString()}</td><td>Gs. ${f.total.toLocaleString()}</td></tr>`;
+        });
+        html += `
+            <tr class="total-row"><td><strong>Total</strong></td><td><strong>Gs. ${totalEfectivo.toLocaleString()}</strong></td><td><strong>Gs. ${totalBancard.toLocaleString()}</strong></td><td><strong>Gs. ${totalGeneral.toLocaleString()}</strong></td></tr>
+        </tbody></table>
+        <p style="margin-top:10px; font-size:0.85rem; color:#666;">📄 Este es el contenido que se incluirá en el PDF. Fuente: Times New Roman, Azul Francia.</p>
+        `;
+        container.innerHTML = html;
+    }
 
-    // ==========================================
-    // CONFIGURACIÓN 11.6: EXPOSICIÓN DE FUNCIONES
-    // ==========================================
+    // ============================================================
+    // 9. INICIALIZACIÓN
+    // ============================================================
+    // Cargar datos al iniciar
+    cargarTodosLosDatos();
 
-    // Hacer funciones accesibles globalmente
-    window.aplicarFiltros = aplicarFiltros;
-    window.limpiarFiltros = limpiarFiltros;
-    window.eliminarFiltro = eliminarFiltro;
-    window.exportarDatos = exportarDatos;
-    window.recargarDatos = recargarDatos;
-    window.verConfiguracion = verConfiguracion;
+    // Actualizar cada 30 segundos
+    setInterval(cargarTodosLosDatos, 30000);
 
-    console.log('✅ Todas las funciones están listas');
+    // Configurar fechas iniciales (últimos 7 días)
+    const hoy = new Date();
+    const hace7Dias = new Date();
+    hace7Dias.setDate(hoy.getDate() - 7);
+    document.getElementById('filtroFechaDesde').value = hace7Dias.toISOString().split('T')[0];
+    document.getElementById('filtroFechaHasta').value = hoy.toISOString().split('T')[0];
+
+    console.log('✅ Panel de Control ASTROLAND cargado correctamente.');
 </script>
 
 </body>
