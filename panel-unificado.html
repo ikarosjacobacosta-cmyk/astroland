@@ -89,9 +89,7 @@
             border-top: 2px solid #ff9800;
         }
         .cierre-row td {
-            background: #e3f2fd !important;
-            font-weight: bold;
-            border-top: 2px solid #2196F3;
+            background: #fff9c4 !important;
         }
 
         .filter-grid {
@@ -118,6 +116,21 @@
             min-width: 150px;
             background: white;
         }
+        .filter-group .rango-inputs {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .filter-group .rango-inputs input {
+            width: 70px;
+            min-width: 70px;
+            text-align: center;
+        }
+        .filter-group .rango-inputs span {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -191,16 +204,13 @@
             color: #666;
             margin-top: 5px;
         }
-
-        /* Resaltar cierres en la tabla de resultados */
-        .cierre-item td {
-            background: #fff9c4 !important;
-        }
+        .stat-box.cierres { border-left-color: #ff9800; }
 
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: stretch; text-align: center; }
             .filter-grid { flex-direction: column; }
             .filter-group input, .filter-group select { min-width: 100%; }
+            .filter-group .rango-inputs input { width: 60px; min-width: 60px; }
         }
     </style>
 </head>
@@ -246,7 +256,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÓN 2: FILTROS AVANZADOS (CON HISTORIAL) -->
+    <!-- SECCIÓN 2: FILTROS AVANZADOS                 -->
     <!-- ============================================ -->
     <div class="card">
         <h2>🔍 Filtros Avanzados <span class="badge">Carrito + Historial</span></h2>
@@ -269,13 +279,25 @@
                 <div class="number" id="statTotalFichas">0</div>
                 <div class="label">🎴 Fichas Consumidas</div>
             </div>
-            <div class="stat-box" style="border-left-color: #ff9800;">
+            <div class="stat-box cierres">
                 <div class="number" id="statTotalCierres">Gs. 0</div>
                 <div class="label">💰 Total Cierres</div>
             </div>
         </div>
 
         <div class="filter-grid">
+            <!-- NUEVO: Filtro por Sucursal -->
+            <div class="filter-group">
+                <label>🏢 Sucursal</label>
+                <select id="filtroSucursal">
+                    <option value="todas">📊 Todas</option>
+                    <option value="Villa Morra">🏢 Villa Morra</option>
+                    <option value="Los Laureles">🏢 Los Laureles</option>
+                    <option value="Lambaré">🏢 Lambaré</option>
+                    <option value="Villa Elisa">🏢 Villa Elisa</option>
+                </select>
+            </div>
+
             <div class="filter-group">
                 <label>📅 Desde</label>
                 <input type="date" id="filtroFechaDesde">
@@ -284,10 +306,16 @@
                 <label>📅 Hasta</label>
                 <input type="date" id="filtroFechaHasta">
             </div>
+            
             <div class="filter-group">
-                <label>🏷️ Código / Prefijo</label>
-                <input type="text" id="filtroCodigo" placeholder="Ej: 005-00 o 005-">
+                <label>🏷️ Rango de Códigos</label>
+                <div class="rango-inputs">
+                    <input type="text" id="filtroCodigoDesde" placeholder="000-00" style="width:80px; min-width:80px;">
+                    <span>→</span>
+                    <input type="text" id="filtroCodigoHasta" placeholder="000-04" style="width:80px; min-width:80px;">
+                </div>
             </div>
+            
             <div class="filter-group">
                 <label>📋 Tipo de Operación</label>
                 <select id="filtroTipoOperacion">
@@ -324,13 +352,14 @@
     <!-- SECCIÓN 3: GENERAR REPORTE PDF               -->
     <!-- ============================================ -->
     <div class="card">
-        <h2>📄 Generar Reporte PDF <span class="badge">Resumen Ejecutivo</span></h2>
+        <h2>📄 Generar Reporte PDF <span class="badge">Basado en Filtros</span></h2>
         <div class="flex" style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-success" onclick="generarPDF()">📥 Descargar PDF</button>
-            <span style="font-size:0.85rem; color:#666;">Reporte con datos del día actual</span>
+            <button class="btn btn-success" onclick="generarPDFconFiltros()">📥 PDF con Filtros</button>
+            <button class="btn btn-warning" onclick="generarPDF()">📥 PDF (Solo Carrito)</button>
+            <span style="font-size:0.85rem; color:#666;">El PDF se genera con los filtros aplicados</span>
         </div>
         <div id="previewPDF" class="mt-20 table-responsive" style="background:#fafafa; padding:15px; border-radius:10px; border:1px dashed #ccc;">
-            <p class="text-center" style="color:#888;">Vista previa del reporte PDF</p>
+            <p class="text-center" style="color:#888;">Vista previa del reporte PDF (basado en filtros)</p>
         </div>
     </div>
 </div>
@@ -468,16 +497,14 @@
         document.getElementById('lastUpdate').textContent = `✅ Actualizado: ${estado.ultimaActualizacion.toLocaleString()}`;
         
         renderCarritos();
-        actualizarPreviewPDF();
         aplicarFiltros();
         actualizarEstadisticasRapidas(estado.todosItems);
     }
 
     // ============================================================
-    // 4. ESTADÍSTICAS RÁPIDAS (CORREGIDO - SIN CIERRES EN EL TOTAL)
+    // 4. ESTADÍSTICAS RÁPIDAS
     // ============================================================
     function actualizarEstadisticasRapidas(items) {
-        // Excluir cierres del total de dinero
         const itemsSinCierres = items.filter(item => 
             item.code !== '000-09' && item.code !== '000-10'
         );
@@ -487,7 +514,6 @@
         const totalPoints = items.reduce((sum, i) => sum + (i.points || 0), 0);
         const totalFichas = items.reduce((sum, i) => sum + (Math.abs(i.fichaConsumption || 0)), 0);
         
-        // Total de cierres
         const cierres = items.filter(item => 
             item.code === '000-09' || item.code === '000-10'
         );
@@ -501,7 +527,7 @@
     }
 
     // ============================================================
-    // 5. RENDERIZADO DE CARRITOS ACTUALES (CORREGIDO)
+    // 5. RENDERIZADO DE CARRITOS ACTUALES
     // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
@@ -553,10 +579,10 @@
     }
 
     // ============================================================
-    // 6. FUNCIONES DE CÁLCULO ESTADÍSTICO (CORREGIDO)
+    // 6. FUNCIONES DE CÁLCULO ESTADÍSTICO
     // ============================================================
     function calcularEstadisticas(items) {
-        let totalMonto = 0;        // NO incluye cierres
+        let totalMonto = 0;
         let cierreEfectivo = 0;
         let cierreBancard = 0;
         let fichasMonto = 0;
@@ -578,20 +604,17 @@
             const code = item.code || '';
             const unidades = item.unidades || 1;
             
-            // Cierres (000-09 y 000-10) NO se suman al totalMonto
             if (code === '000-09') {
                 cierreEfectivo += money;
-                return; // Salir para no sumar al totalMonto
+                return;
             }
             if (code === '000-10') {
                 cierreBancard += money;
-                return; // Salir para no sumar al totalMonto
+                return;
             }
 
-            // Solo sumar al totalMonto si NO es cierre
             totalMonto += money;
 
-            // Clasificación de productos (excluyendo cierres)
             if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
                 if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) {
                     fichasMonto += money;
@@ -675,7 +698,7 @@
     }
 
     // ============================================================
-    // 7. FILTROS AVANZADOS (CORREGIDO - CIERRES IDENTIFICADOS)
+    // 7. FILTROS AVANZADOS (CON RANGO DE CÓDIGOS Y SUCURSAL)
     // ============================================================
     function parseFecha(fechaStr) {
         if (!fechaStr) return null;
@@ -704,28 +727,70 @@
         }
     }
 
+    function codigoEnRango(codigo, desde, hasta) {
+        if (!desde && !hasta) return true;
+        if (!codigo) return false;
+        
+        if (desde && !hasta) return codigo >= desde;
+        if (!desde && hasta) return codigo <= hasta;
+        
+        return codigo >= desde && codigo <= hasta;
+    }
+
     window.aplicarFiltros = function() {
+        const sucursalFiltro = document.getElementById('filtroSucursal').value;
         const fechaDesde = document.getElementById('filtroFechaDesde').value;
         const fechaHasta = document.getElementById('filtroFechaHasta').value;
-        const codigoFiltro = document.getElementById('filtroCodigo').value.trim();
+        const codigoDesde = document.getElementById('filtroCodigoDesde').value.trim();
+        const codigoHasta = document.getElementById('filtroCodigoHasta').value.trim();
         const tipoOperacion = document.getElementById('filtroTipoOperacion').value;
         const fuenteFiltro = document.getElementById('filtroFuente').value;
 
         let itemsBase = [];
+        
+        // Filtrar por sucursal primero
+        let sucursalesAAnalizar = [];
+        if (sucursalFiltro === 'todas') {
+            sucursalesAAnalizar = Object.keys(estado.carritos);
+        } else {
+            sucursalesAAnalizar = [sucursalFiltro];
+        }
+
         if (fuenteFiltro === 'carrito') {
-            for (let [sucursal, items] of Object.entries(estado.carritos)) {
-                items.forEach(item => itemsBase.push({ ...item, sucursal, fuente: 'carrito' }));
+            for (let sucursal of sucursalesAAnalizar) {
+                if (estado.carritos[sucursal]) {
+                    estado.carritos[sucursal].forEach(item => {
+                        itemsBase.push({ ...item, sucursal, fuente: 'carrito' });
+                    });
+                }
             }
         } else if (fuenteFiltro === 'historial') {
-            for (let [sucursal, items] of Object.entries(estado.historial)) {
-                items.forEach(item => itemsBase.push({ ...item, sucursal, fuente: 'historial' }));
+            for (let sucursal of sucursalesAAnalizar) {
+                if (estado.historial[sucursal]) {
+                    estado.historial[sucursal].forEach(item => {
+                        itemsBase.push({ ...item, sucursal, fuente: 'historial' });
+                    });
+                }
             }
         } else {
-            itemsBase = [...estado.todosItems];
+            // Todos (carrito + historial)
+            for (let sucursal of sucursalesAAnalizar) {
+                if (estado.carritos[sucursal]) {
+                    estado.carritos[sucursal].forEach(item => {
+                        itemsBase.push({ ...item, sucursal, fuente: 'carrito' });
+                    });
+                }
+                if (estado.historial[sucursal]) {
+                    estado.historial[sucursal].forEach(item => {
+                        itemsBase.push({ ...item, sucursal, fuente: 'historial' });
+                    });
+                }
+            }
         }
 
         let filtrados = itemsBase;
 
+        // Filtro de fecha
         if (fechaDesde) {
             const desde = new Date(fechaDesde);
             desde.setHours(0, 0, 0, 0);
@@ -746,20 +811,15 @@
             });
         }
 
-        if (codigoFiltro) {
-            const codigoLower = codigoFiltro.toLowerCase();
-            const esPrefijo = codigoLower.endsWith('-');
-            const prefijoLimpio = esPrefijo ? codigoLower.slice(0, -1) : codigoLower;
-
+        // Filtro por rango de códigos
+        if (codigoDesde || codigoHasta) {
             filtrados = filtrados.filter(item => {
-                const code = (item.code || '').toLowerCase();
-                if (esPrefijo) {
-                    return code.startsWith(prefijoLimpio);
-                }
-                return code === codigoLower;
+                const code = item.code || '';
+                return codigoEnRango(code, codigoDesde, codigoHasta);
             });
         }
 
+        // Filtro de tipo de operación
         if (tipoOperacion !== 'todos') {
             filtrados = filtrados.filter(item => {
                 switch(tipoOperacion) {
@@ -786,6 +846,7 @@
         estado.datosFiltrados = filtrados;
         renderResultadosFiltrados(filtrados);
         actualizarEstadisticasRapidas(filtrados);
+        actualizarPreviewPDF(filtrados);
     };
 
     function renderResultadosFiltrados(items) {
@@ -801,7 +862,6 @@
             return;
         }
 
-        // Calcular estadísticas (excluyendo cierres del total)
         const itemsSinCierres = items.filter(item => 
             item.code !== '000-09' && item.code !== '000-10'
         );
@@ -816,6 +876,7 @@
         
         const tipos = {};
         const fuentes = {};
+        const sucursales = {};
         items.forEach(i => {
             let tipo = 'Venta';
             if (i.esMovimiento) tipo = 'Movimiento';
@@ -825,6 +886,9 @@
             
             const fuente = i.fuente || 'desconocido';
             fuentes[fuente] = (fuentes[fuente] || 0) + 1;
+            
+            const sucursal = i.sucursal || 'Sin Sucursal';
+            sucursales[sucursal] = (sucursales[sucursal] || 0) + 1;
         });
 
         let html = `<div class="filter-summary">
@@ -833,6 +897,9 @@
             <span class="filter-tag" style="background:#fff3e0;">💰 Total Cierres: Gs. ${totalCierres.toLocaleString()}</span>
             <span class="filter-tag">🎯 Puntos: ${totalPoints.toLocaleString()}</span>
             <span class="filter-tag">🎴 Fichas: ${totalFichas.toLocaleString()}</span>
+            ${Object.entries(sucursales).map(([suc, count]) => 
+                `<span class="filter-tag">🏢 ${suc}: ${count}</span>`
+            ).join('')}
             ${Object.entries(tipos).map(([tipo, count]) => 
                 `<span class="filter-tag">${tipo}: ${count}</span>`
             ).join('')}
@@ -868,7 +935,7 @@
             else if (esCierre) tipo = '💰 Cierre';
             
             const fuente = item.fuente === 'historial' ? '📜 Historial' : '🛒 Carrito';
-            const claseCierre = esCierre ? 'cierre-item' : '';
+            const claseCierre = esCierre ? 'cierre-row' : '';
             
             html += `<tr class="${claseCierre}">
                 <td><strong>${item.sucursal || '-'}</strong></td>
@@ -895,43 +962,64 @@
     }
 
     window.limpiarFiltros = function() {
+        document.getElementById('filtroSucursal').value = 'todas';
         document.getElementById('filtroFechaDesde').value = '';
         document.getElementById('filtroFechaHasta').value = '';
-        document.getElementById('filtroCodigo').value = '';
+        document.getElementById('filtroCodigoDesde').value = '';
+        document.getElementById('filtroCodigoHasta').value = '';
         document.getElementById('filtroTipoOperacion').value = 'todos';
         document.getElementById('filtroFuente').value = 'todos';
         aplicarFiltros();
     };
 
     // ============================================================
-    // 8. GENERAR REPORTE PDF
+    // 8. GENERAR REPORTE PDF (BASADO EN FILTROS)
     // ============================================================
-    function obtenerDatosParaPDF() {
-        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+    function obtenerDatosParaPDF(items) {
+        const datos = items || estado.datosFiltrados || [];
+        
+        // Agrupar por sucursal
+        const sucursales = {};
+        datos.forEach(item => {
+            const sucursal = item.sucursal || 'Sin Sucursal';
+            if (!sucursales[sucursal]) sucursales[sucursal] = [];
+            sucursales[sucursal].push(item);
+        });
+
         const filas = [];
         let totalEfectivo = 0;
         let totalBancard = 0;
         let totalGeneral = 0;
 
+        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
+        
         orden.forEach(nombre => {
-            const items = estado.carritos[nombre] || [];
-            const stats = calcularEstadisticas(items);
-            filas.push({
-                sucursal: nombre,
-                efectivo: stats.cierreEfectivo,
-                bancard: stats.cierreBancard,
-                total: stats.totalCierre
-            });
-            totalEfectivo += stats.cierreEfectivo;
-            totalBancard += stats.cierreBancard;
-            totalGeneral += stats.totalCierre;
+            const itemsSucursal = sucursales[nombre] || [];
+            const stats = calcularEstadisticas(itemsSucursal);
+            if (stats.cierreEfectivo > 0 || stats.cierreBancard > 0 || stats.totalCierre > 0) {
+                filas.push({
+                    sucursal: nombre,
+                    efectivo: stats.cierreEfectivo,
+                    bancard: stats.cierreBancard,
+                    total: stats.totalCierre
+                });
+                totalEfectivo += stats.cierreEfectivo;
+                totalBancard += stats.cierreBancard;
+                totalGeneral += stats.totalCierre;
+            }
         });
 
-        return { filas, totalEfectivo, totalBancard, totalGeneral };
+        return { 
+            filas: filas.length > 0 ? filas : [{ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 }],
+            totalEfectivo, 
+            totalBancard, 
+            totalGeneral,
+            totalItems: datos.length
+        };
     }
 
-    window.generarPDF = function() {
-        const { filas, totalEfectivo, totalBancard, totalGeneral } = obtenerDatosParaPDF();
+    function generarPDFconDatos(items, titulo = 'Reporte con Filtros') {
+        const { filas, totalEfectivo, totalBancard, totalGeneral, totalItems } = obtenerDatosParaPDF(items);
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
 
@@ -950,7 +1038,34 @@
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.setFont("Times", "normal");
-        doc.text(`Reporte generado: ${new Date().toLocaleString()}`, 20, 50);
+        doc.text(`Reporte: ${titulo}`, 20, 50);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 57);
+        doc.text(`Items: ${totalItems}`, 20, 64);
+
+        // Obtener información de filtros
+        const sucursalFiltro = document.getElementById('filtroSucursal').value;
+        const fechaDesde = document.getElementById('filtroFechaDesde').value;
+        const fechaHasta = document.getElementById('filtroFechaHasta').value;
+        const codigoDesde = document.getElementById('filtroCodigoDesde').value;
+        const codigoHasta = document.getElementById('filtroCodigoHasta').value;
+        
+        let filtrosInfo = [];
+        if (sucursalFiltro && sucursalFiltro !== 'todas') {
+            filtrosInfo.push(`🏢 ${sucursalFiltro}`);
+        }
+        if (fechaDesde || fechaHasta) {
+            filtrosInfo.push(`📅 ${fechaDesde || 'inicio'} → ${fechaHasta || 'hoy'}`);
+        }
+        if (codigoDesde || codigoHasta) {
+            filtrosInfo.push(`🏷️ ${codigoDesde || '000-00'} → ${codigoHasta || '999-99'}`);
+        }
+        if (filtrosInfo.length > 0) {
+            doc.setFontSize(9);
+            doc.setTextColor(80);
+            doc.text(`Filtros: ${filtrosInfo.join(' | ')}`, 20, 71);
+        }
+
+        const startY = filtrosInfo.length > 0 ? 78 : 72;
 
         const tableHeaders = [["Sucursal", "Efectivo", "Bancard", "Total"]];
         const tableRows = filas.map(f => [
@@ -960,12 +1075,14 @@
             f.total.toLocaleString()
         ]);
 
-        tableRows.push(["Total", totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), totalGeneral.toLocaleString()]);
+        if (filas.length > 1) {
+            tableRows.push(["Total", totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), totalGeneral.toLocaleString()]);
+        }
 
         doc.autoTable({
             head: tableHeaders,
             body: tableRows,
-            startY: 60,
+            startY: startY,
             theme: 'plain',
             styles: {
                 font: 'Times',
@@ -992,7 +1109,7 @@
                 fontStyle: 'bold',
                 halign: 'center'
             },
-            foot: tableRows.slice(-1).map(row => row),
+            foot: filas.length > 1 ? tableRows.slice(-1).map(row => row) : undefined,
             margin: { left: 20, right: 20 },
             tableWidth: 'auto'
         });
@@ -1006,34 +1123,98 @@
             doc.text(`Hoja ${i} / ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 15);
         }
 
-        doc.save('ASTROLAND_Reporte_Diario.pdf');
+        const fechaStr = new Date().toISOString().split('T')[0];
+        const sucursalStr = sucursalFiltro && sucursalFiltro !== 'todas' ? `_${sucursalFiltro.replace(' ', '_')}` : '';
+        doc.save(`ASTROLAND_Reporte${sucursalStr}_${fechaStr}.pdf`);
+    }
+
+    // ============================================================
+    // 9. FUNCIONES PARA GENERAR PDF
+    // ============================================================
+    window.generarPDFconFiltros = function() {
+        const items = estado.datosFiltrados || [];
+        if (items.length === 0) {
+            alert('⚠️ No hay datos filtrados para generar el PDF. Aplica filtros primero.');
+            return;
+        }
+        const sucursalFiltro = document.getElementById('filtroSucursal').value;
+        const titulo = sucursalFiltro !== 'todas' ? `Reporte - ${sucursalFiltro}` : 'Reporte - Todas las Sucursales';
+        generarPDFconDatos(items, titulo);
+    };
+
+    window.generarPDF = function() {
+        const items = [];
+        for (let [sucursal, itemsSuc] of Object.entries(estado.carritos)) {
+            itemsSuc.forEach(item => {
+                items.push({ ...item, sucursal });
+            });
+        }
+        if (items.length === 0) {
+            alert('⚠️ No hay items en el carrito actual.');
+            return;
+        }
+        generarPDFconDatos(items, 'Carrito Actual');
     };
 
     // ============================================================
-    // 9. VISTA PREVIA DEL PDF
+    // 10. VISTA PREVIA DEL PDF
     // ============================================================
-    function actualizarPreviewPDF() {
-        const { filas, totalEfectivo, totalBancard, totalGeneral } = obtenerDatosParaPDF();
+    function actualizarPreviewPDF(items) {
+        const datos = items || estado.datosFiltrados || [];
+        const { filas, totalEfectivo, totalBancard, totalGeneral, totalItems } = obtenerDatosParaPDF(datos);
         const container = document.getElementById('previewPDF');
         
-        let html = `
-            <table>
-                <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
-                <tbody>
+        if (datos.length === 0) {
+            container.innerHTML = `<p class="text-center" style="color:#888;">Aplica filtros para ver la vista previa del PDF.</p>`;
+            return;
+        }
+
+        const sucursalFiltro = document.getElementById('filtroSucursal').value;
+        const fechaDesde = document.getElementById('filtroFechaDesde').value;
+        const fechaHasta = document.getElementById('filtroFechaHasta').value;
+        const codigoDesde = document.getElementById('filtroCodigoDesde').value;
+        const codigoHasta = document.getElementById('filtroCodigoHasta').value;
+        
+        let filtrosInfo = [];
+        if (sucursalFiltro && sucursalFiltro !== 'todas') {
+            filtrosInfo.push(`🏢 ${sucursalFiltro}`);
+        }
+        if (fechaDesde || fechaHasta) {
+            filtrosInfo.push(`📅 ${fechaDesde || 'inicio'} → ${fechaHasta || 'hoy'}`);
+        }
+        if (codigoDesde || codigoHasta) {
+            filtrosInfo.push(`🏷️ ${codigoDesde || '000-00'} → ${codigoHasta || '999-99'}`);
+        }
+        
+        let html = `<div style="margin-bottom:10px; font-size:0.85rem; color:#555;">
+            <strong>📄 Vista previa del PDF</strong> 
+            ${filtrosInfo.length > 0 ? `| Filtros: ${filtrosInfo.join(' | ')}` : ''}
+            <span style="margin-left:15px;">📦 ${totalItems} items</span>
+        </div>`;
+        
+        html += `<table>
+            <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
+            <tbody>
         `;
         filas.forEach(f => {
             html += `<tr><td>${f.sucursal}</td><td>Gs. ${f.efectivo.toLocaleString()}</td><td>Gs. ${f.bancard.toLocaleString()}</td><td>Gs. ${f.total.toLocaleString()}</td></tr>`;
         });
-        html += `
-            <tr class="total-row"><td><strong>Total</strong></td><td><strong>Gs. ${totalEfectivo.toLocaleString()}</strong></td><td><strong>Gs. ${totalBancard.toLocaleString()}</strong></td><td><strong>Gs. ${totalGeneral.toLocaleString()}</strong></td></tr>
-        </tbody></table>
-        <p style="margin-top:10px; font-size:0.85rem; color:#666;">📄 Este es el contenido que se incluirá en el PDF.</p>
-        `;
+        
+        if (filas.length > 1) {
+            html += `
+                <tr class="total-row"><td><strong>Total</strong></td>
+                <td><strong>Gs. ${totalEfectivo.toLocaleString()}</strong></td>
+                <td><strong>Gs. ${totalBancard.toLocaleString()}</strong></td>
+                <td><strong>Gs. ${totalGeneral.toLocaleString()}</strong></td></tr>
+            `;
+        }
+        html += `</tbody></table>`;
+        html += `<p style="margin-top:10px; font-size:0.8rem; color:#666;">📌 El PDF incluirá estos datos con formato Times New Roman, Azul Francia, y fondo amarillo en los títulos.</p>`;
         container.innerHTML = html;
     }
 
     // ============================================================
-    // 10. INICIALIZACIÓN
+    // 11. INICIALIZACIÓN
     // ============================================================
     cargarTodosLosDatos();
     setInterval(cargarTodosLosDatos, 60000);
@@ -1044,7 +1225,7 @@
     document.getElementById('filtroFechaDesde').value = hace7Dias.toISOString().split('T')[0];
     document.getElementById('filtroFechaHasta').value = hoy.toISOString().split('T')[0];
 
-    console.log('✅ Panel de Control ASTROLAND con Historial cargado correctamente.');
+    console.log('✅ Panel de Control ASTROLAND con Historial, Rango de Códigos y Filtro por Sucursal cargado correctamente.');
     console.log(`📊 Items cargados: ${estado.todosItems.length} (Carrito + Historial)`);
 </script>
 
