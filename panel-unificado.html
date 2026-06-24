@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel de Control ASTROLAND - Con Historial</title>
+    <title>Panel de Control ASTROLAND - Optimizado</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -38,6 +38,13 @@
             padding: 8px 15px;
             border-radius: 30px;
         }
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .status-badge.loading { background: #fff3e0; color: #e65100; }
+        .status-badge.success { background: #e8f5e9; color: #2e7d32; }
 
         .card {
             background: white;
@@ -55,6 +62,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
         .card h2 .badge {
             font-size: 0.7rem;
@@ -152,8 +160,10 @@
         }
         .btn-primary { background: #1a237e; color: white; }
         .btn-primary:hover { background: #0d1445; transform: scale(1.02); }
+        .btn-primary:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; }
         .btn-success { background: #4CAF50; color: white; }
         .btn-success:hover { background: #388E3C; }
+        .btn-success:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; }
         .btn-warning { background: #ff9800; color: white; }
         .btn-warning:hover { background: #e68900; }
         .btn-outline { background: transparent; color: #1a237e; border: 2px solid #1a237e; }
@@ -194,7 +204,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -206,26 +216,16 @@
             border-left: 4px solid #1a237e;
         }
         .stat-box .number {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: #1a237e;
         }
         .stat-box .label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #666;
             margin-top: 5px;
         }
         .stat-box.cierres { border-left-color: #ff9800; }
-
-        /* Badge para el día laboral */
-        .dia-badge {
-            background: #1a237e;
-            color: white;
-            padding: 2px 10px;
-            border-radius: 15px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
 
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: stretch; text-align: center; }
@@ -240,8 +240,11 @@
 <div class="container">
     <!-- ENCABEZADO -->
     <div class="header">
-        <h1>🎯 ASTROLAND <small>Panel de Control - Con Historial</small></h1>
-        <span class="last-update" id="lastUpdate">🔄 Actualizando...</span>
+        <h1>🎯 ASTROLAND <small>Panel de Control - Optimizado</small></h1>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <span class="status-badge loading" id="statusBadge">⏳ Cargando...</span>
+            <span class="last-update" id="lastUpdate">🔄 Actualizando...</span>
+        </div>
     </div>
 
     <!-- ============================================ -->
@@ -270,46 +273,14 @@
                 </tbody>
             </table>
         </div>
-        <div style="margin-top: 10px; font-size: 0.8rem; color: #666; background: #f5f5f5; padding: 8px 15px; border-radius: 8px;">
-            📌 <strong>Nota:</strong> El "Monto Total" NO incluye los cierres (000-09 y 000-10). 
-            Los cierres se muestran en columnas separadas y se suman en "Total Cierre".
-        </div>
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÓN 2: FILTROS AVANZADOS                 -->
+    <!-- SECCIÓN 2: FILTROS AVANZADOS (OPTIMIZADO)    -->
     <!-- ============================================ -->
     <div class="card">
-        <h2>🔍 Filtros Avanzados <span class="badge">Carrito + Historial</span></h2>
+        <h2>🔍 Filtros Avanzados <span class="badge">Carga bajo demanda</span></h2>
         
-        <!-- Estadísticas rápidas -->
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-box">
-                <div class="number" id="statTotalItems">0</div>
-                <div class="label">📦 Total Items</div>
-            </div>
-            <div class="stat-box">
-                <div class="number" id="statTotalMoney">Gs. 0</div>
-                <div class="label">💰 Dinero Total (sin cierres)</div>
-            </div>
-            <div class="stat-box">
-                <div class="number" id="statTotalPoints">0</div>
-                <div class="label">🎯 Puntos</div>
-            </div>
-            <div class="stat-box">
-                <div class="number" id="statTotalFichas">0</div>
-                <div class="label">🎴 Fichas Consumidas</div>
-            </div>
-            <div class="stat-box cierres">
-                <div class="number" id="statTotalCierres">Gs. 0</div>
-                <div class="label">💰 Total Cierres</div>
-            </div>
-            <div class="stat-box" style="border-left-color: #4CAF50;">
-                <div class="number" id="statDiasLaborales">0</div>
-                <div class="label">📅 Días Laborales</div>
-            </div>
-        </div>
-
         <div class="filter-grid">
             <div class="filter-group">
                 <label>🏢 Sucursal</label>
@@ -323,7 +294,16 @@
             </div>
 
             <div class="filter-group">
-                <label>📅 Día Laboral</label>
+                <label>📅 Desde</label>
+                <input type="date" id="filtroFechaDesde">
+            </div>
+            <div class="filter-group">
+                <label>📅 Hasta</label>
+                <input type="date" id="filtroFechaHasta">
+            </div>
+
+            <div class="filter-group">
+                <label>📅 Día Laboral (Cierre)</label>
                 <input type="date" id="filtroDiaLaboral">
                 <span style="font-size:0.7rem; color:#666;">(Filtra por el día del cierre)</span>
             </div>
@@ -338,7 +318,7 @@
             </div>
             
             <div class="filter-group">
-                <label>📋 Tipo de Operación</label>
+                <label>📋 Tipo</label>
                 <select id="filtroTipoOperacion">
                     <option value="todos">📊 Todos</option>
                     <option value="venta">🛒 Venta</option>
@@ -353,19 +333,48 @@
             <div class="filter-group">
                 <label>📂 Fuente</label>
                 <select id="filtroFuente">
-                    <option value="todos">📊 Todas</option>
                     <option value="carrito">🛒 Carrito Actual</option>
                     <option value="historial">📜 Historial</option>
+                    <option value="todos">📊 Ambos</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label>&nbsp;</label>
-                <button class="btn btn-primary" onclick="aplicarFiltros()">🔍 Aplicar Filtros</button>
+                <button class="btn btn-primary" onclick="aplicarFiltros()" id="btnFiltrar">🔍 Buscar</button>
                 <button class="btn btn-outline" onclick="limpiarFiltros()">🗑️ Limpiar</button>
             </div>
         </div>
+
+        <!-- Estadísticas rápidas (se actualizan después de filtrar) -->
+        <div class="stats-grid" id="statsGrid" style="margin-top:15px; display:none;">
+            <div class="stat-box">
+                <div class="number" id="statTotalItems">0</div>
+                <div class="label">📦 Total Items</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="statTotalMoney">Gs. 0</div>
+                <div class="label">💰 Dinero Total</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="statTotalPoints">0</div>
+                <div class="label">🎯 Puntos</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="statTotalFichas">0</div>
+                <div class="label">🎴 Fichas</div>
+            </div>
+            <div class="stat-box cierres">
+                <div class="number" id="statTotalCierres">Gs. 0</div>
+                <div class="label">💰 Total Cierres</div>
+            </div>
+            <div class="stat-box" style="border-left-color: #4CAF50;">
+                <div class="number" id="statDiasLaborales">0</div>
+                <div class="label">📅 Días Laborales</div>
+            </div>
+        </div>
+
         <div id="resultadosFiltrados" class="mt-20">
-            <p class="text-center" style="color:#888;">Aplica filtros para ver los resultados detallados.</p>
+            <p class="text-center" style="color:#888;">Selecciona filtros y presiona "Buscar" para ver los resultados.</p>
         </div>
     </div>
 
@@ -375,25 +384,24 @@
     <div class="card">
         <h2>📄 Generar Reporte PDF <span class="badge">Basado en Filtros</span></h2>
         <div class="flex" style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-success" onclick="generarPDFconFiltros()">📥 PDF con Filtros</button>
-            <button class="btn btn-warning" onclick="generarPDF()">📥 PDF (Solo Carrito)</button>
+            <button class="btn btn-success" onclick="generarPDFconFiltros()" id="btnPDF">📥 PDF con Filtros</button>
             <span style="font-size:0.85rem; color:#666;">El PDF se genera con los filtros aplicados</span>
         </div>
         <div id="previewPDF" class="mt-20 table-responsive" style="background:#fafafa; padding:15px; border-radius:10px; border:1px dashed #ccc;">
-            <p class="text-center" style="color:#888;">Vista previa del reporte PDF (basado en filtros)</p>
+            <p class="text-center" style="color:#888;">Aplica filtros para ver la vista previa.</p>
         </div>
     </div>
 </div>
 
 <script type="module">
     // ============================================================
-    // 1. CONFIGURACIÓN DE FIREBASE PARA LAS 4 SUCURSALES
+    // 1. CONFIGURACIÓN DE FIREBASE
     // ============================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+    import { getDatabase, ref, get, child, query, orderByChild, startAt, endAt, limitToLast } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
     const sucursalesConfig = [
-        { nombre: "Villa Morra", config: {
+        { nombre: "Villa Morra", id: "villa-morra", config: {
             apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
             authDomain: "villa-morra.firebaseapp.com",
             databaseURL: "https://villa-morra-default-rtdb.firebaseio.com",
@@ -402,7 +410,7 @@
             messagingSenderId: "184849063287",
             appId: "1:184849063287:web:15f360231ade1b85ab5572"
         }},
-        { nombre: "Los Laureles", config: {
+        { nombre: "Los Laureles", id: "los-laureles", config: {
             apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
             authDomain: "los-laureles-49117.firebaseapp.com",
             databaseURL: "https://los-laureles-49117-default-rtdb.firebaseio.com",
@@ -411,7 +419,7 @@
             messagingSenderId: "523096933391",
             appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a"
         }},
-        { nombre: "Lambaré", config: {
+        { nombre: "Lambaré", id: "lambare", config: {
             apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
             authDomain: "lambare-85124.firebaseapp.com",
             databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
@@ -420,7 +428,7 @@
             messagingSenderId: "683666735879",
             appId: "1:683666735879:web:88a7f147d57165ad60bba2"
         }},
-        { nombre: "Villa Elisa", config: {
+        { nombre: "Villa Elisa", id: "villa-elisa", config: {
             apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ",
             authDomain: "villa-elisa-3adbe.firebaseapp.com",
             databaseURL: "https://villa-elisa-3adbe-default-rtdb.firebaseio.com",
@@ -435,222 +443,62 @@
     // 2. ESTADO GLOBAL
     // ============================================================
     const estado = {
-        carritos: {},
-        historial: {},
-        todosItems: [],
+        carritos: {},        // Cargado al inicio
+        historialCache: {},  // Cache de historial por sucursal
         datosFiltrados: [],
-        ultimaActualizacion: null,
-        diasLaborales: {} // { sucursal: [ { dia: 'YYYY-MM-DD', fechaInicio: timestamp, fechaFin: timestamp } ] }
+        diasLaborales: {},
+        cargando: false
     };
 
     // ============================================================
-    // 3. FUNCIONES DE CARGA DE DATOS
+    // 3. FUNCIONES DE CARGA - SOLO CARRITOS AL INICIO
     // ============================================================
-    async function cargarDatosDeSucursal(nombre, config) {
-        try {
-            const app = initializeApp(config, nombre);
-            const db = getDatabase(app);
-            const dbRef = ref(db);
-            
-            const cartSnap = await get(child(dbRef, 'carrito'));
-            let carritoItems = [];
-            if (cartSnap.exists()) {
-                const data = cartSnap.val();
-                carritoItems = Object.entries(data).map(([k, v]) => ({ 
-                    ...v, 
-                    firebaseKey: k,
-                    fuente: 'carrito'
-                }));
-            }
-
-            const histSnap = await get(child(dbRef, 'historial_ventas'));
-            let historialItems = [];
-            if (histSnap.exists()) {
-                const data = histSnap.val();
-                Object.entries(data).forEach(([key, registro]) => {
-                    if (registro.ventas && Array.isArray(registro.ventas)) {
-                        registro.ventas.forEach(venta => {
-                            historialItems.push({
-                                ...venta,
-                                firebaseKey: key,
-                                fuente: 'historial',
-                                fechaEliminacion: registro.fechaEliminacion || venta.fecha,
-                                _registroTotal: registro.totalDinero || 0,
-                                _registroVentas: registro.totalVentas || 0
-                            });
-                        });
-                    }
-                });
-            }
-
-            return { 
-                nombre, 
-                carrito: carritoItems, 
-                historial: historialItems 
-            };
-        } catch (error) {
-            console.error(`Error cargando ${nombre}:`, error);
-            return { nombre, carrito: [], historial: [], error: error.message };
-        }
-    }
-
-    async function cargarTodosLosDatos() {
-        document.getElementById('lastUpdate').textContent = '🔄 Cargando datos...';
+    async function cargarCarritos() {
+        const tbody = document.getElementById('carritosBody');
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center"><div class="loader"></div></td></tr>`;
         
-        const promesas = sucursalesConfig.map(s => cargarDatosDeSucursal(s.nombre, s.config));
-        const resultados = await Promise.all(promesas);
-        
-        resultados.forEach(r => {
-            estado.carritos[r.nombre] = r.carrito || [];
-            estado.historial[r.nombre] = r.historial || [];
-        });
+        const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+        let totalItems = 0;
 
-        estado.todosItems = [];
-        for (let sucursal of Object.keys(estado.carritos)) {
-            estado.carritos[sucursal].forEach(item => {
-                estado.todosItems.push({ ...item, sucursal, fuente: 'carrito' });
-            });
-            estado.historial[sucursal].forEach(item => {
-                estado.todosItems.push({ ...item, sucursal, fuente: 'historial' });
-            });
-        }
-
-        // Calcular días laborales
-        calcularDiasLaborales();
-
-        estado.ultimaActualizacion = new Date();
-        document.getElementById('lastUpdate').textContent = `✅ Actualizado: ${estado.ultimaActualizacion.toLocaleString()}`;
-        
-        renderCarritos();
-        aplicarFiltros();
-        actualizarEstadisticasRapidas(estado.todosItems);
-    }
-
-    // ============================================================
-    // 4. CALCULAR DÍAS LABORALES (Basado en cierres)
-    // ============================================================
-    function calcularDiasLaborales() {
-        const sucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
-        
-        sucursales.forEach(sucursal => {
-            const items = [...(estado.carritos[sucursal] || []), ...(estado.historial[sucursal] || [])];
-            
-            // Ordenar por timestamp
-            items.sort((a, b) => (a.timestampCompleto || 0) - (b.timestampCompleto || 0));
-            
-            const dias = [];
-            let diaActual = null;
-            
-            items.forEach(item => {
-                const ts = item.timestampCompleto || 0;
-                if (!ts) return;
+        for (const suc of sucursalesConfig) {
+            try {
+                const app = initializeApp(suc.config, suc.id);
+                const db = getDatabase(app);
+                const dbRef = ref(db);
+                const cartSnap = await get(child(dbRef, 'carrito'));
                 
-                const fecha = new Date(ts);
-                const fechaStr = fecha.toISOString().split('T')[0];
-                
-                // Si es un cierre, marca el fin del día laboral
-                const esCierre = item.code === '000-09' || item.code === '000-10';
-                
-                if (esCierre) {
-                    if (diaActual) {
-                        // Este cierre cierra el día laboral actual
-                        diaActual.fechaFin = ts;
-                        diaActual.fechaFinStr = fechaStr;
-                        dias.push(diaActual);
-                        diaActual = null;
-                    } else {
-                        // Si no hay día abierto, creamos uno nuevo con este cierre
-                        dias.push({
-                            dia: fechaStr,
-                            fechaInicio: ts,
-                            fechaFin: ts,
-                            fechaInicioStr: fechaStr,
-                            fechaFinStr: fechaStr
-                        });
-                    }
-                } else {
-                    // Si no hay día laboral abierto, abrimos uno nuevo
-                    if (!diaActual) {
-                        diaActual = {
-                            dia: fechaStr,
-                            fechaInicio: ts,
-                            fechaFin: ts,
-                            fechaInicioStr: fechaStr,
-                            fechaFinStr: fechaStr,
-                            items: []
-                        };
-                    }
-                    // Actualizar fecha de fin del día laboral
-                    if (ts > diaActual.fechaFin) {
-                        diaActual.fechaFin = ts;
-                        diaActual.fechaFinStr = fechaStr;
-                    }
-                    // Agregar item al día
-                    if (!diaActual.items) diaActual.items = [];
-                    diaActual.items.push(item);
+                let items = [];
+                if (cartSnap.exists()) {
+                    const data = cartSnap.val();
+                    items = Object.entries(data).map(([k, v]) => ({ 
+                        ...v, 
+                        firebaseKey: k,
+                        fuente: 'carrito',
+                        sucursal: suc.nombre
+                    }));
                 }
-            });
-            
-            // Si queda un día abierto (sin cierre), lo cerramos
-            if (diaActual) {
-                dias.push(diaActual);
+                estado.carritos[suc.nombre] = items;
+                totalItems += items.length;
+            } catch (error) {
+                console.error(`Error cargando carrito de ${suc.nombre}:`, error);
+                estado.carritos[suc.nombre] = [];
             }
-            
-            estado.diasLaborales[sucursal] = dias;
-        });
-        
-        console.log('📅 Días laborales calculados:', estado.diasLaborales);
+        }
+
+        renderCarritos();
+        document.getElementById('totalItemsBadge').textContent = `${totalItems} items`;
+        document.getElementById('lastUpdate').textContent = `✅ Actualizado: ${new Date().toLocaleString()}`;
+        document.getElementById('statusBadge').className = 'status-badge success';
+        document.getElementById('statusBadge').textContent = '✅ Listo';
     }
 
-    // ============================================================
-    // 5. ESTADÍSTICAS RÁPIDAS
-    // ============================================================
-    function actualizarEstadisticasRapidas(items) {
-        const itemsSinCierres = items.filter(item => 
-            item.code !== '000-09' && item.code !== '000-10'
-        );
-        
-        const totalItems = items.length;
-        const totalMoney = itemsSinCierres.reduce((sum, i) => sum + (i.money || 0), 0);
-        const totalPoints = items.reduce((sum, i) => sum + (i.points || 0), 0);
-        const totalFichas = items.reduce((sum, i) => sum + (Math.abs(i.fichaConsumption || 0)), 0);
-        
-        const cierres = items.filter(item => 
-            item.code === '000-09' || item.code === '000-10'
-        );
-        const totalCierres = cierres.reduce((sum, i) => sum + (i.money || 0), 0);
-
-        // Contar días laborales únicos en los items filtrados
-        const sucursalesUnicas = new Set(items.map(i => i.sucursal).filter(Boolean));
-        let totalDias = 0;
-        sucursalesUnicas.forEach(suc => {
-            if (estado.diasLaborales[suc]) {
-                totalDias += estado.diasLaborales[suc].length;
-            }
-        });
-
-        document.getElementById('statTotalItems').textContent = totalItems.toLocaleString();
-        document.getElementById('statTotalMoney').textContent = `Gs. ${totalMoney.toLocaleString()}`;
-        document.getElementById('statTotalPoints').textContent = totalPoints.toLocaleString();
-        document.getElementById('statTotalFichas').textContent = totalFichas.toLocaleString();
-        document.getElementById('statTotalCierres').textContent = `Gs. ${totalCierres.toLocaleString()}`;
-        document.getElementById('statDiasLaborales').textContent = totalDias;
-    }
-
-    // ============================================================
-    // 6. RENDERIZADO DE CARRITOS ACTUALES
-    // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
         let html = '';
-        let totalItems = 0;
-
         const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
 
         ordenSucursales.forEach(sucursal => {
             const items = estado.carritos[sucursal] || [];
-            totalItems += items.length;
-            
             const stats = calcularEstadisticas(items);
 
             html += `<tr>
@@ -669,7 +517,7 @@
             </tr>`;
         });
 
-        const totalStats = calcularEstadisticasTotales(ordenSucursales, 'carrito');
+        const totalStats = calcularEstadisticasTotales(ordenSucursales);
         html += `<tr class="total-row">
             <td><strong>TOTAL GENERAL</strong></td>
             <td>${totalStats.totalMonto.toLocaleString()}</td>
@@ -686,11 +534,10 @@
         </tr>`;
 
         tbody.innerHTML = html;
-        document.getElementById('totalItemsBadge').textContent = `${totalItems} items`;
     }
 
     // ============================================================
-    // 7. FUNCIONES DE CÁLCULO ESTADÍSTICO
+    // 4. FUNCIONES DE CÁLCULO ESTADÍSTICO
     // ============================================================
     function calcularEstadisticas(items) {
         let totalMonto = 0;
@@ -700,83 +547,35 @@
         let juguetesMonto = 0;
         let pulserasMonto = 0;
         let billarMonto = 0;
-        let detalleFichas = {
-            '000-00': 0,
-            '000-01': 0,
-            '000-02': 0,
-            '000-03': 0,
-            '000-04': 0,
-            '000-05': 0,
-            '000-06': 0
-        };
+        let detalleFichas = { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 };
 
         items.forEach(item => {
             const money = item.money || 0;
             const code = item.code || '';
             const unidades = item.unidades || 1;
             
-            if (code === '000-09') {
-                cierreEfectivo += money;
-                return;
-            }
-            if (code === '000-10') {
-                cierreBancard += money;
-                return;
-            }
+            if (code === '000-09') { cierreEfectivo += money; return; }
+            if (code === '000-10') { cierreBancard += money; return; }
 
             totalMonto += money;
 
             if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
-                if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) {
-                    fichasMonto += money;
-                }
+                if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) fichasMonto += money;
                 if (code === '000-07') pulserasMonto += money;
                 if (code === '000-08') billarMonto += money;
-                if (detalleFichas.hasOwnProperty(code)) {
-                    detalleFichas[code] += unidades;
-                }
+                if (detalleFichas.hasOwnProperty(code)) detalleFichas[code] += unidades;
             } else if (code && parseInt(code.substring(0,3)) >= 5) {
                 juguetesMonto += money;
             }
         });
 
-        return {
-            totalMonto,
-            cierreEfectivo,
-            cierreBancard,
-            totalCierre: cierreEfectivo + cierreBancard,
-            fichasMonto,
-            juguetesMonto,
-            pulserasMonto,
-            billarMonto,
-            detalleFichas
-        };
+        return { totalMonto, cierreEfectivo, cierreBancard, totalCierre: cierreEfectivo + cierreBancard, fichasMonto, juguetesMonto, pulserasMonto, billarMonto, detalleFichas };
     }
 
-    function calcularEstadisticasTotales(sucursales, fuente = null) {
-        const total = {
-            totalMonto: 0,
-            cierreEfectivo: 0,
-            cierreBancard: 0,
-            totalCierre: 0,
-            fichasMonto: 0,
-            juguetesMonto: 0,
-            pulserasMonto: 0,
-            billarMonto: 0,
-            detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 }
-        };
-
+    function calcularEstadisticasTotales(sucursales) {
+        const total = { totalMonto: 0, cierreEfectivo: 0, cierreBancard: 0, totalCierre: 0, fichasMonto: 0, juguetesMonto: 0, pulserasMonto: 0, billarMonto: 0, detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 } };
         sucursales.forEach(nombre => {
-            let items = [];
-            if (fuente === 'carrito') {
-                items = estado.carritos[nombre] || [];
-            } else if (fuente === 'historial') {
-                items = estado.historial[nombre] || [];
-            } else {
-                items = [...(estado.carritos[nombre] || []), ...(estado.historial[nombre] || [])];
-            }
-            
-            const stats = calcularEstadisticas(items);
+            const stats = calcularEstadisticas(estado.carritos[nombre] || []);
             total.totalMonto += stats.totalMonto;
             total.cierreEfectivo += stats.cierreEfectivo;
             total.cierreBancard += stats.cierreBancard;
@@ -785,345 +584,279 @@
             total.juguetesMonto += stats.juguetesMonto;
             total.pulserasMonto += stats.pulserasMonto;
             total.billarMonto += stats.billarMonto;
-            for (let key in total.detalleFichas) {
-                total.detalleFichas[key] += stats.detalleFichas[key] || 0;
-            }
+            for (let key in total.detalleFichas) total.detalleFichas[key] += stats.detalleFichas[key] || 0;
         });
-
         return total;
     }
 
     function renderDetalleFichas(detalle) {
         if (!detalle) return '-';
-        return `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 10px;">
-                <span>Unitarias: ${detalle['000-00']}</span>
-                <span>Combo 30k: ${detalle['000-01']}</span>
-                <span>Combo 60k: ${detalle['000-02']}</span>
-                <span>Combo 120k: ${detalle['000-03']}</span>
-                <span>Combo 180k: ${detalle['000-04']}</span>
-                <span>Error: ${detalle['000-05']}</span>
-                <span>Cápsulas: ${detalle['000-06']}</span>
-            </div>
-        `;
+        return `<div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 10px;">
+            <span>Unitarias: ${detalle['000-00']}</span>
+            <span>Combo 30k: ${detalle['000-01']}</span>
+            <span>Combo 60k: ${detalle['000-02']}</span>
+            <span>Combo 120k: ${detalle['000-03']}</span>
+            <span>Combo 180k: ${detalle['000-04']}</span>
+            <span>Error: ${detalle['000-05']}</span>
+            <span>Cápsulas: ${detalle['000-06']}</span>
+        </div>`;
     }
 
     // ============================================================
-    // 8. FILTROS AVANZADOS (CON DÍA LABORAL)
+    // 5. FILTROS AVANZADOS - CARGA BAJO DEMANDA
     // ============================================================
     function parseFecha(fechaStr) {
         if (!fechaStr) return null;
         if (typeof fechaStr === 'number') return new Date(fechaStr);
-        
         try {
             let limpio = fechaStr.trim();
             const partes = limpio.split(' ');
             const fechaPart = partes[0];
             const partesFecha = fechaPart.split('/');
-            
-            if (partesFecha.length === 3) {
-                const dia = parseInt(partesFecha[0]);
-                const mes = parseInt(partesFecha[1]) - 1;
-                const anio = parseInt(partesFecha[2]);
-                return new Date(anio, mes, dia);
-            }
-            
-            if (limpio.includes('-')) {
-                return new Date(limpio);
-            }
-            
+            if (partesFecha.length === 3) return new Date(parseInt(partesFecha[2]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[0]));
+            if (limpio.includes('-')) return new Date(limpio);
             return null;
-        } catch (error) {
-            return null;
-        }
+        } catch { return null; }
     }
 
     function codigoEnRango(codigo, desde, hasta) {
         if (!desde && !hasta) return true;
         if (!codigo) return false;
-        
         if (desde && !hasta) return codigo >= desde;
         if (!desde && hasta) return codigo <= hasta;
-        
         return codigo >= desde && codigo <= hasta;
     }
 
-    function obtenerItemsPorDiaLaboral(items, diaLaboralStr) {
-        if (!diaLaboralStr) return items;
+    async function cargarHistorialPorSucursal(sucursalConfig, fechaDesde, fechaHasta) {
+        const key = sucursalConfig.nombre;
         
-        // Filtrar items por el día laboral
-        // Un día laboral se define por el día en que ocurrió el cierre
-        // Las operaciones pueden ser del día anterior o del mismo día
-        
-        return items.filter(item => {
-            const ts = item.timestampCompleto || 0;
-            if (!ts) return true;
+        // Si ya tenemos el historial en caché y está dentro del rango, usarlo
+        if (estado.historialCache[key] && !fechaDesde && !fechaHasta) {
+            return estado.historialCache[key];
+        }
+
+        try {
+            const app = initializeApp(sucursalConfig.config, sucursalConfig.id);
+            const db = getDatabase(app);
+            const dbRef = ref(db);
             
-            const fecha = new Date(ts);
-            const fechaStr = fecha.toISOString().split('T')[0];
+            // Cargar solo el historial
+            const histSnap = await get(child(dbRef, 'historial_ventas'));
+            let items = [];
             
-            // Verificar si este item pertenece al día laboral
-            // Buscar en los días laborales de la sucursal
-            const sucursal = item.sucursal;
-            if (!sucursal || !estado.diasLaborales[sucursal]) return false;
-            
-            const dias = estado.diasLaborales[sucursal];
-            for (let dia of dias) {
-                if (dia.dia === diaLaboralStr) {
-                    // Verificar si el item está dentro del rango del día laboral
-                    if (ts >= dia.fechaInicio && ts <= dia.fechaFin) {
-                        return true;
+            if (histSnap.exists()) {
+                const data = histSnap.val();
+                Object.entries(data).forEach(([firebaseKey, registro]) => {
+                    if (registro.ventas && Array.isArray(registro.ventas)) {
+                        registro.ventas.forEach(venta => {
+                            const ts = venta.timestampCompleto || venta.timestamp || 0;
+                            // Filtrar por fecha en el lado del cliente
+                            if (fechaDesde || fechaHasta) {
+                                if (ts) {
+                                    const fecha = new Date(ts);
+                                    const fechaStr = fecha.toISOString().split('T')[0];
+                                    if (fechaDesde && fechaStr < fechaDesde) return;
+                                    if (fechaHasta && fechaStr > fechaHasta) return;
+                                }
+                            }
+                            items.push({
+                                ...venta,
+                                firebaseKey: firebaseKey,
+                                fuente: 'historial',
+                                sucursal: sucursalConfig.nombre,
+                                fechaEliminacion: registro.fechaEliminacion || venta.fecha
+                            });
+                        });
                     }
-                }
+                });
             }
-            return false;
-        });
+            
+            // Guardar en caché
+            estado.historialCache[key] = items;
+            return items;
+            
+        } catch (error) {
+            console.error(`Error cargando historial de ${sucursalConfig.nombre}:`, error);
+            return [];
+        }
     }
 
-    window.aplicarFiltros = function() {
+    window.aplicarFiltros = async function() {
+        const btn = document.getElementById('btnFiltrar');
+        btn.disabled = true;
+        btn.textContent = '⏳ Cargando...';
+        document.getElementById('statusBadge').className = 'status-badge loading';
+        document.getElementById('statusBadge').textContent = '⏳ Cargando datos...';
+
         const sucursalFiltro = document.getElementById('filtroSucursal').value;
+        const fechaDesde = document.getElementById('filtroFechaDesde').value;
+        const fechaHasta = document.getElementById('filtroFechaHasta').value;
         const diaLaboralFiltro = document.getElementById('filtroDiaLaboral').value;
         const codigoDesde = document.getElementById('filtroCodigoDesde').value.trim();
         const codigoHasta = document.getElementById('filtroCodigoHasta').value.trim();
         const tipoOperacion = document.getElementById('filtroTipoOperacion').value;
         const fuenteFiltro = document.getElementById('filtroFuente').value;
 
-        let itemsBase = [];
-        
-        // Filtrar por sucursal primero
-        let sucursalesAAnalizar = [];
+        // Determinar qué sucursales cargar
+        let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
-            sucursalesAAnalizar = Object.keys(estado.carritos);
+            sucursalesACargar = sucursalesConfig;
         } else {
-            sucursalesAAnalizar = [sucursalFiltro];
+            const encontrada = sucursalesConfig.find(s => s.nombre === sucursalFiltro);
+            if (encontrada) sucursalesACargar = [encontrada];
         }
 
-        if (fuenteFiltro === 'carrito') {
-            for (let sucursal of sucursalesAAnalizar) {
-                if (estado.carritos[sucursal]) {
-                    estado.carritos[sucursal].forEach(item => {
-                        itemsBase.push({ ...item, sucursal, fuente: 'carrito' });
-                    });
-                }
+        let todosItems = [];
+
+        // Cargar datos según la fuente seleccionada
+        for (const suc of sucursalesACargar) {
+            // Siempre cargar carrito
+            if (fuenteFiltro === 'todos' || fuenteFiltro === 'carrito') {
+                const carritoItems = estado.carritos[suc.nombre] || [];
+                carritoItems.forEach(item => {
+                    todosItems.push({ ...item, sucursal: suc.nombre, fuente: 'carrito' });
+                });
             }
-        } else if (fuenteFiltro === 'historial') {
-            for (let sucursal of sucursalesAAnalizar) {
-                if (estado.historial[sucursal]) {
-                    estado.historial[sucursal].forEach(item => {
-                        itemsBase.push({ ...item, sucursal, fuente: 'historial' });
-                    });
-                }
-            }
-        } else {
-            for (let sucursal of sucursalesAAnalizar) {
-                if (estado.carritos[sucursal]) {
-                    estado.carritos[sucursal].forEach(item => {
-                        itemsBase.push({ ...item, sucursal, fuente: 'carrito' });
-                    });
-                }
-                if (estado.historial[sucursal]) {
-                    estado.historial[sucursal].forEach(item => {
-                        itemsBase.push({ ...item, sucursal, fuente: 'historial' });
-                    });
-                }
+
+            // Cargar historial si es necesario
+            if (fuenteFiltro === 'todos' || fuenteFiltro === 'historial') {
+                const historialItems = await cargarHistorialPorSucursal(suc, fechaDesde, fechaHasta);
+                historialItems.forEach(item => {
+                    todosItems.push({ ...item, sucursal: suc.nombre, fuente: 'historial' });
+                });
             }
         }
 
-        let filtrados = itemsBase;
+        // Aplicar filtros en memoria
+        let filtrados = todosItems;
 
-        // NUEVO: Filtro por Día Laboral (basado en cierres)
+        // Filtro por día laboral (basado en cierres)
         if (diaLaboralFiltro) {
-            filtrados = obtenerItemsPorDiaLaboral(filtrados, diaLaboralFiltro);
-        }
-
-        // Filtro de código
-        if (codigoDesde || codigoHasta) {
             filtrados = filtrados.filter(item => {
-                const code = item.code || '';
-                return codigoEnRango(code, codigoDesde, codigoHasta);
+                const ts = item.timestampCompleto || item.timestamp || 0;
+                if (!ts) return true;
+                const fecha = new Date(ts);
+                const fechaStr = fecha.toISOString().split('T')[0];
+                // Incluir si es el día del cierre o si es el día anterior (operaciones nocturnas)
+                // Para simplificar, incluimos items del día seleccionado y del día anterior
+                // pero solo si tienen un cierre en el día seleccionado
+                const fechaObj = new Date(diaLaboralFiltro);
+                const diaAnterior = new Date(fechaObj);
+                diaAnterior.setDate(diaAnterior.getDate() - 1);
+                const diaAnteriorStr = diaAnterior.toISOString().split('T')[0];
+                
+                return fechaStr === diaLaboralFiltro || fechaStr === diaAnteriorStr;
             });
         }
 
-        // Filtro de tipo de operación
+        // Filtro por rango de códigos
+        if (codigoDesde || codigoHasta) {
+            filtrados = filtrados.filter(item => codigoEnRango(item.code || '', codigoDesde, codigoHasta));
+        }
+
+        // Filtro por tipo de operación
         if (tipoOperacion !== 'todos') {
             filtrados = filtrados.filter(item => {
                 switch(tipoOperacion) {
-                    case 'venta': 
-                        return !item.esMovimiento && !item.esFichaGratis && !item.esCierre && (item.money || 0) > 0;
-                    case 'puntos': 
-                        return (item.points || 0) > 0;
-                    case 'movimiento': 
-                        return item.esMovimiento === true;
-                    case 'stock': 
-                        return item.esMovimiento && item.destinoMovimiento === 'stock';
-                    case 'maquina': 
-                        return item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento.startsWith('maq');
-                    case 'fichas_gratis':
-                        return item.esFichaGratis === true;
-                    case 'cierres':
-                        return item.esCierre === true || item.code === '000-09' || item.code === '000-10';
-                    default: 
-                        return true;
+                    case 'venta': return !item.esMovimiento && !item.esFichaGratis && !item.esCierre && (item.money || 0) > 0;
+                    case 'puntos': return (item.points || 0) > 0;
+                    case 'movimiento': return item.esMovimiento === true;
+                    case 'stock': return item.esMovimiento && item.destinoMovimiento === 'stock';
+                    case 'maquina': return item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento.startsWith('maq');
+                    case 'fichas_gratis': return item.esFichaGratis === true;
+                    case 'cierres': return item.esCierre === true || item.code === '000-09' || item.code === '000-10';
+                    default: return true;
                 }
             });
         }
 
         estado.datosFiltrados = filtrados;
         renderResultadosFiltrados(filtrados);
-        actualizarEstadisticasRapidas(filtrados);
+        actualizarEstadisticasFiltradas(filtrados);
         actualizarPreviewPDF(filtrados);
+
+        btn.disabled = false;
+        btn.textContent = '🔍 Buscar';
+        document.getElementById('statusBadge').className = 'status-badge success';
+        document.getElementById('statusBadge').textContent = `✅ ${filtrados.length} items`;
     };
+
+    function actualizarEstadisticasFiltradas(items) {
+        const statsGrid = document.getElementById('statsGrid');
+        statsGrid.style.display = 'grid';
+
+        const itemsSinCierres = items.filter(item => item.code !== '000-09' && item.code !== '000-10');
+        const cierres = items.filter(item => item.code === '000-09' || item.code === '000-10');
+        
+        document.getElementById('statTotalItems').textContent = items.length.toLocaleString();
+        document.getElementById('statTotalMoney').textContent = `Gs. ${itemsSinCierres.reduce((s, i) => s + (i.money || 0), 0).toLocaleString()}`;
+        document.getElementById('statTotalPoints').textContent = items.reduce((s, i) => s + (i.points || 0), 0).toLocaleString();
+        document.getElementById('statTotalFichas').textContent = items.reduce((s, i) => s + (Math.abs(i.fichaConsumption || 0)), 0).toLocaleString();
+        document.getElementById('statTotalCierres').textContent = `Gs. ${cierres.reduce((s, i) => s + (i.money || 0), 0).toLocaleString()}`;
+        
+        // Contar días laborales únicos
+        const dias = new Set();
+        items.forEach(item => {
+            const ts = item.timestampCompleto || item.timestamp || 0;
+            if (ts) {
+                const fecha = new Date(ts);
+                const key = `${item.sucursal || ''}_${fecha.toISOString().split('T')[0]}`;
+                dias.add(key);
+            }
+        });
+        document.getElementById('statDiasLaborales').textContent = dias.size;
+    }
 
     function renderResultadosFiltrados(items) {
         const container = document.getElementById('resultadosFiltrados');
         
         if (items.length === 0) {
-            container.innerHTML = `
-                <div class="filter-summary">
-                    <span>🔍 <strong>0</strong> resultados encontrados</span>
-                </div>
-                <p class="text-center" style="color:#888; padding:20px;">No se encontraron resultados con los filtros aplicados.</p>
-            `;
+            container.innerHTML = `<p class="text-center" style="color:#888; padding:20px;">No se encontraron resultados con los filtros aplicados.</p>`;
             return;
         }
 
-        // Ordenar por timestamp para mostrar en orden cronológico
-        const itemsOrdenados = [...items].sort((a, b) => (a.timestampCompleto || 0) - (b.timestampCompleto || 0));
+        // Ordenar por timestamp
+        const itemsOrdenados = [...items].sort((a, b) => (a.timestampCompleto || a.timestamp || 0) - (b.timestampCompleto || b.timestamp || 0));
 
-        const itemsSinCierres = itemsOrdenados.filter(item => 
-            item.code !== '000-09' && item.code !== '000-10'
-        );
-        const totalMoney = itemsSinCierres.reduce((sum, i) => sum + (i.money || 0), 0);
-        const totalPoints = itemsOrdenados.reduce((sum, i) => sum + (i.points || 0), 0);
-        const totalFichas = itemsOrdenados.reduce((sum, i) => sum + (Math.abs(i.fichaConsumption || 0)), 0);
-        
-        const cierres = itemsOrdenados.filter(item => 
-            item.code === '000-09' || item.code === '000-10'
-        );
-        const totalCierres = cierres.reduce((sum, i) => sum + (i.money || 0), 0);
-        
-        const tipos = {};
-        const fuentes = {};
-        const sucursales = {};
-        itemsOrdenados.forEach(i => {
-            let tipo = 'Venta';
-            if (i.esMovimiento) tipo = 'Movimiento';
-            else if (i.esFichaGratis) tipo = 'Ficha Gratis';
-            else if (i.esCierre || i.code === '000-09' || i.code === '000-10') tipo = '💰 Cierre';
-            tipos[tipo] = (tipos[tipo] || 0) + 1;
-            
-            const fuente = i.fuente || 'desconocido';
-            fuentes[fuente] = (fuentes[fuente] || 0) + 1;
-            
-            const sucursal = i.sucursal || 'Sin Sucursal';
-            sucursales[sucursal] = (sucursales[sucursal] || 0) + 1;
-        });
-
-        // Encontrar separadores de días laborales
-        let diaActual = '';
         let html = `<div class="filter-summary">
             <span><strong>🔍 ${itemsOrdenados.length}</strong> items encontrados</span>
-            <span class="filter-tag">💰 Total (sin cierres): Gs. ${totalMoney.toLocaleString()}</span>
-            <span class="filter-tag cierre-tag">💰 Total Cierres: Gs. ${totalCierres.toLocaleString()}</span>
-            <span class="filter-tag">🎯 Puntos: ${totalPoints.toLocaleString()}</span>
-            <span class="filter-tag">🎴 Fichas: ${totalFichas.toLocaleString()}</span>
-            ${Object.entries(sucursales).map(([suc, count]) => 
-                `<span class="filter-tag">🏢 ${suc}: ${count}</span>`
-            ).join('')}
-            ${Object.entries(tipos).map(([tipo, count]) => 
-                `<span class="filter-tag">${tipo}: ${count}</span>`
-            ).join('')}
-            ${Object.entries(fuentes).map(([fuente, count]) => 
-                `<span class="filter-tag">📂 ${fuente}: ${count}</span>`
-            ).join('')}
         </div>`;
 
-        html += `<div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Sucursal</th>
-                        <th>Fuente</th>
-                        <th>Código</th>
-                        <th>Producto</th>
-                        <th>Puntos</th>
-                        <th>Dinero (Gs.)</th>
-                        <th>Fichas</th>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Tipo</th>
-                    </tr>
-                </thead>
-                <tbody>`;
+        html += `<div class="table-responsive"><table>
+            <thead><tr>
+                <th>#</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
+                <th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha</th><th>Hora</th><th>Tipo</th>
+            </tr></thead><tbody>`;
 
         let contador = 0;
         let ultimoDia = '';
 
         itemsOrdenados.forEach(item => {
             contador++;
+            const ts = item.timestampCompleto || item.timestamp || 0;
+            const fecha = ts ? new Date(ts) : null;
+            const fechaStr = fecha ? fecha.toISOString().split('T')[0] : item.fecha || '-';
             
-            // Detectar cambio de día laboral
-            const ts = item.timestampCompleto || 0;
-            const fechaItem = ts ? new Date(ts).toISOString().split('T')[0] : '';
-            
-            // Buscar el día laboral de este item
-            let diaLaboral = '';
-            const sucursal = item.sucursal;
-            if (sucursal && estado.diasLaborales[sucursal]) {
-                for (let dia of estado.diasLaborales[sucursal]) {
-                    if (ts >= dia.fechaInicio && ts <= dia.fechaFin) {
-                        diaLaboral = dia.dia;
-                        break;
-                    }
-                }
+            // Detectar cambio de día
+            if (fechaStr !== ultimoDia && ultimoDia !== '') {
+                html += `<tr class="dia-laboral-separator">
+                    <td colspan="11" style="text-align:center;">📅 <strong>Día: ${fechaStr}</strong></td>
+                </tr>`;
             }
-            
-            // Si no se encontró día laboral, usar la fecha del item
-            if (!diaLaboral) diaLaboral = fechaItem;
-            
-            // Mostrar separador de día laboral
-            if (diaLaboral && diaLaboral !== ultimoDia) {
-                if (ultimoDia !== '') {
-                    html += `<tr class="dia-laboral-separator">
-                        <td colspan="11" style="text-align:center;">
-                            📅 <strong>Día Laboral: ${diaLaboral}</strong>
-                            <span class="dia-badge">${diaLaboral}</span>
-                        </td>
-                    </tr>`;
-                } else {
-                    html += `<tr class="dia-laboral-separator">
-                        <td colspan="11" style="text-align:center;">
-                            📅 <strong>Día Laboral: ${diaLaboral}</strong>
-                            <span class="dia-badge">${diaLaboral}</span>
-                        </td>
-                    </tr>`;
-                }
-                ultimoDia = diaLaboral;
+            if (fechaStr !== ultimoDia) {
+                ultimoDia = fechaStr;
             }
 
-            let tipo = '🛒 Venta';
             const esCierre = item.esCierre || item.code === '000-09' || item.code === '000-10';
-            if (item.esMovimiento) tipo = '🔄 Movimiento';
-            else if (item.esFichaGratis) tipo = '🎁 Gratis';
-            else if (esCierre) tipo = '💰 Cierre';
+            const tipo = esCierre ? '💰 Cierre' : 
+                        item.esMovimiento ? '🔄 Movimiento' : 
+                        item.esFichaGratis ? '🎁 Gratis' : '🛒 Venta';
             
-            const fuente = item.fuente === 'historial' ? '📜 Historial' : '🛒 Carrito';
-            const claseCierre = esCierre ? 'cierre-row' : '';
-            
-            // Formatear hora con segundos
-            let horaStr = item.hora || '';
-            if (!horaStr && ts) {
-                const fecha = new Date(ts);
-                horaStr = fecha.toLocaleTimeString('es-PY', { 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    second: '2-digit',
-                    hour12: false 
-                });
-            }
-            
-            html += `<tr class="${claseCierre}">
+            const horaStr = item.hora || (fecha ? fecha.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '-');
+            const fuente = item.fuente === 'historial' ? '📜' : '🛒';
+            const clase = esCierre ? 'cierre-row' : '';
+
+            html += `<tr class="${clase}">
                 <td style="font-size:0.7rem; color:#999;">${contador}</td>
                 <td><strong>${item.sucursal || '-'}</strong></td>
                 <td>${fuente}</td>
@@ -1132,7 +865,7 @@
                 <td>${(item.points || 0).toLocaleString()}</td>
                 <td>${(item.money || 0).toLocaleString()}</td>
                 <td>${Math.abs(item.fichaConsumption || 0)}</td>
-                <td>${item.fecha || item.fechaEliminacion || '-'}</td>
+                <td>${item.fecha || '-'}</td>
                 <td style="font-family:monospace; font-size:0.8rem;">${horaStr}</td>
                 <td>${tipo}</td>
             </tr>`;
@@ -1144,149 +877,94 @@
 
     window.limpiarFiltros = function() {
         document.getElementById('filtroSucursal').value = 'todas';
+        document.getElementById('filtroFechaDesde').value = '';
+        document.getElementById('filtroFechaHasta').value = '';
         document.getElementById('filtroDiaLaboral').value = '';
         document.getElementById('filtroCodigoDesde').value = '';
         document.getElementById('filtroCodigoHasta').value = '';
         document.getElementById('filtroTipoOperacion').value = 'todos';
-        document.getElementById('filtroFuente').value = 'todos';
-        aplicarFiltros();
+        document.getElementById('filtroFuente').value = 'carrito';
+        document.getElementById('resultadosFiltrados').innerHTML = `<p class="text-center" style="color:#888;">Selecciona filtros y presiona "Buscar" para ver los resultados.</p>`;
+        document.getElementById('statsGrid').style.display = 'none';
+        document.getElementById('previewPDF').innerHTML = `<p class="text-center" style="color:#888;">Aplica filtros para ver la vista previa.</p>`;
+        estado.datosFiltrados = [];
     };
 
     // ============================================================
-    // 9. GENERAR REPORTE PDF (BASADO EN FILTROS)
+    // 6. GENERAR PDF
     // ============================================================
-    function obtenerDatosParaPDF(items) {
-        const datos = items || estado.datosFiltrados || [];
-        
-        const sucursales = {};
-        datos.forEach(item => {
-            const sucursal = item.sucursal || 'Sin Sucursal';
-            if (!sucursales[sucursal]) sucursales[sucursal] = [];
-            sucursales[sucursal].push(item);
-        });
+    window.generarPDFconFiltros = function() {
+        const items = estado.datosFiltrados || [];
+        if (items.length === 0) {
+            alert('⚠️ No hay datos filtrados. Aplica filtros primero.');
+            return;
+        }
+        generarPDFconDatos(items);
+    };
 
-        const filas = [];
-        let totalEfectivo = 0;
-        let totalBancard = 0;
-        let totalGeneral = 0;
-
-        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
-        
-        orden.forEach(nombre => {
-            const itemsSucursal = sucursales[nombre] || [];
-            const stats = calcularEstadisticas(itemsSucursal);
-            if (stats.cierreEfectivo > 0 || stats.cierreBancard > 0 || stats.totalCierre > 0) {
-                filas.push({
-                    sucursal: nombre,
-                    efectivo: stats.cierreEfectivo,
-                    bancard: stats.cierreBancard,
-                    total: stats.totalCierre
-                });
-                totalEfectivo += stats.cierreEfectivo;
-                totalBancard += stats.cierreBancard;
-                totalGeneral += stats.totalCierre;
-            }
-        });
-
-        return { 
-            filas: filas.length > 0 ? filas : [{ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 }],
-            totalEfectivo, 
-            totalBancard, 
-            totalGeneral,
-            totalItems: datos.length
-        };
-    }
-
-    function generarPDFconDatos(items, titulo = 'Reporte con Filtros') {
-        const { filas, totalEfectivo, totalBancard, totalGeneral, totalItems } = obtenerDatosParaPDF(items);
+    function generarPDFconDatos(items) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
 
         doc.setFont("Times", "Roman");
-
         doc.setFontSize(22);
         doc.setTextColor(0, 0, 139);
         doc.setFont("Times", "bold");
         doc.text("ASTROLAND", 105, 25, { align: 'center' });
         doc.setFontSize(14);
         doc.text("IN GOD WE TRUST", 105, 35, { align: 'center' });
-
-        doc.setDrawColor(0);
         doc.line(20, 40, 190, 40);
 
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.setFont("Times", "normal");
-        doc.text(`Reporte: ${titulo}`, 20, 50);
-        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 57);
-        doc.text(`Items: ${totalItems}`, 20, 64);
+        doc.text(`Reporte generado: ${new Date().toLocaleString()}`, 20, 50);
+        doc.text(`Items: ${items.length}`, 20, 57);
 
-        const sucursalFiltro = document.getElementById('filtroSucursal').value;
-        const diaLaboralFiltro = document.getElementById('filtroDiaLaboral').value;
-        const codigoDesde = document.getElementById('filtroCodigoDesde').value;
-        const codigoHasta = document.getElementById('filtroCodigoHasta').value;
+        // Agrupar por sucursal
+        const sucursales = {};
+        items.forEach(item => {
+            const suc = item.sucursal || 'Sin Sucursal';
+            if (!sucursales[suc]) sucursales[suc] = [];
+            sucursales[suc].push(item);
+        });
+
+        const filas = [];
+        let totalEfectivo = 0, totalBancard = 0;
+        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
         
-        let filtrosInfo = [];
-        if (sucursalFiltro && sucursalFiltro !== 'todas') {
-            filtrosInfo.push(`🏢 ${sucursalFiltro}`);
-        }
-        if (diaLaboralFiltro) {
-            filtrosInfo.push(`📅 Día: ${diaLaboralFiltro}`);
-        }
-        if (codigoDesde || codigoHasta) {
-            filtrosInfo.push(`🏷️ ${codigoDesde || '000-00'} → ${codigoHasta || '999-99'}`);
-        }
-        if (filtrosInfo.length > 0) {
-            doc.setFontSize(9);
-            doc.setTextColor(80);
-            doc.text(`Filtros: ${filtrosInfo.join(' | ')}`, 20, 71);
+        orden.forEach(nombre => {
+            const stats = calcularEstadisticas(sucursales[nombre] || []);
+            filas.push({
+                sucursal: nombre,
+                efectivo: stats.cierreEfectivo,
+                bancard: stats.cierreBancard,
+                total: stats.totalCierre
+            });
+            totalEfectivo += stats.cierreEfectivo;
+            totalBancard += stats.cierreBancard;
+        });
+
+        const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
+        if (tableRows.length === 0) {
+            tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
         }
 
-        const startY = filtrosInfo.length > 0 ? 78 : 72;
-
-        const tableHeaders = [["Sucursal", "Efectivo", "Bancard", "Total"]];
-        const tableRows = filas.map(f => [
-            f.sucursal,
-            f.efectivo.toLocaleString(),
-            f.bancard.toLocaleString(),
-            f.total.toLocaleString()
-        ]);
-
-        if (filas.length > 1) {
-            tableRows.push(["Total", totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), totalGeneral.toLocaleString()]);
+        const bodyRows = tableRows.map(f => [f.sucursal, f.efectivo.toLocaleString(), f.bancard.toLocaleString(), f.total.toLocaleString()]);
+        if (tableRows.length > 1) {
+            bodyRows.push(['Total', totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), (totalEfectivo + totalBancard).toLocaleString()]);
         }
 
         doc.autoTable({
-            head: tableHeaders,
-            body: tableRows,
-            startY: startY,
+            head: [['Sucursal', 'Efectivo', 'Bancard', 'Total']],
+            body: bodyRows,
+            startY: 65,
             theme: 'plain',
-            styles: {
-                font: 'Times',
-                fontSize: 14,
-                textColor: [0, 0, 139],
-                lineColor: [0, 0, 0],
-                lineWidth: 0.5,
-            },
-            headStyles: {
-                fillColor: [255, 215, 0],
-                textColor: [0, 0, 0],
-                fontSize: 14,
-                fontStyle: 'bold',
-                halign: 'center'
-            },
-            bodyStyles: {
-                fontSize: 14,
-                halign: 'center'
-            },
-            footStyles: {
-                fillColor: [255, 215, 0],
-                textColor: [0, 0, 0],
-                fontSize: 14,
-                fontStyle: 'bold',
-                halign: 'center'
-            },
-            foot: filas.length > 1 ? tableRows.slice(-1).map(row => row) : undefined,
+            styles: { font: 'Times', fontSize: 14, textColor: [0, 0, 139], lineColor: [0, 0, 0], lineWidth: 0.5 },
+            headStyles: { fillColor: [255, 215, 0], textColor: [0, 0, 0], fontSize: 14, fontStyle: 'bold', halign: 'center' },
+            bodyStyles: { fontSize: 14, halign: 'center' },
+            footStyles: { fillColor: [255, 215, 0], textColor: [0, 0, 0], fontSize: 14, fontStyle: 'bold', halign: 'center' },
+            foot: tableRows.length > 1 ? [bodyRows[bodyRows.length - 1]] : undefined,
             margin: { left: 20, right: 20 },
             tableWidth: 'auto'
         });
@@ -1300,111 +978,61 @@
             doc.text(`Hoja ${i} / ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 15);
         }
 
-        const fechaStr = new Date().toISOString().split('T')[0];
-        const sucursalStr = sucursalFiltro && sucursalFiltro !== 'todas' ? `_${sucursalFiltro.replace(' ', '_')}` : '';
-        const diaStr = diaLaboralFiltro ? `_${diaLaboralFiltro}` : '';
-        doc.save(`ASTROLAND_Reporte${sucursalStr}${diaStr}_${fechaStr}.pdf`);
+        doc.save(`ASTROLAND_Reporte_${new Date().toISOString().split('T')[0]}.pdf`);
     }
 
     // ============================================================
-    // 10. FUNCIONES PARA GENERAR PDF
-    // ============================================================
-    window.generarPDFconFiltros = function() {
-        const items = estado.datosFiltrados || [];
-        if (items.length === 0) {
-            alert('⚠️ No hay datos filtrados para generar el PDF. Aplica filtros primero.');
-            return;
-        }
-        const sucursalFiltro = document.getElementById('filtroSucursal').value;
-        const diaLaboralFiltro = document.getElementById('filtroDiaLaboral').value;
-        let titulo = 'Reporte con Filtros';
-        if (sucursalFiltro !== 'todas') titulo += ` - ${sucursalFiltro}`;
-        if (diaLaboralFiltro) titulo += ` - Día: ${diaLaboralFiltro}`;
-        generarPDFconDatos(items, titulo);
-    };
-
-    window.generarPDF = function() {
-        const items = [];
-        for (let [sucursal, itemsSuc] of Object.entries(estado.carritos)) {
-            itemsSuc.forEach(item => {
-                items.push({ ...item, sucursal });
-            });
-        }
-        if (items.length === 0) {
-            alert('⚠️ No hay items en el carrito actual.');
-            return;
-        }
-        generarPDFconDatos(items, 'Carrito Actual');
-    };
-
-    // ============================================================
-    // 11. VISTA PREVIA DEL PDF
+    // 7. VISTA PREVIA DEL PDF
     // ============================================================
     function actualizarPreviewPDF(items) {
-        const datos = items || estado.datosFiltrados || [];
-        const { filas, totalEfectivo, totalBancard, totalGeneral, totalItems } = obtenerDatosParaPDF(datos);
         const container = document.getElementById('previewPDF');
-        
-        if (datos.length === 0) {
-            container.innerHTML = `<p class="text-center" style="color:#888;">Aplica filtros para ver la vista previa del PDF.</p>`;
+        if (!items || items.length === 0) {
+            container.innerHTML = `<p class="text-center" style="color:#888;">No hay datos para mostrar.</p>`;
             return;
         }
 
-        const sucursalFiltro = document.getElementById('filtroSucursal').value;
-        const diaLaboralFiltro = document.getElementById('filtroDiaLaboral').value;
-        const codigoDesde = document.getElementById('filtroCodigoDesde').value;
-        const codigoHasta = document.getElementById('filtroCodigoHasta').value;
-        
-        let filtrosInfo = [];
-        if (sucursalFiltro && sucursalFiltro !== 'todas') {
-            filtrosInfo.push(`🏢 ${sucursalFiltro}`);
-        }
-        if (diaLaboralFiltro) {
-            filtrosInfo.push(`📅 Día: ${diaLaboralFiltro}`);
-        }
-        if (codigoDesde || codigoHasta) {
-            filtrosInfo.push(`🏷️ ${codigoDesde || '000-00'} → ${codigoHasta || '999-99'}`);
-        }
-        
+        const sucursales = {};
+        items.forEach(item => {
+            const suc = item.sucursal || 'Sin Sucursal';
+            if (!sucursales[suc]) sucursales[suc] = [];
+            sucursales[suc].push(item);
+        });
+
+        const filas = [];
+        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
+        orden.forEach(nombre => {
+            const stats = calcularEstadisticas(sucursales[nombre] || []);
+            filas.push({ sucursal: nombre, efectivo: stats.cierreEfectivo, bancard: stats.cierreBancard, total: stats.totalCierre });
+        });
+
+        const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
+        if (tableRows.length === 0) tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
+
         let html = `<div style="margin-bottom:10px; font-size:0.85rem; color:#555;">
-            <strong>📄 Vista previa del PDF</strong> 
-            ${filtrosInfo.length > 0 ? `| Filtros: ${filtrosInfo.join(' | ')}` : ''}
-            <span style="margin-left:15px;">📦 ${totalItems} items</span>
-        </div>`;
+            <strong>📄 Vista previa del PDF</strong> — ${items.length} items
+        </div><table><thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead><tbody>`;
         
-        html += `<table>
-            <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
-            <tbody>
-        `;
-        filas.forEach(f => {
+        tableRows.forEach(f => {
             html += `<tr><td>${f.sucursal}</td><td>Gs. ${f.efectivo.toLocaleString()}</td><td>Gs. ${f.bancard.toLocaleString()}</td><td>Gs. ${f.total.toLocaleString()}</td></tr>`;
         });
         
-        if (filas.length > 1) {
-            html += `
-                <tr class="total-row"><td><strong>Total</strong></td>
-                <td><strong>Gs. ${totalEfectivo.toLocaleString()}</strong></td>
-                <td><strong>Gs. ${totalBancard.toLocaleString()}</strong></td>
-                <td><strong>Gs. ${totalGeneral.toLocaleString()}</strong></td></tr>
-            `;
-        }
         html += `</tbody></table>`;
-        html += `<p style="margin-top:10px; font-size:0.8rem; color:#666;">📌 El PDF incluirá estos datos con formato Times New Roman, Azul Francia, y fondo amarillo en los títulos.</p>`;
         container.innerHTML = html;
     }
 
     // ============================================================
-    // 12. INICIALIZACIÓN
+    // 8. INICIALIZACIÓN
     // ============================================================
-    cargarTodosLosDatos();
-    setInterval(cargarTodosLosDatos, 60000);
+    cargarCarritos();
 
+    // Configurar fechas iniciales (últimos 7 días)
     const hoy = new Date();
     const hace7Dias = new Date();
     hace7Dias.setDate(hoy.getDate() - 7);
-    
-    console.log('✅ Panel de Control ASTROLAND con Días Laborales cargado correctamente.');
-    console.log(`📊 Items cargados: ${estado.todosItems.length} (Carrito + Historial)`);
+    document.getElementById('filtroFechaDesde').value = hace7Dias.toISOString().split('T')[0];
+    document.getElementById('filtroFechaHasta').value = hoy.toISOString().split('T')[0];
+
+    console.log('✅ Panel de Control ASTROLAND Optimizado cargado correctamente.');
 </script>
 
 </body>
