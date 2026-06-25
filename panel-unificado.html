@@ -243,6 +243,19 @@
         }
         .info-box strong { color: #1a237e; }
 
+        /* Debug info */
+        .debug-info {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: stretch; text-align: center; }
             .filter-grid { flex-direction: column; }
@@ -461,7 +474,6 @@
     const estado = {
         carritos: {},
         historialCache: {},
-        diasLaborales: {},      // { sucursal: [ { dia, fechaInicio, fechaFin, items } ] }
         datosFiltrados: [],
         cargando: false
     };
@@ -619,7 +631,51 @@
     }
 
     // ============================================================
-    // 5. FUNCIÓN PRINCIPAL: FILTRAR POR DÍAS LABORALES
+    // 5. FUNCIÓN PARA OBTENER FECHA DE UN ITEM
+    // ============================================================
+    function obtenerFechaItem(item) {
+        // Intentar diferentes formas de obtener la fecha
+        let ts = item.timestampCompleto || item.timestamp || 0;
+        
+        if (ts) {
+            return new Date(ts);
+        }
+        
+        // Si no tiene timestamp, intentar con fecha string
+        if (item.fecha) {
+            try {
+                // Formato "dd/mm/yyyy" o "dd/mm/yyyy hh:mm:ss"
+                const partes = item.fecha.split('/');
+                if (partes.length === 3) {
+                    const dia = parseInt(partes[0]);
+                    const mes = parseInt(partes[1]) - 1;
+                    const anio = parseInt(partes[2]);
+                    return new Date(anio, mes, dia);
+                }
+            } catch(e) {}
+        }
+        
+        return null;
+    }
+
+    function obtenerDiaLaboral(item, diaDesde, diaHasta) {
+        const fecha = obtenerFechaItem(item);
+        if (!fecha) return null;
+        
+        const fechaStr = fecha.toISOString().split('T')[0];
+        
+        // Verificar si está en el rango
+        if (diaDesde && fechaStr < diaDesde) return null;
+        if (diaHasta && fechaStr > diaHasta) return null;
+        
+        // Para operaciones nocturnas (después de medianoche), 
+        // pertenecen al día del cierre anterior
+        // Pero para simplificar, usamos la fecha de la operación
+        return fechaStr;
+    }
+
+    // ============================================================
+    // 6. FUNCIÓN PRINCIPAL: FILTRAR POR DÍAS LABORALES
     // ============================================================
     function codigoEnRango(codigo, desde, hasta) {
         if (!desde && !hasta) return true;
@@ -670,68 +726,6 @@
         }
     }
 
-    function obtenerDiasLaborales(items) {
-        // Ordenar por timestamp
-        const ordenados = [...items].sort((a, b) => (a.timestampCompleto || a.timestamp || 0) - (b.timestampCompleto || b.timestamp || 0));
-        
-        const dias = [];
-        let diaActual = null;
-        
-        ordenados.forEach(item => {
-            const ts = item.timestampCompleto || item.timestamp || 0;
-            if (!ts) return;
-            
-            const fecha = new Date(ts);
-            const fechaStr = fecha.toISOString().split('T')[0];
-            const esCierre = item.code === '000-09' || item.code === '000-10';
-            
-            if (esCierre) {
-                // Si hay un día abierto, lo cerramos con este cierre
-                if (diaActual) {
-                    diaActual.fechaFin = ts;
-                    diaActual.fechaFinStr = fechaStr;
-                    diaActual.cierre = item;
-                    dias.push(diaActual);
-                    diaActual = null;
-                } else {
-                    // Si no hay día abierto, creamos uno solo con el cierre
-                    dias.push({
-                        dia: fechaStr,
-                        fechaInicio: ts,
-                        fechaFin: ts,
-                        fechaInicioStr: fechaStr,
-                        fechaFinStr: fechaStr,
-                        items: [item],
-                        cierre: item
-                    });
-                }
-            } else {
-                if (!diaActual) {
-                    diaActual = {
-                        dia: fechaStr,
-                        fechaInicio: ts,
-                        fechaFin: ts,
-                        fechaInicioStr: fechaStr,
-                        fechaFinStr: fechaStr,
-                        items: []
-                    };
-                }
-                if (ts > diaActual.fechaFin) {
-                    diaActual.fechaFin = ts;
-                    diaActual.fechaFinStr = fechaStr;
-                }
-                diaActual.items.push(item);
-            }
-        });
-        
-        // Si queda un día abierto (sin cierre), lo cerramos
-        if (diaActual) {
-            dias.push(diaActual);
-        }
-        
-        return dias;
-    }
-
     window.aplicarFiltros = async function() {
         const btn = document.getElementById('btnFiltrar');
         btn.disabled = true;
@@ -747,6 +741,14 @@
         const tipoOperacion = document.getElementById('filtroTipoOperacion').value;
         const fuenteFiltro = document.getElementById('filtroFuente').value;
 
+        // Verificar que haya un rango de días
+        if (!diaDesde && !diaHasta) {
+            alert('⚠️ Debes seleccionar al menos un día laboral (Desde o Hasta)');
+            btn.disabled = false;
+            btn.textContent = '🔍 Buscar';
+            return;
+        }
+
         // Determinar sucursales
         let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
@@ -754,14 +756,6 @@
         } else {
             const encontrada = sucursalesConfig.find(s => s.nombre === sucursalFiltro);
             if (encontrada) sucursalesACargar = [encontrada];
-        }
-
-        // Verificar que haya un rango de días
-        if (!diaDesde && !diaHasta) {
-            alert('⚠️ Debes seleccionar al menos un día laboral (Desde o Hasta)');
-            btn.disabled = false;
-            btn.textContent = '🔍 Buscar';
-            return;
         }
 
         let todosItems = [];
@@ -785,37 +779,27 @@
             }
         }
 
-        // Calcular días laborales para cada sucursal
-        const diasPorSucursal = {};
-        for (const suc of sucursalesACargar) {
-            const itemsSuc = todosItems.filter(i => i.sucursal === suc.nombre);
-            diasPorSucursal[suc.nombre] = obtenerDiasLaborales(itemsSuc);
-        }
+        console.log(`📊 Total items cargados: ${todosItems.length}`);
 
-        // Filtrar por rango de días laborales
-        let filtrados = [];
-        for (const suc of sucursalesACargar) {
-            const dias = diasPorSucursal[suc.nombre] || [];
-            const nombreSuc = suc.nombre;
+        // FILTRO PRINCIPAL: Por rango de días laborales
+        let filtrados = todosItems.filter(item => {
+            const fecha = obtenerFechaItem(item);
+            if (!fecha) {
+                console.log('⚠️ Item sin fecha:', item);
+                return false;
+            }
             
-            dias.forEach(dia => {
-                // Verificar si el día está en el rango
-                let incluir = true;
-                if (diaDesde && dia.dia < diaDesde) incluir = false;
-                if (diaHasta && dia.dia > diaHasta) incluir = false;
-                
-                if (incluir) {
-                    // Agregar todos los items de este día laboral
-                    dia.items.forEach(item => {
-                        filtrados.push({ ...item, _diaLaboral: dia.dia });
-                    });
-                    // También agregar el cierre si existe
-                    if (dia.cierre) {
-                        filtrados.push({ ...dia.cierre, _diaLaboral: dia.dia });
-                    }
-                }
-            });
-        }
+            const fechaStr = fecha.toISOString().split('T')[0];
+            
+            // Verificar rango
+            let enRango = true;
+            if (diaDesde && fechaStr < diaDesde) enRango = false;
+            if (diaHasta && fechaStr > diaHasta) enRango = false;
+            
+            return enRango;
+        });
+
+        console.log(`📊 Items después de filtro de fechas: ${filtrados.length}`);
 
         // Aplicar filtros adicionales
         // Códigos
@@ -839,8 +823,21 @@
             });
         }
 
+        console.log(`📊 Items después de filtros adicionales: ${filtrados.length}`);
+
         // Ordenar por timestamp
-        filtrados.sort((a, b) => (a.timestampCompleto || a.timestamp || 0) - (b.timestampCompleto || b.timestamp || 0));
+        filtrados.sort((a, b) => {
+            const tsA = a.timestampCompleto || a.timestamp || 0;
+            const tsB = b.timestampCompleto || b.timestamp || 0;
+            return tsA - tsB;
+        });
+
+        // Agregar día laboral a cada item para visualización
+        filtrados = filtrados.map(item => {
+            const fecha = obtenerFechaItem(item);
+            const diaLaboral = fecha ? fecha.toISOString().split('T')[0] : 'sin fecha';
+            return { ...item, _diaLaboral: diaLaboral };
+        });
 
         estado.datosFiltrados = filtrados;
         renderResultadosFiltrados(filtrados);
@@ -875,7 +872,15 @@
         const container = document.getElementById('resultadosFiltrados');
         
         if (items.length === 0) {
-            container.innerHTML = `<p class="text-center" style="color:#888; padding:20px;">No se encontraron resultados en el rango de días laborales seleccionado.</p>`;
+            container.innerHTML = `
+                <div class="filter-summary">
+                    <span>🔍 <strong>0</strong> resultados encontrados</span>
+                </div>
+                <p class="text-center" style="color:#888; padding:20px;">
+                    No se encontraron operaciones en el rango de días seleccionado.
+                    <br><small>Verifica que haya operaciones en esas fechas.</small>
+                </p>
+            `;
             return;
         }
 
@@ -962,7 +967,7 @@
     };
 
     // ============================================================
-    // 6. GENERAR PDF
+    // 7. GENERAR PDF
     // ============================================================
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
@@ -1058,7 +1063,7 @@
     }
 
     // ============================================================
-    // 7. VISTA PREVIA DEL PDF
+    // 8. VISTA PREVIA DEL PDF
     // ============================================================
     function actualizarPreviewPDF(items) {
         const container = document.getElementById('previewPDF');
@@ -1104,7 +1109,7 @@
     }
 
     // ============================================================
-    // 8. INICIALIZACIÓN
+    // 9. INICIALIZACIÓN
     // ============================================================
     cargarCarritos();
 
@@ -1116,6 +1121,7 @@
     document.getElementById('filtroDiaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel de Control ASTROLAND - Días Laborales cargado correctamente.');
+    console.log('📝 Para depurar, abre la consola del navegador (F12)');
 </script>
 
 </body>
