@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel de Control ASTROLAND - Optimizado</title>
+    <title>Panel de Control ASTROLAND - Días Laborales</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -106,6 +106,12 @@
             border-top: 3px solid #1a237e;
             border-bottom: 3px solid #1a237e;
         }
+        .dia-laboral-header td {
+            background: #1a237e !important;
+            color: white !important;
+            font-weight: bold;
+            padding: 8px;
+        }
 
         .filter-grid {
             display: flex;
@@ -137,8 +143,8 @@
             align-items: center;
         }
         .filter-group .rango-inputs input {
-            width: 70px;
-            min-width: 70px;
+            width: 130px;
+            min-width: 130px;
             text-align: center;
         }
         .filter-group .rango-inputs span {
@@ -227,11 +233,21 @@
         }
         .stat-box.cierres { border-left-color: #ff9800; }
 
+        .info-box {
+            background: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #0d47a1;
+        }
+        .info-box strong { color: #1a237e; }
+
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: stretch; text-align: center; }
             .filter-grid { flex-direction: column; }
             .filter-group input, .filter-group select { min-width: 100%; }
-            .filter-group .rango-inputs input { width: 60px; min-width: 60px; }
+            .filter-group .rango-inputs input { width: 100%; min-width: 100%; }
         }
     </style>
 </head>
@@ -240,7 +256,7 @@
 <div class="container">
     <!-- ENCABEZADO -->
     <div class="header">
-        <h1>🎯 ASTROLAND <small>Panel de Control - Optimizado</small></h1>
+        <h1>🎯 ASTROLAND <small>Panel de Control - Días Laborales</small></h1>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
             <span class="status-badge loading" id="statusBadge">⏳ Cargando...</span>
             <span class="last-update" id="lastUpdate">🔄 Actualizando...</span>
@@ -276,11 +292,17 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÓN 2: FILTROS AVANZADOS (OPTIMIZADO)    -->
+    <!-- SECCIÓN 2: FILTROS POR DÍAS LABORALES        -->
     <!-- ============================================ -->
     <div class="card">
-        <h2>🔍 Filtros Avanzados <span class="badge">Carga bajo demanda</span></h2>
+        <h2>🔍 Filtros por Días Laborales <span class="badge">Basado en Cierres</span></h2>
         
+        <div class="info-box">
+            📌 <strong>¿Cómo funciona?</strong> Los días laborales se definen por los <strong>cierres</strong> (códigos 000-09 y 000-10). 
+            Todas las operaciones desde el inicio del día hasta el cierre pertenecen a ese día laboral, 
+            <strong>incluyendo las que pasan de medianoche</strong>.
+        </div>
+
         <div class="filter-grid">
             <div class="filter-group">
                 <label>🏢 Sucursal</label>
@@ -294,18 +316,12 @@
             </div>
 
             <div class="filter-group">
-                <label>📅 Desde</label>
-                <input type="date" id="filtroFechaDesde">
+                <label>📅 Día Laboral (Desde)</label>
+                <input type="date" id="filtroDiaDesde">
             </div>
             <div class="filter-group">
-                <label>📅 Hasta</label>
-                <input type="date" id="filtroFechaHasta">
-            </div>
-
-            <div class="filter-group">
-                <label>📅 Día Laboral (Cierre)</label>
-                <input type="date" id="filtroDiaLaboral">
-                <span style="font-size:0.7rem; color:#666;">(Filtra por el día del cierre)</span>
+                <label>📅 Día Laboral (Hasta)</label>
+                <input type="date" id="filtroDiaHasta">
             </div>
             
             <div class="filter-group">
@@ -327,7 +343,7 @@
                     <option value="stock">📦 Stock</option>
                     <option value="maquina">🖥️ Máquina</option>
                     <option value="fichas_gratis">🎁 Fichas Gratis</option>
-                    <option value="cierres">💰 Cierres</option>
+                    <option value="cierres">💰 Solo Cierres</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -345,7 +361,7 @@
             </div>
         </div>
 
-        <!-- Estadísticas rápidas (se actualizan después de filtrar) -->
+        <!-- Estadísticas rápidas -->
         <div class="stats-grid" id="statsGrid" style="margin-top:15px; display:none;">
             <div class="stat-box">
                 <div class="number" id="statTotalItems">0</div>
@@ -374,7 +390,7 @@
         </div>
 
         <div id="resultadosFiltrados" class="mt-20">
-            <p class="text-center" style="color:#888;">Selecciona filtros y presiona "Buscar" para ver los resultados.</p>
+            <p class="text-center" style="color:#888;">Selecciona un rango de días laborales y presiona "Buscar".</p>
         </div>
     </div>
 
@@ -382,10 +398,10 @@
     <!-- SECCIÓN 3: GENERAR REPORTE PDF               -->
     <!-- ============================================ -->
     <div class="card">
-        <h2>📄 Generar Reporte PDF <span class="badge">Basado en Filtros</span></h2>
+        <h2>📄 Generar Reporte PDF <span class="badge">Basado en Días Laborales</span></h2>
         <div class="flex" style="display:flex; gap:10px; flex-wrap:wrap;">
             <button class="btn btn-success" onclick="generarPDFconFiltros()" id="btnPDF">📥 PDF con Filtros</button>
-            <span style="font-size:0.85rem; color:#666;">El PDF se genera con los filtros aplicados</span>
+            <span style="font-size:0.85rem; color:#666;">El PDF se genera con los días laborales seleccionados</span>
         </div>
         <div id="previewPDF" class="mt-20 table-responsive" style="background:#fafafa; padding:15px; border-radius:10px; border:1px dashed #ccc;">
             <p class="text-center" style="color:#888;">Aplica filtros para ver la vista previa.</p>
@@ -398,7 +414,7 @@
     // 1. CONFIGURACIÓN DE FIREBASE
     // ============================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getDatabase, ref, get, child, query, orderByChild, startAt, endAt, limitToLast } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
     const sucursalesConfig = [
         { nombre: "Villa Morra", id: "villa-morra", config: {
@@ -443,15 +459,15 @@
     // 2. ESTADO GLOBAL
     // ============================================================
     const estado = {
-        carritos: {},        // Cargado al inicio
-        historialCache: {},  // Cache de historial por sucursal
+        carritos: {},
+        historialCache: {},
+        diasLaborales: {},      // { sucursal: [ { dia, fechaInicio, fechaFin, items } ] }
         datosFiltrados: [],
-        diasLaborales: {},
         cargando: false
     };
 
     // ============================================================
-    // 3. FUNCIONES DE CARGA - SOLO CARRITOS AL INICIO
+    // 3. CARGAR CARRITOS (INICIO RÁPIDO)
     // ============================================================
     async function cargarCarritos() {
         const tbody = document.getElementById('carritosBody');
@@ -603,22 +619,8 @@
     }
 
     // ============================================================
-    // 5. FILTROS AVANZADOS - CARGA BAJO DEMANDA
+    // 5. FUNCIÓN PRINCIPAL: FILTRAR POR DÍAS LABORALES
     // ============================================================
-    function parseFecha(fechaStr) {
-        if (!fechaStr) return null;
-        if (typeof fechaStr === 'number') return new Date(fechaStr);
-        try {
-            let limpio = fechaStr.trim();
-            const partes = limpio.split(' ');
-            const fechaPart = partes[0];
-            const partesFecha = fechaPart.split('/');
-            if (partesFecha.length === 3) return new Date(parseInt(partesFecha[2]), parseInt(partesFecha[1]) - 1, parseInt(partesFecha[0]));
-            if (limpio.includes('-')) return new Date(limpio);
-            return null;
-        } catch { return null; }
-    }
-
     function codigoEnRango(codigo, desde, hasta) {
         if (!desde && !hasta) return true;
         if (!codigo) return false;
@@ -627,11 +629,10 @@
         return codigo >= desde && codigo <= hasta;
     }
 
-    async function cargarHistorialPorSucursal(sucursalConfig, fechaDesde, fechaHasta) {
+    async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
         
-        // Si ya tenemos el historial en caché y está dentro del rango, usarlo
-        if (estado.historialCache[key] && !fechaDesde && !fechaHasta) {
+        if (estado.historialCache[key]) {
             return estado.historialCache[key];
         }
 
@@ -640,7 +641,6 @@
             const db = getDatabase(app);
             const dbRef = ref(db);
             
-            // Cargar solo el historial
             const histSnap = await get(child(dbRef, 'historial_ventas'));
             let items = [];
             
@@ -649,16 +649,6 @@
                 Object.entries(data).forEach(([firebaseKey, registro]) => {
                     if (registro.ventas && Array.isArray(registro.ventas)) {
                         registro.ventas.forEach(venta => {
-                            const ts = venta.timestampCompleto || venta.timestamp || 0;
-                            // Filtrar por fecha en el lado del cliente
-                            if (fechaDesde || fechaHasta) {
-                                if (ts) {
-                                    const fecha = new Date(ts);
-                                    const fechaStr = fecha.toISOString().split('T')[0];
-                                    if (fechaDesde && fechaStr < fechaDesde) return;
-                                    if (fechaHasta && fechaStr > fechaHasta) return;
-                                }
-                            }
                             items.push({
                                 ...venta,
                                 firebaseKey: firebaseKey,
@@ -671,7 +661,6 @@
                 });
             }
             
-            // Guardar en caché
             estado.historialCache[key] = items;
             return items;
             
@@ -679,6 +668,68 @@
             console.error(`Error cargando historial de ${sucursalConfig.nombre}:`, error);
             return [];
         }
+    }
+
+    function obtenerDiasLaborales(items) {
+        // Ordenar por timestamp
+        const ordenados = [...items].sort((a, b) => (a.timestampCompleto || a.timestamp || 0) - (b.timestampCompleto || b.timestamp || 0));
+        
+        const dias = [];
+        let diaActual = null;
+        
+        ordenados.forEach(item => {
+            const ts = item.timestampCompleto || item.timestamp || 0;
+            if (!ts) return;
+            
+            const fecha = new Date(ts);
+            const fechaStr = fecha.toISOString().split('T')[0];
+            const esCierre = item.code === '000-09' || item.code === '000-10';
+            
+            if (esCierre) {
+                // Si hay un día abierto, lo cerramos con este cierre
+                if (diaActual) {
+                    diaActual.fechaFin = ts;
+                    diaActual.fechaFinStr = fechaStr;
+                    diaActual.cierre = item;
+                    dias.push(diaActual);
+                    diaActual = null;
+                } else {
+                    // Si no hay día abierto, creamos uno solo con el cierre
+                    dias.push({
+                        dia: fechaStr,
+                        fechaInicio: ts,
+                        fechaFin: ts,
+                        fechaInicioStr: fechaStr,
+                        fechaFinStr: fechaStr,
+                        items: [item],
+                        cierre: item
+                    });
+                }
+            } else {
+                if (!diaActual) {
+                    diaActual = {
+                        dia: fechaStr,
+                        fechaInicio: ts,
+                        fechaFin: ts,
+                        fechaInicioStr: fechaStr,
+                        fechaFinStr: fechaStr,
+                        items: []
+                    };
+                }
+                if (ts > diaActual.fechaFin) {
+                    diaActual.fechaFin = ts;
+                    diaActual.fechaFinStr = fechaStr;
+                }
+                diaActual.items.push(item);
+            }
+        });
+        
+        // Si queda un día abierto (sin cierre), lo cerramos
+        if (diaActual) {
+            dias.push(diaActual);
+        }
+        
+        return dias;
     }
 
     window.aplicarFiltros = async function() {
@@ -689,15 +740,14 @@
         document.getElementById('statusBadge').textContent = '⏳ Cargando datos...';
 
         const sucursalFiltro = document.getElementById('filtroSucursal').value;
-        const fechaDesde = document.getElementById('filtroFechaDesde').value;
-        const fechaHasta = document.getElementById('filtroFechaHasta').value;
-        const diaLaboralFiltro = document.getElementById('filtroDiaLaboral').value;
+        const diaDesde = document.getElementById('filtroDiaDesde').value;
+        const diaHasta = document.getElementById('filtroDiaHasta').value;
         const codigoDesde = document.getElementById('filtroCodigoDesde').value.trim();
         const codigoHasta = document.getElementById('filtroCodigoHasta').value.trim();
         const tipoOperacion = document.getElementById('filtroTipoOperacion').value;
         const fuenteFiltro = document.getElementById('filtroFuente').value;
 
-        // Determinar qué sucursales cargar
+        // Determinar sucursales
         let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
             sucursalesACargar = sucursalesConfig;
@@ -706,11 +756,19 @@
             if (encontrada) sucursalesACargar = [encontrada];
         }
 
+        // Verificar que haya un rango de días
+        if (!diaDesde && !diaHasta) {
+            alert('⚠️ Debes seleccionar al menos un día laboral (Desde o Hasta)');
+            btn.disabled = false;
+            btn.textContent = '🔍 Buscar';
+            return;
+        }
+
         let todosItems = [];
 
-        // Cargar datos según la fuente seleccionada
+        // Cargar datos de cada sucursal
         for (const suc of sucursalesACargar) {
-            // Siempre cargar carrito
+            // Carrito
             if (fuenteFiltro === 'todos' || fuenteFiltro === 'carrito') {
                 const carritoItems = estado.carritos[suc.nombre] || [];
                 carritoItems.forEach(item => {
@@ -718,43 +776,54 @@
                 });
             }
 
-            // Cargar historial si es necesario
+            // Historial
             if (fuenteFiltro === 'todos' || fuenteFiltro === 'historial') {
-                const historialItems = await cargarHistorialPorSucursal(suc, fechaDesde, fechaHasta);
+                const historialItems = await cargarHistorialPorSucursal(suc);
                 historialItems.forEach(item => {
                     todosItems.push({ ...item, sucursal: suc.nombre, fuente: 'historial' });
                 });
             }
         }
 
-        // Aplicar filtros en memoria
-        let filtrados = todosItems;
+        // Calcular días laborales para cada sucursal
+        const diasPorSucursal = {};
+        for (const suc of sucursalesACargar) {
+            const itemsSuc = todosItems.filter(i => i.sucursal === suc.nombre);
+            diasPorSucursal[suc.nombre] = obtenerDiasLaborales(itemsSuc);
+        }
 
-        // Filtro por día laboral (basado en cierres)
-        if (diaLaboralFiltro) {
-            filtrados = filtrados.filter(item => {
-                const ts = item.timestampCompleto || item.timestamp || 0;
-                if (!ts) return true;
-                const fecha = new Date(ts);
-                const fechaStr = fecha.toISOString().split('T')[0];
-                // Incluir si es el día del cierre o si es el día anterior (operaciones nocturnas)
-                // Para simplificar, incluimos items del día seleccionado y del día anterior
-                // pero solo si tienen un cierre en el día seleccionado
-                const fechaObj = new Date(diaLaboralFiltro);
-                const diaAnterior = new Date(fechaObj);
-                diaAnterior.setDate(diaAnterior.getDate() - 1);
-                const diaAnteriorStr = diaAnterior.toISOString().split('T')[0];
+        // Filtrar por rango de días laborales
+        let filtrados = [];
+        for (const suc of sucursalesACargar) {
+            const dias = diasPorSucursal[suc.nombre] || [];
+            const nombreSuc = suc.nombre;
+            
+            dias.forEach(dia => {
+                // Verificar si el día está en el rango
+                let incluir = true;
+                if (diaDesde && dia.dia < diaDesde) incluir = false;
+                if (diaHasta && dia.dia > diaHasta) incluir = false;
                 
-                return fechaStr === diaLaboralFiltro || fechaStr === diaAnteriorStr;
+                if (incluir) {
+                    // Agregar todos los items de este día laboral
+                    dia.items.forEach(item => {
+                        filtrados.push({ ...item, _diaLaboral: dia.dia });
+                    });
+                    // También agregar el cierre si existe
+                    if (dia.cierre) {
+                        filtrados.push({ ...dia.cierre, _diaLaboral: dia.dia });
+                    }
+                }
             });
         }
 
-        // Filtro por rango de códigos
+        // Aplicar filtros adicionales
+        // Códigos
         if (codigoDesde || codigoHasta) {
             filtrados = filtrados.filter(item => codigoEnRango(item.code || '', codigoDesde, codigoHasta));
         }
 
-        // Filtro por tipo de operación
+        // Tipo de operación
         if (tipoOperacion !== 'todos') {
             filtrados = filtrados.filter(item => {
                 switch(tipoOperacion) {
@@ -770,6 +839,9 @@
             });
         }
 
+        // Ordenar por timestamp
+        filtrados.sort((a, b) => (a.timestampCompleto || a.timestamp || 0) - (b.timestampCompleto || b.timestamp || 0));
+
         estado.datosFiltrados = filtrados;
         renderResultadosFiltrados(filtrados);
         actualizarEstadisticasFiltradas(filtrados);
@@ -778,7 +850,7 @@
         btn.disabled = false;
         btn.textContent = '🔍 Buscar';
         document.getElementById('statusBadge').className = 'status-badge success';
-        document.getElementById('statusBadge').textContent = `✅ ${filtrados.length} items`;
+        document.getElementById('statusBadge').textContent = `✅ ${filtrados.length} items en ${new Set(filtrados.map(i => i._diaLaboral)).size} días`;
     };
 
     function actualizarEstadisticasFiltradas(items) {
@@ -795,15 +867,7 @@
         document.getElementById('statTotalCierres').textContent = `Gs. ${cierres.reduce((s, i) => s + (i.money || 0), 0).toLocaleString()}`;
         
         // Contar días laborales únicos
-        const dias = new Set();
-        items.forEach(item => {
-            const ts = item.timestampCompleto || item.timestamp || 0;
-            if (ts) {
-                const fecha = new Date(ts);
-                const key = `${item.sucursal || ''}_${fecha.toISOString().split('T')[0]}`;
-                dias.add(key);
-            }
-        });
+        const dias = new Set(items.map(i => i._diaLaboral).filter(Boolean));
         document.getElementById('statDiasLaborales').textContent = dias.size;
     }
 
@@ -811,40 +875,48 @@
         const container = document.getElementById('resultadosFiltrados');
         
         if (items.length === 0) {
-            container.innerHTML = `<p class="text-center" style="color:#888; padding:20px;">No se encontraron resultados con los filtros aplicados.</p>`;
+            container.innerHTML = `<p class="text-center" style="color:#888; padding:20px;">No se encontraron resultados en el rango de días laborales seleccionado.</p>`;
             return;
         }
 
-        // Ordenar por timestamp
-        const itemsOrdenados = [...items].sort((a, b) => (a.timestampCompleto || a.timestamp || 0) - (b.timestampCompleto || b.timestamp || 0));
-
         let html = `<div class="filter-summary">
-            <span><strong>🔍 ${itemsOrdenados.length}</strong> items encontrados</span>
+            <span><strong>🔍 ${items.length}</strong> items encontrados</span>
+            <span class="filter-tag">📅 ${new Set(items.map(i => i._diaLaboral)).size} días laborales</span>
         </div>`;
 
         html += `<div class="table-responsive"><table>
             <thead><tr>
-                <th>#</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
+                <th>#</th><th>Día Laboral</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
                 <th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha</th><th>Hora</th><th>Tipo</th>
             </tr></thead><tbody>`;
 
         let contador = 0;
         let ultimoDia = '';
 
-        itemsOrdenados.forEach(item => {
+        items.forEach(item => {
             contador++;
             const ts = item.timestampCompleto || item.timestamp || 0;
             const fecha = ts ? new Date(ts) : null;
-            const fechaStr = fecha ? fecha.toISOString().split('T')[0] : item.fecha || '-';
+            const horaStr = item.hora || (fecha ? fecha.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '-');
             
-            // Detectar cambio de día
-            if (fechaStr !== ultimoDia && ultimoDia !== '') {
-                html += `<tr class="dia-laboral-separator">
-                    <td colspan="11" style="text-align:center;">📅 <strong>Día: ${fechaStr}</strong></td>
-                </tr>`;
-            }
-            if (fechaStr !== ultimoDia) {
-                ultimoDia = fechaStr;
+            const diaLaboral = item._diaLaboral || '-';
+            
+            // Mostrar separador de día laboral
+            if (diaLaboral !== ultimoDia) {
+                if (ultimoDia !== '') {
+                    html += `<tr class="dia-laboral-separator">
+                        <td colspan="12" style="text-align:center;">
+                            📅 <strong>Día Laboral: ${diaLaboral}</strong>
+                        </td>
+                    </tr>`;
+                } else {
+                    html += `<tr class="dia-laboral-header">
+                        <td colspan="12" style="text-align:center;">
+                            📅 <strong>Día Laboral: ${diaLaboral}</strong>
+                        </td>
+                    </tr>`;
+                }
+                ultimoDia = diaLaboral;
             }
 
             const esCierre = item.esCierre || item.code === '000-09' || item.code === '000-10';
@@ -852,12 +924,12 @@
                         item.esMovimiento ? '🔄 Movimiento' : 
                         item.esFichaGratis ? '🎁 Gratis' : '🛒 Venta';
             
-            const horaStr = item.hora || (fecha ? fecha.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '-');
             const fuente = item.fuente === 'historial' ? '📜' : '🛒';
             const clase = esCierre ? 'cierre-row' : '';
 
             html += `<tr class="${clase}">
                 <td style="font-size:0.7rem; color:#999;">${contador}</td>
+                <td style="font-weight:bold; font-size:0.8rem;">${diaLaboral}</td>
                 <td><strong>${item.sucursal || '-'}</strong></td>
                 <td>${fuente}</td>
                 <td>${item.code || '-'}</td>
@@ -877,14 +949,13 @@
 
     window.limpiarFiltros = function() {
         document.getElementById('filtroSucursal').value = 'todas';
-        document.getElementById('filtroFechaDesde').value = '';
-        document.getElementById('filtroFechaHasta').value = '';
-        document.getElementById('filtroDiaLaboral').value = '';
+        document.getElementById('filtroDiaDesde').value = '';
+        document.getElementById('filtroDiaHasta').value = '';
         document.getElementById('filtroCodigoDesde').value = '';
         document.getElementById('filtroCodigoHasta').value = '';
         document.getElementById('filtroTipoOperacion').value = 'todos';
         document.getElementById('filtroFuente').value = 'carrito';
-        document.getElementById('resultadosFiltrados').innerHTML = `<p class="text-center" style="color:#888;">Selecciona filtros y presiona "Buscar" para ver los resultados.</p>`;
+        document.getElementById('resultadosFiltrados').innerHTML = `<p class="text-center" style="color:#888;">Selecciona un rango de días laborales y presiona "Buscar".</p>`;
         document.getElementById('statsGrid').style.display = 'none';
         document.getElementById('previewPDF').innerHTML = `<p class="text-center" style="color:#888;">Aplica filtros para ver la vista previa.</p>`;
         estado.datosFiltrados = [];
@@ -918,8 +989,12 @@
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.setFont("Times", "normal");
-        doc.text(`Reporte generado: ${new Date().toLocaleString()}`, 20, 50);
-        doc.text(`Items: ${items.length}`, 20, 57);
+        
+        const diaDesde = document.getElementById('filtroDiaDesde').value || 'inicio';
+        const diaHasta = document.getElementById('filtroDiaHasta').value || 'hoy';
+        doc.text(`Reporte - Días Laborales: ${diaDesde} → ${diaHasta}`, 20, 50);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 57);
+        doc.text(`Items: ${items.length}`, 20, 64);
 
         // Agrupar por sucursal
         const sucursales = {};
@@ -958,7 +1033,7 @@
         doc.autoTable({
             head: [['Sucursal', 'Efectivo', 'Bancard', 'Total']],
             body: bodyRows,
-            startY: 65,
+            startY: 72,
             theme: 'plain',
             styles: { font: 'Times', fontSize: 14, textColor: [0, 0, 139], lineColor: [0, 0, 0], lineWidth: 0.5 },
             headStyles: { fillColor: [255, 215, 0], textColor: [0, 0, 0], fontSize: 14, fontStyle: 'bold', halign: 'center' },
@@ -978,7 +1053,8 @@
             doc.text(`Hoja ${i} / ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 15);
         }
 
-        doc.save(`ASTROLAND_Reporte_${new Date().toISOString().split('T')[0]}.pdf`);
+        const fechaStr = new Date().toISOString().split('T')[0];
+        doc.save(`ASTROLAND_DiasLaborales_${fechaStr}.pdf`);
     }
 
     // ============================================================
@@ -1008,8 +1084,15 @@
         const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
         if (tableRows.length === 0) tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
 
+        const diaDesde = document.getElementById('filtroDiaDesde').value || 'inicio';
+        const diaHasta = document.getElementById('filtroDiaHasta').value || 'hoy';
+        const dias = new Set(items.map(i => i._diaLaboral).filter(Boolean));
+
         let html = `<div style="margin-bottom:10px; font-size:0.85rem; color:#555;">
-            <strong>📄 Vista previa del PDF</strong> — ${items.length} items
+            <strong>📄 Vista previa del PDF</strong> — 
+            Días: ${diaDesde} → ${diaHasta} | 
+            ${dias.size} días laborales | 
+            ${items.length} items
         </div><table><thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead><tbody>`;
         
         tableRows.forEach(f => {
@@ -1029,10 +1112,10 @@
     const hoy = new Date();
     const hace7Dias = new Date();
     hace7Dias.setDate(hoy.getDate() - 7);
-    document.getElementById('filtroFechaDesde').value = hace7Dias.toISOString().split('T')[0];
-    document.getElementById('filtroFechaHasta').value = hoy.toISOString().split('T')[0];
+    document.getElementById('filtroDiaDesde').value = hace7Dias.toISOString().split('T')[0];
+    document.getElementById('filtroDiaHasta').value = hoy.toISOString().split('T')[0];
 
-    console.log('✅ Panel de Control ASTROLAND Optimizado cargado correctamente.');
+    console.log('✅ Panel de Control ASTROLAND - Días Laborales cargado correctamente.');
 </script>
 
 </body>
