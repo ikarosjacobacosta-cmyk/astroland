@@ -298,9 +298,10 @@
         <h2>🔍 Filtros por Días Laborales <span class="badge">Basado en Cierres</span></h2>
         
         <div class="info-box">
-            📌 <strong>¿Cómo funciona?</strong> Los días laborales se definen por los <strong>cierres</strong> (códigos 000-09 y 000-10). 
-            Todas las operaciones desde el inicio del día hasta el cierre pertenecen a ese día laboral, 
-            <strong>incluyendo las que pasan de medianoche</strong>.
+            📌 <strong>¿Cómo funciona?</strong> El historial agrupa las operaciones por <strong>día laboral</strong> (fechaEliminacion). 
+            Una operación del 22/06 a las 00:01hs aparece en el historial con fecha <strong>21/06</strong> porque el cierre fue el 21.
+            <br><br>
+            <strong>El filtro usa la fecha del título (fechaEliminacion), NO la hora de la operación.</strong>
         </div>
 
         <div class="filter-grid">
@@ -618,37 +619,37 @@
     }
 
     // ============================================================
-    // 5. FUNCIÓN PARA OBTENER FECHA DE UN ITEM (CORREGIDA)
+    // 5. FUNCIÓN PARA OBTENER EL DÍA LABORAL DEL ITEM
     // ============================================================
-    function obtenerFechaItem(item) {
-        // PRIORIDAD 1: Usar la fecha del historial (fechaEliminacion)
+    function obtenerDiaLaboral(item) {
+        // PRIORIDAD 1: Usar fechaEliminacion del registro de historial
         if (item.fechaEliminacion) {
-            try {
-                // Formato "dd/mm/yyyy"
-                const partes = item.fechaEliminacion.split('/');
-                if (partes.length === 3) {
-                    return new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
-                }
-            } catch(e) {}
+            return item.fechaEliminacion;
         }
         
-        // PRIORIDAD 2: Usar timestamp
-        let ts = item.timestampCompleto || item.timestamp || 0;
-        if (ts) {
-            return new Date(ts);
-        }
-        
-        // PRIORIDAD 3: Usar fecha del item
+        // PRIORIDAD 2: Si no tiene fechaEliminacion, usar la fecha del item
         if (item.fecha) {
-            try {
-                const partes = item.fecha.split('/');
-                if (partes.length === 3) {
-                    return new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
-                }
-            } catch(e) {}
+            return item.fecha;
         }
         
         return null;
+    }
+
+    function convertirFechaParaComparar(fechaStr) {
+        if (!fechaStr) return null;
+        try {
+            // Formato "dd/mm/yyyy"
+            const partes = fechaStr.split('/');
+            if (partes.length === 3) {
+                const dia = partes[0].padStart(2, '0');
+                const mes = partes[1].padStart(2, '0');
+                const anio = partes[2];
+                return `${anio}-${mes}-${dia}`;
+            }
+            return fechaStr;
+        } catch(e) {
+            return fechaStr;
+        }
     }
 
     // ============================================================
@@ -680,7 +681,7 @@
             if (histSnap.exists()) {
                 const data = histSnap.val();
                 Object.entries(data).forEach(([firebaseKey, registro]) => {
-                    // El registro TIENE fechaEliminacion
+                    // El registro TIENE fechaEliminacion (el título del día)
                     const fechaEliminacion = registro.fechaEliminacion || '';
                     
                     if (registro.ventas && Array.isArray(registro.ventas)) {
@@ -690,7 +691,9 @@
                                 firebaseKey: firebaseKey,
                                 fuente: 'historial',
                                 sucursal: sucursalConfig.nombre,
-                                fechaEliminacion: fechaEliminacion  // ← LA FECHA DEL REGISTRO
+                                fechaEliminacion: fechaEliminacion,  // ← EL TÍTULO DEL DÍA
+                                // Guardar también el registro completo para referencia
+                                _registro: registro
                             });
                         });
                     }
@@ -724,7 +727,7 @@
 
         console.log('🔍 Aplicando filtros:');
         console.log('  Sucursal:', sucursalFiltro);
-        console.log('  Días:', diaDesde, '→', diaHasta);
+        console.log('  Días Laborales:', diaDesde, '→', diaHasta);
         console.log('  Códigos:', codigoDesde, '→', codigoHasta);
         console.log('  Tipo:', tipoOperacion);
         console.log('  Fuente:', fuenteFiltro);
@@ -755,7 +758,14 @@
                 const carritoItems = estado.carritos[suc.nombre] || [];
                 console.log(`  Carrito ${suc.nombre}: ${carritoItems.length} items`);
                 carritoItems.forEach(item => {
-                    todosItems.push({ ...item, sucursal: suc.nombre, fuente: 'carrito' });
+                    // Para carrito, usamos la fecha del item
+                    todosItems.push({ 
+                        ...item, 
+                        sucursal: suc.nombre, 
+                        fuente: 'carrito',
+                        // El carrito no tiene fechaEliminacion, usamos la fecha del item
+                        fechaEliminacion: item.fecha || ''
+                    });
                 });
             }
 
@@ -771,26 +781,38 @@
 
         console.log(`📊 Total items cargados: ${todosItems.length}`);
 
+        // ============================================================
         // FILTRO PRINCIPAL: Por rango de días laborales
-        // Usamos la fecha del registro (fechaEliminacion) para filtrar
+        // Usamos fechaEliminacion (el título del día) para filtrar
+        // ============================================================
         let filtrados = todosItems.filter(item => {
-            const fecha = obtenerFechaItem(item);
-            if (!fecha) {
-                console.log('⚠️ Item sin fecha:', item.code, item.fecha, item.fechaEliminacion);
+            const diaLaboral = obtenerDiaLaboral(item);
+            if (!diaLaboral) {
+                console.log('⚠️ Item sin fechaEliminacion:', item.code, item.fecha);
                 return false;
             }
             
-            const fechaStr = fecha.toISOString().split('T')[0];
+            // Convertir a formato YYYY-MM-DD para comparar
+            const diaStr = convertirFechaParaComparar(diaLaboral);
+            if (!diaStr) return false;
             
             // Verificar rango
             let enRango = true;
-            if (diaDesde && fechaStr < diaDesde) enRango = false;
-            if (diaHasta && fechaStr > diaHasta) enRango = false;
+            if (diaDesde && diaStr < diaDesde) enRango = false;
+            if (diaHasta && diaStr > diaHasta) enRango = false;
             
             return enRango;
         });
 
-        console.log(`📊 Items después de filtro de fechas: ${filtrados.length}`);
+        console.log(`📊 Items después de filtro de días laborales: ${filtrados.length}`);
+        
+        // Mostrar qué días laborales se están incluyendo
+        const diasIncluidos = new Set();
+        filtrados.forEach(item => {
+            const dia = obtenerDiaLaboral(item);
+            if (dia) diasIncluidos.add(dia);
+        });
+        console.log('📅 Días laborales incluidos:', Array.from(diasIncluidos).sort());
 
         // Aplicar filtros adicionales
         // Códigos
@@ -825,8 +847,7 @@
 
         // Agregar día laboral a cada item para visualización
         filtrados = filtrados.map(item => {
-            const fecha = obtenerFechaItem(item);
-            const diaLaboral = fecha ? fecha.toISOString().split('T')[0] : 'sin fecha';
+            const diaLaboral = obtenerDiaLaboral(item) || 'sin fecha';
             return { ...item, _diaLaboral: diaLaboral };
         });
 
@@ -869,8 +890,8 @@
                     <span>🔍 <strong>0</strong> resultados encontrados</span>
                 </div>
                 <p class="text-center" style="color:#888; padding:20px;">
-                    No se encontraron operaciones en el rango de días seleccionado.
-                    <br><small>Verifica que haya operaciones en esas fechas.</small>
+                    No se encontraron operaciones en el rango de días laborales seleccionado.
+                    <br><small>Verifica que el historial tenga registros con esas fechas de título.</small>
                 </p>
             `;
             return;
@@ -883,8 +904,8 @@
 
         html += `<div class="table-responsive"><table>
             <thead><tr>
-                <th>#</th><th>Día Laboral</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
-                <th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha</th><th>Hora</th><th>Tipo</th>
+                <th>#</th><th>Día Laboral (Título)</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
+                <th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha Op.</th><th>Hora</th><th>Tipo</th>
             </tr></thead><tbody>`;
 
         let contador = 0;
@@ -925,7 +946,7 @@
 
             html += `<tr class="${clase}">
                 <td style="font-size:0.7rem; color:#999;">${contador}</td>
-                <td style="font-weight:bold; font-size:0.8rem;">${diaLaboral}</td>
+                <td style="font-weight:bold; font-size:0.8rem; color:#1a237e;">${diaLaboral}</td>
                 <td><strong>${item.sucursal || '-'}</strong></td>
                 <td>${fuente}</td>
                 <td>${item.code || '-'}</td>
@@ -933,7 +954,7 @@
                 <td>${(item.points || 0).toLocaleString()}</td>
                 <td>${(item.money || 0).toLocaleString()}</td>
                 <td>${Math.abs(item.fichaConsumption || 0)}</td>
-                <td>${item.fecha || item.fechaEliminacion || '-'}</td>
+                <td>${item.fecha || '-'}</td>
                 <td style="font-family:monospace; font-size:0.8rem;">${horaStr}</td>
                 <td>${tipo}</td>
             </tr>`;
@@ -1085,8 +1106,8 @@
 
         let html = `<div style="margin-bottom:10px; font-size:0.85rem; color:#555;">
             <strong>📄 Vista previa del PDF</strong> — 
-            Días: ${diaDesde} → ${diaHasta} | 
-            ${dias.size} días laborales | 
+            Días Laborales: ${diaDesde} → ${diaHasta} | 
+            ${dias.size} días | 
             ${items.length} items
         </div><table><thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead><tbody>`;
         
