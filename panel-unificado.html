@@ -623,7 +623,7 @@
     const estado = {
         carritos: {},
         historialCache: {},
-        contadoresCache: {}, // { sucursal: { maquina: { fecha: { fichas, premios, fichasPrueba, premiosPrueba } } } }
+        contadoresCache: {},
         datosFiltrados: [],
         contadoresFiltrados: {},
         fechasConDatos: [],
@@ -672,6 +672,9 @@
         document.getElementById('statusBadge').textContent = '✅ Listo';
     }
 
+    // ============================================================
+    // 4. RENDERIZAR CARRITOS (CORREGIDO - SOLO VENTAS EN DETALLE)
+    // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
         let html = '';
@@ -679,7 +682,13 @@
 
         ordenSucursales.forEach(sucursal => {
             const items = estado.carritos[sucursal] || [];
-            const stats = calcularEstadisticas(items);
+            // ✅ FILTRAR: Solo items de VENTA (no movimientos, no fichas gratis, no cierres)
+            const itemsVenta = items.filter(item => 
+                !item.esMovimiento && 
+                !item.esFichaGratis && 
+                !item.esCierre
+            );
+            const stats = calcularEstadisticas(itemsVenta);
 
             html += `<tr>
                 <td><strong>${sucursal}</strong></td>
@@ -697,7 +706,17 @@
             </tr>`;
         });
 
-        const totalStats = calcularEstadisticasTotales(ordenSucursales);
+        // Total general - solo ventas
+        const totalStats = calcularEstadisticasTotales(ordenSucursales, 'carrito', true);
+        const totalItems = Object.values(estado.carritos).reduce((sum, items) => {
+            const itemsVenta = items.filter(item => 
+                !item.esMovimiento && 
+                !item.esFichaGratis && 
+                !item.esCierre
+            );
+            return sum + itemsVenta.length;
+        }, 0);
+
         html += `<tr class="total-row">
             <td><strong>TOTAL GENERAL</strong></td>
             <td>${totalStats.totalMonto.toLocaleString()}</td>
@@ -714,10 +733,11 @@
         </tr>`;
 
         tbody.innerHTML = html;
+        document.getElementById('totalItemsBadge').textContent = `${totalItems} items`;
     }
 
     // ============================================================
-    // 4. FUNCIONES DE CÁLCULO ESTADÍSTICO
+    // 5. FUNCIONES DE CÁLCULO ESTADÍSTICO (CORREGIDO)
     // ============================================================
     function calcularEstadisticas(items) {
         let totalMonto = 0;
@@ -734,17 +754,29 @@
             const code = item.code || '';
             const unidades = item.unidades || 1;
             
+            // Cierres
             if (code === '000-09') { cierreEfectivo += money; return; }
             if (code === '000-10') { cierreBancard += money; return; }
 
+            // Monto total de ventas
             totalMonto += money;
 
+            // Clasificación de productos (SOLO ventas, no movimientos)
             if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
-                if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) fichasMonto += money;
+                // Fichas: 000-00 a 000-04 (ventas)
+                if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) {
+                    fichasMonto += money;
+                }
+                // Pulseras: 000-07
                 if (code === '000-07') pulserasMonto += money;
+                // Billar: 000-08
                 if (code === '000-08') billarMonto += money;
-                if (detalleFichas.hasOwnProperty(code)) detalleFichas[code] += unidades;
+                // Detalle de fichas (todos los códigos 000-xx)
+                if (detalleFichas.hasOwnProperty(code)) {
+                    detalleFichas[code] += unidades;
+                }
             } else if (code && parseInt(code.substring(0,3)) >= 5) {
+                // Juguetes: cualquier código >= 005-00
                 juguetesMonto += money;
             }
         });
@@ -752,10 +784,39 @@
         return { totalMonto, cierreEfectivo, cierreBancard, totalCierre: cierreEfectivo + cierreBancard, fichasMonto, juguetesMonto, pulserasMonto, billarMonto, detalleFichas };
     }
 
-    function calcularEstadisticasTotales(sucursales) {
-        const total = { totalMonto: 0, cierreEfectivo: 0, cierreBancard: 0, totalCierre: 0, fichasMonto: 0, juguetesMonto: 0, pulserasMonto: 0, billarMonto: 0, detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 } };
+    function calcularEstadisticasTotales(sucursales, fuente = null, soloVentas = false) {
+        const total = {
+            totalMonto: 0,
+            cierreEfectivo: 0,
+            cierreBancard: 0,
+            totalCierre: 0,
+            fichasMonto: 0,
+            juguetesMonto: 0,
+            pulserasMonto: 0,
+            billarMonto: 0,
+            detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 }
+        };
+
         sucursales.forEach(nombre => {
-            const stats = calcularEstadisticas(estado.carritos[nombre] || []);
+            let items = [];
+            if (fuente === 'carrito') {
+                items = estado.carritos[nombre] || [];
+            } else if (fuente === 'historial') {
+                items = estado.historial[nombre] || [];
+            } else {
+                items = [...(estado.carritos[nombre] || []), ...(estado.historial[nombre] || [])];
+            }
+            
+            // ✅ Si soloVentas es true, filtrar movimientos, fichas gratis y cierres
+            if (soloVentas) {
+                items = items.filter(item => 
+                    !item.esMovimiento && 
+                    !item.esFichaGratis && 
+                    !item.esCierre
+                );
+            }
+            
+            const stats = calcularEstadisticas(items);
             total.totalMonto += stats.totalMonto;
             total.cierreEfectivo += stats.cierreEfectivo;
             total.cierreBancard += stats.cierreBancard;
@@ -764,34 +825,35 @@
             total.juguetesMonto += stats.juguetesMonto;
             total.pulserasMonto += stats.pulserasMonto;
             total.billarMonto += stats.billarMonto;
-            for (let key in total.detalleFichas) total.detalleFichas[key] += stats.detalleFichas[key] || 0;
+            for (let key in total.detalleFichas) {
+                total.detalleFichas[key] += stats.detalleFichas[key] || 0;
+            }
         });
+
         return total;
     }
 
     function renderDetalleFichas(detalle) {
         if (!detalle) return '-';
-        return `<div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 10px;">
-            <span>Unitarias: ${detalle['000-00']}</span>
-            <span>Combo 30k: ${detalle['000-01']}</span>
-            <span>Combo 60k: ${detalle['000-02']}</span>
-            <span>Combo 120k: ${detalle['000-03']}</span>
-            <span>Combo 180k: ${detalle['000-04']}</span>
-            <span>Error: ${detalle['000-05']}</span>
-            <span>Cápsulas: ${detalle['000-06']}</span>
-        </div>`;
+        return `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 10px;">
+                <span>Unitarias: ${detalle['000-00']}</span>
+                <span>Combo 30k: ${detalle['000-01']}</span>
+                <span>Combo 60k: ${detalle['000-02']}</span>
+                <span>Combo 120k: ${detalle['000-03']}</span>
+                <span>Combo 180k: ${detalle['000-04']}</span>
+                <span>Error: ${detalle['000-05']}</span>
+                <span>Cápsulas: ${detalle['000-06']}</span>
+            </div>
+        `;
     }
 
     // ============================================================
-    // 5. FUNCIÓN PARA OBTENER EL DÍA LABORAL DEL ITEM
+    // 6. FUNCIÓN PARA OBTENER EL DÍA LABORAL DEL ITEM
     // ============================================================
     function obtenerDiaLaboral(item) {
-        if (item.fechaEliminacion) {
-            return item.fechaEliminacion;
-        }
-        if (item.fecha) {
-            return item.fecha;
-        }
+        if (item.fechaEliminacion) return item.fechaEliminacion;
+        if (item.fecha) return item.fecha;
         return null;
     }
 
@@ -812,7 +874,7 @@
     }
 
     // ============================================================
-    // 6. FUNCIÓN PRINCIPAL: FILTRAR POR DÍAS LABORALES
+    // 7. FUNCIÓN PRINCIPAL: FILTRAR POR DÍAS LABORALES
     // ============================================================
     function codigoEnRango(codigo, desde, hasta) {
         if (!desde && !hasta) return true;
@@ -909,7 +971,6 @@
         for (const suc of sucursalesACargar) {
             if (fuenteFiltro === 'todos' || fuenteFiltro === 'carrito') {
                 const carritoItems = estado.carritos[suc.nombre] || [];
-                console.log(`  Carrito ${suc.nombre}: ${carritoItems.length} items`);
                 carritoItems.forEach(item => {
                     todosItems.push({ 
                         ...item, 
@@ -922,21 +983,15 @@
 
             if (fuenteFiltro === 'todos' || fuenteFiltro === 'historial') {
                 const historialItems = await cargarHistorialPorSucursal(suc);
-                console.log(`  Historial ${suc.nombre}: ${historialItems.length} items`);
                 historialItems.forEach(item => {
                     todosItems.push({ ...item, sucursal: suc.nombre, fuente: 'historial' });
                 });
             }
         }
 
-        console.log(`📊 Total items cargados: ${todosItems.length}`);
-
         let filtrados = todosItems.filter(item => {
             const diaLaboral = obtenerDiaLaboral(item);
-            if (!diaLaboral) {
-                console.log('⚠️ Item sin fechaEliminacion:', item.code, item.fecha);
-                return false;
-            }
+            if (!diaLaboral) return false;
             
             const diaStr = convertirFechaParaComparar(diaLaboral);
             if (!diaStr) return false;
@@ -944,22 +999,11 @@
             let enRango = true;
             if (diaDesde && diaStr < diaDesde) enRango = false;
             if (diaHasta && diaStr > diaHasta) enRango = false;
-            
             return enRango;
         });
 
-        console.log(`📊 Items después de filtro de días laborales: ${filtrados.length}`);
-        
-        const diasIncluidos = new Set();
-        filtrados.forEach(item => {
-            const dia = obtenerDiaLaboral(item);
-            if (dia) diasIncluidos.add(dia);
-        });
-        console.log('📅 Días laborales incluidos:', Array.from(diasIncluidos).sort());
-
         if (codigoDesde || codigoHasta) {
             filtrados = filtrados.filter(item => codigoEnRango(item.code || '', codigoDesde, codigoHasta));
-            console.log(`  Después de filtro de códigos: ${filtrados.length}`);
         }
 
         if (tipoOperacion !== 'todos') {
@@ -975,7 +1019,6 @@
                     default: return true;
                 }
             });
-            console.log(`  Después de filtro de tipo: ${filtrados.length}`);
         }
 
         filtrados.sort((a, b) => {
@@ -988,8 +1031,6 @@
             const diaLaboral = obtenerDiaLaboral(item) || 'sin fecha';
             return { ...item, _diaLaboral: diaLaboral };
         });
-
-        console.log(`✅ Resultado final: ${filtrados.length} items`);
 
         estado.datosFiltrados = filtrados;
         renderResultadosFiltrados(filtrados);
@@ -1029,7 +1070,6 @@
                 </div>
                 <p class="text-center" style="color:#888; padding:20px;">
                     No se encontraron operaciones en el rango de días laborales seleccionado.
-                    <br><small>Verifica que el historial tenga registros con esas fechas de título.</small>
                 </p>
             `;
             return;
@@ -1042,7 +1082,7 @@
 
         html += `<div class="table-responsive"><table>
             <thead><tr>
-                <th>#</th><th>Día Laboral (Título)</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
+                <th>#</th><th>Día Laboral</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
                 <th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha Op.</th><th>Hora</th><th>Tipo</th>
             </tr></thead><tbody>`;
 
@@ -1060,15 +1100,11 @@
             if (diaLaboral !== ultimoDia) {
                 if (ultimoDia !== '') {
                     html += `<tr class="dia-laboral-separator">
-                        <td colspan="12" style="text-align:center;">
-                            📅 <strong>Día Laboral: ${diaLaboral}</strong>
-                        </td>
+                        <td colspan="12" style="text-align:center;">📅 <strong>Día Laboral: ${diaLaboral}</strong></td>
                     </tr>`;
                 } else {
                     html += `<tr class="dia-laboral-header">
-                        <td colspan="12" style="text-align:center;">
-                            📅 <strong>Día Laboral: ${diaLaboral}</strong>
-                        </td>
+                        <td colspan="12" style="text-align:center;">📅 <strong>Día Laboral: ${diaLaboral}</strong></td>
                     </tr>`;
                 }
                 ultimoDia = diaLaboral;
@@ -1117,19 +1153,16 @@
     };
 
     // ============================================================
-    // 7. CONTADORES DE MÁQUINAS (CORREGIDO)
+    // 8. CONTADORES DE MÁQUINAS
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
         
-        // Si ya está en caché, devolver
         if (estado.contadoresCache[key]) {
-            console.log(`📊 Contadores en caché para ${key}`);
             return estado.contadoresCache[key];
         }
 
         try {
-            console.log(`📊 Cargando contadores para ${key}...`);
             const app = initializeApp(sucursalConfig.config, sucursalConfig.id);
             const db = getDatabase(app);
             const dbRef = ref(db);
@@ -1139,13 +1172,9 @@
             
             if (contSnap.exists()) {
                 const data = contSnap.val();
-                console.log(`📊 Datos de contadores para ${key}:`, data);
-                
-                // Estructura: contadores_maquinas/maqXX/fecha/...
                 Object.entries(data).forEach(([maquina, fechas]) => {
                     if (!contadores[maquina]) contadores[maquina] = {};
                     Object.entries(fechas).forEach(([fecha, valores]) => {
-                        // La fecha puede estar en formato "dd/mm/yyyy" o "yyyy-mm-dd"
                         contadores[maquina][fecha] = {
                             fichas: valores.fichas || 0,
                             premios: valores.premios || 0,
@@ -1154,8 +1183,6 @@
                         };
                     });
                 });
-            } else {
-                console.log(`⚠️ No hay datos de contadores para ${key}`);
             }
             
             estado.contadoresCache[key] = contadores;
@@ -1168,7 +1195,7 @@
     }
 
     window.cargarContadores = async function() {
-        const btn = event?.target || document.querySelector('.btn-info');
+        const btn = document.querySelector('.btn-info');
         if (btn) btn.disabled = true;
         
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
@@ -1184,7 +1211,6 @@
         document.getElementById('statusBadge').className = 'status-badge loading';
         document.getElementById('statusBadge').textContent = '⏳ Cargando contadores...';
 
-        // Determinar sucursales a cargar
         let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
             sucursalesACargar = sucursalesConfig;
@@ -1193,7 +1219,6 @@
             if (encontrada) sucursalesACargar = [encontrada];
         }
 
-        // Cargar contadores de cada sucursal
         let todosContadores = {};
         let fechasConDatos = new Set();
 
@@ -1201,13 +1226,10 @@
             const contadores = await cargarContadoresMaquina(suc);
             todosContadores[suc.nombre] = contadores;
             
-            // Recopilar fechas con datos
             Object.values(contadores).forEach(maquina => {
                 Object.keys(maquina).forEach(fecha => {
-                    // Convertir fecha a formato "dd/mm/yyyy" para consistencia
                     let fechaFormateada = fecha;
                     if (fecha.includes('-')) {
-                        // Convertir "yyyy-mm-dd" a "dd/mm/yyyy"
                         const partes = fecha.split('-');
                         if (partes.length === 3) {
                             fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -1221,13 +1243,7 @@
         estado.contadoresFiltrados = todosContadores;
         estado.fechasConDatos = Array.from(fechasConDatos).sort();
 
-        console.log('📅 Fechas con datos:', estado.fechasConDatos);
-        console.log('📊 Contadores cargados:', todosContadores);
-
-        // Renderizar calendario
         renderCalendario(estado.fechasConDatos, fechaDesde, fechaHasta);
-
-        // Renderizar tabla de contadores
         renderTablaContadores(todosContadores, fechaDesde, fechaHasta, sucursalFiltro);
 
         if (btn) btn.disabled = false;
@@ -1239,18 +1255,11 @@
         const container = document.getElementById('calendarioContainer');
         
         if (!fechasConDatos || fechasConDatos.length === 0) {
-            container.innerHTML = `
-                <p style="color:#888; width:100%; text-align:center; padding:10px;">
-                    No hay datos de contadores en el rango seleccionado.
-                </p>
-            `;
+            container.innerHTML = `<p style="color:#888; width:100%; text-align:center; padding:10px;">No hay datos de contadores en el rango seleccionado.</p>`;
             return;
         }
 
-        // Crear un Set con las fechas para búsqueda rápida
         const fechasSet = new Set(fechasConDatos);
-        console.log('📅 Fechas en Set:', Array.from(fechasSet));
-
         const desde = new Date(fechaDesde);
         const hasta = new Date(fechaHasta);
         
@@ -1265,10 +1274,8 @@
             const fechaStr = `${day}/${month}/${year}`;
             const fechaISO = `${year}-${month}-${day}`;
             
-            // Verificar si la fecha tiene datos (en cualquiera de los dos formatos)
             const tieneDatos = fechasSet.has(fechaStr) || fechasSet.has(fechaISO);
             
-            // Inicio de mes
             const nombreMes = currentDate.toLocaleString('es', { month: 'long' });
             const claveMes = `${year}-${month}`;
             if (claveMes !== mesActual) {
@@ -1302,18 +1309,12 @@
         const tbody = document.getElementById('contadoresBody');
         const summary = document.getElementById('contadoresSummary');
         
-        // Recopilar todas las máquinas con datos en el rango
         const maquinasData = [];
         const fechasSet = new Set();
         
-        console.log('📊 Generando tabla de contadores...');
-        console.log('📊 Contadores recibidos:', contadores);
-        
         for (const [sucursal, maquinas] of Object.entries(contadores)) {
             for (const [maquina, fechas] of Object.entries(maquinas)) {
-                // Filtrar fechas en el rango
                 const fechasFiltradas = Object.entries(fechas).filter(([fecha]) => {
-                    // Convertir fecha a formato YYYY-MM-DD para comparar
                     let fechaComparable = fecha;
                     if (fecha.includes('/')) {
                         const partes = fecha.split('/');
@@ -1324,10 +1325,7 @@
                     return fechaComparable >= fechaDesde && fechaComparable <= fechaHasta;
                 });
                 
-                console.log(`  Máquina ${maquina} - ${fechasFiltradas.length} fechas en rango`);
-                
                 if (fechasFiltradas.length >= 2) {
-                    // Ordenar fechas
                     fechasFiltradas.sort((a, b) => {
                         let aDate = a[0];
                         let bDate = b[0];
@@ -1360,8 +1358,6 @@
             }
         }
         
-        console.log(`📊 Máquinas encontradas: ${maquinasData.length}`);
-        
         if (maquinasData.length === 0) {
             container.style.display = 'none';
             summary.innerHTML = 'No se encontraron máquinas con al menos 2 fechas de registro en el rango seleccionado.';
@@ -1370,14 +1366,12 @@
         
         container.style.display = 'block';
         
-        // Resumen
         summary.innerHTML = `
             <span><strong>📊 ${maquinasData.length}</strong> máquinas encontradas</span>
             <span class="filter-tag">📅 ${fechaDesde} → ${fechaHasta}</span>
             <span class="filter-tag">🏢 ${sucursalFiltro === 'todas' ? 'Todas las sucursales' : sucursalFiltro}</span>
         `;
         
-        // Generar tabla
         let html = '';
         let totalFichas = 0;
         let totalPremios = 0;
@@ -1392,7 +1386,6 @@
             const premiosPruebaInicio = data.inicio.premiosPrueba || 0;
             const premiosPruebaFin = data.fin.premiosPrueba || 0;
             
-            // Cálculo de diferencias
             const diffFichas = Math.max(fichasInicio, fichasFin) - Math.min(fichasInicio, fichasFin);
             const diffFichasPrueba = Math.max(fichasPruebaInicio, fichasPruebaFin) - Math.min(fichasPruebaInicio, fichasPruebaFin);
             const fichasVendidas = diffFichas - diffFichasPrueba;
@@ -1421,7 +1414,6 @@
             </tr>`;
         });
         
-        // Fila de totales
         html += `<tr class="contadores-total-row">
             <td colspan="2"><strong>TOTAL GENERAL</strong></td>
             <td colspan="4"></td>
@@ -1434,7 +1426,7 @@
     }
 
     // ============================================================
-    // 8. GENERAR PDF - CORREGIDO
+    // 9. GENERAR PDF
     // ============================================================
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
@@ -1554,7 +1546,7 @@
     }
 
     // ============================================================
-    // 9. VISTA PREVIA DEL PDF
+    // 10. VISTA PREVIA DEL PDF
     // ============================================================
     function actualizarPreviewPDF(items) {
         const container = document.getElementById('previewPDF');
@@ -1600,26 +1592,22 @@
     }
 
     // ============================================================
-    // 10. INICIALIZACIÓN
+    // 11. INICIALIZACIÓN
     // ============================================================
     cargarCarritos();
 
-    // Configurar fechas iniciales (últimos 7 días)
     const hoy = new Date();
     const hace7Dias = new Date();
     hace7Dias.setDate(hoy.getDate() - 7);
     document.getElementById('filtroDiaDesde').value = hace7Dias.toISOString().split('T')[0];
     document.getElementById('filtroDiaHasta').value = hoy.toISOString().split('T')[0];
     
-    // Configurar fechas para contadores (últimos 30 días)
     const hace30Dias = new Date();
     hace30Dias.setDate(hoy.getDate() - 30);
     document.getElementById('contadorFechaDesde').value = hace30Dias.toISOString().split('T')[0];
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
-    console.log('✅ Panel de Control ASTROLAND - Días Laborales cargado correctamente.');
-    console.log('📝 Abre la consola (F12) para ver los logs de depuración.');
-    console.log('📊 Para probar contadores, selecciona fechas y presiona "Cargar Contadores"');
+    console.log('✅ Panel de Control ASTROLAND cargado correctamente.');
 </script>
 
 </body>
