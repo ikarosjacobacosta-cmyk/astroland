@@ -282,6 +282,8 @@
             padding: 10px;
             background: #f5f5f5;
             border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
         }
         .calendar-day {
             width: 36px;
@@ -623,8 +625,8 @@
         historialCache: {},
         contadoresCache: {}, // { sucursal: { maquina: { fecha: { fichas, premios, fichasPrueba, premiosPrueba } } } }
         datosFiltrados: [],
-        contadoresFiltrados: [],
-        fechasConDatos: [], // Array de fechas que tienen datos de contadores
+        contadoresFiltrados: {},
+        fechasConDatos: [],
         cargando: false
     };
 
@@ -1115,16 +1117,19 @@
     };
 
     // ============================================================
-    // 7. CONTADORES DE MÁQUINAS
+    // 7. CONTADORES DE MÁQUINAS (CORREGIDO)
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
         
+        // Si ya está en caché, devolver
         if (estado.contadoresCache[key]) {
+            console.log(`📊 Contadores en caché para ${key}`);
             return estado.contadoresCache[key];
         }
 
         try {
+            console.log(`📊 Cargando contadores para ${key}...`);
             const app = initializeApp(sucursalConfig.config, sucursalConfig.id);
             const db = getDatabase(app);
             const dbRef = ref(db);
@@ -1134,10 +1139,13 @@
             
             if (contSnap.exists()) {
                 const data = contSnap.val();
+                console.log(`📊 Datos de contadores para ${key}:`, data);
+                
                 // Estructura: contadores_maquinas/maqXX/fecha/...
                 Object.entries(data).forEach(([maquina, fechas]) => {
                     if (!contadores[maquina]) contadores[maquina] = {};
                     Object.entries(fechas).forEach(([fecha, valores]) => {
+                        // La fecha puede estar en formato "dd/mm/yyyy" o "yyyy-mm-dd"
                         contadores[maquina][fecha] = {
                             fichas: valores.fichas || 0,
                             premios: valores.premios || 0,
@@ -1146,6 +1154,8 @@
                         };
                     });
                 });
+            } else {
+                console.log(`⚠️ No hay datos de contadores para ${key}`);
             }
             
             estado.contadoresCache[key] = contadores;
@@ -1158,13 +1168,16 @@
     }
 
     window.cargarContadores = async function() {
-        const btn = document.querySelector('#contadoresResultados button') || document.querySelector('.btn-info');
+        const btn = event?.target || document.querySelector('.btn-info');
+        if (btn) btn.disabled = true;
+        
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
         const fechaDesde = document.getElementById('contadorFechaDesde').value;
         const fechaHasta = document.getElementById('contadorFechaHasta').value;
 
         if (!fechaDesde || !fechaHasta) {
             alert('⚠️ Debes seleccionar un rango de fechas (Desde y Hasta)');
+            if (btn) btn.disabled = false;
             return;
         }
 
@@ -1191,7 +1204,16 @@
             // Recopilar fechas con datos
             Object.values(contadores).forEach(maquina => {
                 Object.keys(maquina).forEach(fecha => {
-                    fechasConDatos.add(fecha);
+                    // Convertir fecha a formato "dd/mm/yyyy" para consistencia
+                    let fechaFormateada = fecha;
+                    if (fecha.includes('-')) {
+                        // Convertir "yyyy-mm-dd" a "dd/mm/yyyy"
+                        const partes = fecha.split('-');
+                        if (partes.length === 3) {
+                            fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                        }
+                    }
+                    fechasConDatos.add(fechaFormateada);
                 });
             });
         }
@@ -1199,20 +1221,24 @@
         estado.contadoresFiltrados = todosContadores;
         estado.fechasConDatos = Array.from(fechasConDatos).sort();
 
+        console.log('📅 Fechas con datos:', estado.fechasConDatos);
+        console.log('📊 Contadores cargados:', todosContadores);
+
         // Renderizar calendario
-        renderCalendario(fechasConDatos, fechaDesde, fechaHasta);
+        renderCalendario(estado.fechasConDatos, fechaDesde, fechaHasta);
 
         // Renderizar tabla de contadores
         renderTablaContadores(todosContadores, fechaDesde, fechaHasta, sucursalFiltro);
 
+        if (btn) btn.disabled = false;
         document.getElementById('statusBadge').className = 'status-badge success';
-        document.getElementById('statusBadge').textContent = `✅ Contadores cargados - ${fechasConDatos.size} fechas con datos`;
+        document.getElementById('statusBadge').textContent = `✅ Contadores cargados - ${estado.fechasConDatos.length} fechas con datos`;
     };
 
     function renderCalendario(fechasConDatos, fechaDesde, fechaHasta) {
         const container = document.getElementById('calendarioContainer');
         
-        if (fechasConDatos.length === 0) {
+        if (!fechasConDatos || fechasConDatos.length === 0) {
             container.innerHTML = `
                 <p style="color:#888; width:100%; text-align:center; padding:10px;">
                     No hay datos de contadores en el rango seleccionado.
@@ -1221,13 +1247,16 @@
             return;
         }
 
-        // Convertir fechas a objetos Date
+        // Crear un Set con las fechas para búsqueda rápida
         const fechasSet = new Set(fechasConDatos);
+        console.log('📅 Fechas en Set:', Array.from(fechasSet));
+
         const desde = new Date(fechaDesde);
         const hasta = new Date(fechaHasta);
         
         let html = '';
         let currentDate = new Date(desde);
+        let mesActual = '';
         
         while (currentDate <= hasta) {
             const year = currentDate.getFullYear();
@@ -1236,21 +1265,28 @@
             const fechaStr = `${day}/${month}/${year}`;
             const fechaISO = `${year}-${month}-${day}`;
             
+            // Verificar si la fecha tiene datos (en cualquiera de los dos formatos)
             const tieneDatos = fechasSet.has(fechaStr) || fechasSet.has(fechaISO);
             
             // Inicio de mes
-            if (currentDate.getDate() === 1) {
+            const nombreMes = currentDate.toLocaleString('es', { month: 'long' });
+            const claveMes = `${year}-${month}`;
+            if (claveMes !== mesActual) {
                 if (html) html += '</div>';
-                const nombreMes = currentDate.toLocaleString('es', { month: 'long' });
-                html += `<div class="calendar-month">${nombreMes} ${year}</div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">`;
+                mesActual = claveMes;
+                html += `<div class="calendar-month">${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${year}</div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">`;
             }
             
             const diaSemana = currentDate.getDay();
             const esFinDeSemana = diaSemana === 0 || diaSemana === 6;
             const esHoy = fechaISO === new Date().toISOString().split('T')[0];
             
-            html += `<div class="calendar-day ${tieneDatos ? 'has-data' : ''} ${esFinDeSemana ? 'weekend' : ''} ${esHoy ? 'selected' : ''}"
-                         title="${fechaStr}${tieneDatos ? ' ✅ Tiene datos' : ''}">
+            let clases = 'calendar-day';
+            if (tieneDatos) clases += ' has-data';
+            if (esFinDeSemana) clases += ' weekend';
+            if (esHoy) clases += ' selected';
+            
+            html += `<div class="${clases}" title="${fechaStr}${tieneDatos ? ' ✅ Tiene datos de contadores' : ' ❌ Sin datos'}">
                 ${currentDate.getDate()}
             </div>`;
             
@@ -1270,19 +1306,39 @@
         const maquinasData = [];
         const fechasSet = new Set();
         
+        console.log('📊 Generando tabla de contadores...');
+        console.log('📊 Contadores recibidos:', contadores);
+        
         for (const [sucursal, maquinas] of Object.entries(contadores)) {
             for (const [maquina, fechas] of Object.entries(maquinas)) {
                 // Filtrar fechas en el rango
                 const fechasFiltradas = Object.entries(fechas).filter(([fecha]) => {
-                    const fechaComparable = convertirFechaParaComparar(fecha);
+                    // Convertir fecha a formato YYYY-MM-DD para comparar
+                    let fechaComparable = fecha;
+                    if (fecha.includes('/')) {
+                        const partes = fecha.split('/');
+                        if (partes.length === 3) {
+                            fechaComparable = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                        }
+                    }
                     return fechaComparable >= fechaDesde && fechaComparable <= fechaHasta;
                 });
+                
+                console.log(`  Máquina ${maquina} - ${fechasFiltradas.length} fechas en rango`);
                 
                 if (fechasFiltradas.length >= 2) {
                     // Ordenar fechas
                     fechasFiltradas.sort((a, b) => {
-                        const aDate = convertirFechaParaComparar(a[0]);
-                        const bDate = convertirFechaParaComparar(b[0]);
+                        let aDate = a[0];
+                        let bDate = b[0];
+                        if (aDate.includes('/')) {
+                            const partes = aDate.split('/');
+                            aDate = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                        }
+                        if (bDate.includes('/')) {
+                            const partes = bDate.split('/');
+                            bDate = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                        }
                         return aDate.localeCompare(bDate);
                     });
                     
@@ -1304,9 +1360,11 @@
             }
         }
         
+        console.log(`📊 Máquinas encontradas: ${maquinasData.length}`);
+        
         if (maquinasData.length === 0) {
             container.style.display = 'none';
-            summary.innerHTML = 'No se encontraron máquinas con datos en el rango seleccionado.';
+            summary.innerHTML = 'No se encontraron máquinas con al menos 2 fechas de registro en el rango seleccionado.';
             return;
         }
         
@@ -1561,6 +1619,7 @@
 
     console.log('✅ Panel de Control ASTROLAND - Días Laborales cargado correctamente.');
     console.log('📝 Abre la consola (F12) para ver los logs de depuración.');
+    console.log('📊 Para probar contadores, selecciona fechas y presiona "Cargar Contadores"');
 </script>
 
 </body>
