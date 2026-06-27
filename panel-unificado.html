@@ -681,7 +681,6 @@
             if (histSnap.exists()) {
                 const data = histSnap.val();
                 Object.entries(data).forEach(([firebaseKey, registro]) => {
-                    // El registro TIENE fechaEliminacion (el título del día)
                     const fechaEliminacion = registro.fechaEliminacion || '';
                     
                     if (registro.ventas && Array.isArray(registro.ventas)) {
@@ -691,8 +690,7 @@
                                 firebaseKey: firebaseKey,
                                 fuente: 'historial',
                                 sucursal: sucursalConfig.nombre,
-                                fechaEliminacion: fechaEliminacion,  // ← EL TÍTULO DEL DÍA
-                                // Guardar también el registro completo para referencia
+                                fechaEliminacion: fechaEliminacion,
                                 _registro: registro
                             });
                         });
@@ -732,7 +730,6 @@
         console.log('  Tipo:', tipoOperacion);
         console.log('  Fuente:', fuenteFiltro);
 
-        // Verificar que haya un rango de días
         if (!diaDesde && !diaHasta) {
             alert('⚠️ Debes seleccionar al menos un día laboral (Desde o Hasta)');
             btn.disabled = false;
@@ -740,7 +737,6 @@
             return;
         }
 
-        // Determinar sucursales
         let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
             sucursalesACargar = sucursalesConfig;
@@ -751,25 +747,20 @@
 
         let todosItems = [];
 
-        // Cargar datos de cada sucursal
         for (const suc of sucursalesACargar) {
-            // Carrito
             if (fuenteFiltro === 'todos' || fuenteFiltro === 'carrito') {
                 const carritoItems = estado.carritos[suc.nombre] || [];
                 console.log(`  Carrito ${suc.nombre}: ${carritoItems.length} items`);
                 carritoItems.forEach(item => {
-                    // Para carrito, usamos la fecha del item
                     todosItems.push({ 
                         ...item, 
                         sucursal: suc.nombre, 
                         fuente: 'carrito',
-                        // El carrito no tiene fechaEliminacion, usamos la fecha del item
                         fechaEliminacion: item.fecha || ''
                     });
                 });
             }
 
-            // Historial
             if (fuenteFiltro === 'todos' || fuenteFiltro === 'historial') {
                 const historialItems = await cargarHistorialPorSucursal(suc);
                 console.log(`  Historial ${suc.nombre}: ${historialItems.length} items`);
@@ -781,10 +772,7 @@
 
         console.log(`📊 Total items cargados: ${todosItems.length}`);
 
-        // ============================================================
-        // FILTRO PRINCIPAL: Por rango de días laborales
-        // Usamos fechaEliminacion (el título del día) para filtrar
-        // ============================================================
+        // FILTRO PRINCIPAL: Por rango de días laborales (usando fechaEliminacion)
         let filtrados = todosItems.filter(item => {
             const diaLaboral = obtenerDiaLaboral(item);
             if (!diaLaboral) {
@@ -792,11 +780,9 @@
                 return false;
             }
             
-            // Convertir a formato YYYY-MM-DD para comparar
             const diaStr = convertirFechaParaComparar(diaLaboral);
             if (!diaStr) return false;
             
-            // Verificar rango
             let enRango = true;
             if (diaDesde && diaStr < diaDesde) enRango = false;
             if (diaHasta && diaStr > diaHasta) enRango = false;
@@ -806,7 +792,6 @@
 
         console.log(`📊 Items después de filtro de días laborales: ${filtrados.length}`);
         
-        // Mostrar qué días laborales se están incluyendo
         const diasIncluidos = new Set();
         filtrados.forEach(item => {
             const dia = obtenerDiaLaboral(item);
@@ -814,14 +799,11 @@
         });
         console.log('📅 Días laborales incluidos:', Array.from(diasIncluidos).sort());
 
-        // Aplicar filtros adicionales
-        // Códigos
         if (codigoDesde || codigoHasta) {
             filtrados = filtrados.filter(item => codigoEnRango(item.code || '', codigoDesde, codigoHasta));
             console.log(`  Después de filtro de códigos: ${filtrados.length}`);
         }
 
-        // Tipo de operación
         if (tipoOperacion !== 'todos') {
             filtrados = filtrados.filter(item => {
                 switch(tipoOperacion) {
@@ -838,14 +820,12 @@
             console.log(`  Después de filtro de tipo: ${filtrados.length}`);
         }
 
-        // Ordenar por timestamp
         filtrados.sort((a, b) => {
             const tsA = a.timestampCompleto || a.timestamp || 0;
             const tsB = b.timestampCompleto || b.timestamp || 0;
             return tsA - tsB;
         });
 
-        // Agregar día laboral a cada item para visualización
         filtrados = filtrados.map(item => {
             const diaLaboral = obtenerDiaLaboral(item) || 'sin fecha';
             return { ...item, _diaLaboral: diaLaboral };
@@ -979,7 +959,7 @@
     };
 
     // ============================================================
-    // 7. GENERAR PDF
+    // 7. GENERAR PDF - CORREGIDO (SIN DUPLICAR TOTAL)
     // ============================================================
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
@@ -1013,6 +993,7 @@
         doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 57);
         doc.text(`Items: ${items.length}`, 20, 64);
 
+        // Agrupar por sucursal
         const sucursales = {};
         items.forEach(item => {
             const suc = item.sucursal || 'Sin Sucursal';
@@ -1036,26 +1017,53 @@
             totalBancard += stats.cierreBancard;
         });
 
+        // Filtrar filas con datos
         const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
+        
         if (tableRows.length === 0) {
             tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
         }
 
+        // ✅ BODY: SOLO sucursales (SIN total)
         const bodyRows = tableRows.map(f => [f.sucursal, f.efectivo.toLocaleString(), f.bancard.toLocaleString(), f.total.toLocaleString()]);
+
+        // ✅ FOOT: SOLO el total (CON fondo amarillo)
+        const footRows = [];
         if (tableRows.length > 1) {
-            bodyRows.push(['Total', totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), (totalEfectivo + totalBancard).toLocaleString()]);
+            footRows.push(['Total', totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), (totalEfectivo + totalBancard).toLocaleString()]);
         }
 
         doc.autoTable({
             head: [['Sucursal', 'Efectivo', 'Bancard', 'Total']],
             body: bodyRows,
+            foot: footRows,  // ← El total SOLO aparece aquí (con fondo amarillo)
             startY: 72,
             theme: 'plain',
-            styles: { font: 'Times', fontSize: 14, textColor: [0, 0, 139], lineColor: [0, 0, 0], lineWidth: 0.5 },
-            headStyles: { fillColor: [255, 215, 0], textColor: [0, 0, 0], fontSize: 14, fontStyle: 'bold', halign: 'center' },
-            bodyStyles: { fontSize: 14, halign: 'center' },
-            footStyles: { fillColor: [255, 215, 0], textColor: [0, 0, 0], fontSize: 14, fontStyle: 'bold', halign: 'center' },
-            foot: tableRows.length > 1 ? [bodyRows[bodyRows.length - 1]] : undefined,
+            styles: {
+                font: 'Times',
+                fontSize: 14,
+                textColor: [0, 0, 139],
+                lineColor: [0, 0, 0],
+                lineWidth: 0.5,
+            },
+            headStyles: {
+                fillColor: [255, 215, 0],
+                textColor: [0, 0, 0],
+                fontSize: 14,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: {
+                fontSize: 14,
+                halign: 'center'
+            },
+            footStyles: {
+                fillColor: [255, 215, 0],  // ✅ Fondo amarillo
+                textColor: [0, 0, 0],
+                fontSize: 14,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
             margin: { left: 20, right: 20 },
             tableWidth: 'auto'
         });
@@ -1070,7 +1078,9 @@
         }
 
         const fechaStr = new Date().toISOString().split('T')[0];
-        doc.save(`ASTROLAND_DiasLaborales_${fechaStr}.pdf`);
+        const sucursalFiltro = document.getElementById('filtroSucursal').value;
+        const sufijo = sucursalFiltro && sucursalFiltro !== 'todas' ? `_${sucursalFiltro.replace(' ', '_')}` : '';
+        doc.save(`ASTROLAND_DiasLaborales${sufijo}_${fechaStr}.pdf`);
     }
 
     // ============================================================
