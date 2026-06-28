@@ -715,6 +715,75 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   touch-action: manipulation;
 }
 
+/* Estilos para el modal de selección de items a vaciar */
+.vaciar-seleccion-modal {
+  display: none;
+  position: fixed;
+  z-index: 5000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.95);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.vaciar-seleccion-modal .modal-content {
+  background-color: #fff;
+  margin: 0;
+  padding: 20px;
+  border-radius: 0;
+  width: 100%;
+  min-height: 100%;
+  position: relative;
+}
+.vaciar-item {
+  display: grid;
+  grid-template-columns: 30px 2fr 1fr 1fr 1fr;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.vaciar-item:hover { background: #f5f5f5; }
+.vaciar-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+.vaciar-header {
+  background: #1a1a2e;
+  color: white;
+  font-weight: bold;
+  border-radius: 10px 10px 0 0;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 30px 2fr 1fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.vaciar-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.vaciar-actions button {
+  padding: 14px 24px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1rem;
+  touch-action: manipulation;
+}
+.btn-seleccionar-todos { background: #2196F3; color: white; }
+.btn-deseleccionar-todos { background: #666; color: white; }
+.btn-vaciar-seleccionados { background: #f44336; color: white; }
+.btn-cancelar-vaciar { background: #999; color: white; }
+
 footer { text-align:center; padding:14px; margin-top:20px; color:#666; font-size:0.9rem; }
 body { padding-top: 80px; }
 
@@ -789,6 +858,33 @@ body { padding-top: 80px; }
 <button class="cart-button" onclick="openCartModal()">🛒 Carrito (<span id="cartCount">0</span>)</button>
 <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
 <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
+
+<!-- Modal de selección para vaciar carrito -->
+<div id="vaciarSeleccionModal" class="vaciar-seleccion-modal">
+  <div class="modal-content">
+    <button class="close" onclick="closeVaciarSeleccionModal()">&times;</button>
+    <h3>🗑️ Seleccionar items para vaciar</h3>
+    <p style="color:#666; text-align:center; margin-bottom:15px;">
+      Selecciona los items que deseas mover al historial. Los no seleccionados permanecerán en el carrito.
+    </p>
+    <div id="vaciarListaContainer">
+      <div class="vaciar-header">
+        <span>✅</span>
+        <span>Producto</span>
+        <span>💰 Dinero</span>
+        <span>🎯 Puntos</span>
+        <span>📅 Fecha</span>
+      </div>
+      <div id="vaciarItemsList"></div>
+    </div>
+    <div class="vaciar-actions">
+      <button class="btn-seleccionar-todos" onclick="seleccionarTodosVaciar()">✅ Seleccionar Todos</button>
+      <button class="btn-deseleccionar-todos" onclick="deseleccionarTodosVaciar()">⬜ Deseleccionar Todos</button>
+      <button class="btn-vaciar-seleccionados" onclick="confirmarVaciarSeleccionados()">🗑️ Vaciar Seleccionados</button>
+      <button class="btn-cancelar-vaciar" onclick="closeVaciarSeleccionModal()">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <div id="purchaseModal" class="modal">
   <div class="modal-content">
@@ -887,7 +983,7 @@ body { padding-top: 80px; }
     <div class="cart-actions">
       <button onclick="showExportPasswordPrompt()" style="background:#4CAF50; color:white;">📥 Exportar Todo</button>
       <button onclick="mostrarPanelFiltrado()" style="background:#FF9800; color:white;">🔓 Mostrar Filtros y Totales</button>
-      <button onclick="showClearPasswordPrompt()" style="background:#ff9800; color:white;">🗑️ Vaciar Carrito</button>
+      <button onclick="abrirVaciarSeleccion()" style="background:#ff9800; color:white;">🗑️ Vaciar Seleccionados</button>
     </div>
     <div id="filtrosCarritoSeccion" style="display: none;">
         <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
@@ -1049,6 +1145,7 @@ body { padding-top: 80px; }
   let historialVentas = [];
   let modoEdicionFecha = null;
   let contadoresMaquinas = {};
+  let vaciarSeleccionados = [];
   
   const PASSWORD_STOCK = "maira";
   const PASSWORD_GENERAL = "majo";
@@ -1076,6 +1173,282 @@ body { padding-top: 80px; }
     fechaHasta: ''
   };
 
+  // ========== FUNCIONES PARA VACIAR SELECCIONADOS ==========
+  window.abrirVaciarSeleccion = function() {
+    if (cart.length === 0) {
+      alert('El carrito está vacío');
+      return;
+    }
+    
+    const pwd = prompt('🔐 Ingrese la contraseña para vaciar seleccionados:');
+    if (pwd !== PASSWORD_GENERAL) { 
+      alert('Contraseña incorrecta'); 
+      return; 
+    }
+    
+    // Inicializar selección: todos los items seleccionados por defecto
+    vaciarSeleccionados = cart.map(item => item.firebaseKey);
+    renderVaciarLista();
+    document.getElementById('vaciarSeleccionModal').style.display = 'block';
+    blockBodyScroll();
+  };
+
+  window.closeVaciarSeleccionModal = function() {
+    document.getElementById('vaciarSeleccionModal').style.display = 'none';
+    unblockBodyScroll();
+  };
+
+  function renderVaciarLista() {
+    const container = document.getElementById('vaciarItemsList');
+    if (!container) return;
+    
+    if (cart.length === 0) {
+      container.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">🛒 No hay items en el carrito</p>';
+      return;
+    }
+    
+    let html = '';
+    cart.forEach(item => {
+      const isChecked = vaciarSeleccionados.includes(item.firebaseKey);
+      const nombre = item.name || item.code || 'Sin nombre';
+      const dinero = item.money ? `Gs. ${item.money.toLocaleString()}` : '-';
+      const puntos = item.points || 0;
+      const fecha = item.fecha || '-';
+      
+      html += `
+        <div class="vaciar-item">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                 onchange="toggleVaciarItem('${item.firebaseKey}')">
+          <span>${nombre}</span>
+          <span>${dinero}</span>
+          <span>${puntos}</span>
+          <span>${fecha}</span>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  window.toggleVaciarItem = function(firebaseKey) {
+    const idx = vaciarSeleccionados.indexOf(firebaseKey);
+    if (idx >= 0) {
+      vaciarSeleccionados.splice(idx, 1);
+    } else {
+      vaciarSeleccionados.push(firebaseKey);
+    }
+  };
+
+  window.seleccionarTodosVaciar = function() {
+    vaciarSeleccionados = cart.map(item => item.firebaseKey);
+    renderVaciarLista();
+  };
+
+  window.deseleccionarTodosVaciar = function() {
+    vaciarSeleccionados = [];
+    renderVaciarLista();
+  };
+
+  window.confirmarVaciarSeleccionados = async function() {
+    if (vaciarSeleccionados.length === 0) {
+      alert('❌ No has seleccionado ningún item para vaciar');
+      return;
+    }
+    
+    // Obtener los items seleccionados
+    const itemsSeleccionados = cart.filter(item => vaciarSeleccionados.includes(item.firebaseKey));
+    
+    if (itemsSeleccionados.length === 0) {
+      alert('❌ No hay items seleccionados');
+      return;
+    }
+    
+    const totalDinero = itemsSeleccionados.reduce((s, v) => s + (v.money || 0), 0);
+    const totalPuntos = itemsSeleccionados.reduce((s, v) => s + (v.points || 0), 0);
+    
+    // Confirmar con el usuario
+    const confirmar = confirm(`🗑️ CONFIRMAR VACIADO\n\n📦 Items a vaciar: ${itemsSeleccionados.length}\n💰 Dinero: Gs. ${totalDinero.toLocaleString()}\n🎯 Puntos: ${totalPuntos}\n\n⚠️ Estos items se guardarán en el historial y se eliminarán del carrito.\nLos items NO seleccionados permanecerán en el carrito.\n\n¿Continuar?`);
+    
+    if (!confirmar) return;
+    
+    // Cerrar el modal de selección
+    closeVaciarSeleccionModal();
+    
+    // Abrir el modal de fecha para elegir la fecha del historial
+    modoEdicionFecha = {
+      tipo: 'vaciar_seleccionados',
+      items: itemsSeleccionados
+    };
+    
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+    
+    document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para el historial';
+    document.getElementById('fechaModalDescripcion').textContent = 
+      `¿Qué fecha quieres asignar a estos ${itemsSeleccionados.length} items?`;
+    document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
+    document.getElementById('fechaModal').style.display = 'block';
+  };
+
+  // Modificar confirmarAccionFecha para soportar vaciar_seleccionados
+  const originalConfirmarFecha = window.confirmarAccionFecha;
+  window.confirmarAccionFecha = async function() {
+    const fechaInput = document.getElementById('fechaHistorialInput').value;
+    if (!fechaInput) {
+      alert('❌ Debes seleccionar una fecha');
+      return;
+    }
+    
+    const btnConfirmar = document.querySelector('#fechaModal .fecha-modal-buttons button:first-child');
+    const textoOriginal = btnConfirmar.textContent;
+    btnConfirmar.textContent = '⏳ GUARDANDO...';
+    btnConfirmar.disabled = true;
+    
+    try {
+      if (modoEdicionFecha && modoEdicionFecha.tipo === 'vaciar_seleccionados') {
+        // VACIAR SELECCIONADOS
+        const itemsSeleccionados = modoEdicionFecha.items;
+        
+        if (!itemsSeleccionados || itemsSeleccionados.length === 0) {
+          alert('❌ No hay items seleccionados');
+          closeFechaModal();
+          return;
+        }
+        
+        console.log(`📦 Vaciar seleccionados: ${itemsSeleccionados.length} items para guardar`);
+        
+        // Guardar en historial SOLO los seleccionados
+        const guardadoExitoso = await guardarEnHistorial(itemsSeleccionados, fechaInput);
+        
+        if (guardadoExitoso) {
+          // Eliminar SOLO los items seleccionados de Firebase
+          let eliminados = 0;
+          for (const item of itemsSeleccionados) {
+            try {
+              await remove(ref(database, `carrito/${item.firebaseKey}`));
+              eliminados++;
+            } catch (e) {
+              console.error('Error eliminando item:', e);
+            }
+          }
+          
+          console.log(`✅ Eliminados ${eliminados} items del carrito`);
+          
+          closeFechaModal();
+          alert(`✅ ÉXITO! Se guardaron ${itemsSeleccionados.length} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${itemsSeleccionados.reduce((s, v) => s + (v.money || 0), 0).toLocaleString()}\n\n📌 Los items NO seleccionados permanecen en el carrito.`);
+          
+          await loadInitialCart();
+          if (document.getElementById('cartModal').style.display === 'block') {
+            renderCart();
+          }
+        } else {
+          alert('❌ Error al guardar en historial. Las ventas NO se eliminaron.');
+        }
+        
+        modoEdicionFecha = null;
+        
+      } else if (modoEdicionFecha === 'vaciar') {
+        // VACIAR TODO (funcionalidad original)
+        if (cart.length === 0) {
+          alert('⚠️ El carrito está vacío');
+          closeFechaModal();
+          return;
+        }
+        
+        console.log(`📦 Vaciar carrito completo: ${cart.length} items para guardar`);
+        
+        const backupLocal = {
+          timestamp: Date.now(),
+          fechaRecuperacion: new Date().toLocaleString(),
+          fechaAsignada: fechaInput,
+          ventas: JSON.parse(JSON.stringify(cart)),
+          totalVentas: cart.length,
+          totalDinero: cart.reduce((s, v) => s + (v.money || 0), 0),
+          sucursal: "Villa Elisa"
+        };
+        localStorage.setItem('BACKUP_VENTAS_' + Date.now(), JSON.stringify(backupLocal));
+        localStorage.setItem('BACKUP_ULTIMO', JSON.stringify(backupLocal));
+        console.log("💾 Backup guardado en localStorage");
+        
+        const guardadoExitoso = await guardarEnHistorial(cart, fechaInput);
+        
+        if (guardadoExitoso) {
+          await remove(cartRef);
+          console.log("✅ Carrito vaciado después de guardar");
+          
+          closeFechaModal();
+          alert(`✅ ÉXITO! Se guardaron ${backupLocal.totalVentas} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${backupLocal.totalDinero.toLocaleString()}`);
+          
+          await loadInitialCart();
+          if (document.getElementById('cartModal').style.display === 'block') {
+            renderCart();
+          }
+        } else {
+          alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y están respaldadas localmente.');
+        }
+        
+        modoEdicionFecha = null;
+        
+      } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
+        // EDITAR FECHA (funcionalidad original)
+        const firebaseKey = modoEdicionFecha.firebaseKey;
+        const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
+        if (registro) {
+          const fechaObj = new Date(fechaInput);
+          fechaObj.setHours(12, 0, 0, 0);
+          
+          await update(ref(database, `historial_ventas/${firebaseKey}`), {
+            fechaEliminacion: fechaInput,
+            timestamp: fechaObj.getTime()
+          });
+          
+          closeFechaModal();
+          alert(`✅ Fecha actualizada a: ${fechaInput.split('-').reverse().join('/')}`);
+          await loadHistorial();
+          filtrarHistorial();
+        }
+        modoEdicionFecha = null;
+      }
+      
+    } catch (error) {
+      console.error("❌ Error en confirmarAccionFecha:", error);
+      alert('❌ Error al procesar la solicitud.');
+    } finally {
+      btnConfirmar.textContent = textoOriginal;
+      btnConfirmar.disabled = false;
+    }
+  };
+
+  // Mantener la función original para vaciar todo (se usa desde el botón de contraseña)
+  window.verifyClearPasswordAndShowDate = function() {
+    const pwd = document.getElementById('clearPassword').value;
+    if (pwd !== PASSWORD_GENERAL) { 
+      alert('Contraseña incorrecta'); 
+      return; 
+    }
+    if (cart.length === 0) {
+      alert('El carrito está vacío');
+      return;
+    }
+    
+    hideClearPrompt();
+    document.getElementById('cartModal').style.display = 'none';
+    unblockBodyScroll();
+    
+    modoEdicionFecha = 'vaciar';
+    
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+    
+    document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para historial';
+    document.getElementById('fechaModalDescripcion').textContent = '¿Qué fecha quieres asignar a este registro?';
+    document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
+    document.getElementById('fechaModal').style.display = 'block';
+  };
+
+  // ========== FIN FUNCIONES VACIAR SELECCIONADOS ==========
+
   // ========== MEJORA DE BÚSQUEDA DEL CATÁLOGO PRINCIPAL ==========
   let timeoutBusqueda = null;
 
@@ -1083,16 +1456,13 @@ body { padding-top: 80px; }
       const input = document.getElementById('busqueda');
       if (!input) return;
       
-      // Configurar teclado numérico en celulares
       input.inputMode = 'numeric';
       
-      // Limpiar evento anterior y configurar nuevo
       const nuevoInput = input.cloneNode(true);
       input.parentNode.replaceChild(nuevoInput, input);
       
       nuevoInput.addEventListener('input', function(e) {
           let v = this.value;
-          // Solo permitir números y guiones
           v = v.replace(/[^0-9-]/g, '');
           this.value = v;
           
@@ -1103,7 +1473,6 @@ body { padding-top: 80px; }
               return;
           }
           
-          // Extraer los primeros 3 dígitos numéricos (ignorando guiones)
           const match = v.match(/\d{3}/);
           if (match && match[0].length === 3) {
               timeoutBusqueda = setTimeout(() => {
@@ -2398,33 +2767,6 @@ body { padding-top: 80px; }
     }
   }
 
-  window.verifyClearPasswordAndShowDate = function() {
-    const pwd = document.getElementById('clearPassword').value;
-    if (pwd !== PASSWORD_GENERAL) { 
-      alert('Contraseña incorrecta'); 
-      return; 
-    }
-    if (cart.length === 0) {
-      alert('El carrito está vacío');
-      return;
-    }
-    
-    hideClearPrompt();
-    document.getElementById('cartModal').style.display = 'none';
-    unblockBodyScroll();
-    
-    modoEdicionFecha = 'vaciar';
-    
-    const hoy = new Date();
-    const ayer = new Date();
-    ayer.setDate(hoy.getDate() - 1);
-    
-    document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para historial';
-    document.getElementById('fechaModalDescripcion').textContent = '¿Qué fecha quieres asignar a este registro?';
-    document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
-    document.getElementById('fechaModal').style.display = 'block';
-  };
-
   window.mostrarModalEditarFecha = function(firebaseKey, fechaActual) {
     modoEdicionFecha = { tipo: 'editar', firebaseKey: firebaseKey };
     
@@ -2436,88 +2778,6 @@ body { padding-top: 80px; }
 
   window.closeFechaModal = function() {
     document.getElementById('fechaModal').style.display = 'none';
-    modoEdicionFecha = null;
-  };
-
-  window.confirmarAccionFecha = async function() {
-    const fechaInput = document.getElementById('fechaHistorialInput').value;
-    if (!fechaInput) {
-      alert('❌ Debes seleccionar una fecha');
-      return;
-    }
-    
-    const btnConfirmar = document.querySelector('#fechaModal .fecha-modal-buttons button:first-child');
-    const textoOriginal = btnConfirmar.textContent;
-    btnConfirmar.textContent = '⏳ GUARDANDO...';
-    btnConfirmar.disabled = true;
-    
-    try {
-      if (modoEdicionFecha === 'vaciar') {
-        if (cart.length === 0) {
-          alert('⚠️ El carrito está vacío');
-          closeFechaModal();
-          return;
-        }
-        
-        console.log(`📦 Vaciar carrito: ${cart.length} items para guardar`);
-        
-        const backupLocal = {
-          timestamp: Date.now(),
-          fechaRecuperacion: new Date().toLocaleString(),
-          fechaAsignada: fechaInput,
-          ventas: JSON.parse(JSON.stringify(cart)),
-          totalVentas: cart.length,
-          totalDinero: cart.reduce((s, v) => s + (v.money || 0), 0),
-          sucursal: "Villa Elisa"
-        };
-        localStorage.setItem('BACKUP_VENTAS_' + Date.now(), JSON.stringify(backupLocal));
-        localStorage.setItem('BACKUP_ULTIMO', JSON.stringify(backupLocal));
-        console.log("💾 Backup guardado en localStorage");
-        
-        const guardadoExitoso = await guardarEnHistorial(cart, fechaInput);
-        
-        if (guardadoExitoso) {
-          await remove(cartRef);
-          console.log("✅ Carrito vaciado después de guardar");
-          
-          closeFechaModal();
-          alert(`✅ ÉXITO! Se guardaron ${backupLocal.totalVentas} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${backupLocal.totalDinero.toLocaleString()}`);
-          
-          await loadInitialCart();
-          if (document.getElementById('cartModal').style.display === 'block') {
-            renderCart();
-          }
-        } else {
-          alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y están respaldadas localmente.');
-          console.log("💾 Puedes recuperar las ventas del backup local en caso necesario");
-        }
-        
-      } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
-        const firebaseKey = modoEdicionFecha.firebaseKey;
-        const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
-        if (registro) {
-          const fechaObj = new Date(fechaInput);
-          fechaObj.setHours(12, 0, 0, 0);
-          
-          await update(ref(database, `historial_ventas/${firebaseKey}`), {
-            fechaEliminacion: fechaInput,
-            timestamp: fechaObj.getTime()
-          });
-          
-          closeFechaModal();
-          alert(`✅ Fecha actualizada a: ${fechaInput.split('-').reverse().join('/')}`);
-          await loadHistorial();
-          filtrarHistorial();
-        }
-      }
-    } catch (error) {
-      console.error("❌ Error en confirmarAccionFecha:", error);
-      alert('❌ Error al procesar la solicitud. Las ventas están respaldadas localmente.');
-    } finally {
-      btnConfirmar.textContent = textoOriginal;
-      btnConfirmar.disabled = false;
-    }
-    
     modoEdicionFecha = null;
   };
 
@@ -2584,7 +2844,6 @@ body { padding-top: 80px; }
     return html;
   }
 
-  // ========== FUNCIÓN FILTRAR HISTORIAL ==========
   window.filtrarHistorial = function() {
     const desde = document.getElementById('fechaDesde').value;
     const hasta = document.getElementById('fechaHasta').value;
@@ -2686,7 +2945,6 @@ body { padding-top: 80px; }
     XLSX.writeFile(wb, `Historial_VillaElisa_${desde}_${hasta}.xlsx`);
   };
 
-  // Función para mostrar/ocultar panel de filtros y totales con contraseña
   window.mostrarPanelFiltrado = function() {
       const pwd = prompt('🔐 Ingrese la contraseña para mostrar los filtros y totales:');
       if (pwd === PASSWORD_GENERAL) {
@@ -2697,24 +2955,20 @@ body { padding-top: 80px; }
               seccionFiltros.style.display = 'block';
               seccionTotales.style.display = 'block';
               
-              // Configurar eventos después de mostrar
               const filtroTexto = document.getElementById('filtroTexto');
               const filtroTipo = document.getElementById('filtroTipo');
               const filtroFechaDesde = document.getElementById('filtroFechaDesde');
               const filtroFechaHasta = document.getElementById('filtroFechaHasta');
 
-              // Limpiar listeners previos para evitar duplicados
               const nuevoFiltroTexto = filtroTexto.cloneNode(true);
               filtroTexto.parentNode.replaceChild(nuevoFiltroTexto, filtroTexto);
               
-              // Mejora: Búsqueda en filtros del carrito con código completo y teclado numérico
               nuevoFiltroTexto.inputMode = 'numeric';
               nuevoFiltroTexto.addEventListener('input', function(e) {
                   let v = this.value;
                   v = v.replace(/[^0-9-]/g, '');
                   this.value = v;
                   
-                  // Solo filtrar cuando el código esté completo (ej: 100-38)
                   if (/^\d{3}-\d{2}$/.test(v)) {
                       aplicarFiltroCarrito('texto', v);
                   } else if (v === '') {
@@ -2726,12 +2980,10 @@ body { padding-top: 80px; }
               filtroFechaDesde.addEventListener('change', () => aplicarFiltroCarrito('fechaDesde', filtroFechaDesde.value));
               filtroFechaHasta.addEventListener('change', () => aplicarFiltroCarrito('fechaHasta', filtroFechaHasta.value));
               
-              // Forzar render para que aparezcan los totales
               renderCart();
           } else {
               seccionFiltros.style.display = 'none';
               seccionTotales.style.display = 'none';
-              // Limpiar filtros al ocultar
               limpiarFiltrosCarrito();
           }
       } else {
@@ -2775,7 +3027,6 @@ body { padding-top: 80px; }
         totalCierres: itemsFiltrados.filter(i => i.esCierre).length
     };
     
-    // Renderizar los totales en el div correspondiente
     const totalesDiv = document.getElementById('totalesCarritoSeccion');
     if (totalesDiv) {
         totalesDiv.innerHTML = `
@@ -3067,7 +3318,6 @@ body { padding-top: 80px; }
           let v = this.value.replace(/[^0-9-]/g, '');
           this.value = v;
           
-          // Activar búsqueda al tener 3 dígitos
           const match = v.match(/\d{3}/);
           if (match && match[0].length === 3) {
               filterStockItems(match[0]);
@@ -3138,7 +3388,6 @@ body { padding-top: 80px; }
     document.getElementById('cartModal').style.display = 'none'; 
     hideExportPrompt(); 
     hideClearPrompt();
-    // Ocultar también la sección de filtros y totales al cerrar el carrito
     document.getElementById('filtrosCarritoSeccion').style.display = 'none';
     document.getElementById('totalesCarritoSeccion').style.display = 'none';
     unblockBodyScroll();
