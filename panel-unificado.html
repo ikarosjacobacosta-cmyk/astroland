@@ -3,577 +3,1233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel de Control ASTROLAND - Días Laborales</title>
+    <title>ASTROLAND - Panel de Control Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* ============================================================
+           CSS VARIABLES Y RESET
+           ============================================================ */
+        :root {
+            --primary: #0d1b4a;
+            --primary-light: #1a2d6e;
+            --primary-dark: #080f2b;
+            --gold: #c9a84c;
+            --gold-light: #f0e6b0;
+            --gold-dark: #a8892e;
+            --success: #2e7d32;
+            --success-light: #e8f5e9;
+            --danger: #c62828;
+            --danger-light: #ffebee;
+            --warning: #e65100;
+            --warning-light: #fff3e0;
+            --info: #0d47a1;
+            --info-light: #e3f2fd;
+            --gray-50: #f8f9fa;
+            --gray-100: #f0f2f5;
+            --gray-200: #e2e6ea;
+            --gray-300: #c8ced4;
+            --gray-400: #a0a8b4;
+            --gray-500: #6c7a8a;
+            --gray-600: #4a5568;
+            --gray-700: #2d3748;
+            --shadow-sm: 0 2px 8px rgba(13, 27, 74, 0.08);
+            --shadow-md: 0 4px 20px rgba(13, 27, 74, 0.12);
+            --shadow-lg: 0 8px 40px rgba(13, 27, 74, 0.16);
+            --shadow-xl: 0 12px 60px rgba(13, 27, 74, 0.2);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+
         body {
-            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #f4f7fc;
-            color: #333;
+            font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-700);
+            min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
 
-        .header {
+        /* ============================================================
+           SCROLLBAR PERSONALIZADA
+           ============================================================ */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+        /* ============================================================
+           CONTENEDOR PRINCIPAL
+           ============================================================ */
+        .app-container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* ============================================================
+           HEADER PREMIUM
+           ============================================================ */
+        .header-premium {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+            padding: 20px 32px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #fff;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 16px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
         }
-        .header h1 { color: #1a237e; font-size: 1.8rem; }
-        .header h1 small { font-size: 0.8rem; font-weight: normal; color: #666; }
-        .last-update {
-            font-size: 0.85rem;
-            color: #666;
-            background: #e8eaf6;
-            padding: 8px 15px;
-            border-radius: 30px;
-        }
-        .status-badge {
-            font-size: 0.8rem;
-            padding: 4px 12px;
-            border-radius: 20px;
-        }
-        .status-badge.loading { background: #fff3e0; color: #e65100; }
-        .status-badge.success { background: #e8f5e9; color: #2e7d32; }
 
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px 25px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
+        .header-premium::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: radial-gradient(ellipse, rgba(201, 168, 76, 0.08) 0%, transparent 70%);
+            pointer-events: none;
         }
-        .card h2 {
-            font-size: 1.4rem;
-            color: #1a237e;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #e8eaf6;
-            padding-bottom: 10px;
+
+        .header-premium::after {
+            content: '✦';
+            position: absolute;
+            bottom: 10px;
+            right: 30px;
+            font-size: 80px;
+            color: rgba(201, 168, 76, 0.06);
+            pointer-events: none;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 1;
+        }
+
+        .header-logo {
+            width: 48px;
+            height: 48px;
+            background: var(--gold);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
+        }
+
+        .header-title h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .header-title h1 span {
+            color: var(--gold);
+        }
+
+        .header-title small {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            font-weight: 400;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 1;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.8rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .header-badge .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot 2s infinite;
+        }
+
+        .header-badge .status-dot.online {
+            background: #4CAF50;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .btn-icon:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        .btn-icon.active {
+            background: var(--gold);
+            color: var(--primary-dark);
+        }
+
+        /* ============================================================
+           NAVEGACIÓN POR TABS
+           ============================================================ */
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: white;
+            padding: 6px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+            flex-wrap: nowrap;
+        }
+
+        .nav-tab {
+            padding: 10px 22px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: var(--gray-500);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover {
+            background: var(--gray-100);
+            color: var(--primary);
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(13, 27, 74, 0.3);
+        }
+
+        .nav-tab .tab-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .nav-tab.active .tab-badge {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* ============================================================
+           TARJETAS (CARDS)
+           ============================================================ */
+        .card-premium {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 24px 28px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+            transition: var(--transition);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .card-premium:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-header h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
             display: flex;
             align-items: center;
             gap: 10px;
-            flex-wrap: wrap;
-        }
-        .card h2 .badge {
-            font-size: 0.7rem;
-            background: #e8eaf6;
-            color: #333;
-            padding: 2px 10px;
-            border-radius: 20px;
         }
 
-        .table-responsive { overflow-x: auto; }
-        table {
+        .card-header h2 .icon {
+            font-size: 1.4rem;
+        }
+
+        .card-header .badge-count {
+            background: var(--gray-100);
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        .card-header .badge-count strong {
+            color: var(--primary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ============================================================
+           BOTONES
+           ============================================================ */
+        .btn-premium {
+            padding: 8px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-premium:active {
+            transform: translateY(0);
+        }
+
+        .btn-premium.primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-premium.primary:hover {
+            background: var(--primary-light);
+        }
+
+        .btn-premium.success {
+            background: var(--success);
+            color: white;
+        }
+        .btn-premium.success:hover {
+            background: #1b5e20;
+        }
+
+        .btn-premium.warning {
+            background: var(--warning);
+            color: white;
+        }
+        .btn-premium.warning:hover {
+            background: #bf360c;
+        }
+
+        .btn-premium.info {
+            background: var(--info);
+            color: white;
+        }
+        .btn-premium.info:hover {
+            background: #0a3060;
+        }
+
+        .btn-premium.gold {
+            background: var(--gold);
+            color: var(--primary-dark);
+        }
+        .btn-premium.gold:hover {
+            background: var(--gold-dark);
+            color: white;
+        }
+
+        .btn-premium.outline {
+            background: transparent;
+            color: var(--gray-600);
+            border: 2px solid var(--gray-200);
+        }
+        .btn-premium.outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(13, 27, 74, 0.04);
+        }
+
+        .btn-premium:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ============================================================
+           TABLAS PREMIUM
+           ============================================================ */
+        .table-premium {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-        th {
-            background: #1a237e;
-            color: white;
-            padding: 12px 8px;
-            text-align: center;
-            white-space: nowrap;
-        }
-        td {
-            padding: 10px 8px;
-            text-align: center;
-            border-bottom: 1px solid #e8eaf6;
-        }
-        tr:hover td { background: #f5f8ff; }
-        .total-row td {
-            background: #fff3e0 !important;
-            font-weight: bold;
-            border-top: 2px solid #ff9800;
-        }
-        .cierre-row td {
-            background: #fff9c4 !important;
-        }
-        .dia-laboral-separator td {
-            background: #e8eaf6 !important;
-            font-weight: bold;
-            color: #1a237e;
-            border-top: 3px solid #1a237e;
-            border-bottom: 3px solid #1a237e;
-        }
-        .dia-laboral-header td {
-            background: #1a237e !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 8px;
+            font-size: 0.85rem;
         }
 
-        /* Estilos para contadores */
-        .contadores-header th {
-            background: #1a237e;
-            color: white;
+        .table-premium thead th {
+            background: var(--gray-50);
+            color: var(--gray-600);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            padding: 12px 10px;
             text-align: center;
-        }
-        .contadores-subheader th {
-            background: #283593;
-            color: white;
-            font-size: 0.75rem;
-            text-align: center;
-        }
-        .contadores-diferencia {
-            background: #e8f5e9 !important;
-            font-weight: bold;
-        }
-        .contadores-diferencia td {
-            border-top: 2px solid #4CAF50;
-            border-bottom: 2px solid #4CAF50;
-        }
-        .contadores-maquina-row td {
-            background: #fafafa;
-        }
-        .contadores-maquina-row:hover td {
-            background: #f5f8ff;
-        }
-        .contadores-total-row td {
-            background: #fff3e0 !important;
-            font-weight: bold;
-            border-top: 2px solid #ff9800;
+            border-bottom: 2px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
-        .filter-grid {
+        .table-premium tbody td {
+            padding: 11px 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--gray-100);
+            transition: var(--transition);
+            vertical-align: middle;
+        }
+
+        .table-premium tbody tr {
+            transition: var(--transition);
+        }
+
+        .table-premium tbody tr:hover td {
+            background: var(--gray-50);
+        }
+
+        .table-premium tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-premium .total-row td {
+            background: var(--warning-light) !important;
+            font-weight: 700;
+            border-top: 2px solid var(--gold);
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .table-premium .total-row:hover td {
+            background: #fff3e0 !important;
+        }
+
+        .table-premium .cierre-row td {
+            background: var(--gold-light) !important;
+        }
+
+        .table-premium .cierre-row:hover td {
+            background: #f5e6b0 !important;
+        }
+
+        .table-premium .dia-separator td {
+            background: var(--gray-100) !important;
+            font-weight: 700;
+            color: var(--gray-600);
+            padding: 8px 10px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .table-premium .dia-separator td i {
+            margin-right: 8px;
+            color: var(--gold);
+        }
+
+        /* ============================================================
+           FILTROS
+           ============================================================ */
+        .filter-grid-premium {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px 25px;
+            gap: 14px 20px;
             align-items: flex-end;
+            padding: 16px 0;
         }
+
         .filter-group {
             display: flex;
             flex-direction: column;
             gap: 4px;
+            flex: 1 1 150px;
+            min-width: 130px;
         }
+
         .filter-group label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #555;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
         }
-        .filter-group input, .filter-group select {
+
+        .filter-group input,
+        .filter-group select {
             padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            min-width: 150px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            transition: var(--transition);
             background: white;
+            width: 100%;
+            font-family: inherit;
         }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 27, 74, 0.1);
+        }
+
         .filter-group .rango-inputs {
             display: flex;
-            gap: 5px;
+            gap: 6px;
             align-items: center;
         }
+
         .filter-group .rango-inputs input {
-            width: 130px;
-            min-width: 130px;
+            width: 90px;
+            min-width: 70px;
             text-align: center;
         }
+
         .filter-group .rango-inputs span {
-            font-size: 0.8rem;
-            color: #666;
+            color: var(--gray-400);
+            font-weight: 700;
         }
 
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-primary { background: #1a237e; color: white; }
-        .btn-primary:hover { background: #0d1445; transform: scale(1.02); }
-        .btn-primary:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; }
-        .btn-success { background: #4CAF50; color: white; }
-        .btn-success:hover { background: #388E3C; }
-        .btn-success:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; }
-        .btn-warning { background: #ff9800; color: white; }
-        .btn-warning:hover { background: #e68900; }
-        .btn-outline { background: transparent; color: #1a237e; border: 2px solid #1a237e; }
-        .btn-outline:hover { background: #1a237e; color: white; }
-        .btn-info { background: #2196F3; color: white; }
-        .btn-info:hover { background: #1976D2; }
-
-        .filter-summary {
-            background: #e8eaf6;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+        .filter-actions {
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+            gap: 8px;
             align-items: center;
-        }
-        .filter-tag {
-            background: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            border: 1px solid #ccc;
+            flex-wrap: wrap;
         }
 
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 4px solid #1a237e;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .stat-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border-left: 4px solid #1a237e;
-        }
-        .stat-box .number {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #1a237e;
-        }
-        .stat-box .label {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: 5px;
-        }
-        .stat-box.cierres { border-left-color: #ff9800; }
-
-        .info-box {
-            background: #e3f2fd;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            color: #0d47a1;
-        }
-        .info-box strong { color: #1a237e; }
-
-        /* Calendario con fechas resaltadas */
-        .calendar-container {
+        /* ============================================================
+           CALENDARIO
+           ============================================================ */
+        .calendar-premium {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-            margin: 10px 0 15px 0;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            max-height: 300px;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: var(--radius-sm);
+            margin: 10px 0 16px 0;
+            border: 1px solid var(--gray-200);
+            max-height: 260px;
             overflow-y: auto;
         }
+
         .calendar-day {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid #e0e0e0;
-            background: white;
-            color: #333;
-        }
-        .calendar-day:hover {
-            transform: scale(1.05);
-            border-color: #1a237e;
-        }
-        .calendar-day.has-data {
-            background: #fff9c4 !important;
-            border-color: #f9a825;
-            font-weight: bold;
-        }
-        .calendar-day.has-data:hover {
-            background: #fff176 !important;
-        }
-        .calendar-day.empty {
-            background: transparent;
-            border: none;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
             cursor: default;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            background: white;
+            color: var(--gray-600);
         }
-        .calendar-day.selected {
-            background: #1a237e !important;
-            color: white !important;
-            border-color: #1a237e;
+
+        .calendar-day.has-data {
+            background: var(--gold-light) !important;
+            border-color: var(--gold);
+            color: var(--primary-dark);
         }
+
+        .calendar-day.has-data::after {
+            content: '●';
+            font-size: 6px;
+            color: var(--gold-dark);
+            position: absolute;
+            bottom: 1px;
+        }
+
         .calendar-day.weekend {
-            color: #f44336;
+            color: var(--danger);
         }
+
+        .calendar-day.selected {
+            background: var(--primary) !important;
+            color: white !important;
+            border-color: var(--primary);
+        }
+
         .calendar-month {
-            font-weight: bold;
-            color: #1a237e;
+            font-weight: 700;
+            color: var(--primary);
             width: 100%;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
+            margin: 4px 0 6px 0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .calendar-month i {
+            color: var(--gold);
+        }
+
+        /* ============================================================
+           CONTADORES
+           ============================================================ */
+        .contadores-header th {
+            background: var(--primary) !important;
+            color: white !important;
+        }
+
+        .contadores-subheader th {
+            background: var(--primary-light) !important;
+            color: rgba(255,255,255,0.85) !important;
+            font-size: 0.7rem !important;
+            font-weight: 600 !important;
+        }
+
+        .contadores-total-row td {
+            background: var(--warning-light) !important;
+            font-weight: 700 !important;
+            border-top: 2px solid var(--gold) !important;
+        }
+
+        .contadores-diff {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        /* ============================================================
+           ESTADÍSTICAS RÁPIDAS
+           ============================================================ */
+        .stats-grid-premium {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--gray-50);
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-card .number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .stat-card .number.gold {
+            color: var(--gold-dark);
+        }
+
+        .stat-card .number.green {
+            color: var(--success);
+        }
+
+        .stat-card .number.red {
+            color: var(--danger);
+        }
+
+        .stat-card .label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 4px;
+        }
+
+        .stat-card.cierres {
+            border-left-color: var(--gold);
+        }
+
+        .stat-card.dias {
+            border-left-color: var(--success);
+        }
+
+        /* ============================================================
+           INFO BOX
+           ============================================================ */
+        .info-box-premium {
+            background: var(--info-light);
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            color: var(--info);
+            border-left: 4px solid var(--info);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .info-box-premium i {
+            font-size: 1.2rem;
+            margin-top: 2px;
+            color: var(--info);
+        }
+
+        .info-box-premium strong {
+            color: var(--primary-dark);
+        }
+
+        /* ============================================================
+           FILTER SUMMARY
+           ============================================================ */
+        .filter-summary-premium {
+            background: var(--gray-50);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            align-items: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .filter-tag-premium {
+            background: white;
+            padding: 3px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            border: 1px solid var(--gray-200);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--gray-600);
+        }
+
+        .filter-tag-premium i {
+            color: var(--primary);
+        }
+
+        /* ============================================================
+           PREVIEW PDF
+           ============================================================ */
+        .preview-pdf {
+            background: var(--gray-50);
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            border: 2px dashed var(--gray-300);
+            margin-top: 12px;
+            min-height: 60px;
+        }
+
+        .preview-pdf table {
+            font-size: 0.8rem;
+        }
+
+        .preview-pdf table th {
+            background: var(--primary);
+            color: white;
+            padding: 6px 10px;
+        }
+
+        .preview-pdf table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        /* ============================================================
+           LOADING
+           ============================================================ */
+        .loader-premium {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 30px;
+        }
+
+        .loader-premium .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 992px) {
+            .header-premium { padding: 16px 20px; }
+            .header-title h1 { font-size: 1.3rem; }
+            .stats-grid-premium { grid-template-columns: repeat(3, 1fr); }
         }
 
         @media (max-width: 768px) {
-            .header { flex-direction: column; align-items: stretch; text-align: center; }
-            .filter-grid { flex-direction: column; }
-            .filter-group input, .filter-group select { min-width: 100%; }
-            .filter-group .rango-inputs input { width: 100%; min-width: 100%; }
+            body { padding: 12px; }
+            .header-premium { flex-direction: column; align-items: stretch; text-align: center; }
+            .header-left { justify-content: center; }
+            .header-right { justify-content: center; }
+            .card-premium { padding: 16px; }
+            .nav-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .nav-tab { padding: 8px 14px; font-size: 0.75rem; }
+            .stats-grid-premium { grid-template-columns: repeat(2, 1fr); }
+            .filter-grid-premium { flex-direction: column; }
+            .filter-group { flex: 1 1 100%; min-width: 100%; }
+            .filter-group .rango-inputs input { width: 100%; }
+            .table-premium { font-size: 0.75rem; }
+            .table-premium thead th { font-size: 0.6rem; padding: 8px 4px; }
+            .table-premium tbody td { padding: 8px 4px; }
             .calendar-day { width: 30px; height: 30px; font-size: 0.7rem; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid-premium { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stat-card { padding: 10px; }
+            .stat-card .number { font-size: 1.2rem; }
+            .header-logo { width: 36px; height: 36px; font-size: 18px; }
+            .header-title h1 { font-size: 1.1rem; }
+            .header-badge { font-size: 0.7rem; padding: 4px 10px; }
+        }
+
+        /* ============================================================
+           TOOLTIP
+           ============================================================ */
+        .tooltip-trigger {
+            cursor: help;
+            border-bottom: 1px dashed var(--gray-300);
+        }
+
+        /* ============================================================
+           SCROLL SUAVE
+           ============================================================ */
+        html {
+            scroll-behavior: smooth;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- ENCABEZADO -->
-    <div class="header">
-        <h1>🎯 ASTROLAND <small>Panel de Control - Días Laborales</small></h1>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <span class="status-badge loading" id="statusBadge">⏳ Cargando...</span>
-            <span class="last-update" id="lastUpdate">🔄 Actualizando...</span>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- SECCIÓN 1: CARRITOS ACTUALES                 -->
-    <!-- ============================================ -->
-    <div class="card">
-        <h2>🛒 Carritos Actuales <span class="badge" id="totalItemsBadge">0 items</span></h2>
-        <div class="table-responsive">
-            <table id="carritosTable">
-                <thead>
-                    <tr>
-                        <th>Sucursal</th>
-                        <th>Monto Total (Gs.)</th>
-                        <th>Cierre Efectivo (000-09)</th>
-                        <th>Cierre Bancard (000-10)</th>
-                        <th>Total Cierre</th>
-                        <th>Fichas (Gs.)</th>
-                        <th>Juguetes (Gs.)</th>
-                        <th>Pulseras (Gs.)</th>
-                        <th>Billar (Gs.)</th>
-                        <th>Detalle Fichas</th>
-                    </tr>
-                </thead>
-                <tbody id="carritosBody">
-                    <tr><td colspan="10" class="text-center"><div class="loader"></div></td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- SECCIÓN 2: FILTROS POR DÍAS LABORALES        -->
-    <!-- ============================================ -->
-    <div class="card">
-        <h2>🔍 Filtros por Días Laborales <span class="badge">Basado en Cierres</span></h2>
-        
-        <div class="info-box">
-            📌 <strong>¿Cómo funciona?</strong> El historial agrupa las operaciones por <strong>día laboral</strong> (fechaEliminacion). 
-            Una operación del 22/06 a las 00:01hs aparece en el historial con fecha <strong>21/06</strong> porque el cierre fue el 21.
-            <br><br>
-            <strong>El filtro usa la fecha del título (fechaEliminacion), NO la hora de la operación.</strong>
-        </div>
-
-        <div class="filter-grid">
-            <div class="filter-group">
-                <label>🏢 Sucursal</label>
-                <select id="filtroSucursal">
-                    <option value="todas">📊 Todas</option>
-                    <option value="Villa Morra">🏢 Villa Morra</option>
-                    <option value="Los Laureles">🏢 Los Laureles</option>
-                    <option value="Lambaré">🏢 Lambaré</option>
-                    <option value="Villa Elisa">🏢 Villa Elisa</option>
-                </select>
+<div class="app-container">
+    <!-- ============================================================
+    HEADER PREMIUM
+    ============================================================ -->
+    <header class="header-premium">
+        <div class="header-left">
+            <div class="header-logo">A</div>
+            <div class="header-title">
+                <h1>ASTROLAND <span>✦</span></h1>
+                <small>Panel de Control Unificado · Gestión de Sucursales</small>
             </div>
+        </div>
+        <div class="header-right">
+            <div class="header-badge">
+                <span class="status-dot online"></span>
+                <span>Conectado</span>
+            </div>
+            <div class="header-badge">
+                <i class="fas fa-clock" style="color: var(--gold);"></i>
+                <span id="lastUpdate">Actualizando...</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-icon" onclick="recargarDatos()" title="Actualizar datos">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn-icon" onclick="toggleTheme()" title="Cambiar tema">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-icon" onclick="window.print()" title="Imprimir">
+                    <i class="fas fa-print"></i>
+                </button>
+            </div>
+        </div>
+    </header>
 
-            <div class="filter-group">
-                <label>📅 Día Laboral (Desde)</label>
-                <input type="date" id="filtroDiaDesde">
-            </div>
-            <div class="filter-group">
-                <label>📅 Día Laboral (Hasta)</label>
-                <input type="date" id="filtroDiaHasta">
-            </div>
-            
-            <div class="filter-group">
-                <label>🏷️ Rango de Códigos</label>
-                <div class="rango-inputs">
-                    <input type="text" id="filtroCodigoDesde" placeholder="000-00" style="width:80px; min-width:80px;">
-                    <span>→</span>
-                    <input type="text" id="filtroCodigoHasta" placeholder="000-04" style="width:80px; min-width:80px;">
+    <!-- ============================================================
+    NAVEGACIÓN POR TABS
+    ============================================================ -->
+    <nav class="nav-tabs" id="mainNav">
+        <button class="nav-tab active" data-tab="tab-carritos">
+            <i class="fas fa-shopping-cart"></i> Carritos
+            <span class="tab-badge" id="tabCarritosBadge">0</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-filtros">
+            <i class="fas fa-filter"></i> Filtros
+        </button>
+        <button class="nav-tab" data-tab="tab-contadores">
+            <i class="fas fa-calculator"></i> Contadores
+        </button>
+        <button class="nav-tab" data-tab="tab-pdf">
+            <i class="fas fa-file-pdf"></i> Reportes
+        </button>
+    </nav>
+
+    <!-- ============================================================
+    TAB 1: CARRITOS ACTUALES
+    ============================================================ -->
+    <section id="tab-carritos" class="tab-content active">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2>
+                    <span class="icon">🛒</span>
+                    Carritos Actuales por Sucursal
+                </h2>
+                <div class="card-actions">
+                    <span class="badge-count">
+                        <i class="fas fa-box"></i> <strong id="totalItemsBadge">0</strong> items
+                    </span>
                 </div>
             </div>
-            
-            <div class="filter-group">
-                <label>📋 Tipo</label>
-                <select id="filtroTipoOperacion">
-                    <option value="todos">📊 Todos</option>
-                    <option value="venta">🛒 Venta</option>
-                    <option value="puntos">🎯 Puntos</option>
-                    <option value="movimiento">🔄 Movimiento</option>
-                    <option value="stock">📦 Stock</option>
-                    <option value="maquina">🖥️ Máquina</option>
-                    <option value="fichas_gratis">🎁 Fichas Gratis</option>
-                    <option value="cierres">💰 Solo Cierres</option>
-                </select>
+            <div class="table-responsive">
+                <table class="table-premium" id="carritosTable">
+                    <thead>
+                        <tr>
+                            <th>Sucursal</th>
+                            <th>Monto Total</th>
+                            <th>Cierre Efectivo</th>
+                            <th>Cierre Bancard</th>
+                            <th>Total Cierre</th>
+                            <th>Fichas</th>
+                            <th>Juguetes</th>
+                            <th>Pulseras</th>
+                            <th>Billar</th>
+                            <th>Detalle Fichas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carritosBody">
+                        <tr><td colspan="10" style="text-align:center; padding:30px;">
+                            <div class="loader-premium">
+                                <div class="spinner"></div>
+                                <span>Cargando datos...</span>
+                            </div>
+                        </td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="filter-group">
-                <label>📂 Fuente</label>
-                <select id="filtroFuente">
-                    <option value="carrito">🛒 Carrito Actual</option>
-                    <option value="historial">📜 Historial</option>
-                    <option value="todos">📊 Ambos</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>&nbsp;</label>
-                <button class="btn btn-primary" onclick="aplicarFiltros()" id="btnFiltrar">🔍 Buscar</button>
-                <button class="btn btn-outline" onclick="limpiarFiltros()">🗑️ Limpiar</button>
+            <div style="margin-top:12px; font-size:0.75rem; color:var(--gray-400); display:flex; gap:16px; flex-wrap:wrap;">
+                <span><i class="fas fa-info-circle" style="color:var(--info);"></i> El monto total no incluye cierres</span>
+                <span><i class="fas fa-circle" style="color:var(--gold);"></i> Cierres: 000-09 / 000-10</span>
+                <span><i class="fas fa-circle" style="color:var(--success);"></i> Fichas: 000-00 al 000-04</span>
             </div>
         </div>
+    </section>
 
-        <!-- Estadísticas rápidas -->
-        <div class="stats-grid" id="statsGrid" style="margin-top:15px; display:none;">
-            <div class="stat-box">
-                <div class="number" id="statTotalItems">0</div>
-                <div class="label">📦 Total Items</div>
+    <!-- ============================================================
+    TAB 2: FILTROS AVANZADOS
+    ============================================================ -->
+    <section id="tab-filtros" class="tab-content" style="display:none;">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2>
+                    <span class="icon">🔍</span>
+                    Filtros Avanzados
+                </h2>
+                <span class="badge-count">Carrito + Historial</span>
             </div>
-            <div class="stat-box">
-                <div class="number" id="statTotalMoney">Gs. 0</div>
-                <div class="label">💰 Dinero Total</div>
-            </div>
-            <div class="stat-box">
-                <div class="number" id="statTotalPoints">0</div>
-                <div class="label">🎯 Puntos</div>
-            </div>
-            <div class="stat-box">
-                <div class="number" id="statTotalFichas">0</div>
-                <div class="label">🎴 Fichas</div>
-            </div>
-            <div class="stat-box cierres">
-                <div class="number" id="statTotalCierres">Gs. 0</div>
-                <div class="label">💰 Total Cierres</div>
-            </div>
-            <div class="stat-box" style="border-left-color: #4CAF50;">
-                <div class="number" id="statDiasLaborales">0</div>
-                <div class="label">📅 Días Laborales</div>
-            </div>
-        </div>
 
-        <div id="resultadosFiltrados" class="mt-20">
-            <p class="text-center" style="color:#888;">Selecciona un rango de días laborales y presiona "Buscar".</p>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- SECCIÓN 3: CONTADORES DE MÁQUINAS           -->
-    <!-- ============================================ -->
-    <div class="card">
-        <h2>🖥️ Contadores de Máquinas <span class="badge">Por Días Laborales</span></h2>
-        
-        <div class="info-box">
-            📌 <strong>¿Cómo funciona?</strong> Selecciona un rango de fechas y una sucursal para ver los contadores de cada máquina.
-            <br>
-            <strong>Fichas:</strong> (Contador Mayor - Contador Menor) - Fichas de Prueba = Fichas Vendidas
-            <br>
-            <strong>Premios:</strong> (Contador Mayor - Contador Menor) - Premios de Prueba = Premios Entregados
-        </div>
-
-        <div class="filter-grid">
-            <div class="filter-group">
-                <label>🏢 Sucursal</label>
-                <select id="contadorSucursal">
-                    <option value="todas">📊 Todas</option>
-                    <option value="Villa Morra">🏢 Villa Morra</option>
-                    <option value="Los Laureles">🏢 Los Laureles</option>
-                    <option value="Lambaré">🏢 Lambaré</option>
-                    <option value="Villa Elisa">🏢 Villa Elisa</option>
-                </select>
+            <!-- Estadísticas rápidas -->
+            <div class="stats-grid-premium" id="statsGrid" style="display:none;">
+                <div class="stat-card">
+                    <div class="number" id="statTotalItems">0</div>
+                    <div class="label">📦 Total Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number gold" id="statTotalMoney">Gs. 0</div>
+                    <div class="label">💰 Dinero Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="statTotalPoints">0</div>
+                    <div class="label">🎯 Puntos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number green" id="statTotalFichas">0</div>
+                    <div class="label">🎴 Fichas</div>
+                </div>
+                <div class="stat-card cierres">
+                    <div class="number gold" id="statTotalCierres">Gs. 0</div>
+                    <div class="label">💰 Total Cierres</div>
+                </div>
+                <div class="stat-card dias">
+                    <div class="number green" id="statDiasLaborales">0</div>
+                    <div class="label">📅 Días Laborales</div>
+                </div>
             </div>
-            <div class="filter-group">
-                <label>📅 Fecha Desde</label>
-                <input type="date" id="contadorFechaDesde">
-            </div>
-            <div class="filter-group">
-                <label>📅 Fecha Hasta</label>
-                <input type="date" id="contadorFechaHasta">
-            </div>
-            <div class="filter-group">
-                <label>&nbsp;</label>
-                <button class="btn btn-info" onclick="cargarContadores()">📊 Cargar Contadores</button>
-            </div>
-        </div>
 
-        <!-- Calendario con fechas resaltadas -->
-        <div id="calendarioContainer" class="calendar-container">
-            <p style="color:#888; width:100%; text-align:center; padding:10px;">
-                Selecciona fechas y presiona "Cargar Contadores" para ver el calendario.
-            </p>
-        </div>
+            <div class="info-box-premium">
+                <i class="fas fa-lightbulb"></i>
+                <div>
+                    <strong>¿Cómo funciona?</strong> El historial agrupa las operaciones por <strong>día laboral</strong> (fechaEliminacion). 
+                    Una operación del 22/06 a las 00:01hs aparece en el historial con fecha <strong>21/06</strong> porque el cierre fue el 21.
+                </div>
+            </div>
 
-        <!-- Tabla de contadores -->
-        <div id="contadoresResultados" class="mt-20 table-responsive" style="display:none;">
-            <div class="filter-summary" id="contadoresSummary"></div>
-            <table id="contadoresTable">
-                <thead>
-                    <tr class="contadores-header">
-                        <th rowspan="2" style="min-width:80px;">Sucursal</th>
-                        <th rowspan="2" style="min-width:60px;">Máquina</th>
-                        <th colspan="4" style="min-width:200px;">Fecha de Anotación (Inicio)</th>
-                        <th colspan="4" style="min-width:200px;">Fecha de Anotación (Fin)</th>
-                        <th colspan="2" style="min-width:120px;">Diferencia</th>
-                    </tr>
-                    <tr class="contadores-subheader">
-                        <th>Fichas</th><th>Premios</th><th>Fichas Prueba</th><th>Premios Prueba</th>
-                        <th>Fichas</th><th>Premios</th><th>Fichas Prueba</th><th>Premios Prueba</th>
-                        <th>Fichas</th><th>Premios</th>
-                    </tr>
-                </thead>
-                <tbody id="contadoresBody">
-                </tbody>
-            </table>
-        </div>
-    </div>
+            <div class="filter-grid-premium">
+                <div class="filter-group">
+                    <label><i class="fas fa-store"></i> Sucursal</label>
+                    <select id="filtroSucursal">
+                        <option value="todas">📊 Todas</option>
+                        <option value="Villa Morra">🏢 Villa Morra</option>
+                        <option value="Los Laureles">🏢 Los Laureles</option>
+                        <option value="Lambaré">🏢 Lambaré</option>
+                        <option value="Villa Elisa">🏢 Villa Elisa</option>
+                    </select>
+                </div>
 
-    <!-- ============================================ -->
-    <!-- SECCIÓN 4: GENERAR REPORTE PDF               -->
-    <!-- ============================================ -->
-    <div class="card">
-        <h2>📄 Generar Reporte PDF <span class="badge">Basado en Días Laborales</span></h2>
-        <div class="flex" style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-success" onclick="generarPDFconFiltros()" id="btnPDF">📥 PDF con Filtros</button>
-            <span style="font-size:0.85rem; color:#666;">El PDF se genera con los días laborales seleccionados</span>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Desde</label>
+                    <input type="date" id="filtroDiaDesde">
+                </div>
+
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Hasta</label>
+                    <input type="date" id="filtroDiaHasta">
+                </div>
+
+                <div class="filter-group">
+                    <label><i class="fas fa-tag"></i> Rango de Códigos</label>
+                    <div class="rango-inputs">
+                        <input type="text" id="filtroCodigoDesde" placeholder="000-00">
+                        <span>→</span>
+                        <input type="text" id="filtroCodigoHasta" placeholder="000-04">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label><i class="fas fa-list"></i> Tipo</label>
+                    <select id="filtroTipoOperacion">
+                        <option value="todos">📊 Todos</option>
+                        <option value="venta">🛒 Venta</option>
+                        <option value="puntos">🎯 Puntos</option>
+                        <option value="movimiento">🔄 Movimiento</option>
+                        <option value="stock">📦 Stock</option>
+                        <option value="maquina">🖥️ Máquina</option>
+                        <option value="fichas_gratis">🎁 Fichas Gratis</option>
+                        <option value="cierres">💰 Cierres</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label><i class="fas fa-database"></i> Fuente</label>
+                    <select id="filtroFuente">
+                        <option value="carrito">🛒 Carrito</option>
+                        <option value="historial">📜 Historial</option>
+                        <option value="todos">📊 Ambos</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button class="btn-premium primary" onclick="aplicarFiltros()" id="btnFiltrar">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <button class="btn-premium outline" onclick="limpiarFiltros()">
+                        <i class="fas fa-undo"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultadosFiltrados" class="mt-20">
+                <p style="text-align:center; color:var(--gray-400); padding:20px;">
+                    <i class="fas fa-search" style="margin-right:8px;"></i>
+                    Selecciona filtros y presiona "Buscar"
+                </p>
+            </div>
         </div>
-        <div id="previewPDF" class="mt-20 table-responsive" style="background:#fafafa; padding:15px; border-radius:10px; border:1px dashed #ccc;">
-            <p class="text-center" style="color:#888;">Aplica filtros para ver la vista previa.</p>
+    </section>
+
+    <!-- ============================================================
+    TAB 3: CONTADORES DE MÁQUINAS
+    ============================================================ -->
+    <section id="tab-contadores" class="tab-content" style="display:none;">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2>
+                    <span class="icon">🖥️</span>
+                    Contadores de Máquinas
+                </h2>
+                <span class="badge-count">Por Días Laborales</span>
+            </div>
+
+            <div class="info-box-premium">
+                <i class="fas fa-calculator"></i>
+                <div>
+                    <strong>Fichas:</strong> (Mayor - Menor) - Prueba = Vendidas &nbsp;|&nbsp;
+                    <strong>Premios:</strong> (Mayor - Menor) - Prueba = Entregados
+                </div>
+            </div>
+
+            <div class="filter-grid-premium">
+                <div class="filter-group">
+                    <label><i class="fas fa-store"></i> Sucursal</label>
+                    <select id="contadorSucursal">
+                        <option value="todas">📊 Todas</option>
+                        <option value="Villa Morra">🏢 Villa Morra</option>
+                        <option value="Los Laureles">🏢 Los Laureles</option>
+                        <option value="Lambaré">🏢 Lambaré</option>
+                        <option value="Villa Elisa">🏢 Villa Elisa</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Desde</label>
+                    <input type="date" id="contadorFechaDesde">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Hasta</label>
+                    <input type="date" id="contadorFechaHasta">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-premium info" onclick="cargarContadores()">
+                        <i class="fas fa-chart-bar"></i> Cargar Contadores
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calendario -->
+            <div id="calendarioContainer" class="calendar-premium">
+                <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
+                    <i class="fas fa-calendar-day"></i> Selecciona fechas y presiona "Cargar Contadores"
+                </p>
+            </div>
+
+            <!-- Tabla de contadores -->
+            <div id="contadoresResultados" style="display:none; margin-top:16px;">
+                <div class="filter-summary-premium" id="contadoresSummary"></div>
+                <div class="table-responsive">
+                    <table class="table-premium" id="contadoresTable">
+                        <thead>
+                            <tr class="contadores-header">
+                                <th rowspan="2" style="min-width:80px;">Sucursal</th>
+                                <th rowspan="2" style="min-width:60px;">Máquina</th>
+                                <th colspan="4" style="min-width:200px;">Fecha Inicio</th>
+                                <th colspan="4" style="min-width:200px;">Fecha Fin</th>
+                                <th colspan="2" style="min-width:120px;">Diferencia</th>
+                            </tr>
+                            <tr class="contadores-subheader">
+                                <th>Fichas</th><th>Premios</th><th>Fichas Prueba</th><th>Premios Prueba</th>
+                                <th>Fichas</th><th>Premios</th><th>Fichas Prueba</th><th>Premios Prueba</th>
+                                <th>Fichas</th><th>Premios</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contadoresBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <!-- ============================================================
+    TAB 4: REPORTES PDF
+    ============================================================ -->
+    <section id="tab-pdf" class="tab-content" style="display:none;">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2>
+                    <span class="icon">📄</span>
+                    Generar Reporte PDF
+                </h2>
+                <span class="badge-count">Basado en filtros</span>
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+                <button class="btn-premium success" onclick="generarPDFconFiltros()">
+                    <i class="fas fa-file-pdf"></i> PDF con Filtros
+                </button>
+                <span style="font-size:0.8rem; color:var(--gray-400); display:flex; align-items:center;">
+                    <i class="fas fa-info-circle" style="margin-right:6px;"></i>
+                    Se genera con los filtros aplicados
+                </span>
+            </div>
+
+            <div class="preview-pdf" id="previewPDF">
+                <p style="text-align:center; color:var(--gray-400);">
+                    <i class="fas fa-file-pdf" style="margin-right:8px;"></i>
+                    Aplica filtros para ver la vista previa
+                </p>
+            </div>
+        </div>
+    </section>
 </div>
 
 <script type="module">
     // ============================================================
-    // 1. CONFIGURACIÓN DE FIREBASE
+    // 1. IMPORTACIONES Y CONFIGURACIÓN
     // ============================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
@@ -618,7 +1274,7 @@
     ];
 
     // ============================================================
-    // 2. ESTADO GLOBAL
+    // 2. ESTADO
     // ============================================================
     const estado = {
         carritos: {},
@@ -627,15 +1283,58 @@
         datosFiltrados: [],
         contadoresFiltrados: {},
         fechasConDatos: [],
-        cargando: false
+        tema: 'light'
     };
 
     // ============================================================
-    // 3. CARGAR CARRITOS (INICIO RÁPIDO)
+    // 3. NAVEGACIÓN POR TABS
+    // ============================================================
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Quitar active de todos
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            
+            // Activar este
+            this.classList.add('active');
+            const target = document.getElementById(this.dataset.tab);
+            if (target) target.style.display = 'block';
+        });
+    });
+
+    // ============================================================
+    // 4. FUNCIONES GLOBALES (window)
+    // ============================================================
+    window.recargarDatos = function() {
+        cargarCarritos();
+        mostrarMensaje('🔄 Datos actualizados', 'success');
+    };
+
+    window.toggleTheme = function() {
+        // Implementación simple de tema claro/oscuro
+        document.body.classList.toggle('dark-theme');
+    };
+
+    function mostrarMensaje(texto, tipo = 'info') {
+        const badge = document.getElementById('statusBadge');
+        if (badge) {
+            badge.textContent = texto;
+            badge.className = 'status-badge ' + tipo;
+            setTimeout(() => {
+                badge.className = 'status-badge success';
+                badge.textContent = '✅ Listo';
+            }, 3000);
+        }
+    }
+
+    // ============================================================
+    // 5. CARGAR CARRITOS
     // ============================================================
     async function cargarCarritos() {
         const tbody = document.getElementById('carritosBody');
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center"><div class="loader"></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px;">
+            <div class="loader-premium"><div class="spinner"></div><span>Cargando...</span></div>
+        </td></tr>`;
         
         const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
         let totalItems = 0;
@@ -660,34 +1359,28 @@
                 estado.carritos[suc.nombre] = items;
                 totalItems += items.length;
             } catch (error) {
-                console.error(`Error cargando carrito de ${suc.nombre}:`, error);
+                console.error(`Error cargando ${suc.nombre}:`, error);
                 estado.carritos[suc.nombre] = [];
             }
         }
 
         renderCarritos();
-        document.getElementById('totalItemsBadge').textContent = `${totalItems} items`;
-        document.getElementById('lastUpdate').textContent = `✅ Actualizado: ${new Date().toLocaleString()}`;
-        document.getElementById('statusBadge').className = 'status-badge success';
-        document.getElementById('statusBadge').textContent = '✅ Listo';
+        document.getElementById('totalItemsBadge').textContent = totalItems;
+        document.getElementById('tabCarritosBadge').textContent = totalItems;
+        document.getElementById('lastUpdate').textContent = `✅ ${new Date().toLocaleTimeString()}`;
     }
 
     // ============================================================
-    // 4. RENDERIZAR CARRITOS (CORREGIDO - ERRORES Y CÁPSULAS INCLUIDOS)
+    // 6. RENDERIZAR CARRITOS
     // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
-        let html = '';
         const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+        let html = '';
 
         ordenSucursales.forEach(sucursal => {
             const items = estado.carritos[sucursal] || [];
-            // ✅ FILTRAR: Excluir movimientos y cierres, PERO INCLUIR fichas gratis (000-05 y 000-06)
-            const itemsVenta = items.filter(item => 
-                !item.esMovimiento && 
-                !item.esCierre
-                // ✅ NO excluimos esFichaGratis para que 000-05 y 000-06 se cuenten
-            );
+            const itemsVenta = items.filter(item => !item.esMovimiento && !item.esCierre);
             const stats = calcularEstadisticas(itemsVenta);
 
             html += `<tr>
@@ -706,20 +1399,9 @@
             </tr>`;
         });
 
-        // Total general - excluyendo movimientos y cierres, pero incluyendo fichas gratis
         const totalStats = calcularEstadisticasTotales(ordenSucursales, 'carrito', false);
-        // false = NO filtrar esFichaGratis
-        
-        const totalItems = Object.values(estado.carritos).reduce((sum, items) => {
-            const itemsVenta = items.filter(item => 
-                !item.esMovimiento && 
-                !item.esCierre
-            );
-            return sum + itemsVenta.length;
-        }, 0);
-
         html += `<tr class="total-row">
-            <td><strong>TOTAL GENERAL</strong></td>
+            <td><strong>TOTAL</strong></td>
             <td>${totalStats.totalMonto.toLocaleString()}</td>
             <td>${totalStats.cierreEfectivo.toLocaleString()}</td>
             <td>${totalStats.cierreBancard.toLocaleString()}</td>
@@ -734,20 +1416,14 @@
         </tr>`;
 
         tbody.innerHTML = html;
-        document.getElementById('totalItemsBadge').textContent = `${totalItems} items`;
     }
 
     // ============================================================
-    // 5. FUNCIONES DE CÁLCULO ESTADÍSTICO
+    // 7. FUNCIONES DE CÁLCULO
     // ============================================================
     function calcularEstadisticas(items) {
-        let totalMonto = 0;
-        let cierreEfectivo = 0;
-        let cierreBancard = 0;
-        let fichasMonto = 0;
-        let juguetesMonto = 0;
-        let pulserasMonto = 0;
-        let billarMonto = 0;
+        let totalMonto = 0, cierreEfectivo = 0, cierreBancard = 0;
+        let fichasMonto = 0, juguetesMonto = 0, pulserasMonto = 0, billarMonto = 0;
         let detalleFichas = { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 };
 
         items.forEach(item => {
@@ -755,29 +1431,17 @@
             const code = item.code || '';
             const unidades = item.unidades || 1;
             
-            // Cierres
             if (code === '000-09') { cierreEfectivo += money; return; }
             if (code === '000-10') { cierreBancard += money; return; }
 
-            // Monto total de ventas
             totalMonto += money;
 
-            // Clasificación de productos
             if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
-                // Fichas: 000-00 a 000-04
-                if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) {
-                    fichasMonto += money;
-                }
-                // Pulseras: 000-07
+                if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) fichasMonto += money;
                 if (code === '000-07') pulserasMonto += money;
-                // Billar: 000-08
                 if (code === '000-08') billarMonto += money;
-                // Detalle de fichas (TODOS los códigos 000-xx, incluyendo 000-05 y 000-06)
-                if (detalleFichas.hasOwnProperty(code)) {
-                    detalleFichas[code] += unidades;
-                }
+                if (detalleFichas.hasOwnProperty(code)) detalleFichas[code] += unidades;
             } else if (code && parseInt(code.substring(0,3)) >= 5) {
-                // Juguetes: cualquier código >= 005-00
                 juguetesMonto += money;
             }
         });
@@ -787,34 +1451,19 @@
 
     function calcularEstadisticasTotales(sucursales, fuente = null, soloVentas = false) {
         const total = {
-            totalMonto: 0,
-            cierreEfectivo: 0,
-            cierreBancard: 0,
-            totalCierre: 0,
-            fichasMonto: 0,
-            juguetesMonto: 0,
-            pulserasMonto: 0,
-            billarMonto: 0,
+            totalMonto: 0, cierreEfectivo: 0, cierreBancard: 0, totalCierre: 0,
+            fichasMonto: 0, juguetesMonto: 0, pulserasMonto: 0, billarMonto: 0,
             detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 }
         };
 
         sucursales.forEach(nombre => {
             let items = [];
-            if (fuente === 'carrito') {
-                items = estado.carritos[nombre] || [];
-            } else if (fuente === 'historial') {
-                items = estado.historial[nombre] || [];
-            } else {
-                items = [...(estado.carritos[nombre] || []), ...(estado.historial[nombre] || [])];
-            }
+            if (fuente === 'carrito') items = estado.carritos[nombre] || [];
+            else if (fuente === 'historial') items = estado.historial[nombre] || [];
+            else items = [...(estado.carritos[nombre] || []), ...(estado.historial[nombre] || [])];
             
-            // ✅ Si soloVentas es true, filtrar movimientos y cierres, pero NO fichas gratis
             if (soloVentas) {
-                items = items.filter(item => 
-                    !item.esMovimiento && 
-                    !item.esCierre
-                    // ✅ NO excluimos esFichaGratis
-                );
+                items = items.filter(item => !item.esMovimiento && !item.esCierre);
             }
             
             const stats = calcularEstadisticas(items);
@@ -830,27 +1479,26 @@
                 total.detalleFichas[key] += stats.detalleFichas[key] || 0;
             }
         });
-
         return total;
     }
 
     function renderDetalleFichas(detalle) {
         if (!detalle) return '-';
         return `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px 8px; font-size:0.7rem;">
                 <span>Unitarias: ${detalle['000-00']}</span>
                 <span>Combo 30k: ${detalle['000-01']}</span>
                 <span>Combo 60k: ${detalle['000-02']}</span>
                 <span>Combo 120k: ${detalle['000-03']}</span>
                 <span>Combo 180k: ${detalle['000-04']}</span>
                 <span>Error: ${detalle['000-05']}</span>
-                <span>Cápsulas: ${detalle['000-06']}</span>
+                <span style="grid-column: span 2; text-align:center;">Cápsulas: ${detalle['000-06']}</span>
             </div>
         `;
     }
 
     // ============================================================
-    // 6. FUNCIONES PARA OBTENER FECHAS
+    // 8. FUNCIONES DE FECHA
     // ============================================================
     function obtenerDiaLaboral(item) {
         if (item.fechaEliminacion) return item.fechaEliminacion;
@@ -863,28 +1511,15 @@
         try {
             const partes = fechaStr.split('/');
             if (partes.length === 3) {
-                const dia = partes[0].padStart(2, '0');
-                const mes = partes[1].padStart(2, '0');
-                const anio = partes[2];
-                return `${anio}-${mes}-${dia}`;
+                return `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
             }
             return fechaStr;
-        } catch(e) {
-            return fechaStr;
-        }
+        } catch(e) { return fechaStr; }
     }
 
     // ============================================================
-    // 7. FILTRAR POR DÍAS LABORALES
+    // 9. FILTROS AVANZADOS
     // ============================================================
-    function codigoEnRango(codigo, desde, hasta) {
-        if (!desde && !hasta) return true;
-        if (!codigo) return false;
-        if (desde && !hasta) return codigo >= desde;
-        if (!desde && hasta) return codigo <= hasta;
-        return codigo >= desde && codigo <= hasta;
-    }
-
     async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
         if (estado.historialCache[key]) return estado.historialCache[key];
@@ -925,9 +1560,7 @@
     window.aplicarFiltros = async function() {
         const btn = document.getElementById('btnFiltrar');
         btn.disabled = true;
-        btn.textContent = '⏳ Cargando...';
-        document.getElementById('statusBadge').className = 'status-badge loading';
-        document.getElementById('statusBadge').textContent = '⏳ Cargando datos...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
 
         const sucursalFiltro = document.getElementById('filtroSucursal').value;
         const diaDesde = document.getElementById('filtroDiaDesde').value;
@@ -938,9 +1571,9 @@
         const fuenteFiltro = document.getElementById('filtroFuente').value;
 
         if (!diaDesde && !diaHasta) {
-            alert('⚠️ Debes seleccionar al menos un día laboral (Desde o Hasta)');
+            alert('⚠️ Debes seleccionar al menos un día laboral');
             btn.disabled = false;
-            btn.textContent = '🔍 Buscar';
+            btn.innerHTML = '<i class="fas fa-search"></i> Buscar';
             return;
         }
 
@@ -958,12 +1591,7 @@
             if (fuenteFiltro === 'todos' || fuenteFiltro === 'carrito') {
                 const carritoItems = estado.carritos[suc.nombre] || [];
                 carritoItems.forEach(item => {
-                    todosItems.push({ 
-                        ...item, 
-                        sucursal: suc.nombre, 
-                        fuente: 'carrito',
-                        fechaEliminacion: item.fecha || ''
-                    });
+                    todosItems.push({ ...item, sucursal: suc.nombre, fuente: 'carrito', fechaEliminacion: item.fecha || '' });
                 });
             }
 
@@ -987,7 +1615,13 @@
         });
 
         if (codigoDesde || codigoHasta) {
-            filtrados = filtrados.filter(item => codigoEnRango(item.code || '', codigoDesde, codigoHasta));
+            filtrados = filtrados.filter(item => {
+                const code = item.code || '';
+                if (codigoDesde && codigoHasta) return code >= codigoDesde && code <= codigoHasta;
+                if (codigoDesde) return code >= codigoDesde;
+                if (codigoHasta) return code <= codigoHasta;
+                return true;
+            });
         }
 
         if (tipoOperacion !== 'todos') {
@@ -1005,12 +1639,7 @@
             });
         }
 
-        filtrados.sort((a, b) => {
-            const tsA = a.timestampCompleto || a.timestamp || 0;
-            const tsB = b.timestampCompleto || b.timestamp || 0;
-            return tsA - tsB;
-        });
-
+        filtrados.sort((a, b) => (a.timestampCompleto || a.timestamp || 0) - (b.timestampCompleto || b.timestamp || 0));
         filtrados = filtrados.map(item => {
             const diaLaboral = obtenerDiaLaboral(item) || 'sin fecha';
             return { ...item, _diaLaboral: diaLaboral };
@@ -1022,9 +1651,7 @@
         actualizarPreviewPDF(filtrados);
 
         btn.disabled = false;
-        btn.textContent = '🔍 Buscar';
-        document.getElementById('statusBadge').className = 'status-badge success';
-        document.getElementById('statusBadge').textContent = `✅ ${filtrados.length} items en ${new Set(filtrados.map(i => i._diaLaboral)).size} días`;
+        btn.innerHTML = '<i class="fas fa-search"></i> Buscar';
     };
 
     function actualizarEstadisticasFiltradas(items) {
@@ -1049,31 +1676,30 @@
         
         if (items.length === 0) {
             container.innerHTML = `
-                <div class="filter-summary">
-                    <span>🔍 <strong>0</strong> resultados encontrados</span>
+                <div class="filter-summary-premium">
+                    <span><i class="fas fa-search"></i> <strong>0</strong> resultados</span>
                 </div>
-                <p class="text-center" style="color:#888; padding:20px;">
-                    No se encontraron operaciones en el rango de días laborales seleccionado.
+                <p style="text-align:center; color:var(--gray-400); padding:20px;">
+                    No se encontraron operaciones en el rango seleccionado
                 </p>
             `;
             return;
         }
 
-        let html = `<div class="filter-summary">
-            <span><strong>🔍 ${items.length}</strong> items encontrados</span>
-            <span class="filter-tag">📅 ${new Set(items.map(i => i._diaLaboral)).size} días laborales</span>
+        let html = `<div class="filter-summary-premium">
+            <span><i class="fas fa-list"></i> <strong>${items.length}</strong> items</span>
+            <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${new Set(items.map(i => i._diaLaboral)).size} días</span>
         </div>`;
 
-        html += `<div class="table-responsive"><table>
+        html += `<div class="table-responsive"><table class="table-premium">
             <thead><tr>
                 <th>#</th><th>Día Laboral</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
-                <th>Puntos</th><th>Dinero (Gs.)</th><th>Fichas</th><th>Fecha Op.</th><th>Hora</th><th>Tipo</th>
+                <th>Puntos</th><th>Dinero</th><th>Fichas</th><th>Fecha</th><th>Hora</th><th>Tipo</th>
             </tr></thead><tbody>`;
 
-        let contador = 0;
-        let ultimoDia = '';
+        let contador = 0, ultimoDia = '';
 
-        items.forEach(item => {
+        items.slice(0, 200).forEach(item => {
             contador++;
             const ts = item.timestampCompleto || item.timestamp || 0;
             const fecha = ts ? new Date(ts) : null;
@@ -1082,41 +1708,38 @@
             const diaLaboral = item._diaLaboral || '-';
             
             if (diaLaboral !== ultimoDia) {
-                if (ultimoDia !== '') {
-                    html += `<tr class="dia-laboral-separator">
-                        <td colspan="12" style="text-align:center;">📅 <strong>Día Laboral: ${diaLaboral}</strong></td>
-                    </tr>`;
-                } else {
-                    html += `<tr class="dia-laboral-header">
-                        <td colspan="12" style="text-align:center;">📅 <strong>Día Laboral: ${diaLaboral}</strong></td>
-                    </tr>`;
-                }
+                html += `<tr class="dia-separator">
+                    <td colspan="12"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
+                </tr>`;
                 ultimoDia = diaLaboral;
             }
 
             const esCierre = item.esCierre || item.code === '000-09' || item.code === '000-10';
-            const tipo = esCierre ? '💰 Cierre' : 
-                        item.esMovimiento ? '🔄 Movimiento' : 
-                        item.esFichaGratis ? '🎁 Gratis' : '🛒 Venta';
-            
+            const tipo = esCierre ? '💰 Cierre' : item.esMovimiento ? '🔄 Movimiento' : item.esFichaGratis ? '🎁 Gratis' : '🛒 Venta';
             const fuente = item.fuente === 'historial' ? '📜' : '🛒';
             const clase = esCierre ? 'cierre-row' : '';
 
             html += `<tr class="${clase}">
-                <td style="font-size:0.7rem; color:#999;">${contador}</td>
-                <td style="font-weight:bold; font-size:0.8rem; color:#1a237e;">${diaLaboral}</td>
+                <td style="color:var(--gray-400); font-size:0.7rem;">${contador}</td>
+                <td style="font-weight:600; font-size:0.75rem; color:var(--primary);">${diaLaboral}</td>
                 <td><strong>${item.sucursal || '-'}</strong></td>
                 <td>${fuente}</td>
                 <td>${item.code || '-'}</td>
-                <td>${item.name || '-'}</td>
+                <td style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.name || '-'}</td>
                 <td>${(item.points || 0).toLocaleString()}</td>
                 <td>${(item.money || 0).toLocaleString()}</td>
                 <td>${Math.abs(item.fichaConsumption || 0)}</td>
                 <td>${item.fecha || '-'}</td>
-                <td style="font-family:monospace; font-size:0.8rem;">${horaStr}</td>
+                <td style="font-family:monospace; font-size:0.75rem;">${horaStr}</td>
                 <td>${tipo}</td>
             </tr>`;
         });
+
+        if (items.length > 200) {
+            html += `<tr><td colspan="12" style="text-align:center; color:var(--gray-400); padding:10px;">
+                ... y ${items.length - 200} items más
+            </td></tr>`;
+        }
 
         html += `</tbody></table></div>`;
         container.innerHTML = html;
@@ -1130,14 +1753,17 @@
         document.getElementById('filtroCodigoHasta').value = '';
         document.getElementById('filtroTipoOperacion').value = 'todos';
         document.getElementById('filtroFuente').value = 'carrito';
-        document.getElementById('resultadosFiltrados').innerHTML = `<p class="text-center" style="color:#888;">Selecciona un rango de días laborales y presiona "Buscar".</p>`;
+        document.getElementById('resultadosFiltrados').innerHTML = `
+            <p style="text-align:center; color:var(--gray-400); padding:20px;">
+                <i class="fas fa-search" style="margin-right:8px;"></i>
+                Selecciona filtros y presiona "Buscar"
+            </p>`;
         document.getElementById('statsGrid').style.display = 'none';
-        document.getElementById('previewPDF').innerHTML = `<p class="text-center" style="color:#888;">Aplica filtros para ver la vista previa.</p>`;
         estado.datosFiltrados = [];
     };
 
     // ============================================================
-    // 8. CONTADORES DE MÁQUINAS
+    // 10. CONTADORES DE MÁQUINAS
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -1174,7 +1800,7 @@
     }
 
     window.cargarContadores = async function() {
-        const btn = document.querySelector('.btn-info');
+        const btn = event?.target || document.querySelector('.btn-premium.info');
         if (btn) btn.disabled = true;
         
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
@@ -1182,13 +1808,10 @@
         const fechaHasta = document.getElementById('contadorFechaHasta').value;
 
         if (!fechaDesde || !fechaHasta) {
-            alert('⚠️ Debes seleccionar un rango de fechas (Desde y Hasta)');
+            alert('⚠️ Debes seleccionar un rango de fechas');
             if (btn) btn.disabled = false;
             return;
         }
-
-        document.getElementById('statusBadge').className = 'status-badge loading';
-        document.getElementById('statusBadge').textContent = '⏳ Cargando contadores...';
 
         let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
@@ -1226,15 +1849,17 @@
         renderTablaContadores(todosContadores, fechaDesde, fechaHasta, sucursalFiltro);
 
         if (btn) btn.disabled = false;
-        document.getElementById('statusBadge').className = 'status-badge success';
-        document.getElementById('statusBadge').textContent = `✅ Contadores cargados - ${estado.fechasConDatos.length} fechas con datos`;
     };
 
     function renderCalendario(fechasConDatos, fechaDesde, fechaHasta) {
         const container = document.getElementById('calendarioContainer');
         
         if (!fechasConDatos || fechasConDatos.length === 0) {
-            container.innerHTML = `<p style="color:#888; width:100%; text-align:center; padding:10px;">No hay datos de contadores en el rango seleccionado.</p>`;
+            container.innerHTML = `
+                <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
+                    <i class="fas fa-calendar-day"></i> No hay datos de contadores en el rango seleccionado
+                </p>
+            `;
             return;
         }
 
@@ -1260,7 +1885,7 @@
             if (claveMes !== mesActual) {
                 if (html) html += '</div>';
                 mesActual = claveMes;
-                html += `<div class="calendar-month">${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${year}</div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">`;
+                html += `<div class="calendar-month"><i class="fas fa-calendar-alt"></i> ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${year}</div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">`;
             }
             
             const diaSemana = currentDate.getDay();
@@ -1272,7 +1897,7 @@
             if (esFinDeSemana) clases += ' weekend';
             if (esHoy) clases += ' selected';
             
-            html += `<div class="${clases}" title="${fechaStr}${tieneDatos ? ' ✅ Tiene datos de contadores' : ' ❌ Sin datos'}">
+            html += `<div class="${clases}" title="${fechaStr}${tieneDatos ? ' ✅ Tiene datos' : ' ❌ Sin datos'}">
                 ${currentDate.getDate()}
             </div>`;
             
@@ -1331,21 +1956,20 @@
         
         if (maquinasData.length === 0) {
             container.style.display = 'none';
-            summary.innerHTML = 'No se encontraron máquinas con al menos 2 fechas de registro en el rango seleccionado.';
+            summary.innerHTML = 'No se encontraron máquinas con al menos 2 fechas en el rango seleccionado.';
             return;
         }
         
         container.style.display = 'block';
         
         summary.innerHTML = `
-            <span><strong>📊 ${maquinasData.length}</strong> máquinas encontradas</span>
-            <span class="filter-tag">📅 ${fechaDesde} → ${fechaHasta}</span>
-            <span class="filter-tag">🏢 ${sucursalFiltro === 'todas' ? 'Todas las sucursales' : sucursalFiltro}</span>
+            <span><i class="fas fa-server"></i> <strong>${maquinasData.length}</strong> máquinas</span>
+            <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${fechaDesde} → ${fechaHasta}</span>
+            <span class="filter-tag-premium"><i class="fas fa-store"></i> ${sucursalFiltro === 'todas' ? 'Todas' : sucursalFiltro}</span>
         `;
         
         let html = '';
-        let totalFichas = 0;
-        let totalPremios = 0;
+        let totalFichas = 0, totalPremios = 0;
         
         maquinasData.forEach((data, index) => {
             const fichasInicio = data.inicio.fichas || 0;
@@ -1368,8 +1992,8 @@
             totalFichas += fichasVendidas;
             totalPremios += premiosEntregados;
             
-            const claseFila = index % 2 === 0 ? 'contadores-maquina-row' : '';
-            html += `<tr class="${claseFila}">
+            const claseFila = index % 2 === 0 ? '' : 'style="background:var(--gray-50);"';
+            html += `<tr ${claseFila}>
                 <td><strong>${data.sucursal}</strong></td>
                 <td><strong>${data.maquina.toUpperCase()}</strong></td>
                 <td>${fichasInicio}</td>
@@ -1380,13 +2004,13 @@
                 <td>${premiosFin}</td>
                 <td>${fichasPruebaFin}</td>
                 <td>${premiosPruebaFin}</td>
-                <td style="color:#4CAF50; font-weight:bold;">${fichasVendidas}</td>
-                <td style="color:#4CAF50; font-weight:bold;">${premiosEntregados}</td>
+                <td class="contadores-diff">${fichasVendidas}</td>
+                <td class="contadores-diff">${premiosEntregados}</td>
             </tr>`;
         });
         
         html += `<tr class="contadores-total-row">
-            <td colspan="2"><strong>TOTAL GENERAL</strong></td>
+            <td colspan="2"><strong>TOTAL</strong></td>
             <td colspan="4"></td>
             <td colspan="4"></td>
             <td><strong>${totalFichas}</strong></td>
@@ -1397,7 +2021,7 @@
     }
 
     // ============================================================
-    // 9. GENERAR PDF
+    // 11. PDF
     // ============================================================
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
@@ -1516,13 +2140,15 @@
         doc.save(`ASTROLAND_DiasLaborales${sufijo}_${fechaStr}.pdf`);
     }
 
-    // ============================================================
-    // 10. VISTA PREVIA DEL PDF
-    // ============================================================
     function actualizarPreviewPDF(items) {
         const container = document.getElementById('previewPDF');
         if (!items || items.length === 0) {
-            container.innerHTML = `<p class="text-center" style="color:#888;">No hay datos para mostrar.</p>`;
+            container.innerHTML = `
+                <p style="text-align:center; color:var(--gray-400);">
+                    <i class="fas fa-file-pdf" style="margin-right:8px;"></i>
+                    Aplica filtros para ver la vista previa
+                </p>
+            `;
             return;
         }
 
@@ -1547,23 +2173,29 @@
         const diaHasta = document.getElementById('filtroDiaHasta').value || 'hoy';
         const dias = new Set(items.map(i => i._diaLaboral).filter(Boolean));
 
-        let html = `<div style="margin-bottom:10px; font-size:0.85rem; color:#555;">
-            <strong>📄 Vista previa del PDF</strong> — 
-            Días Laborales: ${diaDesde} → ${diaHasta} | 
-            ${dias.size} días | 
-            ${items.length} items
-        </div><table><thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead><tbody>`;
+        let html = `
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px; font-size:0.8rem; color:var(--gray-500);">
+                <span><i class="fas fa-calendar"></i> ${diaDesde} → ${diaHasta}</span>
+                <span><i class="fas fa-calendar-day"></i> ${dias.size} días</span>
+                <span><i class="fas fa-list"></i> ${items.length} items</span>
+            </div>
+            <table class="table-premium">
+                <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
+                <tbody>`;
         
         tableRows.forEach(f => {
             html += `<tr><td>${f.sucursal}</td><td>Gs. ${f.efectivo.toLocaleString()}</td><td>Gs. ${f.bancard.toLocaleString()}</td><td>Gs. ${f.total.toLocaleString()}</td></tr>`;
         });
         
         html += `</tbody></table>`;
+        html += `<p style="margin-top:8px; font-size:0.7rem; color:var(--gray-400);">
+            <i class="fas fa-info-circle"></i> Formato: Times New Roman, Azul Francia, fondo amarillo en títulos.
+        </p>`;
         container.innerHTML = html;
     }
 
     // ============================================================
-    // 11. INICIALIZACIÓN
+    // 12. INICIALIZACIÓN
     // ============================================================
     cargarCarritos();
 
@@ -1578,7 +2210,8 @@
     document.getElementById('contadorFechaDesde').value = hace30Dias.toISOString().split('T')[0];
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
-    console.log('✅ Panel de Control ASTROLAND cargado correctamente.');
+    console.log('✅ Panel ASTROLAND Premium cargado correctamente');
+    console.log('🏷️ Versión: 2.0 - Diseño mejorado');
 </script>
 
 </body>
