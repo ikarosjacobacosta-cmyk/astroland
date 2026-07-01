@@ -1086,7 +1086,7 @@ body { padding-top: 80px; }
 <div id="fechaModal" class="fecha-modal">
   <div class="fecha-modal-content">
     <h4 id="fechaModalTitulo">📅 Seleccionar fecha para historial</h4>
-    <p id="fechaModalDescripcion" style="text-align:center; color:#666;">¿Qué fecha quieres asignar a este registro?</p>
+    <p id="fechaModalDescripcion" style="text-align:center; color:#666;">¿Qué fecha quieres asignar a este registro? Si ya existe un cierre con esa fecha, se agregarán a él.</p>
     <input type="date" id="fechaHistorialInput">
     <div class="fecha-modal-buttons">
       <button id="fechaModalConfirmar" style="background:#4CAF50; color:white;" onclick="confirmarAccionFecha()">✅ Confirmar</button>
@@ -1173,6 +1173,162 @@ body { padding-top: 80px; }
     fechaHasta: ''
   };
 
+  // ========== NUEVA FUNCIÓN: BUSCAR REGISTRO POR FECHA ==========
+  async function buscarRegistroHistorialPorFecha(fecha) {
+    try {
+      const registros = historialVentas.filter(h => h.fechaEliminacion === fecha);
+      return registros;
+    } catch (error) {
+      console.error('Error buscando registro por fecha:', error);
+      return [];
+    }
+  }
+
+  // ========== FUNCIÓN GUARDAR EN HISTORIAL MODIFICADA ==========
+  async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
+    if (!ventasAEliminar || ventasAEliminar.length === 0) {
+      console.log("⚠️ No hay ventas para guardar");
+      return false;
+    }
+    
+    console.log(`📝 Guardando ${ventasAEliminar.length} ventas en historial...`);
+    console.log(`📅 Fecha: ${fechaSeleccionada}`);
+    
+    try {
+      if (!fechaSeleccionada || fechaSeleccionada === '') {
+        console.error("❌ Fecha inválida");
+        alert("❌ Error: Fecha inválida");
+        return false;
+      }
+      
+      const fechaObj = new Date(fechaSeleccionada);
+      if (isNaN(fechaObj.getTime())) {
+        console.error("❌ Fecha inválida:", fechaSeleccionada);
+        alert("❌ Error: Formato de fecha inválido");
+        return false;
+      }
+      
+      fechaObj.setHours(12, 0, 0, 0);
+      const timestamp = fechaObj.getTime();
+      
+      // Buscar si ya existe un registro con esta fecha
+      const registrosExistentes = await buscarRegistroHistorialPorFecha(fechaSeleccionada);
+      
+      // Mapear las ventas para guardar
+      const ventasMapeadas = ventasAEliminar.map(item => ({
+        code: item.code || '',
+        name: item.name || '',
+        points: item.points || 0,
+        money: item.money || 0,
+        fichaConsumption: item.fichaConsumption || 0,
+        unidades: item.unidades || 1,
+        fecha: item.fecha || new Date().toLocaleDateString('es-PY'),
+        hora: item.hora || new Date().toLocaleTimeString('es-PY'),
+        esFichaGratis: item.esFichaGratis || false,
+        esMovimiento: item.esMovimiento || false,
+        tipoMovimiento: item.tipoMovimiento || null,
+        destinoMovimiento: item.destinoMovimiento || null
+      }));
+      
+      const totalDinero = ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0);
+      const totalPuntos = ventasAEliminar.reduce((s, v) => s + (v.points || 0), 0);
+      const totalFichas = ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0);
+      const totalFichasRegaladas = ventasAEliminar.reduce((s, v) => s + (v.esFichaGratis ? Math.abs(v.fichaConsumption) || 0 : 0), 0);
+      
+      const movimientosPorMaquina = {};
+      ventasAEliminar.forEach(item => {
+        if (item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento !== 'stock') {
+          const maquina = item.destinoMovimiento;
+          if (!movimientosPorMaquina[maquina]) {
+            movimientosPorMaquina[maquina] = { agregar: 0, quitar: 0 };
+          }
+          if (item.tipoMovimiento === 'agregar') {
+            movimientosPorMaquina[maquina].agregar += (item.unidades || 1);
+          } else if (item.tipoMovimiento === 'quitar') {
+            movimientosPorMaquina[maquina].quitar += (item.unidades || 1);
+          }
+        }
+      });
+      
+      // Si existe un registro con la misma fecha, actualizarlo
+      if (registrosExistentes && registrosExistentes.length > 0) {
+        const registroExistente = registrosExistentes[0];
+        const firebaseKey = registroExistente.firebaseKey;
+        
+        console.log(`📌 Registro existente encontrado con fecha ${fechaSeleccionada}, ID: ${firebaseKey}`);
+        console.log(`📦 Ventas existentes: ${registroExistente.totalVentas || 0}, Dinero: Gs. ${(registroExistente.totalDinero || 0).toLocaleString()}`);
+        
+        // Combinar las ventas existentes con las nuevas
+        const ventasCombinadas = [...(registroExistente.ventas || []), ...ventasMapeadas];
+        
+        // Recalcular totales
+        const nuevoTotalDinero = (registroExistente.totalDinero || 0) + totalDinero;
+        const nuevoTotalPuntos = (registroExistente.totalPuntos || 0) + totalPuntos;
+        const nuevoTotalFichas = (registroExistente.totalFichas || 0) + totalFichas;
+        const nuevoTotalFichasRegaladas = (registroExistente.totalFichasRegaladas || 0) + totalFichasRegaladas;
+        const nuevoTotalVentas = (registroExistente.totalVentas || 0) + ventasAEliminar.length;
+        
+        // Combinar movimientos por máquina
+        const movimientosCombinados = { ...(registroExistente.movimientosPorMaquina || {}) };
+        for (const [maquina, datos] of Object.entries(movimientosPorMaquina)) {
+          if (!movimientosCombinados[maquina]) {
+            movimientosCombinados[maquina] = { agregar: 0, quitar: 0 };
+          }
+          movimientosCombinados[maquina].agregar += datos.agregar || 0;
+          movimientosCombinados[maquina].quitar += datos.quitar || 0;
+        }
+        
+        // Actualizar el registro existente
+        await update(ref(database, `historial_ventas/${firebaseKey}`), {
+          ventas: ventasCombinadas,
+          totalVentas: nuevoTotalVentas,
+          totalDinero: nuevoTotalDinero,
+          totalPuntos: nuevoTotalPuntos,
+          totalFichas: nuevoTotalFichas,
+          totalFichasRegaladas: nuevoTotalFichasRegaladas,
+          movimientosPorMaquina: movimientosCombinados,
+          fechaCreacion: new Date().toISOString(),
+          actualizado: true
+        });
+        
+        console.log(`✅ Historial ACTUALIZADO correctamente. ID: ${firebaseKey}`);
+        console.log(`📊 Nuevos totales: Ventas: ${nuevoTotalVentas}, Dinero: Gs. ${nuevoTotalDinero.toLocaleString()}`);
+        
+        return true;
+      }
+      
+      // Si no existe, crear un nuevo registro
+      console.log(`📌 No se encontró registro para la fecha ${fechaSeleccionada}, creando uno nuevo.`);
+      
+      const registro = {
+        sucursal: "Villa Morra",
+        fechaEliminacion: fechaSeleccionada,
+        timestamp: timestamp,
+        fechaCreacion: new Date().toISOString(),
+        ventas: ventasMapeadas,
+        totalVentas: ventasAEliminar.length,
+        totalDinero: totalDinero,
+        totalPuntos: totalPuntos,
+        totalFichas: totalFichas,
+        totalFichasRegaladas: totalFichasRegaladas,
+        movimientosPorMaquina: movimientosPorMaquina
+      };
+      
+      const nuevoRegistroRef = await push(historialRef, registro);
+      
+      console.log(`✅ Nuevo historial creado correctamente, ID: ${nuevoRegistroRef.key}`);
+      console.log(`💰 Total guardado: Gs. ${totalDinero.toLocaleString()}`);
+      console.log(`📦 Items: ${ventasAEliminar.length}`);
+      
+      return true;
+      
+    } catch(e) { 
+      console.error("❌ Error al guardar en historial:", e);
+      alert("❌ Error crítico al guardar en historial. Las ventas NO se eliminaron.");
+      return false;
+    }
+  }
+
   // ========== FUNCIONES PARA VACIAR SELECCIONADOS ==========
   window.abrirVaciarSeleccion = function() {
     if (cart.length === 0) {
@@ -1186,7 +1342,6 @@ body { padding-top: 80px; }
       return; 
     }
     
-    // Inicializar selección: todos los items seleccionados por defecto
     vaciarSeleccionados = cart.map(item => item.firebaseKey);
     renderVaciarLista();
     document.getElementById('vaciarSeleccionModal').style.display = 'block';
@@ -1254,7 +1409,6 @@ body { padding-top: 80px; }
       return;
     }
     
-    // Obtener los items seleccionados
     const itemsSeleccionados = cart.filter(item => vaciarSeleccionados.includes(item.firebaseKey));
     
     if (itemsSeleccionados.length === 0) {
@@ -1265,15 +1419,12 @@ body { padding-top: 80px; }
     const totalDinero = itemsSeleccionados.reduce((s, v) => s + (v.money || 0), 0);
     const totalPuntos = itemsSeleccionados.reduce((s, v) => s + (v.points || 0), 0);
     
-    // Confirmar con el usuario
     const confirmar = confirm(`🗑️ CONFIRMAR VACIADO\n\n📦 Items a vaciar: ${itemsSeleccionados.length}\n💰 Dinero: Gs. ${totalDinero.toLocaleString()}\n🎯 Puntos: ${totalPuntos}\n\n⚠️ Estos items se guardarán en el historial y se eliminarán del carrito.\nLos items NO seleccionados permanecerán en el carrito.\n\n¿Continuar?`);
     
     if (!confirmar) return;
     
-    // Cerrar el modal de selección
     closeVaciarSeleccionModal();
     
-    // Abrir el modal de fecha para elegir la fecha del historial
     modoEdicionFecha = {
       tipo: 'vaciar_seleccionados',
       items: itemsSeleccionados
@@ -1285,13 +1436,12 @@ body { padding-top: 80px; }
     
     document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para el historial';
     document.getElementById('fechaModalDescripcion').textContent = 
-      `¿Qué fecha quieres asignar a estos ${itemsSeleccionados.length} items?`;
+      `¿Qué fecha quieres asignar a estos ${itemsSeleccionados.length} items? Si ya existe un cierre con esa fecha, se agregarán a él.`;
     document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
     document.getElementById('fechaModal').style.display = 'block';
   };
 
-  // Modificar confirmarAccionFecha para soportar vaciar_seleccionados
-  const originalConfirmarFecha = window.confirmarAccionFecha;
+  // ========== CONFIRMAR ACCIÓN FECHA MODIFICADA ==========
   window.confirmarAccionFecha = async function() {
     const fechaInput = document.getElementById('fechaHistorialInput').value;
     if (!fechaInput) {
@@ -1306,7 +1456,6 @@ body { padding-top: 80px; }
     
     try {
       if (modoEdicionFecha && modoEdicionFecha.tipo === 'vaciar_seleccionados') {
-        // VACIAR SELECCIONADOS
         const itemsSeleccionados = modoEdicionFecha.items;
         
         if (!itemsSeleccionados || itemsSeleccionados.length === 0) {
@@ -1317,11 +1466,9 @@ body { padding-top: 80px; }
         
         console.log(`📦 Vaciar seleccionados: ${itemsSeleccionados.length} items para guardar`);
         
-        // Guardar en historial SOLO los seleccionados
         const guardadoExitoso = await guardarEnHistorial(itemsSeleccionados, fechaInput);
         
         if (guardadoExitoso) {
-          // Eliminar SOLO los items seleccionados de Firebase
           let eliminados = 0;
           for (const item of itemsSeleccionados) {
             try {
@@ -1335,11 +1482,25 @@ body { padding-top: 80px; }
           console.log(`✅ Eliminados ${eliminados} items del carrito`);
           
           closeFechaModal();
-          alert(`✅ ÉXITO! Se guardaron ${itemsSeleccionados.length} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${itemsSeleccionados.reduce((s, v) => s + (v.money || 0), 0).toLocaleString()}\n\n📌 Los items NO seleccionados permanecen en el carrito.`);
+          
+          const registros = await buscarRegistroHistorialPorFecha(fechaInput);
+          let mensajeExtra = '';
+          if (registros && registros.length > 0) {
+            const registro = registros[0];
+            mensajeExtra = `\n📌 REGISTRO ACTUALIZADO (ya existía con esa fecha)\n📦 Total ventas acumuladas: ${registro.totalVentas}\n💰 Total dinero acumulado: Gs. ${(registro.totalDinero || 0).toLocaleString()}`;
+          } else {
+            mensajeExtra = `\n📌 NUEVO REGISTRO creado para la fecha: ${fechaInput.split('-').reverse().join('/')}`;
+          }
+          
+          alert(`✅ ÉXITO! Se guardaron ${itemsSeleccionados.length} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total de esta operación: Gs. ${itemsSeleccionados.reduce((s, v) => s + (v.money || 0), 0).toLocaleString()}${mensajeExtra}\n\n📌 Los items NO seleccionados permanecen en el carrito.`);
           
           await loadInitialCart();
+          await loadHistorial();
           if (document.getElementById('cartModal').style.display === 'block') {
             renderCart();
+          }
+          if (document.getElementById('historialModal').style.display === 'block') {
+            filtrarHistorial();
           }
         } else {
           alert('❌ Error al guardar en historial. Las ventas NO se eliminaron.');
@@ -1348,7 +1509,6 @@ body { padding-top: 80px; }
         modoEdicionFecha = null;
         
       } else if (modoEdicionFecha === 'vaciar') {
-        // VACIAR TODO (funcionalidad original)
         if (cart.length === 0) {
           alert('⚠️ El carrito está vacío');
           closeFechaModal();
@@ -1377,11 +1537,25 @@ body { padding-top: 80px; }
           console.log("✅ Carrito vaciado después de guardar");
           
           closeFechaModal();
-          alert(`✅ ÉXITO! Se guardaron ${backupLocal.totalVentas} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${backupLocal.totalDinero.toLocaleString()}`);
+          
+          const registros = await buscarRegistroHistorialPorFecha(fechaInput);
+          let mensajeExtra = '';
+          if (registros && registros.length > 0) {
+            const registro = registros[0];
+            mensajeExtra = `\n📌 REGISTRO ACTUALIZADO (ya existía con esa fecha)\n📦 Total ventas acumuladas: ${registro.totalVentas}\n💰 Total dinero acumulado: Gs. ${(registro.totalDinero || 0).toLocaleString()}`;
+          } else {
+            mensajeExtra = `\n📌 NUEVO REGISTRO creado para la fecha: ${fechaInput.split('-').reverse().join('/')}`;
+          }
+          
+          alert(`✅ ÉXITO! Se guardaron ${backupLocal.totalVentas} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${backupLocal.totalDinero.toLocaleString()}${mensajeExtra}`);
           
           await loadInitialCart();
+          await loadHistorial();
           if (document.getElementById('cartModal').style.display === 'block') {
             renderCart();
+          }
+          if (document.getElementById('historialModal').style.display === 'block') {
+            filtrarHistorial();
           }
         } else {
           alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y están respaldadas localmente.');
@@ -1390,7 +1564,6 @@ body { padding-top: 80px; }
         modoEdicionFecha = null;
         
       } else if (modoEdicionFecha && modoEdicionFecha.tipo === 'editar') {
-        // EDITAR FECHA (funcionalidad original)
         const firebaseKey = modoEdicionFecha.firebaseKey;
         const registro = historialVentas.find(h => h.firebaseKey === firebaseKey);
         if (registro) {
@@ -1419,7 +1592,6 @@ body { padding-top: 80px; }
     }
   };
 
-  // Mantener la función original para vaciar todo (se usa desde el botón de contraseña)
   window.verifyClearPasswordAndShowDate = function() {
     const pwd = document.getElementById('clearPassword').value;
     if (pwd !== PASSWORD_GENERAL) { 
@@ -1442,7 +1614,7 @@ body { padding-top: 80px; }
     ayer.setDate(hoy.getDate() - 1);
     
     document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para historial';
-    document.getElementById('fechaModalDescripcion').textContent = '¿Qué fecha quieres asignar a este registro?';
+    document.getElementById('fechaModalDescripcion').textContent = '¿Qué fecha quieres asignar a este registro? Si ya existe un cierre con esa fecha, se agregarán a él.';
     document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
     document.getElementById('fechaModal').style.display = 'block';
   };
@@ -2677,95 +2849,6 @@ body { padding-top: 80px; }
       btnOriginal.disabled = false;
     }
   };
-
-  async function guardarEnHistorial(ventasAEliminar, fechaSeleccionada) {
-    if (!ventasAEliminar || ventasAEliminar.length === 0) {
-      console.log("⚠️ No hay ventas para guardar");
-      return false;
-    }
-    
-    console.log(`📝 Guardando ${ventasAEliminar.length} ventas en historial...`);
-    
-    try {
-      if (!fechaSeleccionada || fechaSeleccionada === '') {
-        console.error("❌ Fecha inválida");
-        alert("❌ Error: Fecha inválida");
-        return false;
-      }
-      
-      const fechaObj = new Date(fechaSeleccionada);
-      if (isNaN(fechaObj.getTime())) {
-        console.error("❌ Fecha inválida:", fechaSeleccionada);
-        alert("❌ Error: Formato de fecha inválido");
-        return false;
-      }
-      
-      fechaObj.setHours(12, 0, 0, 0);
-      
-      const ventasMapeadas = ventasAEliminar.map(item => ({
-        code: item.code || '',
-        name: item.name || '',
-        points: item.points || 0,
-        money: item.money || 0,
-        fichaConsumption: item.fichaConsumption || 0,
-        unidades: item.unidades || 1,
-        fecha: item.fecha || new Date().toLocaleDateString('es-PY'),
-        hora: item.hora || new Date().toLocaleTimeString('es-PY'),
-        esFichaGratis: item.esFichaGratis || false,
-        esMovimiento: item.esMovimiento || false,
-        tipoMovimiento: item.tipoMovimiento || null,
-        destinoMovimiento: item.destinoMovimiento || null
-      }));
-      
-      const totalDinero = ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0);
-      const totalPuntos = ventasAEliminar.reduce((s, v) => s + (v.points || 0), 0);
-      const totalFichas = ventasAEliminar.reduce((s, v) => s + (Math.abs(v.fichaConsumption) || 0), 0);
-      const totalFichasRegaladas = ventasAEliminar.reduce((s, v) => s + (v.esFichaGratis ? Math.abs(v.fichaConsumption) || 0 : 0), 0);
-      
-      const movimientosPorMaquina = {};
-      ventasAEliminar.forEach(item => {
-        if (item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento !== 'stock') {
-          const maquina = item.destinoMovimiento;
-          if (!movimientosPorMaquina[maquina]) {
-            movimientosPorMaquina[maquina] = { agregar: 0, quitar: 0 };
-          }
-          if (item.tipoMovimiento === 'agregar') {
-            movimientosPorMaquina[maquina].agregar += (item.unidades || 1);
-          } else if (item.tipoMovimiento === 'quitar') {
-            movimientosPorMaquina[maquina].quitar += (item.unidades || 1);
-          }
-        }
-      });
-      
-      const registro = {
-        sucursal: "Villa Morra",
-        fechaEliminacion: fechaSeleccionada,
-        timestamp: fechaObj.getTime(),
-        fechaCreacion: new Date().toISOString(),
-        ventas: ventasMapeadas,
-        totalVentas: ventasAEliminar.length,
-        totalDinero: totalDinero,
-        totalPuntos: totalPuntos,
-        totalFichas: totalFichas,
-        totalFichasRegaladas: totalFichasRegaladas,
-        movimientosPorMaquina: movimientosPorMaquina
-      };
-      
-      const nuevoRegistroRef = await push(historialRef, registro);
-      
-      console.log("✅ Historial guardado correctamente, ID:", nuevoRegistroRef.key);
-      console.log(`💰 Total guardado: Gs. ${totalDinero.toLocaleString()}`);
-      console.log(`📦 Items: ${ventasAEliminar.length}`);
-      console.log(`🖥️ Movimientos por máquina:`, movimientosPorMaquina);
-      
-      return true;
-      
-    } catch(e) { 
-      console.error("❌ Error al guardar en historial:", e);
-      alert("❌ Error crítico al guardar en historial. Las ventas NO se eliminaron.");
-      return false;
-    }
-  }
 
   window.mostrarModalEditarFecha = function(firebaseKey, fechaActual) {
     modoEdicionFecha = { tipo: 'editar', firebaseKey: firebaseKey };
