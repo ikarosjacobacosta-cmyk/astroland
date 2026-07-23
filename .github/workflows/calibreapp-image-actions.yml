@@ -1,10 +1,7 @@
 name: Compress and Convert Images to WebP
 
 on:
-  # Permite ejecutar el workflow manualmente desde la pestaña "Actions"
   workflow_dispatch:
-  
-  # Se ejecuta automáticamente al subir archivos a la rama main
   push:
     branches:
       - main
@@ -12,7 +9,13 @@ on:
       - '**.jpg'
       - '**.jpeg'
       - '**.png'
-      - '**.webp'  # También optimiza las WebP que subas
+      - '**.webp'
+  pull_request:
+    paths:
+      - '**.jpg'
+      - '**.jpeg'
+      - '**.png'
+      - '**.webp'
 
 jobs:
   build:
@@ -24,16 +27,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Compress and Convert Images
+        id: calibre
         uses: calibreapp/image-actions@main
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          
-          # Convierte JPG/PNG a WebP automáticamente
           export-webp: true
-          
-          # Calidad de las WebP generadas (1-100, 80 es el valor por defecto)
           webpQuality: '80'
-          
-          # También puedes ajustar la calidad para JPG y PNG si quieres
-          # jpegQuality: '85'
-          # pngQuality: '80'
+          compressOnly: ${{ github.event_name != 'pull_request' }}
+
+      - name: Create Pull Request
+        if: |
+          github.event_name != 'pull_request' &&
+          steps.calibre.outputs.markdown != ''
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: 'Auto: Compress and Convert Images to WebP'
+          branch-suffix: timestamp
+          commit-message: 'Compress and convert images to WebP'
+          body: ${{ steps.calibre.outputs.markdown }}
