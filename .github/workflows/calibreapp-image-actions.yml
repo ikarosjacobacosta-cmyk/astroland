@@ -1,19 +1,39 @@
-name: Compress images
+name: Compress and Convert Images to WebP
+
 on:
-  pull_request:
+  # Permite ejecutar el workflow manualmente desde la pestaña "Actions"
+  workflow_dispatch:
+  
+  # Se ejecuta automáticamente al subir archivos a la rama main
+  push:
+    branches:
+      - main
     paths:
       - '**.jpg'
       - '**.jpeg'
+      - '**.png'
+      - '**.webp'  # También optimiza las WebP que subas
+
 jobs:
   build:
-    name: calibreapp/image-actions
+    name: Optimize Images
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: Compress Images
+
+      - name: Compress and Convert Images
         uses: calibreapp/image-actions@main
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Convierte JPG/PNG a WebP automáticamente
           export-webp: true
+          
+          # Calidad de las WebP generadas (1-100, 80 es el valor por defecto)
           webpQuality: '80'
+          
+          # También puedes ajustar la calidad para JPG y PNG si quieres
+          # jpegQuality: '85'
+          # pngQuality: '80'
