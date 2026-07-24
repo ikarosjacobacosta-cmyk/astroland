@@ -1154,7 +1154,7 @@ body { padding-top: 80px; }
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
   // ✅ VALORES ACTUALIZADOS: 
-  // 000-00: 1 ficha (ahora tiene cantidad)
+  // 000-00: 1 ficha, precio 5000 (ahora tiene cantidad)
   // 000-01: 16 fichas, costo 50000
   // 000-02: 36 fichas, costo 100000
   // 000-03 y 000-04: ELIMINADOS
@@ -1867,7 +1867,7 @@ body { padding-top: 80px; }
     
     const categorias = [
       { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
-        { codigo: "000-00", precio: 5000 },
+        { codigo: "000-00", precio: 5000 },   // ✅ Precio actualizado a 5000
         { codigo: "000-01", precio: 50000 },  // ✅ Actualizado: 16 fichas, costo 50000
         { codigo: "000-02", precio: 100000 }, // ✅ Actualizado: 36 fichas, costo 100000
         // 000-03 y 000-04 ELIMINADOS
