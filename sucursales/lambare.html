@@ -1153,10 +1153,17 @@ body { padding-top: 80px; }
   const STOCK_INICIAL = 100;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-  // ✅ VALORES ACTUALIZADOS: código 000-02 = 8 fichas, 000-03 = 17 fichas, 000-04 = 25 fichas
+  // ✅ VALORES ACTUALIZADOS: 
+  // 000-00: 1 ficha (ahora tiene cantidad)
+  // 000-01: 16 fichas, costo 50000
+  // 000-02: 36 fichas, costo 100000
+  // 000-03 y 000-04: ELIMINADOS
   const FICHA_CONSUMPTION = { 
-    '000-00': 1, '000-01': 3, '000-02': 8, '000-03': 17, '000-04': 25,
-    '000-05': 1, '000-06': 7
+    '000-00': 1, 
+    '000-01': 16, 
+    '000-02': 36,
+    '000-05': 1, 
+    '000-06': 7
   };
   
   const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
@@ -1816,7 +1823,8 @@ body { padding-top: 80px; }
   };
 
   function shouldShowQuantity(code) {
-    return code.startsWith('005-13');
+    // Ahora 000-00 también muestra la cantidad
+    return code === '005-13' || code === '000-00';
   }
 
   function shouldShowMovimientosTab(code) {
@@ -1860,13 +1868,9 @@ body { padding-top: 80px; }
     const categorias = [
       { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
         { codigo: "000-00", precio: 10000 },
-        { codigo: "000-01", precio: 30000 },
-        // ✅ VALORES ACTUALIZADOS: 000-02 = 8 fichas, precio 50000
-        { codigo: "000-02", precio: 50000 },
-        // ✅ VALORES ACTUALIZADOS: 000-03 = 17 fichas, precio 100000
-        { codigo: "000-03", precio: 100000 },
-        // ✅ VALORES ACTUALIZADOS: 000-04 = 25 fichas, precio 140000
-        { codigo: "000-04", precio: 140000 },
+        { codigo: "000-01", precio: 50000 },  // ✅ Actualizado: 16 fichas, costo 50000
+        { codigo: "000-02", precio: 100000 }, // ✅ Actualizado: 36 fichas, costo 100000
+        // 000-03 y 000-04 ELIMINADOS
         { codigo: "000-05", precio: 0 },
         { codigo: "000-06", precio: 0 },
         { codigo: "000-07", precio: 15000 },
@@ -3386,7 +3390,7 @@ body { padding-top: 80px; }
       html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(3), 000-02(8), 000-03(17), 000-04(25), 000-05(1), 000-06(7)</small></p>`;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(16), 000-02(36), 000-05(1), 000-06(7)</small></p>`;
         html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
       }
       html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
