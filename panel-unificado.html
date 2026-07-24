@@ -600,6 +600,7 @@
             border: 1px solid transparent;
             background: white;
             color: var(--gray-600);
+            position: relative;
         }
 
         .calendar-day.has-data {
@@ -986,7 +987,7 @@
             <div style="margin-top:12px; font-size:0.75rem; color:var(--gray-400); display:flex; gap:16px; flex-wrap:wrap;">
                 <span><i class="fas fa-info-circle" style="color:var(--info);"></i> El monto total no incluye cierres</span>
                 <span><i class="fas fa-circle" style="color:var(--gold);"></i> Cierres: 000-09 / 000-10</span>
-                <span><i class="fas fa-circle" style="color:var(--success);"></i> Fichas: 000-00 al 000-04</span>
+                <span><i class="fas fa-circle" style="color:var(--success);"></i> Fichas: 000-00 al 000-02</span>
             </div>
         </div>
     </section>
@@ -1067,7 +1068,7 @@
                     <div class="rango-inputs">
                         <input type="text" id="filtroCodigoDesde" placeholder="000-00">
                         <span>→</span>
-                        <input type="text" id="filtroCodigoHasta" placeholder="000-04">
+                        <input type="text" id="filtroCodigoHasta" placeholder="000-02">
                     </div>
                 </div>
 
@@ -1291,11 +1292,9 @@
     // ============================================================
     document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.addEventListener('click', function() {
-            // Quitar active de todos
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             
-            // Activar este
             this.classList.add('active');
             const target = document.getElementById(this.dataset.tab);
             if (target) target.style.display = 'block';
@@ -1311,7 +1310,6 @@
     };
 
     window.toggleTheme = function() {
-        // Implementación simple de tema claro/oscuro
         document.body.classList.toggle('dark-theme');
     };
 
@@ -1424,7 +1422,7 @@
     function calcularEstadisticas(items) {
         let totalMonto = 0, cierreEfectivo = 0, cierreBancard = 0;
         let fichasMonto = 0, juguetesMonto = 0, pulserasMonto = 0, billarMonto = 0;
-        let detalleFichas = { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 };
+        let detalleFichas = { '000-00': 0, '000-01': 0, '000-02': 0, '000-05': 0, '000-06': 0 };
 
         items.forEach(item => {
             const money = item.money || 0;
@@ -1437,7 +1435,7 @@
             totalMonto += money;
 
             if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
-                if (['000-00', '000-01', '000-02', '000-03', '000-04'].includes(code)) fichasMonto += money;
+                if (['000-00', '000-01', '000-02'].includes(code)) fichasMonto += money;
                 if (code === '000-07') pulserasMonto += money;
                 if (code === '000-08') billarMonto += money;
                 if (detalleFichas.hasOwnProperty(code)) detalleFichas[code] += unidades;
@@ -1453,7 +1451,7 @@
         const total = {
             totalMonto: 0, cierreEfectivo: 0, cierreBancard: 0, totalCierre: 0,
             fichasMonto: 0, juguetesMonto: 0, pulserasMonto: 0, billarMonto: 0,
-            detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-03': 0, '000-04': 0, '000-05': 0, '000-06': 0 }
+            detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-05': 0, '000-06': 0 }
         };
 
         sucursales.forEach(nombre => {
@@ -1487,10 +1485,8 @@
         return `
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px 8px; font-size:0.7rem;">
                 <span>Unitarias: ${detalle['000-00']}</span>
-                <span>Combo 30k: ${detalle['000-01']}</span>
-                <span>Combo 60k: ${detalle['000-02']}</span>
-                <span>Combo 120k: ${detalle['000-03']}</span>
-                <span>Combo 180k: ${detalle['000-04']}</span>
+                <span>Combo 50k: ${detalle['000-01']}</span>
+                <span>Combo 100k: ${detalle['000-02']}</span>
                 <span>Error: ${detalle['000-05']}</span>
                 <span style="grid-column: span 2; text-align:center;">Cápsulas: ${detalle['000-06']}</span>
             </div>
