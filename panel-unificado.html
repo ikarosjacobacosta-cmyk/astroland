@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* ============================================================
@@ -415,6 +414,14 @@
             border-color: var(--primary);
             color: var(--primary);
             background: rgba(13, 27, 74, 0.04);
+        }
+
+        .btn-premium.danger {
+            background: var(--danger);
+            color: white;
+        }
+        .btn-premium.danger:hover {
+            background: #b71c1c;
         }
 
         .btn-premium:disabled {
@@ -835,6 +842,34 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ============================================================
+           ELIMINAR BUTTON
+           ============================================================ */
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-delete:hover {
+            background: #b71c1c;
+            transform: scale(1.05);
+        }
+
+        .btn-delete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ============================================================
            RESPONSIVE
            ============================================================ */
         @media (max-width: 992px) {
@@ -883,6 +918,120 @@
            ============================================================ */
         html {
             scroll-behavior: smooth;
+        }
+
+        /* ============================================================
+           TOAST NOTIFICATIONS
+           ============================================================ */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--primary-dark);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid var(--gold);
+        }
+
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+        .toast.info { border-left-color: var(--info); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: var(--radius-md);
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow-xl);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-box h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .modal-box p {
+            margin-bottom: 16px;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .modal-box .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-box .modal-actions button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .modal-box .modal-actions .btn-confirm {
+            background: var(--danger);
+            color: white;
+        }
+
+        .modal-box .modal-actions .btn-confirm:hover {
+            background: #b71c1c;
+        }
+
+        .modal-box .modal-actions .btn-cancel {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        .modal-box .modal-actions .btn-cancel:hover {
+            background: var(--gray-300);
         }
     </style>
 </head>
@@ -1228,12 +1377,27 @@
     </section>
 </div>
 
+<!-- Modal de confirmación -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <h3><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> Confirmar Eliminación</h3>
+        <p id="confirmModalMessage">¿Estás seguro de eliminar este registro?</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
+            <button class="btn-confirm" id="confirmDeleteBtn">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
 <script type="module">
     // ============================================================
     // 1. IMPORTACIONES Y CONFIGURACIÓN
     // ============================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+    import { getDatabase, ref, get, child, remove, update } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
     const sucursalesConfig = [
         { nombre: "Villa Morra", id: "villa-morra", config: {
@@ -1274,6 +1438,10 @@
         }}
     ];
 
+    // Mapeo rápido de sucursal a configuración
+    const sucursalToConfig = {};
+    sucursalesConfig.forEach(s => { sucursalToConfig[s.nombre] = s; });
+
     // ============================================================
     // 2. ESTADO
     // ============================================================
@@ -1284,8 +1452,12 @@
         datosFiltrados: [],
         contadoresFiltrados: {},
         fechasConDatos: [],
-        tema: 'light'
+        tema: 'light',
+        eliminando: false
     };
+
+    // Variable para almacenar el item a eliminar
+    let pendingDelete = null;
 
     // ============================================================
     // 3. NAVEGACIÓN POR TABS
@@ -1302,31 +1474,192 @@
     });
 
     // ============================================================
-    // 4. FUNCIONES GLOBALES (window)
+    // 4. TOAST NOTIFICATIONS
     // ============================================================
-    window.recargarDatos = function() {
-        cargarCarritos();
-        mostrarMensaje('🔄 Datos actualizados', 'success');
-    };
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+        toast.innerHTML = `${icon} ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
 
-    window.toggleTheme = function() {
-        document.body.classList.toggle('dark-theme');
-    };
+    // ============================================================
+    // 5. MODAL DE CONFIRMACIÓN
+    // ============================================================
+    function openConfirmModal(message, onConfirm) {
+        document.getElementById('confirmModalMessage').textContent = message;
+        document.getElementById('confirmModal').classList.add('active');
+        const btn = document.getElementById('confirmDeleteBtn');
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', function() {
+            closeConfirmModal();
+            if (onConfirm) onConfirm();
+        });
+    }
 
-    function mostrarMensaje(texto, tipo = 'info') {
-        const badge = document.getElementById('statusBadge');
-        if (badge) {
-            badge.textContent = texto;
-            badge.className = 'status-badge ' + tipo;
-            setTimeout(() => {
-                badge.className = 'status-badge success';
-                badge.textContent = '✅ Listo';
-            }, 3000);
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.remove('active');
+    }
+
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeConfirmModal();
+    });
+
+    // ============================================================
+    // 6. FUNCIONES DE ELIMINACIÓN
+    // ============================================================
+    async function eliminarDelCarrito(sucursal, firebaseKey) {
+        const config = sucursalToConfig[sucursal];
+        if (!config) return { success: false, error: 'Sucursal no encontrada' };
+        
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            await remove(ref(db, `carrito/${firebaseKey}`));
+            return { success: true };
+        } catch (error) {
+            console.error('Error eliminando del carrito:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async function eliminarItemHistorial(sucursal, firebaseKey, indexVenta) {
+        const config = sucursalToConfig[sucursal];
+        if (!config) return { success: false, error: 'Sucursal no encontrada' };
+        
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            
+            // Obtener el registro completo
+            const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
+            if (!snapshot.exists()) {
+                return { success: false, error: 'Registro no encontrado' };
+            }
+            
+            const registro = snapshot.val();
+            const ventas = registro.ventas || [];
+            
+            // Verificar que el índice existe
+            if (indexVenta < 0 || indexVenta >= ventas.length) {
+                return { success: false, error: 'Item no encontrado' };
+            }
+            
+            // Eliminar el item del array
+            ventas.splice(indexVenta, 1);
+            
+            // Actualizar el registro en Firebase
+            await update(ref(db, `historial_ventas/${firebaseKey}`), {
+                ventas: ventas,
+                totalVentas: ventas.length,
+                totalDinero: ventas.reduce((s, v) => s + (v.money || 0), 0),
+                totalPuntos: ventas.reduce((s, v) => s + (v.points || 0), 0),
+                totalFichas: ventas.reduce((s, v) => s + (Math.abs(v.fichaConsumption || 0)), 0),
+                actualizado: new Date().toISOString()
+            });
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Error eliminando item del historial:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async function eliminarRegistroHistorial(sucursal, firebaseKey) {
+        const config = sucursalToConfig[sucursal];
+        if (!config) return { success: false, error: 'Sucursal no encontrada' };
+        
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            await remove(ref(db, `historial_ventas/${firebaseKey}`));
+            return { success: true };
+        } catch (error) {
+            console.error('Error eliminando registro:', error);
+            return { success: false, error: error.message };
         }
     }
 
     // ============================================================
-    // 5. CARGAR CARRITOS
+    // 7. FUNCIÓN GLOBAL DE ELIMINACIÓN
+    // ============================================================
+    window.eliminarItem = function(sucursal, firebaseKey, fuente, ventaIndex = null, nombre = '') {
+        if (estado.eliminando) return;
+        
+        const mensaje = fuente === 'carrito' 
+            ? `¿Estás seguro de eliminar este item del carrito de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`
+            : `¿Estás seguro de eliminar este item del HISTORIAL de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`;
+        
+        // Guardar datos para la eliminación
+        pendingDelete = { sucursal, firebaseKey, fuente, ventaIndex };
+        
+        openConfirmModal(mensaje, async () => {
+            estado.eliminando = true;
+            
+            try {
+                let resultado;
+                
+                if (pendingDelete.fuente === 'carrito') {
+                    resultado = await eliminarDelCarrito(pendingDelete.sucursal, pendingDelete.firebaseKey);
+                } else if (pendingDelete.fuente === 'historial') {
+                    if (pendingDelete.ventaIndex !== null) {
+                        resultado = await eliminarItemHistorial(
+                            pendingDelete.sucursal, 
+                            pendingDelete.firebaseKey, 
+                            pendingDelete.ventaIndex
+                        );
+                    } else {
+                        resultado = await eliminarRegistroHistorial(pendingDelete.sucursal, pendingDelete.firebaseKey);
+                    }
+                }
+                
+                if (resultado.success) {
+                    showToast(`✅ Item eliminado correctamente de ${pendingDelete.sucursal}`, 'success');
+                    // Recargar los filtros
+                    await aplicarFiltros();
+                    // Recargar carritos también
+                    await cargarCarritos();
+                } else {
+                    showToast(`❌ Error al eliminar: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`❌ Error inesperado: ${error.message}`, 'error');
+            } finally {
+                estado.eliminando = false;
+                pendingDelete = null;
+            }
+        });
+    };
+
+    // ============================================================
+    // 8. FUNCIONES GLOBALES (window)
+    // ============================================================
+    window.recargarDatos = function() {
+        cargarCarritos();
+        showToast('🔄 Datos actualizados', 'info');
+    };
+
+    window.toggleTheme = function() {
+        document.body.classList.toggle('dark-theme');
+        const icon = document.querySelector('.btn-icon .fa-moon');
+        if (icon) {
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+        }
+    };
+
+    // ============================================================
+    // 9. CARGAR CARRITOS
     // ============================================================
     async function cargarCarritos() {
         const tbody = document.getElementById('carritosBody');
@@ -1369,7 +1702,7 @@
     }
 
     // ============================================================
-    // 6. RENDERIZAR CARRITOS
+    // 10. RENDERIZAR CARRITOS
     // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
@@ -1417,7 +1750,7 @@
     }
 
     // ============================================================
-    // 7. FUNCIONES DE CÁLCULO
+    // 11. FUNCIONES DE CÁLCULO
     // ============================================================
     function calcularEstadisticas(items) {
         let totalMonto = 0, cierreEfectivo = 0, cierreBancard = 0;
@@ -1494,7 +1827,7 @@
     }
 
     // ============================================================
-    // 8. FUNCIONES DE FECHA
+    // 12. FUNCIONES DE FECHA
     // ============================================================
     function obtenerDiaLaboral(item) {
         if (item.fechaEliminacion) return item.fechaEliminacion;
@@ -1514,7 +1847,7 @@
     }
 
     // ============================================================
-    // 9. FILTROS AVANZADOS
+    // 13. FILTROS AVANZADOS
     // ============================================================
     async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -1532,13 +1865,15 @@
                 Object.entries(data).forEach(([firebaseKey, registro]) => {
                     const fechaEliminacion = registro.fechaEliminacion || '';
                     if (registro.ventas && Array.isArray(registro.ventas)) {
-                        registro.ventas.forEach(venta => {
+                        registro.ventas.forEach((venta, index) => {
                             items.push({
                                 ...venta,
                                 firebaseKey: firebaseKey,
                                 fuente: 'historial',
                                 sucursal: sucursalConfig.nombre,
-                                fechaEliminacion: fechaEliminacion
+                                fechaEliminacion: fechaEliminacion,
+                                ventaIndex: index,
+                                _esItemHistorial: true
                             });
                         });
                     }
@@ -1685,12 +2020,14 @@
         let html = `<div class="filter-summary-premium">
             <span><i class="fas fa-list"></i> <strong>${items.length}</strong> items</span>
             <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${new Set(items.map(i => i._diaLaboral)).size} días</span>
+            <span class="filter-tag-premium"><i class="fas fa-trash" style="color:var(--danger);"></i> Puedes eliminar items del historial</span>
         </div>`;
 
         html += `<div class="table-responsive"><table class="table-premium">
             <thead><tr>
                 <th>#</th><th>Día Laboral</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
                 <th>Puntos</th><th>Dinero</th><th>Fichas</th><th>Fecha</th><th>Hora</th><th>Tipo</th>
+                <th>Acción</th>
             </tr></thead><tbody>`;
 
         let contador = 0, ultimoDia = '';
@@ -1705,7 +2042,7 @@
             
             if (diaLaboral !== ultimoDia) {
                 html += `<tr class="dia-separator">
-                    <td colspan="12"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
+                    <td colspan="13"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
                 </tr>`;
                 ultimoDia = diaLaboral;
             }
@@ -1714,6 +2051,12 @@
             const tipo = esCierre ? '💰 Cierre' : item.esMovimiento ? '🔄 Movimiento' : item.esFichaGratis ? '🎁 Gratis' : '🛒 Venta';
             const fuente = item.fuente === 'historial' ? '📜' : '🛒';
             const clase = esCierre ? 'cierre-row' : '';
+            const nombreItem = item.name || item.code || 'Sin nombre';
+
+            // Determinar si se puede eliminar
+            const puedeEliminar = item.fuente === 'historial' || item.fuente === 'carrito';
+            const ventaIndex = item.ventaIndex !== undefined ? item.ventaIndex : null;
+            const firebaseKey = item.firebaseKey || '';
 
             html += `<tr class="${clase}">
                 <td style="color:var(--gray-400); font-size:0.7rem;">${contador}</td>
@@ -1721,18 +2064,27 @@
                 <td><strong>${item.sucursal || '-'}</strong></td>
                 <td>${fuente}</td>
                 <td>${item.code || '-'}</td>
-                <td style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.name || '-'}</td>
+                <td style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${nombreItem}</td>
                 <td>${(item.points || 0).toLocaleString()}</td>
                 <td>${(item.money || 0).toLocaleString()}</td>
                 <td>${Math.abs(item.fichaConsumption || 0)}</td>
                 <td>${item.fecha || '-'}</td>
                 <td style="font-family:monospace; font-size:0.75rem;">${horaStr}</td>
                 <td>${tipo}</td>
+                <td>
+                    ${puedeEliminar ? `
+                        <button class="btn-delete" 
+                                onclick="eliminarItem('${item.sucursal}', '${firebaseKey}', '${item.fuente}', ${ventaIndex}, '${nombreItem.replace(/'/g, "\\'")}')"
+                                title="Eliminar este item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : '<span style="color:var(--gray-400); font-size:0.7rem;">-</span>'}
+                </td>
             </tr>`;
         });
 
         if (items.length > 200) {
-            html += `<tr><td colspan="12" style="text-align:center; color:var(--gray-400); padding:10px;">
+            html += `<tr><td colspan="13" style="text-align:center; color:var(--gray-400); padding:10px;">
                 ... y ${items.length - 200} items más
             </td></tr>`;
         }
@@ -1759,7 +2111,7 @@
     };
 
     // ============================================================
-    // 10. CONTADORES DE MÁQUINAS
+    // 14. CONTADORES DE MÁQUINAS
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -2017,7 +2369,7 @@
     }
 
     // ============================================================
-    // 11. PDF
+    // 15. PDF
     // ============================================================
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
@@ -2191,7 +2543,7 @@
     }
 
     // ============================================================
-    // 12. INICIALIZACIÓN
+    // 16. INICIALIZACIÓN
     // ============================================================
     cargarCarritos();
 
@@ -2207,7 +2559,8 @@
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 2.0 - Diseño mejorado');
+    console.log('🏷️ Versión: 2.1 - Con eliminación de items del historial');
+    console.log('🗑️ Puedes eliminar items del historial desde la tabla de filtros');
 </script>
 
 </body>
