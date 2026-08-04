@@ -508,6 +508,19 @@
         }
 
         /* ============================================================
+           ESTILOS PARA MOVIMIENTOS
+           ============================================================ */
+        .unidades-maquina {
+            font-weight: bold;
+        }
+        .unidades-positivo { 
+            color: #4CAF50; 
+        }
+        .unidades-negativo { 
+            color: #f44336; 
+        }
+
+        /* ============================================================
            FILTROS
            ============================================================ */
         .filter-grid-premium {
@@ -1535,57 +1548,72 @@
 
     async function eliminarItemHistorial(sucursal, firebaseKey, indexVenta) {
         const config = sucursalToConfig[sucursal];
-        if (!config) return { success: false, error: 'Sucursal no encontrada' };
+        if (!config) return { success: false, error: 'Sucursal no encontrada: ' + sucursal };
         
         try {
+            console.log(`🔍 Intentando eliminar de ${sucursal}: firebaseKey=${firebaseKey}, indexVenta=${indexVenta}`);
+            
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
             
             // Obtener el registro completo
             const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
             if (!snapshot.exists()) {
-                return { success: false, error: 'Registro no encontrado' };
+                console.error(`❌ Registro no encontrado: ${firebaseKey}`);
+                return { success: false, error: 'Registro no encontrado en ' + sucursal };
             }
             
             const registro = snapshot.val();
             const ventas = registro.ventas || [];
             
             // Verificar que el índice existe
-            if (indexVenta < 0 || indexVenta >= ventas.length) {
-                return { success: false, error: 'Item no encontrado' };
+            if (indexVenta === null || indexVenta === undefined || indexVenta < 0 || indexVenta >= ventas.length) {
+                console.error(`❌ Índice inválido: ${indexVenta}, total ventas: ${ventas.length}`);
+                return { success: false, error: 'Item no encontrado en el índice ' + indexVenta };
             }
             
             // Eliminar el item del array
             ventas.splice(indexVenta, 1);
             
+            // Recalcular totales
+            const totalDinero = ventas.reduce((s, v) => s + (v.money || 0), 0);
+            const totalPuntos = ventas.reduce((s, v) => s + (v.points || 0), 0);
+            const totalFichas = ventas.reduce((s, v) => s + (Math.abs(v.fichaConsumption || 0)), 0);
+            
             // Actualizar el registro en Firebase
             await update(ref(db, `historial_ventas/${firebaseKey}`), {
                 ventas: ventas,
                 totalVentas: ventas.length,
-                totalDinero: ventas.reduce((s, v) => s + (v.money || 0), 0),
-                totalPuntos: ventas.reduce((s, v) => s + (v.points || 0), 0),
-                totalFichas: ventas.reduce((s, v) => s + (Math.abs(v.fichaConsumption || 0)), 0),
+                totalDinero: totalDinero,
+                totalPuntos: totalPuntos,
+                totalFichas: totalFichas,
                 actualizado: new Date().toISOString()
             });
             
+            console.log(`✅ Item eliminado correctamente de ${sucursal}`);
             return { success: true };
+            
         } catch (error) {
-            console.error('Error eliminando item del historial:', error);
+            console.error(`❌ Error eliminando item del historial de ${sucursal}:`, error);
             return { success: false, error: error.message };
         }
     }
 
     async function eliminarRegistroHistorial(sucursal, firebaseKey) {
         const config = sucursalToConfig[sucursal];
-        if (!config) return { success: false, error: 'Sucursal no encontrada' };
+        if (!config) return { success: false, error: 'Sucursal no encontrada: ' + sucursal };
         
         try {
+            console.log(`🔍 Intentando eliminar registro completo de ${sucursal}: firebaseKey=${firebaseKey}`);
+            
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
             await remove(ref(db, `historial_ventas/${firebaseKey}`));
+            
+            console.log(`✅ Registro completo eliminado de ${sucursal}`);
             return { success: true };
         } catch (error) {
-            console.error('Error eliminando registro:', error);
+            console.error(`❌ Error eliminando registro de ${sucursal}:`, error);
             return { success: false, error: error.message };
         }
     }
@@ -1594,7 +1622,17 @@
     // 7. FUNCIÓN GLOBAL DE ELIMINACIÓN
     // ============================================================
     window.eliminarItem = function(sucursal, firebaseKey, fuente, ventaIndex = null, nombre = '') {
-        if (estado.eliminando) return;
+        if (estado.eliminando) {
+            showToast('⏳ Ya hay una eliminación en proceso...', 'warning');
+            return;
+        }
+        
+        // Validar datos
+        if (!sucursal || !firebaseKey) {
+            showToast('❌ Datos incompletos para eliminar', 'error');
+            console.error('Datos inválidos:', { sucursal, firebaseKey, fuente, ventaIndex });
+            return;
+        }
         
         const mensaje = fuente === 'carrito' 
             ? `¿Estás seguro de eliminar este item del carrito de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`
@@ -1603,16 +1641,19 @@
         // Guardar datos para la eliminación
         pendingDelete = { sucursal, firebaseKey, fuente, ventaIndex };
         
+        // Mostrar modal de confirmación
         openConfirmModal(mensaje, async () => {
             estado.eliminando = true;
             
             try {
                 let resultado;
                 
+                console.log(`🗑️ Eliminando:`, pendingDelete);
+                
                 if (pendingDelete.fuente === 'carrito') {
                     resultado = await eliminarDelCarrito(pendingDelete.sucursal, pendingDelete.firebaseKey);
                 } else if (pendingDelete.fuente === 'historial') {
-                    if (pendingDelete.ventaIndex !== null) {
+                    if (pendingDelete.ventaIndex !== null && pendingDelete.ventaIndex !== undefined) {
                         resultado = await eliminarItemHistorial(
                             pendingDelete.sucursal, 
                             pendingDelete.firebaseKey, 
@@ -1621,6 +1662,11 @@
                     } else {
                         resultado = await eliminarRegistroHistorial(pendingDelete.sucursal, pendingDelete.firebaseKey);
                     }
+                } else {
+                    showToast(`❌ Fuente desconocida: ${pendingDelete.fuente}`, 'error');
+                    estado.eliminando = false;
+                    pendingDelete = null;
+                    return;
                 }
                 
                 if (resultado.success) {
@@ -1631,9 +1677,11 @@
                     await cargarCarritos();
                 } else {
                     showToast(`❌ Error al eliminar: ${resultado.error}`, 'error');
+                    console.error('Error en eliminación:', resultado);
                 }
             } catch (error) {
                 showToast(`❌ Error inesperado: ${error.message}`, 'error');
+                console.error('Error inesperado:', error);
             } finally {
                 estado.eliminando = false;
                 pendingDelete = null;
@@ -1881,6 +1929,7 @@
             }
             
             estado.historialCache[key] = items;
+            console.log(`📜 Historial de ${key}: ${items.length} items cargados`);
             return items;
         } catch (error) {
             console.error(`Error cargando historial de ${sucursalConfig.nombre}:`, error);
@@ -2025,8 +2074,19 @@
 
         html += `<div class="table-responsive"><table class="table-premium">
             <thead><tr>
-                <th>#</th><th>Día Laboral</th><th>Sucursal</th><th>Fuente</th><th>Código</th><th>Producto</th>
-                <th>Puntos</th><th>Dinero</th><th>Fichas</th><th>Fecha</th><th>Hora</th><th>Tipo</th>
+                <th>#</th>
+                <th>Día Laboral</th>
+                <th>Sucursal</th>
+                <th>Fuente</th>
+                <th>Código</th>
+                <th>Producto</th>
+                <th>🎯 Pts</th>
+                <th>💰 Gs.</th>
+                <th>🎴 Fichas</th>
+                <th>🔄 Mov</th>
+                <th>📅 Fecha</th>
+                <th>⏰ Hora</th>
+                <th>Tipo</th>
                 <th>Acción</th>
             </tr></thead><tbody>`;
 
@@ -2042,13 +2102,51 @@
             
             if (diaLaboral !== ultimoDia) {
                 html += `<tr class="dia-separator">
-                    <td colspan="13"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
+                    <td colspan="14"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
                 </tr>`;
                 ultimoDia = diaLaboral;
             }
 
             const esCierre = item.esCierre || item.code === '000-09' || item.code === '000-10';
-            const tipo = esCierre ? '💰 Cierre' : item.esMovimiento ? '🔄 Movimiento' : item.esFichaGratis ? '🎁 Gratis' : '🛒 Venta';
+            const esMovimiento = item.esMovimiento === true;
+            const esFichaGratis = item.esFichaGratis === true;
+            
+            // Determinar el tipo y movimiento
+            let tipo = '🛒 Venta';
+            let movimientoTexto = '';
+            let movimientoClase = '';
+            const cantidad = item.unidades || item.qty || 1;
+            
+            if (esCierre) {
+                tipo = '💰 Cierre';
+                movimientoTexto = '💰 Cierre';
+            } else if (esMovimiento) {
+                const tipoMov = item.tipoMovimiento || '';
+                if (tipoMov === 'agregar') {
+                    movimientoTexto = `+${cantidad}`;
+                    movimientoClase = 'unidades-positivo';
+                } else if (tipoMov === 'quitar') {
+                    movimientoTexto = `-${cantidad}`;
+                    movimientoClase = 'unidades-negativo';
+                } else {
+                    movimientoTexto = `${cantidad}`;
+                }
+                // Mostrar el destino si existe
+                const destino = item.destinoMovimiento || '';
+                if (destino && destino !== 'stock') {
+                    movimientoTexto += ` → ${destino.toUpperCase()}`;
+                } else if (destino === 'stock') {
+                    movimientoTexto += ` → Stock`;
+                }
+                tipo = '🔄 Movimiento';
+            } else if (esFichaGratis) {
+                tipo = '🎁 Gratis';
+                movimientoTexto = '🎁 Gratis';
+            } else {
+                // Venta normal
+                movimientoTexto = '-';
+            }
+            
             const fuente = item.fuente === 'historial' ? '📜' : '🛒';
             const clase = esCierre ? 'cierre-row' : '';
             const nombreItem = item.name || item.code || 'Sin nombre';
@@ -2064,13 +2162,14 @@
                 <td><strong>${item.sucursal || '-'}</strong></td>
                 <td>${fuente}</td>
                 <td>${item.code || '-'}</td>
-                <td style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${nombreItem}</td>
+                <td style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${nombreItem}">${nombreItem}</td>
                 <td>${(item.points || 0).toLocaleString()}</td>
                 <td>${(item.money || 0).toLocaleString()}</td>
                 <td>${Math.abs(item.fichaConsumption || 0)}</td>
+                <td class="unidades-maquina ${movimientoClase}" style="font-weight:bold;">${movimientoTexto}</td>
                 <td>${item.fecha || '-'}</td>
                 <td style="font-family:monospace; font-size:0.75rem;">${horaStr}</td>
-                <td>${tipo}</td>
+                <td style="font-size:0.75rem;">${tipo}</td>
                 <td>
                     ${puedeEliminar ? `
                         <button class="btn-delete" 
@@ -2084,7 +2183,7 @@
         });
 
         if (items.length > 200) {
-            html += `<tr><td colspan="13" style="text-align:center; color:var(--gray-400); padding:10px;">
+            html += `<tr><td colspan="14" style="text-align:center; color:var(--gray-400); padding:10px;">
                 ... y ${items.length - 200} items más
             </td></tr>`;
         }
@@ -2559,7 +2658,7 @@
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 2.1 - Con eliminación de items del historial');
+    console.log('🏷️ Versión: 2.1 - Con columna Mov y eliminación de items');
     console.log('🗑️ Puedes eliminar items del historial desde la tabla de filtros');
 </script>
 
