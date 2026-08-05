@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🚗 Gestor de Viajes - Mili & Astroland</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 15px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header h1 small {
+            font-size: 0.9rem;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+        .stats-global {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            background: rgba(255,255,255,0.1);
+            padding: 12px 20px;
+            border-radius: 15px;
+        }
+        .stats-global .stat-item {
+            text-align: center;
+        }
+        .stats-global .stat-item .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+        .stats-global .stat-item .value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #4fc3f7;
+        }
+
+        .secciones-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 768px) {
+            .secciones-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .seccion {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-top: 5px solid #3498db;
+        }
+        .seccion.mili {
+            border-top-color: #e74c3c;
+        }
+        .seccion.astroland {
+            border-top-color: #2ecc71;
+        }
+        .seccion-titulo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .seccion-titulo .badge {
+            font-size: 0.7rem;
+            background: #ecf0f1;
+            padding: 2px 12px;
+            border-radius: 20px;
+            color: #2c3e50;
+        }
+
+        .info-combustible {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 15px 0;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 15px;
+        }
+        .info-combustible .campo {
+            display: flex;
+            flex-direction: column;
+        }
+        .info-combustible .campo label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #7f8c8d;
+        }
+        .info-combustible .campo .valor {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .info-combustible .campo .valor.verde { color: #27ae60; }
+        .info-combustible .campo .valor.rojo { color: #e74c3c; }
+        .info-combustible .campo .valor.azul { color: #3498db; }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            font-size: 1rem;
+            min-width: 100px;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .input-group .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #2ecc71; color: white; }
+        .btn-success:hover { background: #27ae60; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #d68910; }
+        .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+
+        .btn-gps {
+            background: #9b59b6;
+            color: white;
+        }
+        .btn-gps:hover { background: #8e44ad; }
+
+        .historial {
+            margin-top: 20px;
+            border-top: 2px solid #ecf0f1;
+            padding-top: 15px;
+        }
+        .historial h4 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .historial-lista {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+        }
+        .historial-item {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #3498db;
+        }
+        .historial-item .fecha { color: #7f8c8d; font-size: 0.75rem; }
+        .historial-item .distancia { font-weight: 700; color: #2c3e50; }
+        .historial-item .btn-eliminar {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0 5px;
+        }
+
+        .mapa-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-top: 20px;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 15px;
+            border: 2px solid #ecf0f1;
+        }
+        .controles-mapa {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #95a5a6;
+            font-size: 0.85rem;
+            padding: 15px;
+        }
+
+        /* Scrollbar personalizado */
+        .historial-lista::-webkit-scrollbar {
+            width: 6px;
+        }
+        .historial-lista::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .historial-lista::-webkit-scrollbar-thumb {
+            background: #bdc3c7;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <h1>
+            🚗 Gestor de Viajes
+            <small>GPS + Combustible</small>
+        </h1>
+        <div class="stats-global">
+            <div class="stat-item">
+                <div class="label">⛽ Combustible Total</div>
+                <div class="value" id="combustibleGlobal">0.00 L</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">📏 KM Totales</div>
+                <div class="value" id="kmGlobal">0.00 km</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">🎯 KM Restantes</div>
+                <div class="value" id="kmRestantesGlobal">0.00 km</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIONES MILI Y ASTROLAND -->
+    <div class="secciones-grid">
+        <!-- SECCIÓN MILI -->
+        <div class="seccion mili" id="seccionMili">
+            <div class="seccion-titulo">
+                🔴 Mili
+                <span class="badge">Empresarial</span>
+            </div>
+            <div class="info-combustible">
+                <div class="campo">
+                    <label>⛽ Combustible</label>
+                    <div class="valor azul" id="miliCombustible">0.00 L</div>
+                </div>
+                <div class="campo">
+                    <label>📏 KM Recorridos</label>
+                    <div class="valor" id="miliKmRecorridos">0.00 km</div>
+                </div>
+                <div class="campo">
+                    <label>🎯 KM Restantes</label>
+                    <div class="valor verde" id="miliKmRestantes">0.00 km</div>
+                </div>
+                <div class="campo">
+                    <label>📊 Viajes</label>
+                    <div class="valor" id="miliViajes">0</div>
+                </div>
+            </div>
+            <div class="input-group">
+                <input type="number" id="miliLitros" step="0.01" placeholder="Litros cargados" min="0">
+                <button class="btn btn-success" onclick="cargarCombustible('mili')">+ Cargar</button>
+            </div>
+            <div class="controles-mapa">
+                <button class="btn btn-primary btn-sm" onclick="iniciarViaje('mili')">▶ Iniciar Viaje</button>
+                <button class="btn btn-danger btn-sm" onclick="finalizarViaje('mili')">⏹ Finalizar</button>
+                <button class="btn btn-warning btn-sm" onclick="resetearSeccion('mili')">⟲ Resetear</button>
+            </div>
+            <div class="historial">
+                <h4>
+                    📜 Historial de Viajes
+                    <button class="btn btn-danger btn-sm" onclick="limpiarHistorial('mili')">🗑️ Limpiar</button>
+                </h4>
+                <div class="historial-lista" id="miliHistorial"></div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN ASTROLAND -->
+        <div class="seccion astroland" id="seccionAstroland">
+            <div class="seccion-titulo">
+                🟢 Astroland
+                <span class="badge">Particular</span>
+            </div>
+            <div class="info-combustible">
+                <div class="campo">
+                    <label>⛽ Combustible</label>
+                    <div class="valor azul" id="astroCombustible">0.00 L</div>
+                </div>
+                <div class="campo">
+                    <label>📏 KM Recorridos</label>
+                    <div class="valor" id="astroKmRecorridos">0.00 km</div>
+                </div>
+                <div class="campo">
+                    <label>🎯 KM Restantes</label>
+                    <div class="valor verde" id="astroKmRestantes">0.00 km</div>
+                </div>
+                <div class="campo">
+                    <label>📊 Viajes</label>
+                    <div class="valor" id="astroViajes">0</div>
+                </div>
+            </div>
+            <div class="input-group">
+                <input type="number" id="astroLitros" step="0.01" placeholder="Litros cargados" min="0">
+                <button class="btn btn-success" onclick="cargarCombustible('astro')">+ Cargar</button>
+            </div>
+            <div class="controles-mapa">
+                <button class="btn btn-primary btn-sm" onclick="iniciarViaje('astro')">▶ Iniciar Viaje</button>
+                <button class="btn btn-danger btn-sm" onclick="finalizarViaje('astro')">⏹ Finalizar</button>
+                <button class="btn btn-warning btn-sm" onclick="resetearSeccion('astro')">⟲ Resetear</button>
+            </div>
+            <div class="historial">
+                <h4>
+                    📜 Historial de Viajes
+                    <button class="btn btn-danger btn-sm" onclick="limpiarHistorial('astro')">🗑️ Limpiar</button>
+                </h4>
+                <div class="historial-lista" id="astroHistorial"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAPA -->
+    <div class="mapa-container">
+        <h3 style="margin-bottom: 15px;">📍 Mapa de Recorrido</h3>
+        <div id="map"></div>
+        <div class="controles-mapa">
+            <button class="btn btn-gps btn-sm" onclick="centrarMapa()">📍 Centrar en mi ubicación</button>
+            <button class="btn btn-warning btn-sm" onclick="limpiarMapa()">🗑️ Limpiar mapa</button>
+        </div>
+        <div id="mensajeEstado" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 10px; text-align: center; color: #2c3e50;">
+            💡 Selecciona una sección (Mili o Astroland) e inicia un viaje.
+        </div>
+    </div>
+
+    <div class="footer">
+        🚗 Gestor de Viajes v2.0 | 13.908 litros = 63 km | Datos guardados en localStorage
+    </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
+const RENDIMIENTO = 63 / 13.908; // 4.53 km por litro
+const FACTOR = 13.908 / 63; // litros por km
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+let estado = {
+    mili: {
+        combustible: 0,
+        kmRecorridos: 0,
+        viajes: [],
+        viajeActivo: false,
+        ruta: [],
+        watchId: null,
+        nombreOrigen: '',
+        nombreDestino: ''
+    },
+    astro: {
+        combustible: 0,
+        kmRecorridos: 0,
+        viajes: [],
+        viajeActivo: false,
+        ruta: [],
+        watchId: null,
+        nombreOrigen: '',
+        nombreDestino: ''
+    },
+    mapa: null,
+    polyline: null,
+    marcadorOrigen: null,
+    marcadorDestino: null,
+    marcadorActual: null,
+    seccionActiva: null // 'mili' o 'astro'
+};
+
+// ============================================================
+// INICIALIZACIÓN
+// ============================================================
+function init() {
+    cargarDatos();
+    initMap();
+    actualizarUI();
+    actualizarGlobales();
+}
+
+// ============================================================
+// LOCAL STORAGE
+// ============================================================
+function guardarDatos() {
+    const datos = {
+        mili: {
+            combustible: estado.mili.combustible,
+            kmRecorridos: estado.mili.kmRecorridos,
+            viajes: estado.mili.viajes
+        },
+        astro: {
+            combustible: estado.astro.combustible,
+            kmRecorridos: estado.astro.kmRecorridos,
+            viajes: estado.astro.viajes
+        }
+    };
+    localStorage.setItem('gestorViajes', JSON.stringify(datos));
+}
+
+function cargarDatos() {
+    const datos = localStorage.getItem('gestorViajes');
+    if (!datos) return;
+    try {
+        const parsed = JSON.parse(datos);
+        if (parsed.mili) {
+            estado.mili.combustible = parsed.mili.combustible || 0;
+            estado.mili.kmRecorridos = parsed.mili.kmRecorridos || 0;
+            estado.mili.viajes = parsed.mili.viajes || [];
+        }
+        if (parsed.astro) {
+            estado.astro.combustible = parsed.astro.combustible || 0;
+            estado.astro.kmRecorridos = parsed.astro.kmRecorridos || 0;
+            estado.astro.viajes = parsed.astro.viajes || [];
+        }
+    } catch (e) {
+        console.warn('Error al cargar datos:', e);
+    }
+}
+
+// ============================================================
+// FUNCIONES DE COMBUSTIBLE
+// ============================================================
+function cargarCombustible(seccion) {
+    const inputId = seccion === 'mili' ? 'miliLitros' : 'astroLitros';
+    const input = document.getElementById(inputId);
+    const litros = parseFloat(input.value);
+    
+    if (!litros || litros <= 0) {
+        alert('Por favor, ingresa una cantidad válida de litros.');
+        return;
+    }
+    
+    if (seccion === 'mili') {
+        estado.mili.combustible += litros;
+    } else {
+        estado.astro.combustible += litros;
+    }
+    
+    input.value = '';
+    actualizarUI();
+    actualizarGlobales();
+    guardarDatos();
+    
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    alert(`✅ Se cargaron ${litros.toFixed(2)} litros a ${nombre}.`);
+}
+
+function getKmRestantes(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const kmPosibles = data.combustible * RENDIMIENTO;
+    return Math.max(0, kmPosibles - data.kmRecorridos);
+}
+
+// ============================================================
+// FUNCIONES DE VIAJE
+// ============================================================
+function iniciarViaje(seccion) {
+    if (estado.seccionActiva) {
+        alert(`⚠️ Ya hay un viaje activo en ${estado.seccionActiva === 'mili' ? 'Mili' : 'Astroland'}. Finalízalo primero.`);
+        return;
+    }
+    
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    const nombreOrigen = prompt(`✏️ Escribe el nombre del PUNTO DE PARTIDA para ${nombre}:`, 'Mi inicio');
+    if (nombreOrigen === null) return;
+    if (!nombreOrigen.trim()) {
+        alert('El nombre no puede estar vacío.');
+        return;
+    }
+    
+    if (!navigator.geolocation) {
+        alert('Tu navegador no soporta Geolocalización.');
+        return;
+    }
+    
+    document.getElementById('mensajeEstado').textContent = `⏳ Obteniendo ubicación para ${nombre}...`;
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            const data = seccion === 'mili' ? estado.mili : estado.astro;
+            data.viajeActivo = true;
+            data.ruta = [{ lat, lng }];
+            data.nombreOrigen = nombreOrigen.trim();
+            data.nombreDestino = '';
+            
+            estado.seccionActiva = seccion;
+            
+            // Limpiar mapa
+            limpiarMapa();
+            
+            // Mostrar en mapa
+            if (estado.mapa) {
+                estado.mapa.setView([lat, lng], 16);
+            }
+            
+            actualizarUI();
+            actualizarGlobales();
+            
+            // Iniciar watch
+            data.watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    if (!data.viajeActivo) return;
+                    const newLat = pos.coords.latitude;
+                    const newLng = pos.coords.longitude;
+                    const ultimo = data.ruta[data.ruta.length - 1];
+                    if (ultimo) {
+                        const dist = calcularDistancia(ultimo.lat, ultimo.lng, newLat, newLng);
+                        if (dist < 2) return;
+                    }
+                    data.ruta.push({ lat: newLat, lng: newLng });
+                    dibujarRuta(seccion);
+                    document.getElementById('mensajeEstado').textContent = `📍 ${nombre}: Movimiento detectado. Puntos: ${data.ruta.length}`;
+                },
+                (error) => {
+                    console.warn('Error GPS:', error);
+                    document.getElementById('mensajeEstado').textContent = `⚠️ Error GPS: ${error.message}`;
+                },
+                { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+            );
+            
+            document.getElementById('mensajeEstado').textContent = `✅ Viaje iniciado en ${nombre} desde "${nombreOrigen.trim()}"`;
+            dibujarRuta(seccion);
+        },
+        (error) => {
+            alert('No se pudo obtener la ubicación.\n' + error.message);
+            document.getElementById('mensajeEstado').textContent = `❌ Error GPS: ${error.message}`;
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+function finalizarViaje(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    
+    if (!data.viajeActivo) {
+        alert(`No hay un viaje activo en ${nombre}.`);
+        return;
+    }
+    
+    if (data.ruta.length < 2) {
+        alert('El viaje debe tener al menos 2 puntos para calcular distancia.');
+        return;
+    }
+    
+    const nombreDestino = prompt(`✏️ Escribe el nombre del DESTINO para ${nombre}:`, 'Mi destino');
+    if (nombreDestino === null) return;
+    if (!nombreDestino.trim()) {
+        alert('El nombre no puede estar vacío.');
+        return;
+    }
+    
+    // Calcular distancia
+    let distanciaTotal = 0;
+    for (let i = 1; i < data.ruta.length; i++) {
+        const p1 = data.ruta[i-1];
+        const p2 = data.ruta[i];
+        distanciaTotal += calcularDistancia(p1.lat, p1.lng, p2.lat, p2.lng);
+    }
+    const km = distanciaTotal / 1000;
+    
+    // Guardar viaje
+    const viaje = {
+        fecha: new Date().toLocaleString(),
+        origen: data.nombreOrigen,
+        destino: nombreDestino.trim(),
+        distancia: km,
+        puntos: data.ruta.length
+    };
+    data.viajes.push(viaje);
+    data.kmRecorridos += km;
+    data.nombreDestino = nombreDestino.trim();
+    
+    // Detener watch
+    if (data.watchId) {
+        navigator.geolocation.clearWatch(data.watchId);
+        data.watchId = null;
+    }
+    
+    data.viajeActivo = false;
+    estado.seccionActiva = null;
+    
+    actualizarUI();
+    actualizarGlobales();
+    guardarDatos();
+    mostrarHistorial(seccion);
+    dibujarRuta(seccion);
+    
+    document.getElementById('mensajeEstado').textContent = `🏁 Viaje finalizado en ${nombre}. Distancia: ${km.toFixed(2)} km. Destino: "${nombreDestino.trim()}"`;
+    alert(`✅ Viaje completado!\n📏 Distancia: ${km.toFixed(2)} km\n📍 Origen: ${data.nombreOrigen}\n🏆 Destino: ${nombreDestino.trim()}`);
+}
+
+function resetearSeccion(seccion) {
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    if (!confirm(`¿Resetear todos los datos de ${nombre}?`)) return;
+    
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    if (data.watchId) {
+        navigator.geolocation.clearWatch(data.watchId);
+    }
+    data.combustible = 0;
+    data.kmRecorridos = 0;
+    data.viajes = [];
+    data.viajeActivo = false;
+    data.ruta = [];
+    data.watchId = null;
+    
+    if (estado.seccionActiva === seccion) {
+        estado.seccionActiva = null;
+    }
+    
+    actualizarUI();
+    actualizarGlobales();
+    guardarDatos();
+    mostrarHistorial(seccion);
+    limpiarMapa();
+    
+    document.getElementById('mensajeEstado').textContent = `🔄 ${nombre} reseteado completamente.`;
+}
+
+function limpiarHistorial(seccion) {
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    if (!confirm(`¿Eliminar todo el historial de ${nombre}?`)) return;
+    
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    data.viajes = [];
+    guardarDatos();
+    mostrarHistorial(seccion);
+    actualizarUI();
+    actualizarGlobales();
+}
+
+// ============================================================
+// FUNCIONES DE MAPA
+// ============================================================
+function initMap() {
+    const map = L.map('map').setView([-34.6037, -58.3816], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19
+    }).addTo(map);
+    estado.mapa = map;
+    return map;
+}
+
+function dibujarRuta(seccion) {
+    const map = estado.mapa;
+    if (!map) return;
+    
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    const color = seccion === 'mili' ? '#e74c3c' : '#2ecc71';
+    
+    // Limpiar capas anteriores
+    if (estado.polyline) {
+        map.removeLayer(estado.polyline);
+        estado.polyline = null;
+    }
+    if (estado.marcadorOrigen) {
+        map.removeLayer(estado.marcadorOrigen);
+        estado.marcadorOrigen = null;
+    }
+    if (estado.marcadorDestino) {
+        map.removeLayer(estado.marcadorDestino);
+        estado.marcadorDestino = null;
+    }
+    if (estado.marcadorActual) {
+        map.removeLayer(estado.marcadorActual);
+        estado.marcadorActual = null;
+    }
+    
+    if (data.ruta.length === 0) return;
+    
+    // Marcador de origen
+    const origen = data.ruta[0];
+    estado.marcadorOrigen = L.marker([origen.lat, origen.lng], {
+        icon: L.divIcon({
+            html: '🏁',
+            className: 'custom-marker',
+            iconSize: [30, 30]
+        })
+    }).addTo(map);
+    estado.marcadorOrigen.bindTooltip(data.nombreOrigen || 'Origen', {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -10]
+    });
+    
+    // Si hay más de un punto, dibujar línea
+    if (data.ruta.length > 1) {
+        const latlngs = data.ruta.map(p => [p.lat, p.lng]);
+        estado.polyline = L.polyline(latlngs, {
+            color: color,
+            weight: 4,
+            opacity: 0.8,
+            smoothFactor: 1
+        }).addTo(map);
+        map.fitBounds(estado.polyline.getBounds(), { padding: [30, 30] });
+        
+        // Marcador de destino (último punto)
+        const destino = data.ruta[data.ruta.length - 1];
+        estado.marcadorDestino = L.marker([destino.lat, destino.lng], {
+            icon: L.divIcon({
+                html: '🏆',
+                className: 'custom-marker',
+                iconSize: [30, 30]
+            })
+        }).addTo(map);
+        estado.marcadorDestino.bindTooltip(data.nombreDestino || 'Destino', {
+            permanent: true,
+            direction: 'top',
+            offset: [0, -10]
+        });
+    } else {
+        // Solo un punto (viaje iniciado)
+        estado.marcadorActual = L.marker([origen.lat, origen.lng]).addTo(map);
+        map.setView([origen.lat, origen.lng], 16);
+    }
+}
+
+function centrarMapa() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            if (estado.mapa) {
+                estado.mapa.setView([pos.coords.latitude, pos.coords.longitude], 16);
+            }
+        },
+        () => alert('No se pudo obtener la ubicación.')
+    );
+}
+
+function limpiarMapa() {
+    if (estado.mapa) {
+        if (estado.polyline) { estado.mapa.removeLayer(estado.polyline); estado.polyline = null; }
+        if (estado.marcadorOrigen) { estado.mapa.removeLayer(estado.marcadorOrigen); estado.marcadorOrigen = null; }
+        if (estado.marcadorDestino) { estado.mapa.removeLayer(estado.marcadorDestino); estado.marcadorDestino = null; }
+        if (estado.marcadorActual) { estado.mapa.removeLayer(estado.marcadorActual); estado.marcadorActual = null; }
+        estado.mapa.setView([-34.6037, -58.3816], 13);
+    }
+    // También limpiar rutas de ambas secciones
+    estado.mili.ruta = [];
+    estado.astro.ruta = [];
+    document.getElementById('mensajeEstado').textContent = '🗑️ Mapa limpiado.';
+}
+
+// ============================================================
+// FUNCIONES AUXILIARES
+// ============================================================
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const toRad = (deg) => deg * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// ============================================================
+// ACTUALIZACIÓN DE UI
+// ============================================================
+function actualizarUI() {
+    // Mili
+    document.getElementById('miliCombustible').textContent = estado.mili.combustible.toFixed(2) + ' L';
+    document.getElementById('miliKmRecorridos').textContent = estado.mili.kmRecorridos.toFixed(2) + ' km';
+    document.getElementById('miliKmRestantes').textContent = getKmRestantes('mili').toFixed(2) + ' km';
+    document.getElementById('miliViajes').textContent = estado.mili.viajes.length;
+    
+    // Astroland
+    document.getElementById('astroCombustible').textContent = estado.astro.combustible.toFixed(2) + ' L';
+    document.getElementById('astroKmRecorridos').textContent = estado.astro.kmRecorridos.toFixed(2) + ' km';
+    document.getElementById('astroKmRestantes').textContent = getKmRestantes('astro').toFixed(2) + ' km';
+    document.getElementById('astroViajes').textContent = estado.astro.viajes.length;
+    
+    // Mostrar historiales
+    mostrarHistorial('mili');
+    mostrarHistorial('astro');
+}
+
+function actualizarGlobales() {
+    const totalCombustible = estado.mili.combustible + estado.astro.combustible;
+    const totalKm = estado.mili.kmRecorridos + estado.astro.kmRecorridos;
+    const totalKmRestantes = getKmRestantes('mili') + getKmRestantes('astro');
+    
+    document.getElementById('combustibleGlobal').textContent = totalCombustible.toFixed(2) + ' L';
+    document.getElementById('kmGlobal').textContent = totalKm.toFixed(2) + ' km';
+    document.getElementById('kmRestantesGlobal').textContent = totalKmRestantes.toFixed(2) + ' km';
+}
+
+function mostrarHistorial(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const container = document.getElementById(seccion + 'Historial');
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    
+    if (data.viajes.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#95a5a6;padding:15px;">No hay viajes registrados</div>';
+        return;
+    }
+    
+    // Mostrar últimos 10 viajes (más recientes primero)
+    const viajesMostrar = [...data.viajes].reverse().slice(0, 10);
+    container.innerHTML = viajesMostrar.map((v, index) => `
+        <div class="historial-item">
+            <div>
+                <strong>${v.origen} → ${v.destino}</strong>
+                <div class="fecha">${v.fecha} • ${v.puntos} puntos</div>
+            </div>
+            <div class="distancia">${v.distancia.toFixed(2)} km</div>
+        </div>
+    `).join('');
+}
+
+// ============================================================
+// INICIO
+// ============================================================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
