@@ -1317,7 +1317,7 @@
                     <input type="date" id="contadorFechaHasta">
                 </div>
                 <div class="filter-actions">
-                    <button class="btn-premium info" onclick="cargarContadores()">
+                    <button class="btn-premium info" onclick="cargarContadores(event)">
                         <i class="fas fa-chart-bar"></i> Cargar Contadores
                     </button>
                 </div>
@@ -2092,7 +2092,8 @@
 
         let contador = 0, ultimoDia = '';
 
-        items.slice(0, 200).forEach(item => {
+        // 🔥 CORREGIDO: Eliminado el límite de 200 items, ahora muestra todos
+        items.forEach(item => {
             contador++;
             const ts = item.timestampCompleto || item.timestamp || 0;
             const fecha = ts ? new Date(ts) : null;
@@ -2111,7 +2112,6 @@
             const esMovimiento = item.esMovimiento === true;
             const esFichaGratis = item.esFichaGratis === true;
             
-            // Determinar el tipo y movimiento
             let tipo = '🛒 Venta';
             let movimientoTexto = '';
             let movimientoClase = '';
@@ -2131,7 +2131,6 @@
                 } else {
                     movimientoTexto = `${cantidad}`;
                 }
-                // Mostrar el destino si existe
                 const destino = item.destinoMovimiento || '';
                 if (destino && destino !== 'stock') {
                     movimientoTexto += ` → ${destino.toUpperCase()}`;
@@ -2143,7 +2142,6 @@
                 tipo = '🎁 Gratis';
                 movimientoTexto = '🎁 Gratis';
             } else {
-                // Venta normal
                 movimientoTexto = '-';
             }
             
@@ -2151,7 +2149,6 @@
             const clase = esCierre ? 'cierre-row' : '';
             const nombreItem = item.name || item.code || 'Sin nombre';
 
-            // Determinar si se puede eliminar
             const puedeEliminar = item.fuente === 'historial' || item.fuente === 'carrito';
             const ventaIndex = item.ventaIndex !== undefined ? item.ventaIndex : null;
             const firebaseKey = item.firebaseKey || '';
@@ -2182,11 +2179,7 @@
             </tr>`;
         });
 
-        if (items.length > 200) {
-            html += `<tr><td colspan="14" style="text-align:center; color:var(--gray-400); padding:10px;">
-                ... y ${items.length - 200} items más
-            </td></tr>`;
-        }
+        // 🔥 CORREGIDO: Eliminado el mensaje de "x items más"
 
         html += `</tbody></table></div>`;
         container.innerHTML = html;
@@ -2246,8 +2239,9 @@
         }
     }
 
-    window.cargarContadores = async function() {
-        const btn = event?.target || document.querySelector('.btn-premium.info');
+    window.cargarContadores = async function(event) {
+        // 🔥 CORREGIDO: Obtener el botón correctamente
+        const btn = document.querySelector('.btn-premium.info');
         if (btn) btn.disabled = true;
         
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
@@ -2291,6 +2285,22 @@
 
         estado.contadoresFiltrados = todosContadores;
         estado.fechasConDatos = Array.from(fechasConDatos).sort();
+
+        // 🔥 CORREGIDO: Verificar si hay datos antes de renderizar
+        if (Object.keys(todosContadores).length === 0) {
+            const container = document.getElementById('contadoresResultados');
+            const summary = document.getElementById('contadoresSummary');
+            container.style.display = 'block';
+            summary.innerHTML = 'No se encontraron contadores en el rango seleccionado.';
+            document.getElementById('contadoresBody').innerHTML = '';
+            document.getElementById('calendarioContainer').innerHTML = `
+                <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
+                    <i class="fas fa-calendar-day"></i> No hay datos de contadores en el rango seleccionado
+                </p>
+            `;
+            if (btn) btn.disabled = false;
+            return;
+        }
 
         renderCalendario(estado.fechasConDatos, fechaDesde, fechaHasta);
         renderTablaContadores(todosContadores, fechaDesde, fechaHasta, sucursalFiltro);
@@ -2658,7 +2668,7 @@
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 2.1 - Con columna Mov y eliminación de items');
+    console.log('🏷️ Versión: 2.2 - Corregido límite de items y carga de contadores');
     console.log('🗑️ Puedes eliminar items del historial desde la tabla de filtros');
 </script>
 
