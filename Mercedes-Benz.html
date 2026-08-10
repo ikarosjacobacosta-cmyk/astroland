@@ -186,11 +186,6 @@
             transition: all 0.2s;
         }
         .btn-ver-mapa:hover { background: #8e44ad; transform: scale(1.05); }
-        .btn-ver-mapa:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-        }
 
         .btn-gps {
             background: #9b59b6;
@@ -429,7 +424,7 @@
     </div>
 
     <div class="footer">
-        🚗 Gestor de Viajes v3.1 | 13.908 litros = 63 km | Datos guardados en localStorage
+        🚗 Gestor de Viajes v3.2 | 13.908 litros = 63 km | Datos guardados en localStorage
     </div>
 </div>
 
@@ -440,7 +435,7 @@
 // ============================================================
 // CONFIGURACIÓN
 // ============================================================
-const RENDIMIENTO = 63 / 13.908; // 4.53 km por litro
+const RENDIMIENTO = 63 / 13.908;
 
 // ============================================================
 // ESTADO GLOBAL
@@ -481,11 +476,11 @@ let estado = {
 // ============================================================
 function init() {
     cargarDatos();
+    migrarViajesAntiguos(); // Migrar ANTES de mostrar la UI
     initMap();
     actualizarUI();
     actualizarGlobales();
     restaurarViajeActivo();
-    migrarViajesAntiguos();
     
     document.addEventListener('visibilitychange', manejarVisibilidad);
     window.addEventListener('beforeunload', guardarEstadoCompleto);
@@ -493,40 +488,59 @@ function init() {
 }
 
 // ============================================================
-// MIGRACIÓN DE VIAJES ANTIGUOS
+// MIGRACIÓN DE VIAJES ANTIGUOS (AHORA GUARDA EN LOCALSTORAGE)
 // ============================================================
 function migrarViajesAntiguos() {
+    let migrado = false;
+    
     // Migrar viajes de Mili
-    estado.mili.viajes = estado.mili.viajes.map(viaje => {
-        if (!viaje.ruta) {
-            // Si no tiene ruta, crear una ruta simulada con 2 puntos
-            // Usamos coordenadas aproximadas de Buenos Aires
-            const latBase = -34.6037 + (Math.random() - 0.5) * 0.01;
-            const lngBase = -58.3816 + (Math.random() - 0.5) * 0.01;
-            viaje.ruta = [
-                { lat: latBase, lng: lngBase },
-                { lat: latBase + 0.002, lng: lngBase + 0.002 }
-            ];
-            viaje.puntos = 2;
+    estado.mili.viajes = estado.mili.viajes.map((viaje, index) => {
+        if (!viaje.ruta || viaje.ruta.length < 2) {
+            migrado = true;
+            // Crear ruta simulada con 3-5 puntos
+            const puntos = 3 + Math.floor(Math.random() * 3);
+            const latBase = -34.6037 + (Math.random() - 0.5) * 0.02;
+            const lngBase = -58.3816 + (Math.random() - 0.5) * 0.02;
+            const ruta = [];
+            for (let i = 0; i < puntos; i++) {
+                ruta.push({
+                    lat: latBase + (i / puntos) * 0.005,
+                    lng: lngBase + (i / puntos) * 0.005
+                });
+            }
+            viaje.ruta = ruta;
+            viaje.puntos = ruta.length;
         }
         return viaje;
     });
     
     // Migrar viajes de Astroland
-    estado.astro.viajes = estado.astro.viajes.map(viaje => {
-        if (!viaje.ruta) {
-            const latBase = -34.6037 + (Math.random() - 0.5) * 0.01;
-            const lngBase = -58.3816 + (Math.random() - 0.5) * 0.01;
-            viaje.ruta = [
-                { lat: latBase, lng: lngBase },
-                { lat: latBase + 0.002, lng: lngBase + 0.002 }
-            ];
-            viaje.puntos = 2;
+    estado.astro.viajes = estado.astro.viajes.map((viaje, index) => {
+        if (!viaje.ruta || viaje.ruta.length < 2) {
+            migrado = true;
+            const puntos = 3 + Math.floor(Math.random() * 3);
+            const latBase = -34.6037 + (Math.random() - 0.5) * 0.02;
+            const lngBase = -58.3816 + (Math.random() - 0.5) * 0.02;
+            const ruta = [];
+            for (let i = 0; i < puntos; i++) {
+                ruta.push({
+                    lat: latBase + (i / puntos) * 0.005,
+                    lng: lngBase + (i / puntos) * 0.005
+                });
+            }
+            viaje.ruta = ruta;
+            viaje.puntos = ruta.length;
         }
         return viaje;
     });
     
-    guardarDatos();
+    // Si se migró algo, guardar en localStorage
+    if (migrado) {
+        console.log('🔄 Migrando viajes antiguos...');
+        guardarDatos();
+        guardarEstadoCompleto();
+        console.log('✅ Viajes migrados correctamente');
+    }
 }
 
 // ============================================================
@@ -886,26 +900,31 @@ function limpiarHistorial(seccion) {
 
 function verViajeEnMapa(seccion, index) {
     const data = seccion === 'mili' ? estado.mili : estado.astro;
-    const viaje = data.viajes[index];
+    let viaje = data.viajes[index];
     
     if (!viaje) {
         alert('Viaje no encontrado.');
         return;
     }
     
-    // Si el viaje no tiene ruta, intentar crearla
+    // Si el viaje no tiene ruta, CREAR UNA
     if (!viaje.ruta || viaje.ruta.length < 2) {
-        // Crear una ruta simulada basada en el origen y destino
+        const puntos = 3 + Math.floor(Math.random() * 3);
         const latBase = -34.6037 + (Math.random() - 0.5) * 0.02;
         const lngBase = -58.3816 + (Math.random() - 0.5) * 0.02;
-        viaje.ruta = [
-            { lat: latBase, lng: lngBase },
-            { lat: latBase + 0.003, lng: lngBase + 0.003 },
-            { lat: latBase + 0.005, lng: lngBase + 0.005 }
-        ];
-        viaje.puntos = 3;
+        const ruta = [];
+        for (let i = 0; i < puntos; i++) {
+            ruta.push({
+                lat: latBase + (i / puntos) * 0.005,
+                lng: lngBase + (i / puntos) * 0.005
+            });
+        }
+        viaje.ruta = ruta;
+        viaje.puntos = ruta.length;
         // Guardar los datos actualizados
         guardarDatos();
+        guardarEstadoCompleto();
+        console.log('✅ Ruta creada para viaje antiguo');
     }
     
     limpiarMapa(false);
@@ -965,7 +984,6 @@ function cerrarHistorialMapa() {
     limpiarMapa(true);
     document.getElementById('mensajeEstado').textContent = '💡 Modo historial cerrado.';
     
-    // Si hay un viaje activo, mostrarlo
     if (estado.seccionActiva) {
         const data = estado.seccionActiva === 'mili' ? estado.mili : estado.astro;
         if (data.viajeActivo && data.ruta.length > 0) {
@@ -1168,6 +1186,7 @@ function mostrarHistorial(seccion) {
     const viajesMostrar = [...data.viajes].reverse().slice(0, 10);
     container.innerHTML = viajesMostrar.map((v, index) => {
         const realIndex = data.viajes.length - 1 - index;
+        // Verificar si tiene ruta (si no, se creará al hacer clic)
         const tieneRuta = v.ruta && v.ruta.length >= 2;
         return `
         <div class="historial-item">
@@ -1177,8 +1196,8 @@ function mostrarHistorial(seccion) {
             </div>
             <div class="acciones">
                 <span class="distancia">${v.distancia.toFixed(2)} km</span>
-                <button class="btn-ver-mapa" onclick="verViajeEnMapa('${seccion}', ${realIndex})" ${!tieneRuta ? 'disabled' : ''}>
-                    ${tieneRuta ? '🗺️ Ver' : '❌ Sin ruta'}
+                <button class="btn-ver-mapa" onclick="verViajeEnMapa('${seccion}', ${realIndex})">
+                    🗺️ Ver
                 </button>
             </div>
         </div>
