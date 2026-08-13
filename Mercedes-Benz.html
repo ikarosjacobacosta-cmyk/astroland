@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <style>
+        /* ... estilos anteriores ... */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 15px; min-height: 100vh; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -35,6 +36,8 @@
         .stats-global .stat-item { text-align: center; }
         .stats-global .stat-item .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.7; }
         .stats-global .stat-item .value { font-size: 1.3rem; font-weight: 700; color: #4fc3f7; }
+        .stats-global .stat-item .value.negativo { color: #e74c3c; }
+        .stats-global .stat-item .value.positivo { color: #2ecc71; }
 
         .secciones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         @media (max-width: 768px) { .secciones-grid { grid-template-columns: 1fr; } }
@@ -45,9 +48,11 @@
             padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             border-top: 5px solid #3498db;
+            position: relative;
         }
         .seccion.mili { border-top-color: #e74c3c; }
         .seccion.astroland { border-top-color: #2ecc71; }
+        
         .seccion-titulo {
             font-size: 1.5rem;
             font-weight: 700;
@@ -74,6 +79,8 @@
         .info-combustible .campo .valor.verde { color: #27ae60; }
         .info-combustible .campo .valor.rojo { color: #e74c3c; }
         .info-combustible .campo .valor.azul { color: #3498db; }
+        .info-combustible .campo .valor.naranja { color: #e67e22; }
+        .info-combustible .campo .valor.negativo { color: #e74c3c; }
 
         .input-group { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
         .input-group input {
@@ -119,6 +126,17 @@
         .btn-ver-mapa:hover { background: #8e44ad; transform: scale(1.05); }
         .btn-gps { background: #9b59b6; color: white; }
         .btn-gps:hover { background: #8e44ad; }
+        .btn-modo-manual {
+            background: #e67e22;
+            color: white;
+        }
+        .btn-modo-manual:hover { background: #d35400; }
+        .btn-modo-manual.activo { background: #27ae60; }
+        .btn-transferir {
+            background: #8e44ad;
+            color: white;
+        }
+        .btn-transferir:hover { background: #7d3c98; }
 
         .historial { margin-top: 20px; border-top: 2px solid #ecf0f1; padding-top: 15px; }
         .historial h4 {
@@ -147,14 +165,6 @@
         .historial-item .fecha { color: #7f8c8d; font-size: 0.75rem; }
         .historial-item .distancia { font-weight: 700; color: #2c3e50; }
         .historial-item .acciones { display: flex; gap: 5px; align-items: center; }
-        .historial-item .corregido { 
-            background: #27ae60; 
-            color: white; 
-            font-size: 0.6rem; 
-            padding: 2px 8px; 
-            border-radius: 10px;
-            font-weight: bold;
-        }
 
         .mapa-container {
             background: white;
@@ -181,6 +191,8 @@
         .estado-viaje.inactivo { background: #95a5a6; color: white; }
         .estado-viaje.singps { background: #e74c3c; color: white; animation: parpadeo 1s infinite; }
         .estado-viaje.reconectando { background: #f39c12; color: white; animation: parpadeo 0.5s infinite; }
+        .estado-viaje.manual { background: #e67e22; color: white; }
+        .estado-viaje.sincombustible { background: #e74c3c; color: white; animation: parpadeo 0.5s infinite; }
 
         @keyframes parpadeo { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
@@ -196,6 +208,9 @@
         }
         .alert-gps.visible { display: block; }
         .alert-gps.reconectando { background: #cce5ff; border-color: #007bff; color: #004085; }
+        .alert-gps.sincombustible { background: #f8d7da; border-color: #e74c3c; color: #721c24; }
+        .alert-gps.deuda { background: #f8d7da; border-color: #e74c3c; color: #721c24; }
+        
         .puntos-info {
             font-size: 0.8rem;
             color: #7f8c8d;
@@ -224,6 +239,81 @@
             margin-right: 10px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .drag-instruction {
+            background: #e8f4fd;
+            border: 2px dashed #3498db;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            display: none;
+            color: #2c3e50;
+        }
+        .drag-instruction.visible { display: block; }
+        .drag-instruction strong { color: #e67e22; }
+
+        .barra-combustible {
+            background: #ecf0f1;
+            border-radius: 10px;
+            height: 20px;
+            margin: 8px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .barra-combustible .relleno {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+        }
+        .barra-combustible .relleno.bajo { background: linear-gradient(90deg, #e67e22, #f39c12); }
+        .barra-combustible .relleno.critico { background: linear-gradient(90deg, #e74c3c, #c0392b); animation: parpadeo 1s infinite; }
+        .barra-combustible .relleno.deuda { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+        .barra-combustible .texto-barra {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.visible { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 { margin-bottom: 15px; color: #2c3e50; }
+        .modal-content .input-group { margin: 10px 0; }
+        .modal-content .btn { width: 100%; margin-top: 10px; }
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #95a5a6;
+        }
+        .modal-close:hover { color: #2c3e50; }
     </style>
 </head>
 <body>
@@ -235,68 +325,99 @@
             <div class="stat-item"><div class="label">⛽ Combustible Total</div><div class="value" id="combustibleGlobal">0.00 L</div></div>
             <div class="stat-item"><div class="label">📏 KM Totales</div><div class="value" id="kmGlobal">0.00 km</div></div>
             <div class="stat-item"><div class="label">🎯 KM Restantes</div><div class="value" id="kmRestantesGlobal">0.00 km</div></div>
+            <div class="stat-item"><div class="label">💰 Deuda Total</div><div class="value negativo" id="deudaGlobal">0.00 L</div></div>
         </div>
     </div>
 
     <div class="secciones-grid">
+        <!-- SECCIÓN MILI -->
         <div class="seccion mili" id="seccionMili">
             <div class="seccion-titulo">
-                🔴 Mili <span class="badge">Empresarial</span>
+                🔴 Mili <span class="badge">Personal</span>
                 <span id="miliEstadoViaje" class="estado-viaje inactivo">⏸ Inactivo</span>
             </div>
             <div id="miliAlertGps" class="alert-gps">📡 SIN SEÑAL GPS - Reintentando conexión...</div>
+            <div id="miliAlertDeuda" class="alert-gps deuda">💰 EN DEUDA - Combustible pagado por otra sección</div>
             <div id="miliCorrigiendo" class="corrigiendo">
                 <span class="spinner"></span> 🔄 Corrigiendo automáticamente la ruta...
             </div>
-            <div class="puntos-info">📍 Puntos registrados: <span id="miliPuntosContador">0</span> | 🕐 Último punto: <span id="miliUltimoPunto">--</span></div>
+            <div id="miliDragInstruction" class="drag-instruction">
+                🖱️ <strong>Arrastra el marcador 🏆</strong> en el mapa para cambiar el destino.
+            </div>
+            
+            <div class="barra-combustible" id="miliBarra">
+                <div class="relleno" id="miliBarraRelleno" style="width: 0%;"></div>
+                <div class="texto-barra" id="miliBarraTexto">0.00 L (0 km)</div>
+            </div>
+            
+            <div class="puntos-info">📍 Puntos: <span id="miliPuntosContador">0</span> | 🕐 <span id="miliUltimoPunto">--</span></div>
             <div class="info-combustible">
                 <div class="campo"><label>⛽ Combustible</label><div class="valor azul" id="miliCombustible">0.00 L</div></div>
                 <div class="campo"><label>📏 KM Recorridos</label><div class="valor" id="miliKmRecorridos">0.00 km</div></div>
                 <div class="campo"><label>🎯 KM Restantes</label><div class="valor verde" id="miliKmRestantes">0.00 km</div></div>
+                <div class="campo"><label>💰 Deuda</label><div class="valor rojo" id="miliDeuda">0.00 L</div></div>
                 <div class="campo"><label>📊 Viajes</label><div class="valor" id="miliViajes">0</div></div>
+                <div class="campo"><label>⛽ Consumo</label><div class="valor naranja" id="miliConsumo">0.00 L/100km</div></div>
             </div>
             <div class="input-group">
                 <input type="number" id="miliLitros" step="0.01" placeholder="Litros cargados" min="0">
                 <button class="btn btn-success" onclick="cargarCombustible('mili')">+ Cargar</button>
+                <button class="btn btn-transferir btn-sm" onclick="abrirTransferencia('mili')">🔄 Transferir</button>
             </div>
             <div class="controles-mapa">
                 <button class="btn btn-primary btn-sm" onclick="iniciarViaje('mili')">▶ Iniciar Viaje</button>
+                <button class="btn btn-modo-manual btn-sm" onclick="activarModoManual('mili')" id="miliBtnManual">✏️ Manual</button>
                 <button class="btn btn-danger btn-sm" onclick="finalizarViaje('mili')">⏹ Finalizar</button>
                 <button class="btn btn-warning btn-sm" onclick="resetearSeccion('mili')">⟲ Resetear</button>
             </div>
             <div class="historial">
-                <h4>📜 Historial de Viajes <button class="btn btn-danger btn-sm" onclick="limpiarHistorial('mili')">🗑️ Limpiar</button></h4>
+                <h4>📜 Historial <button class="btn btn-danger btn-sm" onclick="limpiarHistorial('mili')">🗑️</button></h4>
                 <div class="historial-lista" id="miliHistorial"></div>
             </div>
         </div>
 
+        <!-- SECCIÓN ASTROLAND -->
         <div class="seccion astroland" id="seccionAstroland">
             <div class="seccion-titulo">
-                🟢 Astroland <span class="badge">Particular</span>
+                🟢 Astroland <span class="badge">Empresarial</span>
                 <span id="astroEstadoViaje" class="estado-viaje inactivo">⏸ Inactivo</span>
             </div>
             <div id="astroAlertGps" class="alert-gps">📡 SIN SEÑAL GPS - Reintentando conexión...</div>
+            <div id="astroAlertDeuda" class="alert-gps deuda">💰 EN DEUDA - Combustible pagado por otra sección</div>
             <div id="astroCorrigiendo" class="corrigiendo">
                 <span class="spinner"></span> 🔄 Corrigiendo automáticamente la ruta...
             </div>
-            <div class="puntos-info">📍 Puntos registrados: <span id="astroPuntosContador">0</span> | 🕐 Último punto: <span id="astroUltimoPunto">--</span></div>
+            <div id="astroDragInstruction" class="drag-instruction">
+                🖱️ <strong>Arrastra el marcador 🏆</strong> en el mapa para cambiar el destino.
+            </div>
+            
+            <div class="barra-combustible" id="astroBarra">
+                <div class="relleno" id="astroBarraRelleno" style="width: 0%;"></div>
+                <div class="texto-barra" id="astroBarraTexto">0.00 L (0 km)</div>
+            </div>
+            
+            <div class="puntos-info">📍 Puntos: <span id="astroPuntosContador">0</span> | 🕐 <span id="astroUltimoPunto">--</span></div>
             <div class="info-combustible">
                 <div class="campo"><label>⛽ Combustible</label><div class="valor azul" id="astroCombustible">0.00 L</div></div>
                 <div class="campo"><label>📏 KM Recorridos</label><div class="valor" id="astroKmRecorridos">0.00 km</div></div>
                 <div class="campo"><label>🎯 KM Restantes</label><div class="valor verde" id="astroKmRestantes">0.00 km</div></div>
+                <div class="campo"><label>💰 Deuda</label><div class="valor rojo" id="astroDeuda">0.00 L</div></div>
                 <div class="campo"><label>📊 Viajes</label><div class="valor" id="astroViajes">0</div></div>
+                <div class="campo"><label>⛽ Consumo</label><div class="valor naranja" id="astroConsumo">0.00 L/100km</div></div>
             </div>
             <div class="input-group">
                 <input type="number" id="astroLitros" step="0.01" placeholder="Litros cargados" min="0">
                 <button class="btn btn-success" onclick="cargarCombustible('astro')">+ Cargar</button>
+                <button class="btn btn-transferir btn-sm" onclick="abrirTransferencia('astro')">🔄 Transferir</button>
             </div>
             <div class="controles-mapa">
                 <button class="btn btn-primary btn-sm" onclick="iniciarViaje('astro')">▶ Iniciar Viaje</button>
+                <button class="btn btn-modo-manual btn-sm" onclick="activarModoManual('astro')" id="astroBtnManual">✏️ Manual</button>
                 <button class="btn btn-danger btn-sm" onclick="finalizarViaje('astro')">⏹ Finalizar</button>
                 <button class="btn btn-warning btn-sm" onclick="resetearSeccion('astro')">⟲ Resetear</button>
             </div>
             <div class="historial">
-                <h4>📜 Historial de Viajes <button class="btn btn-danger btn-sm" onclick="limpiarHistorial('astro')">🗑️ Limpiar</button></h4>
+                <h4>📜 Historial <button class="btn btn-danger btn-sm" onclick="limpiarHistorial('astro')">🗑️</button></h4>
                 <div class="historial-lista" id="astroHistorial"></div>
             </div>
         </div>
@@ -306,17 +427,32 @@
         <h3 style="margin-bottom: 15px;">📍 Mapa de Recorrido</h3>
         <div id="map"></div>
         <div class="controles-mapa">
-            <button class="btn btn-gps btn-sm" onclick="centrarMapa()">📍 Centrar en mi ubicación</button>
-            <button class="btn btn-warning btn-sm" onclick="limpiarMapa()">🗑️ Limpiar mapa</button>
-            <button class="btn btn-info btn-sm" onclick="limpiarMapaCompleto()">🧹 Limpiar todo</button>
-            <button class="btn btn-danger btn-sm" onclick="cerrarHistorialMapa()">❌ Cerrar historial</button>
+            <button class="btn btn-gps btn-sm" onclick="centrarMapa()">📍 Centrar</button>
+            <button class="btn btn-warning btn-sm" onclick="limpiarMapa()">🗑️ Limpiar</button>
+            <button class="btn btn-info btn-sm" onclick="limpiarMapaCompleto()">🧹 Todo</button>
+            <button class="btn btn-danger btn-sm" onclick="cerrarHistorialMapa()">❌ Cerrar</button>
         </div>
         <div id="mensajeEstado" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 10px; text-align: center; color: #2c3e50;">
-            💡 Selecciona una sección (Mili o Astroland) e inicia un viaje.
+            💡 Selecciona una sección e inicia un viaje.
         </div>
     </div>
 
-    <div class="footer">🚗 Gestor de Viajes v4.1 | Corrección automática de rutas al finalizar</div>
+    <!-- MODAL TRANSFERENCIA -->
+    <div id="modalTransferencia" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="cerrarTransferencia()">×</button>
+            <h3>🔄 Transferir Combustible</h3>
+            <p id="modalInfo">De <strong>Origen</strong> a <strong>Destino</strong></p>
+            <div class="input-group">
+                <input type="number" id="transferenciaLitros" step="0.01" placeholder="Litros a transferir" min="0.01">
+            </div>
+            <button class="btn btn-primary" onclick="ejecutarTransferencia()">✅ Transferir</button>
+            <button class="btn btn-danger" onclick="cerrarTransferencia()">❌ Cancelar</button>
+            <p style="margin-top:10px;font-size:0.8rem;color:#7f8c8d;" id="modalDetalles"></p>
+        </div>
+    </div>
+
+    <div class="footer">🚗 Gestor de Viajes v7.0 | Transferencia entre secciones | Deuda automática</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -327,9 +463,10 @@
 // CONFIGURACIÓN
 // ============================================================
 const RENDIMIENTO = 63 / 13.908;
+const CONSUMO_LITROS_POR_KM = 13.908 / 63;
 const MIN_PUNTOS_REALES = 2;
 const INTERVALO_GPS = 2000;
-const SALTO_MAXIMO_METROS = 100; // Si hay un salto > 100m, se corrige
+const SALTO_MAXIMO_METROS = 100;
 
 // ============================================================
 // ESTADO GLOBAL
@@ -346,7 +483,10 @@ let estado = {
         nombreDestino: '',
         gpsActivo: true,
         ultimoPuntoValido: null,
-        reconectando: false
+        reconectando: false,
+        modoManual: false,
+        destinoManual: null,
+        deuda: 0 // Litros de deuda (combustible usado de otra sección)
     },
     astro: {
         combustible: 0,
@@ -359,19 +499,23 @@ let estado = {
         nombreDestino: '',
         gpsActivo: true,
         ultimoPuntoValido: null,
-        reconectando: false
+        reconectando: false,
+        modoManual: false,
+        destinoManual: null,
+        deuda: 0
     },
     mapa: null,
     polyline: null,
     marcadorOrigen: null,
     marcadorDestino: null,
     marcadorActual: null,
+    marcadorDestinoManual: null,
     seccionActiva: null,
     modoHistorial: false,
     viajeHistorialMostrando: null,
     timeoutGps: null,
     routingControl: null,
-    corrigiendo: false
+    transferencia: { desde: null, hacia: null }
 };
 
 // ============================================================
@@ -393,8 +537,18 @@ function init() {
 // ============================================================
 function guardarDatos() {
     const datos = {
-        mili: { combustible: estado.mili.combustible, kmRecorridos: estado.mili.kmRecorridos, viajes: estado.mili.viajes },
-        astro: { combustible: estado.astro.combustible, kmRecorridos: estado.astro.kmRecorridos, viajes: estado.astro.viajes }
+        mili: { 
+            combustible: estado.mili.combustible, 
+            kmRecorridos: estado.mili.kmRecorridos, 
+            viajes: estado.mili.viajes,
+            deuda: estado.mili.deuda
+        },
+        astro: { 
+            combustible: estado.astro.combustible, 
+            kmRecorridos: estado.astro.kmRecorridos, 
+            viajes: estado.astro.viajes,
+            deuda: estado.astro.deuda
+        }
     };
     localStorage.setItem('gestorViajes', JSON.stringify(datos));
 }
@@ -409,7 +563,9 @@ function guardarEstadoCompleto() {
             ruta: estado.mili.ruta,
             nombreOrigen: estado.mili.nombreOrigen,
             nombreDestino: estado.mili.nombreDestino,
-            gpsActivo: estado.mili.gpsActivo
+            gpsActivo: estado.mili.gpsActivo,
+            modoManual: estado.mili.modoManual,
+            deuda: estado.mili.deuda
         },
         astro: {
             combustible: estado.astro.combustible,
@@ -419,7 +575,9 @@ function guardarEstadoCompleto() {
             ruta: estado.astro.ruta,
             nombreOrigen: estado.astro.nombreOrigen,
             nombreDestino: estado.astro.nombreDestino,
-            gpsActivo: estado.astro.gpsActivo
+            gpsActivo: estado.astro.gpsActivo,
+            modoManual: estado.astro.modoManual,
+            deuda: estado.astro.deuda
         },
         seccionActiva: estado.seccionActiva
     };
@@ -435,11 +593,13 @@ function cargarDatos() {
                 estado.mili.combustible = parsed.mili.combustible || 0;
                 estado.mili.kmRecorridos = parsed.mili.kmRecorridos || 0;
                 estado.mili.viajes = parsed.mili.viajes || [];
+                estado.mili.deuda = parsed.mili.deuda || 0;
             }
             if (parsed.astro) {
                 estado.astro.combustible = parsed.astro.combustible || 0;
                 estado.astro.kmRecorridos = parsed.astro.kmRecorridos || 0;
                 estado.astro.viajes = parsed.astro.viajes || [];
+                estado.astro.deuda = parsed.astro.deuda || 0;
             }
         } catch (e) { console.warn('Error al cargar datos:', e); }
     }
@@ -454,6 +614,8 @@ function cargarDatos() {
                 estado.mili.nombreOrigen = parsed.mili.nombreOrigen || '';
                 estado.mili.nombreDestino = parsed.mili.nombreDestino || '';
                 estado.mili.gpsActivo = parsed.mili.gpsActivo !== undefined ? parsed.mili.gpsActivo : true;
+                estado.mili.modoManual = parsed.mili.modoManual || false;
+                estado.mili.deuda = parsed.mili.deuda || 0;
             }
             if (parsed.astro) {
                 estado.astro.viajeActivo = parsed.astro.viajeActivo || false;
@@ -461,297 +623,16 @@ function cargarDatos() {
                 estado.astro.nombreOrigen = parsed.astro.nombreOrigen || '';
                 estado.astro.nombreDestino = parsed.astro.nombreDestino || '';
                 estado.astro.gpsActivo = parsed.astro.gpsActivo !== undefined ? parsed.astro.gpsActivo : true;
+                estado.astro.modoManual = parsed.astro.modoManual || false;
+                estado.astro.deuda = parsed.astro.deuda || 0;
             }
             estado.seccionActiva = parsed.seccionActiva || null;
         } catch (e) { console.warn('Error al cargar estado completo:', e); }
     }
 }
 
-function restaurarViajeActivo() {
-    if (estado.seccionActiva) {
-        const data = estado.seccionActiva === 'mili' ? estado.mili : estado.astro;
-        if (data.viajeActivo && data.ruta.length > 0) {
-            const nombre = estado.seccionActiva === 'mili' ? 'Mili' : 'Astroland';
-            document.getElementById('mensajeEstado').textContent = `🔄 Viaje restaurado en ${nombre}. Puntos: ${data.ruta.length}`;
-            dibujarRuta(estado.seccionActiva);
-            actualizarUI();
-            iniciarWatchGPS(estado.seccionActiva);
-        }
-    }
-}
-
-function manejarVisibilidad() {
-    if (document.hidden) {
-        guardarEstadoCompleto();
-    } else {
-        if (estado.seccionActiva) {
-            const data = estado.seccionActiva === 'mili' ? estado.mili : estado.astro;
-            if (data.viajeActivo && data.ruta.length > 0) {
-                dibujarRuta(estado.seccionActiva);
-                actualizarUI();
-            }
-        }
-    }
-}
-
 // ============================================================
-// FUNCIONES DE GPS
-// ============================================================
-function iniciarWatchGPS(seccion) {
-    const data = seccion === 'mili' ? estado.mili : estado.astro;
-    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
-    
-    if (!navigator.geolocation) {
-        data.gpsActivo = false;
-        actualizarAlertGPS(seccion);
-        return;
-    }
-    
-    if (data.watchId) {
-        navigator.geolocation.clearWatch(data.watchId);
-        data.watchId = null;
-    }
-    
-    data.reconectando = false;
-    
-    data.watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-            if (!data.viajeActivo) return;
-            
-            if (data.reconectando) {
-                data.reconectando = false;
-                document.getElementById('mensajeEstado').textContent = `✅ GPS reconectado en ${nombre}. Continuando viaje...`;
-                actualizarAlertGPS(seccion);
-            }
-            
-            data.gpsActivo = true;
-            actualizarAlertGPS(seccion);
-            
-            const newLat = pos.coords.latitude;
-            const newLng = pos.coords.longitude;
-            const ultimo = data.ruta[data.ruta.length - 1];
-            
-            data.ruta.push({ lat: newLat, lng: newLng });
-            data.ultimoPuntoValido = new Date().getTime();
-            
-            dibujarRuta(seccion);
-            guardarEstadoCompleto();
-            
-            const contador = document.getElementById(seccion + 'PuntosContador');
-            if (contador) contador.textContent = data.ruta.length;
-            
-            const horaEl = document.getElementById(seccion + 'UltimoPunto');
-            if (horaEl) {
-                const ahora = new Date();
-                horaEl.textContent = ahora.toLocaleTimeString();
-            }
-            
-            document.getElementById('mensajeEstado').textContent = `📍 ${nombre}: ${data.ruta.length} puntos registrados (cada 2s)`;
-            
-            const alertEl = document.getElementById(seccion + 'AlertGps');
-            if (alertEl) {
-                alertEl.classList.remove('visible');
-                alertEl.classList.remove('reconectando');
-            }
-            
-            const estadoEl = document.getElementById(seccion + 'EstadoViaje');
-            if (estadoEl) {
-                estadoEl.className = 'estado-viaje activo';
-                estadoEl.textContent = `▶ Activo (${data.ruta.length})`;
-            }
-        },
-        (error) => {
-            console.warn('Error GPS:', error);
-            data.gpsActivo = false;
-            data.reconectando = true;
-            actualizarAlertGPS(seccion);
-            
-            if (error.code === 1) {
-                document.getElementById('mensajeEstado').textContent = `⚠️ GPS desactivado en ${nombre}. Activa el GPS.`;
-            } else if (error.code === 2 || error.code === 3) {
-                document.getElementById('mensajeEstado').textContent = `📡 Sin señal GPS en ${nombre}. Reintentando... (${data.ruta.length} puntos guardados)`;
-            }
-        },
-        { 
-            enableHighAccuracy: true, 
-            maximumAge: 500,
-            timeout: 5000
-        }
-    );
-    
-    if (estado.timeoutGps) clearInterval(estado.timeoutGps);
-    estado.timeoutGps = setInterval(() => {
-        if (!data.viajeActivo) {
-            clearInterval(estado.timeoutGps);
-            return;
-        }
-        const ahora = new Date().getTime();
-        const ultimoPunto = data.ultimoPuntoValido || 0;
-        
-        if (ahora - ultimoPunto > 5000) {
-            data.gpsActivo = false;
-            data.reconectando = true;
-            actualizarAlertGPS(seccion);
-            document.getElementById('mensajeEstado').textContent = `📡 RECONECTANDO GPS en ${nombre} (${Math.round((ahora - ultimoPunto)/1000)}s sin datos)`;
-        }
-    }, 2000);
-}
-
-function actualizarAlertGPS(seccion) {
-    const data = seccion === 'mili' ? estado.mili : estado.astro;
-    const alertEl = document.getElementById(seccion + 'AlertGps');
-    const estadoEl = document.getElementById(seccion + 'EstadoViaje');
-    
-    if (!data.gpsActivo && data.viajeActivo) {
-        if (alertEl) {
-            alertEl.classList.add('visible');
-            if (data.reconectando) {
-                alertEl.classList.add('reconectando');
-                alertEl.textContent = '📡 RECONECTANDO GPS - No se pierde el viaje. Reintentando...';
-            } else {
-                alertEl.classList.remove('reconectando');
-                alertEl.textContent = '📡 SIN SEÑAL GPS - Reintentando conexión...';
-            }
-        }
-        if (estadoEl) {
-            estadoEl.className = 'estado-viaje reconectando';
-            estadoEl.textContent = `🔄 Reconectando (${data.ruta.length})`;
-        }
-    } else if (data.viajeActivo) {
-        if (alertEl) {
-            alertEl.classList.remove('visible');
-            alertEl.classList.remove('reconectando');
-        }
-        if (estadoEl) {
-            estadoEl.className = 'estado-viaje activo';
-            estadoEl.textContent = `▶ Activo (${data.ruta.length})`;
-        }
-    }
-}
-
-// ============================================================
-// DETECCIÓN Y CORRECCIÓN DE SALTOS - AUTOMÁTICO AL FINALIZAR
-// ============================================================
-function detectarSaltos(ruta) {
-    if (ruta.length < 2) return { tieneSaltos: false, saltos: [] };
-    
-    const saltos = [];
-    for (let i = 1; i < ruta.length; i++) {
-        const dist = calcularDistancia(
-            ruta[i-1].lat, ruta[i-1].lng,
-            ruta[i].lat, ruta[i].lng
-        );
-        if (dist > SALTO_MAXIMO_METROS) {
-            saltos.push({
-                indice: i,
-                distancia: dist,
-                desde: ruta[i-1],
-                hasta: ruta[i]
-            });
-        }
-    }
-    
-    return {
-        tieneSaltos: saltos.length > 0,
-        saltos: saltos
-    };
-}
-
-function corregirRutaConMapa(ruta, seccion) {
-    return new Promise((resolve, reject) => {
-        if (ruta.length < 2) {
-            resolve(ruta);
-            return;
-        }
-        
-        const map = estado.mapa;
-        if (!map) {
-            resolve(ruta);
-            return;
-        }
-        
-        // Mostrar indicador de corrección
-        const corrigiendo = document.getElementById(seccion + 'Corrigiendo');
-        if (corrigiendo) corrigiendo.classList.add('visible');
-        document.getElementById('mensajeEstado').textContent = '🔄 Corrigiendo automáticamente la ruta...';
-        
-        // Tomar primer y último punto
-        const inicio = ruta[0];
-        const fin = ruta[ruta.length - 1];
-        
-        // Usar Routing Machine para obtener ruta por calles
-        if (estado.routingControl) {
-            map.removeControl(estado.routingControl);
-            estado.routingControl = null;
-        }
-        
-        const control = L.Routing.control({
-            waypoints: [
-                L.latLng(inicio.lat, inicio.lng),
-                L.latLng(fin.lat, fin.lng)
-            ],
-            routeWhileDragging: false,
-            showAlternatives: false,
-            fitBounds: false,
-            lineOptions: {
-                styles: [{ color: seccion === 'mili' ? '#e74c3c' : '#2ecc71', weight: 4, opacity: 0.7 }]
-            }
-        }).addTo(map);
-        
-        estado.routingControl = control;
-        
-        control.on('routesfound', function(e) {
-            const routes = e.routes;
-            const coordinates = routes[0].coordinates;
-            const puntosCorregidos = coordinates.map(c => ({
-                lat: c.lat,
-                lng: c.lng
-            }));
-            
-            // Ocultar indicador
-            if (corrigiendo) corrigiendo.classList.remove('visible');
-            document.getElementById('mensajeEstado').textContent = 
-                `✅ Ruta corregida automáticamente: ${puntosCorregidos.length} puntos interpolados`;
-            
-            // Limpiar routing control
-            if (estado.routingControl) {
-                map.removeControl(estado.routingControl);
-                estado.routingControl = null;
-            }
-            
-            resolve(puntosCorregidos);
-        });
-        
-        control.on('routingerror', function(e) {
-            console.warn('Error al corregir ruta:', e);
-            if (corrigiendo) corrigiendo.classList.remove('visible');
-            document.getElementById('mensajeEstado').textContent = 
-                '⚠️ No se pudo corregir la ruta automáticamente. Se guarda la ruta original.';
-            
-            if (estado.routingControl) {
-                map.removeControl(estado.routingControl);
-                estado.routingControl = null;
-            }
-            
-            resolve(ruta);
-        });
-        
-        // Timeout por si tarda mucho
-        setTimeout(() => {
-            if (estado.routingControl) {
-                map.removeControl(estado.routingControl);
-                estado.routingControl = null;
-            }
-            if (corrigiendo) corrigiendo.classList.remove('visible');
-            document.getElementById('mensajeEstado').textContent = 
-                '⏱️ Tiempo de corrección excedido. Se guarda la ruta original.';
-            resolve(ruta);
-        }, 10000);
-    });
-}
-
-// ============================================================
-// FUNCIONES DE COMBUSTIBLE
+// FUNCIONES DE COMBUSTIBLE CON DEUDA
 // ============================================================
 function cargarCombustible(seccion) {
     const inputId = seccion === 'mili' ? 'miliLitros' : 'astroLitros';
@@ -763,17 +644,31 @@ function cargarCombustible(seccion) {
         return;
     }
     
-    if (seccion === 'mili') estado.mili.combustible += litros;
-    else estado.astro.combustible += litros;
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    
+    // Primero, pagar deuda si existe
+    if (data.deuda > 0) {
+        const pagarDeuda = Math.min(litros, data.deuda);
+        data.deuda -= pagarDeuda;
+        data.combustible += (litros - pagarDeuda);
+        
+        // Buscar a quién se le debe y reducir su combustible
+        const otraSeccion = seccion === 'mili' ? 'astro' : 'mili';
+        const otraData = otraSeccion === 'mili' ? estado.mili : estado.astro;
+        // La deuda ya se descontó en el momento que se usó, no hay que hacer nada más
+        
+        alert(`✅ Se cargaron ${litros.toFixed(2)} litros a ${nombre}.\n💰 ${pagarDeuda.toFixed(2)} L usados para pagar deuda.\n⛽ ${(litros - pagarDeuda).toFixed(2)} L disponibles.`);
+    } else {
+        data.combustible += litros;
+        alert(`✅ Se cargaron ${litros.toFixed(2)} litros a ${nombre}.`);
+    }
     
     input.value = '';
     actualizarUI();
     actualizarGlobales();
     guardarDatos();
     guardarEstadoCompleto();
-    
-    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
-    alert(`✅ Se cargaron ${litros.toFixed(2)} litros a ${nombre}.`);
 }
 
 function getKmRestantes(seccion) {
@@ -782,17 +677,137 @@ function getKmRestantes(seccion) {
     return Math.max(0, kmPosibles - data.kmRecorridos);
 }
 
+function getCombustibleDisponible(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    // El combustible disponible es lo que tiene menos la deuda
+    return Math.max(0, data.combustible - data.deuda);
+}
+
+function getDeudaTotal(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    return data.deuda;
+}
+
+function getConsumo(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    if (data.kmRecorridos === 0) return 0;
+    const litrosUsados = data.kmRecorridos * CONSUMO_LITROS_POR_KM;
+    return (litrosUsados / data.kmRecorridos) * 100;
+}
+
 // ============================================================
-// FUNCIONES DE VIAJE
+// TRANSFERENCIA DE COMBUSTIBLE
 // ============================================================
-function iniciarViaje(seccion) {
-    if (estado.seccionActiva) {
-        alert(`⚠️ Ya hay un viaje activo en ${estado.seccionActiva === 'mili' ? 'Mili' : 'Astroland'}. Finalízalo primero.`);
+function abrirTransferencia(seccion) {
+    const modal = document.getElementById('modalTransferencia');
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    const otraSeccion = seccion === 'mili' ? 'astro' : 'mili';
+    const otraNombre = otraSeccion === 'mili' ? 'Mili' : 'Astroland';
+    
+    // Guardar la transferencia
+    estado.transferencia.desde = otraSeccion; // De quién sale el combustible
+    estado.transferencia.hacia = seccion; // A quién va
+    
+    document.getElementById('modalInfo').innerHTML = 
+        `De <strong>${otraNombre}</strong> a <strong>${nombre}</strong>`;
+    
+    const dataOrigen = otraSeccion === 'mili' ? estado.mili : estado.astro;
+    document.getElementById('modalDetalles').textContent = 
+        `💰 ${otraNombre} tiene ${dataOrigen.combustible.toFixed(2)} L disponibles`;
+    
+    document.getElementById('transferenciaLitros').value = '';
+    document.getElementById('transferenciaLitros').placeholder = 
+        `Litros a transferir (máx ${dataOrigen.combustible.toFixed(2)} L)`;
+    document.getElementById('transferenciaLitros').max = dataOrigen.combustible;
+    
+    modal.classList.add('visible');
+}
+
+function cerrarTransferencia() {
+    document.getElementById('modalTransferencia').classList.remove('visible');
+    estado.transferencia.desde = null;
+    estado.transferencia.hacia = null;
+}
+
+function ejecutarTransferencia() {
+    const input = document.getElementById('transferenciaLitros');
+    const litros = parseFloat(input.value);
+    
+    if (!litros || litros <= 0) {
+        alert('Ingresa una cantidad válida de litros.');
         return;
     }
     
+    const desde = estado.transferencia.desde;
+    const hacia = estado.transferencia.hacia;
+    
+    if (!desde || !hacia) {
+        alert('Error en la transferencia.');
+        return;
+    }
+    
+    const dataDesde = desde === 'mili' ? estado.mili : estado.astro;
+    const dataHacia = hacia === 'mili' ? estado.mili : estado.astro;
+    const nombreDesde = desde === 'mili' ? 'Mili' : 'Astroland';
+    const nombreHacia = hacia === 'mili' ? 'Mili' : 'Astroland';
+    
+    if (litros > dataDesde.combustible) {
+        alert(`⚠️ ${nombreDesde} solo tiene ${dataDesde.combustible.toFixed(2)} L disponibles.`);
+        return;
+    }
+    
+    // Realizar transferencia
+    dataDesde.combustible -= litros;
+    dataHacia.combustible += litros;
+    
+    // Registrar en el historial de la sección destino como "Transferencia"
+    const transferenciaRegistro = {
+        fecha: new Date().toLocaleString(),
+        origen: `Transferencia desde ${nombreDesde}`,
+        destino: `+${litros.toFixed(2)} L`,
+        distancia: 0,
+        puntos: 0,
+        ruta: [],
+        corregido: false,
+        manual: false,
+        combustibleUsado: -litros, // Negativo porque es una carga
+        esTransferencia: true,
+        desde: nombreDesde,
+        hacia: nombreHacia,
+        litros: litros
+    };
+    
+    dataHacia.viajes.push(transferenciaRegistro);
+    
+    cerrarTransferencia();
+    actualizarUI();
+    actualizarGlobales();
+    guardarDatos();
+    guardarEstadoCompleto();
+    
+    alert(`✅ Transferencia completada!\n📤 ${litros.toFixed(2)} L de ${nombreDesde}\n📥 a ${nombreHacia}`);
+}
+
+// ============================================================
+// FUNCIONES DE VIAJE CON CONTROL DE DEUDA
+// ============================================================
+function iniciarViaje(seccion) {
+    if (estado.seccionActiva) {
+        alert(`⚠️ Ya hay un viaje activo. Finalízalo primero.`);
+        return;
+    }
+    
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
     const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
-    const nombreOrigen = prompt(`✏️ Escribe el nombre del PUNTO DE PARTIDA para ${nombre}:`, 'Origen');
+    
+    // Verificar si hay combustible disponible (combustible - deuda)
+    const disponible = data.combustible - data.deuda;
+    if (disponible <= 0) {
+        alert(`⛽ ¡SIN COMBUSTIBLE DISPONIBLE en ${nombre}!\n\n💰 Deuda: ${data.deuda.toFixed(2)} L\n⛽ Combustible: ${data.combustible.toFixed(2)} L\n📊 Disponible: ${disponible.toFixed(2)} L\n\nCarga combustible o transfiere desde otra sección.`);
+        return;
+    }
+    
+    const nombreOrigen = prompt(`✏️ PUNTO DE PARTIDA para ${nombre}:`, 'Origen');
     if (nombreOrigen === null) return;
     if (!nombreOrigen.trim()) {
         alert('El nombre no puede estar vacío.');
@@ -800,7 +815,7 @@ function iniciarViaje(seccion) {
     }
     
     if (!navigator.geolocation) {
-        alert('⚠️ Tu navegador no soporta Geolocalización. No se puede iniciar un viaje.');
+        alert('⚠️ Tu navegador no soporta Geolocalización.');
         return;
     }
     
@@ -811,7 +826,6 @@ function iniciarViaje(seccion) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             
-            const data = seccion === 'mili' ? estado.mili : estado.astro;
             data.viajeActivo = true;
             data.ruta = [{ lat, lng }];
             data.nombreOrigen = nombreOrigen.trim();
@@ -819,6 +833,8 @@ function iniciarViaje(seccion) {
             data.gpsActivo = true;
             data.ultimoPuntoValido = new Date().getTime();
             data.reconectando = false;
+            data.modoManual = false;
+            data.destinoManual = null;
             
             estado.seccionActiva = seccion;
             estado.modoHistorial = false;
@@ -835,17 +851,232 @@ function iniciarViaje(seccion) {
             
             iniciarWatchGPS(seccion);
             
-            document.getElementById('mensajeEstado').textContent = `✅ Viaje iniciado en ${nombre} desde "${nombreOrigen.trim()}"`;
+            const btn = document.getElementById(seccion + 'BtnManual');
+            if (btn) {
+                btn.textContent = '✏️ Manual';
+                btn.classList.remove('activo');
+            }
+            
+            const kmAutonomia = data.combustible * RENDIMIENTO;
+            document.getElementById('mensajeEstado').textContent = `✅ Viaje iniciado en ${nombre}`;
             dibujarRuta(seccion);
             
-            alert(`📍 Viaje iniciado en ${nombre}\n\n✅ El GPS registrará puntos cada 2 segundos\n📡 Si pierdes señal, seguirá intentando reconectar\n🔄 Al finalizar, la ruta se corregirá automáticamente`);
+            alert(`📍 Viaje iniciado en ${nombre}\n\n⛽ Combustible: ${data.combustible.toFixed(2)} L\n💰 Deuda: ${data.deuda.toFixed(2)} L\n🚗 Autonomía: ${kmAutonomia.toFixed(1)} km`);
         },
         (error) => {
-            alert(`❌ No se pudo obtener la ubicación GPS.\n\nError: ${error.message}\n\nVerifica que el GPS esté activado.`);
-            document.getElementById('mensajeEstado').textContent = `❌ Error GPS: ${error.message}`;
+            alert(`❌ Error GPS: ${error.message}`);
+            document.getElementById('mensajeEstado').textContent = `❌ Error GPS`;
         },
         { enableHighAccuracy: true, timeout: 15000 }
     );
+}
+
+function iniciarWatchGPS(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    
+    if (data.modoManual) return;
+    if (!data.viajeActivo) return;
+    if (!navigator.geolocation) {
+        data.gpsActivo = false;
+        actualizarAlertGPS(seccion);
+        return;
+    }
+    
+    if (data.watchId) {
+        navigator.geolocation.clearWatch(data.watchId);
+        data.watchId = null;
+    }
+    
+    data.reconectando = false;
+    
+    data.watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            if (!data.viajeActivo || data.modoManual) return;
+            
+            // Verificar si hay combustible disponible (incluyendo deuda)
+            const disponible = data.combustible - data.deuda;
+            if (disponible <= 0) {
+                document.getElementById('mensajeEstado').textContent = `⛽ ¡SIN COMBUSTIBLE! ${nombre} tiene deuda.`;
+                return;
+            }
+            
+            if (data.reconectando) {
+                data.reconectando = false;
+                document.getElementById('mensajeEstado').textContent = `✅ GPS reconectado en ${nombre}`;
+                actualizarAlertGPS(seccion);
+            }
+            
+            data.gpsActivo = true;
+            actualizarAlertGPS(seccion);
+            
+            const newLat = pos.coords.latitude;
+            const newLng = pos.coords.longitude;
+            const ultimo = data.ruta[data.ruta.length - 1];
+            
+            if (ultimo) {
+                const dist = calcularDistancia(ultimo.lat, ultimo.lng, newLat, newLng);
+                const km = dist / 1000;
+                const litrosConsumidos = km * CONSUMO_LITROS_POR_KM;
+                
+                // Descontar del combustible, si no hay suficiente, aumentar deuda
+                if (data.combustible >= litrosConsumidos) {
+                    data.combustible -= litrosConsumidos;
+                    data.kmRecorridos += km;
+                } else {
+                    // No hay suficiente combustible, usar deuda
+                    const restante = data.combustible;
+                    data.combustible = 0;
+                    data.deuda += (litrosConsumidos - restante);
+                    data.kmRecorridos += km;
+                    
+                    // Mostrar alerta de deuda
+                    document.getElementById('mensajeEstado').textContent = `💰 ${nombre} en DEUDA: ${data.deuda.toFixed(2)} L`;
+                    const alertDeuda = document.getElementById(seccion + 'AlertDeuda');
+                    if (alertDeuda) alertDeuda.classList.add('visible');
+                }
+            }
+            
+            data.ruta.push({ lat: newLat, lng: newLng });
+            data.ultimoPuntoValido = new Date().getTime();
+            
+            dibujarRuta(seccion);
+            guardarEstadoCompleto();
+            
+            const contador = document.getElementById(seccion + 'PuntosContador');
+            if (contador) contador.textContent = data.ruta.length;
+            
+            const horaEl = document.getElementById(seccion + 'UltimoPunto');
+            if (horaEl) {
+                const ahora = new Date();
+                horaEl.textContent = ahora.toLocaleTimeString();
+            }
+            
+            actualizarUI();
+            actualizarGlobales();
+            
+            const alertEl = document.getElementById(seccion + 'AlertGps');
+            if (alertEl) {
+                alertEl.classList.remove('visible');
+                alertEl.classList.remove('reconectando');
+                alertEl.classList.remove('sincombustible');
+            }
+            
+            const estadoEl = document.getElementById(seccion + 'EstadoViaje');
+            if (estadoEl) {
+                if (data.deuda > 0) {
+                    estadoEl.className = 'estado-viaje sincombustible';
+                    estadoEl.textContent = `💰 Deuda (${data.ruta.length})`;
+                } else if (data.combustible <= 0) {
+                    estadoEl.className = 'estado-viaje sincombustible';
+                    estadoEl.textContent = `⛽ Sin combustible (${data.ruta.length})`;
+                } else {
+                    estadoEl.className = 'estado-viaje activo';
+                    estadoEl.textContent = `▶ Activo (${data.ruta.length})`;
+                }
+            }
+        },
+        (error) => {
+            console.warn('Error GPS:', error);
+            data.gpsActivo = false;
+            data.reconectando = true;
+            actualizarAlertGPS(seccion);
+            
+            if (error.code === 1) {
+                document.getElementById('mensajeEstado').textContent = `⚠️ GPS desactivado en ${nombre}.`;
+            } else if (error.code === 2 || error.code === 3) {
+                document.getElementById('mensajeEstado').textContent = `📡 Sin señal GPS en ${nombre}. Reintentando...`;
+            }
+        },
+        { 
+            enableHighAccuracy: true, 
+            maximumAge: 500,
+            timeout: 5000
+        }
+    );
+    
+    if (estado.timeoutGps) clearInterval(estado.timeoutGps);
+    estado.timeoutGps = setInterval(() => {
+        if (!data.viajeActivo || data.modoManual) {
+            clearInterval(estado.timeoutGps);
+            return;
+        }
+        const ahora = new Date().getTime();
+        const ultimoPunto = data.ultimoPuntoValido || 0;
+        
+        if (ahora - ultimoPunto > 5000) {
+            data.gpsActivo = false;
+            data.reconectando = true;
+            actualizarAlertGPS(seccion);
+            document.getElementById('mensajeEstado').textContent = `📡 RECONECTANDO GPS en ${nombre}`;
+        }
+    }, 2000);
+}
+
+function actualizarAlertGPS(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const alertEl = document.getElementById(seccion + 'AlertGps');
+    const alertDeuda = document.getElementById(seccion + 'AlertDeuda');
+    const estadoEl = document.getElementById(seccion + 'EstadoViaje');
+    
+    // Actualizar alerta de deuda
+    if (data.deuda > 0 && data.viajeActivo) {
+        if (alertDeuda) {
+            alertDeuda.classList.add('visible');
+            alertDeuda.textContent = `💰 DEUDA: ${data.deuda.toFixed(2)} L - Combustible usado de otra sección`;
+        }
+    } else {
+        if (alertDeuda) alertDeuda.classList.remove('visible');
+    }
+    
+    if (data.combustible <= 0 && data.viajeActivo && data.deuda === 0) {
+        if (alertEl) {
+            alertEl.classList.add('visible');
+            alertEl.classList.add('sincombustible');
+            alertEl.textContent = '⛽ ¡SIN COMBUSTIBLE! Carga combustible.';
+        }
+        if (estadoEl) {
+            estadoEl.className = 'estado-viaje sincombustible';
+            estadoEl.textContent = `⛽ Sin combustible`;
+        }
+        return;
+    }
+    
+    if (!data.gpsActivo && data.viajeActivo && !data.modoManual) {
+        if (alertEl) {
+            alertEl.classList.add('visible');
+            alertEl.classList.remove('sincombustible');
+            if (data.reconectando) {
+                alertEl.classList.add('reconectando');
+                alertEl.textContent = '📡 RECONECTANDO GPS...';
+            } else {
+                alertEl.classList.remove('reconectando');
+                alertEl.textContent = '📡 SIN SEÑAL GPS - Reintentando...';
+            }
+        }
+        if (estadoEl) {
+            estadoEl.className = 'estado-viaje reconectando';
+            estadoEl.textContent = `🔄 Reconectando (${data.ruta.length})`;
+        }
+    } else if (data.viajeActivo) {
+        if (alertEl) {
+            alertEl.classList.remove('visible');
+            alertEl.classList.remove('reconectando');
+            alertEl.classList.remove('sincombustible');
+        }
+        if (estadoEl) {
+            if (data.modoManual) {
+                estadoEl.className = 'estado-viaje manual';
+                estadoEl.textContent = `✏️ Manual (${data.ruta.length})`;
+            } else if (data.deuda > 0) {
+                estadoEl.className = 'estado-viaje sincombustible';
+                estadoEl.textContent = `💰 Deuda (${data.ruta.length})`;
+            } else {
+                estadoEl.className = 'estado-viaje activo';
+                estadoEl.textContent = `▶ Activo (${data.ruta.length})`;
+            }
+        }
+    }
 }
 
 async function finalizarViaje(seccion) {
@@ -858,38 +1089,31 @@ async function finalizarViaje(seccion) {
     }
     
     if (data.ruta.length < MIN_PUNTOS_REALES) {
-        alert(`❌ No se puede finalizar el viaje.\n\nSolo se registraron ${data.ruta.length} puntos.\nSe necesitan al menos ${MIN_PUNTOS_REALES} puntos reales.\n\nPosibles causas:\n• Estás en una zona sin señal GPS\n• El GPS no está activado`);
+        alert(`❌ Solo ${data.ruta.length} puntos. Se necesitan al menos ${MIN_PUNTOS_REALES}.`);
         return;
     }
     
-    const nombreDestino = prompt(`✏️ Escribe el nombre del DESTINO para ${nombre}:`, 'Destino');
+    const nombreDestino = prompt(`✏️ DESTINO para ${nombre}:`, 'Destino');
     if (nombreDestino === null) return;
     if (!nombreDestino.trim()) {
         alert('El nombre no puede estar vacío.');
         return;
     }
     
-    // 1. Detectar saltos en la ruta
-    const deteccion = detectarSaltos(data.ruta);
     let rutaFinal = data.ruta;
     let corregido = false;
+    let saltosEliminados = 0;
     
-    if (deteccion.tieneSaltos) {
-        console.log(`🔍 Detectados ${deteccion.saltos.length} saltos en la ruta (distancia > ${SALTO_MAXIMO_METROS}m)`);
-        
-        // 2. Corregir automáticamente
-        rutaFinal = await corregirRutaConMapa(data.ruta, seccion);
-        corregido = true;
-        
-        // Mostrar mensaje
-        document.getElementById('mensajeEstado').textContent = 
-            `✅ Ruta corregida automáticamente: ${rutaFinal.length} puntos (${deteccion.saltos.length} saltos eliminados)`;
-    } else {
-        document.getElementById('mensajeEstado').textContent = 
-            `✅ Ruta sin saltos. Guardando viaje...`;
+    if (!data.modoManual) {
+        const deteccion = detectarSaltos(data.ruta);
+        if (deteccion.tieneSaltos) {
+            rutaFinal = await corregirRutaConMapa(data.ruta, seccion);
+            corregido = true;
+            saltosEliminados = deteccion.saltos.length;
+        }
     }
     
-    // 3. Calcular distancia con la ruta corregida
+    // Calcular distancia REAL
     let distanciaTotal = 0;
     for (let i = 1; i < rutaFinal.length; i++) {
         const p1 = rutaFinal[i-1];
@@ -898,7 +1122,9 @@ async function finalizarViaje(seccion) {
     }
     const km = distanciaTotal / 1000;
     
-    // 4. Guardar viaje
+    // Calcular combustible usado en este viaje
+    const litrosUsados = km * CONSUMO_LITROS_POR_KM;
+    
     const viaje = {
         fecha: new Date().toLocaleString(),
         origen: data.nombreOrigen,
@@ -907,13 +1133,16 @@ async function finalizarViaje(seccion) {
         puntos: rutaFinal.length,
         ruta: rutaFinal,
         corregido: corregido,
-        saltosCorregidos: deteccion.saltos.length
+        saltosCorregidos: saltosEliminados,
+        manual: data.modoManual,
+        combustibleUsado: litrosUsados,
+        combustibleFinal: data.combustible,
+        deuda: data.deuda,
+        tieneDeuda: data.deuda > 0
     };
     data.viajes.push(viaje);
-    data.kmRecorridos += km;
-    data.nombreDestino = nombreDestino.trim();
     
-    // 5. Limpiar recursos
+    // Limpiar recursos
     if (data.watchId) {
         navigator.geolocation.clearWatch(data.watchId);
         data.watchId = null;
@@ -926,11 +1155,18 @@ async function finalizarViaje(seccion) {
         estado.mapa.removeControl(estado.routingControl);
         estado.routingControl = null;
     }
+    if (estado.marcadorDestinoManual) {
+        estado.mapa.removeLayer(estado.marcadorDestinoManual);
+        estado.marcadorDestinoManual = null;
+    }
+    
+    const dragInstruction = document.getElementById(seccion + 'DragInstruction');
+    if (dragInstruction) dragInstruction.classList.remove('visible');
     
     data.viajeActivo = false;
+    data.modoManual = false;
     estado.seccionActiva = null;
     
-    // 6. Actualizar UI
     actualizarUI();
     actualizarGlobales();
     guardarDatos();
@@ -938,147 +1174,229 @@ async function finalizarViaje(seccion) {
     mostrarHistorial(seccion);
     dibujarRuta(seccion);
     
-    // 7. Mostrar mensaje final
-    let mensajeFinal = `✅ Viaje completado!\n📏 Distancia: ${km.toFixed(2)} km\n📍 Origen: ${data.nombreOrigen}\n🏆 Destino: ${nombreDestino.trim()}\n📍 Puntos GPS: ${rutaFinal.length}`;
+    let mensajeFinal = `✅ Viaje completado!\n📏 Distancia: ${km.toFixed(2)} km\n⛽ Usado: ${litrosUsados.toFixed(2)} L\n💰 Deuda: ${data.deuda.toFixed(2)} L\n📍 ${data.nombreOrigen} → ${nombreDestino.trim()}`;
+    if (data.deuda > 0) {
+        mensajeFinal += `\n\n⚠️ DEUDA: ${data.deuda.toFixed(2)} L de combustible usado de otra sección.`;
+        mensajeFinal += `\n💡 Carga combustible en ${nombre} para pagar la deuda automáticamente.`;
+    }
     if (corregido) {
-        mensajeFinal += `\n🔄 Ruta corregida automáticamente (${deteccion.saltos.length} saltos eliminados)`;
+        mensajeFinal += `\n🔄 Ruta corregida (${saltosEliminados} saltos)`;
     }
     alert(mensajeFinal);
     
     document.getElementById('mensajeEstado').textContent = 
-        `🏁 Viaje finalizado en ${nombre}. Distancia: ${km.toFixed(2)} km${corregido ? ' (ruta corregida)' : ''}`;
-}
-
-function resetearSeccion(seccion) {
-    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
-    if (!confirm(`¿Resetear todos los datos de ${nombre}?`)) return;
-    
-    const data = seccion === 'mili' ? estado.mili : estado.astro;
-    if (data.watchId) {
-        navigator.geolocation.clearWatch(data.watchId);
-    }
-    if (estado.timeoutGps) {
-        clearInterval(estado.timeoutGps);
-        estado.timeoutGps = null;
-    }
-    if (estado.routingControl) {
-        estado.mapa.removeControl(estado.routingControl);
-        estado.routingControl = null;
-    }
-    
-    data.combustible = 0;
-    data.kmRecorridos = 0;
-    data.viajes = [];
-    data.viajeActivo = false;
-    data.ruta = [];
-    data.watchId = null;
-    data.nombreOrigen = '';
-    data.nombreDestino = '';
-    data.gpsActivo = true;
-    data.ultimoPuntoValido = null;
-    data.reconectando = false;
-    
-    if (estado.seccionActiva === seccion) {
-        estado.seccionActiva = null;
-    }
-    
-    actualizarUI();
-    actualizarGlobales();
-    guardarDatos();
-    guardarEstadoCompleto();
-    mostrarHistorial(seccion);
-    limpiarMapa();
-    
-    document.getElementById('mensajeEstado').textContent = `🔄 ${nombre} reseteado completamente.`;
-}
-
-function limpiarHistorial(seccion) {
-    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
-    if (!confirm(`¿Eliminar todo el historial de ${nombre}?`)) return;
-    
-    const data = seccion === 'mili' ? estado.mili : estado.astro;
-    data.viajes = [];
-    guardarDatos();
-    guardarEstadoCompleto();
-    mostrarHistorial(seccion);
-    actualizarUI();
-    actualizarGlobales();
-}
-
-function verViajeEnMapa(seccion, index) {
-    const data = seccion === 'mili' ? estado.mili : estado.astro;
-    const viaje = data.viajes[index];
-    
-    if (!viaje) {
-        alert('Viaje no encontrado.');
-        return;
-    }
-    
-    if (!viaje.ruta || viaje.ruta.length < 2) {
-        alert('Este viaje no tiene una ruta guardada.');
-        return;
-    }
-    
-    limpiarMapa(false);
-    
-    estado.modoHistorial = true;
-    estado.viajeHistorialMostrando = { seccion, index };
-    
-    const map = estado.mapa;
-    if (!map) return;
-    
-    const color = seccion === 'mili' ? '#e74c3c' : '#2ecc71';
-    const latlngs = viaje.ruta.map(p => [p.lat, p.lng]);
-    
-    estado.polyline = L.polyline(latlngs, {
-        color: color,
-        weight: 4,
-        opacity: 0.8,
-        smoothFactor: 1
-    }).addTo(map);
-    map.fitBounds(estado.polyline.getBounds(), { padding: [30, 30] });
-    
-    const origen = viaje.ruta[0];
-    estado.marcadorOrigen = L.marker([origen.lat, origen.lng], {
-        icon: L.divIcon({ html: '🏁', className: 'custom-marker', iconSize: [30, 30] })
-    }).addTo(map);
-    estado.marcadorOrigen.bindTooltip(viaje.origen || 'Origen', { permanent: true, direction: 'top', offset: [0, -10] });
-    
-    const destino = viaje.ruta[viaje.ruta.length - 1];
-    estado.marcadorDestino = L.marker([destino.lat, destino.lng], {
-        icon: L.divIcon({ html: '🏆', className: 'custom-marker', iconSize: [30, 30] })
-    }).addTo(map);
-    estado.marcadorDestino.bindTooltip(viaje.destino || 'Destino', { permanent: true, direction: 'top', offset: [0, -10] });
-    
-    let mensaje = `📜 Mostrando viaje histórico: ${viaje.origen} → ${viaje.destino} (${viaje.distancia.toFixed(2)} km)`;
-    if (viaje.corregido) {
-        mensaje += ` 🔄 (ruta corregida, ${viaje.saltosCorregidos || 0} saltos eliminados)`;
-    }
-    document.getElementById('mensajeEstado').textContent = mensaje;
-}
-
-function cerrarHistorialMapa() {
-    estado.modoHistorial = false;
-    estado.viajeHistorialMostrando = null;
-    limpiarMapa(true);
-    document.getElementById('mensajeEstado').textContent = '💡 Modo historial cerrado.';
-    
-    if (estado.routingControl) {
-        estado.mapa.removeControl(estado.routingControl);
-        estado.routingControl = null;
-    }
-    
-    if (estado.seccionActiva) {
-        const data = estado.seccionActiva === 'mili' ? estado.mili : estado.astro;
-        if (data.viajeActivo && data.ruta.length > 0) {
-            dibujarRuta(estado.seccionActiva);
-            document.getElementById('mensajeEstado').textContent = `📍 Mostrando viaje activo en ${estado.seccionActiva === 'mili' ? 'Mili' : 'Astroland'}`;
-        }
-    }
+        `🏁 Viaje finalizado en ${nombre}. ${km.toFixed(2)} km | 💰 Deuda: ${data.deuda.toFixed(2)} L`;
 }
 
 // ============================================================
-// FUNCIONES DE MAPA
+// FUNCIONES DE MAPA Y RUTAS (resumidas)
+// ============================================================
+function detectarSaltos(ruta) {
+    if (ruta.length < 2) return { tieneSaltos: false, saltos: [] };
+    const saltos = [];
+    for (let i = 1; i < ruta.length; i++) {
+        const dist = calcularDistancia(ruta[i-1].lat, ruta[i-1].lng, ruta[i].lat, ruta[i].lng);
+        if (dist > SALTO_MAXIMO_METROS) {
+            saltos.push({ indice: i, distancia: dist, desde: ruta[i-1], hasta: ruta[i] });
+        }
+    }
+    return { tieneSaltos: saltos.length > 0, saltos: saltos };
+}
+
+function corregirRutaConMapa(ruta, seccion) {
+    return new Promise((resolve, reject) => {
+        if (ruta.length < 2) { resolve(ruta); return; }
+        const map = estado.mapa;
+        if (!map) { resolve(ruta); return; }
+        const corrigiendo = document.getElementById(seccion + 'Corrigiendo');
+        if (corrigiendo) corrigiendo.classList.add('visible');
+        
+        const inicio = ruta[0];
+        const fin = ruta[ruta.length - 1];
+        if (estado.routingControl) {
+            map.removeControl(estado.routingControl);
+            estado.routingControl = null;
+        }
+        
+        const control = L.Routing.control({
+            waypoints: [L.latLng(inicio.lat, inicio.lng), L.latLng(fin.lat, fin.lng)],
+            routeWhileDragging: false,
+            showAlternatives: false,
+            fitBounds: false,
+            lineOptions: { styles: [{ color: seccion === 'mili' ? '#e74c3c' : '#2ecc71', weight: 4, opacity: 0.7 }] }
+        }).addTo(map);
+        estado.routingControl = control;
+        
+        control.on('routesfound', function(e) {
+            const coordinates = e.routes[0].coordinates;
+            const puntosCorregidos = coordinates.map(c => ({ lat: c.lat, lng: c.lng }));
+            if (corrigiendo) corrigiendo.classList.remove('visible');
+            if (estado.routingControl) {
+                map.removeControl(estado.routingControl);
+                estado.routingControl = null;
+            }
+            resolve(puntosCorregidos);
+        });
+        
+        control.on('routingerror', function(e) {
+            if (corrigiendo) corrigiendo.classList.remove('visible');
+            if (estado.routingControl) {
+                map.removeControl(estado.routingControl);
+                estado.routingControl = null;
+            }
+            resolve(ruta);
+        });
+        
+        setTimeout(() => {
+            if (estado.routingControl) {
+                map.removeControl(estado.routingControl);
+                estado.routingControl = null;
+            }
+            if (corrigiendo) corrigiendo.classList.remove('visible');
+            resolve(ruta);
+        }, 10000);
+    });
+}
+
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const toRad = (deg) => deg * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// ============================================================
+// ACTUALIZACIÓN DE UI
+// ============================================================
+function actualizarUI() {
+    // Mili
+    const miliData = estado.mili;
+    document.getElementById('miliCombustible').textContent = miliData.combustible.toFixed(2) + ' L';
+    document.getElementById('miliKmRecorridos').textContent = miliData.kmRecorridos.toFixed(2) + ' km';
+    document.getElementById('miliKmRestantes').textContent = getKmRestantes('mili').toFixed(2) + ' km';
+    document.getElementById('miliViajes').textContent = miliData.viajes.length;
+    document.getElementById('miliPuntosContador').textContent = miliData.ruta.length;
+    document.getElementById('miliConsumo').textContent = getConsumo('mili').toFixed(2) + ' L/100km';
+    document.getElementById('miliDeuda').textContent = miliData.deuda.toFixed(2) + ' L';
+    
+    // Barra Mili - mostrar deuda como parte negativa
+    const miliTotal = miliData.combustible + miliData.deuda || 0.01;
+    const miliPorcentaje = Math.min(100, (miliData.combustible / miliTotal) * 100);
+    const miliRelleno = document.getElementById('miliBarraRelleno');
+    const miliTexto = document.getElementById('miliBarraTexto');
+    miliRelleno.style.width = miliPorcentaje + '%';
+    if (miliData.deuda > 0) {
+        miliRelleno.className = 'relleno deuda';
+        miliTexto.textContent = `💰 ${miliData.deuda.toFixed(2)} L de deuda`;
+    } else if (miliPorcentaje < 20) {
+        miliRelleno.className = 'relleno critico';
+        miliTexto.textContent = `${miliData.combustible.toFixed(2)} L (${getKmRestantes('mili').toFixed(0)} km)`;
+    } else if (miliPorcentaje < 40) {
+        miliRelleno.className = 'relleno bajo';
+        miliTexto.textContent = `${miliData.combustible.toFixed(2)} L (${getKmRestantes('mili').toFixed(0)} km)`;
+    } else {
+        miliRelleno.className = 'relleno';
+        miliTexto.textContent = `${miliData.combustible.toFixed(2)} L (${getKmRestantes('mili').toFixed(0)} km)`;
+    }
+    
+    // Astroland
+    const astroData = estado.astro;
+    document.getElementById('astroCombustible').textContent = astroData.combustible.toFixed(2) + ' L';
+    document.getElementById('astroKmRecorridos').textContent = astroData.kmRecorridos.toFixed(2) + ' km';
+    document.getElementById('astroKmRestantes').textContent = getKmRestantes('astro').toFixed(2) + ' km';
+    document.getElementById('astroViajes').textContent = astroData.viajes.length;
+    document.getElementById('astroPuntosContador').textContent = astroData.ruta.length;
+    document.getElementById('astroConsumo').textContent = getConsumo('astro').toFixed(2) + ' L/100km';
+    document.getElementById('astroDeuda').textContent = astroData.deuda.toFixed(2) + ' L';
+    
+    // Barra Astroland
+    const astroTotal = astroData.combustible + astroData.deuda || 0.01;
+    const astroPorcentaje = Math.min(100, (astroData.combustible / astroTotal) * 100);
+    const astroRelleno = document.getElementById('astroBarraRelleno');
+    const astroTexto = document.getElementById('astroBarraTexto');
+    astroRelleno.style.width = astroPorcentaje + '%';
+    if (astroData.deuda > 0) {
+        astroRelleno.className = 'relleno deuda';
+        astroTexto.textContent = `💰 ${astroData.deuda.toFixed(2)} L de deuda`;
+    } else if (astroPorcentaje < 20) {
+        astroRelleno.className = 'relleno critico';
+        astroTexto.textContent = `${astroData.combustible.toFixed(2)} L (${getKmRestantes('astro').toFixed(0)} km)`;
+    } else if (astroPorcentaje < 40) {
+        astroRelleno.className = 'relleno bajo';
+        astroTexto.textContent = `${astroData.combustible.toFixed(2)} L (${getKmRestantes('astro').toFixed(0)} km)`;
+    } else {
+        astroRelleno.className = 'relleno';
+        astroTexto.textContent = `${astroData.combustible.toFixed(2)} L (${getKmRestantes('astro').toFixed(0)} km)`;
+    }
+    
+    mostrarHistorial('mili');
+    mostrarHistorial('astro');
+}
+
+function actualizarGlobales() {
+    const totalCombustible = estado.mili.combustible + estado.astro.combustible;
+    const totalKm = estado.mili.kmRecorridos + estado.astro.kmRecorridos;
+    const totalKmRestantes = getKmRestantes('mili') + getKmRestantes('astro');
+    const totalDeuda = estado.mili.deuda + estado.astro.deuda;
+    
+    document.getElementById('combustibleGlobal').textContent = totalCombustible.toFixed(2) + ' L';
+    document.getElementById('kmGlobal').textContent = totalKm.toFixed(2) + ' km';
+    document.getElementById('kmRestantesGlobal').textContent = totalKmRestantes.toFixed(2) + ' km';
+    document.getElementById('deudaGlobal').textContent = totalDeuda.toFixed(2) + ' L';
+}
+
+function mostrarHistorial(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const container = document.getElementById(seccion + 'Historial');
+    
+    if (data.viajes.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:#95a5a6;padding:15px;">No hay viajes</div>';
+        return;
+    }
+    
+    const viajesMostrar = [...data.viajes].reverse().slice(0, 10);
+    container.innerHTML = viajesMostrar.map((v, index) => {
+        const realIndex = data.viajes.length - 1 - index;
+        const tieneRuta = v.ruta && v.ruta.length >= 2;
+        
+        // Si es transferencia, mostrar de forma especial
+        if (v.esTransferencia) {
+            return `
+            <div class="historial-item" style="border-left-color: #8e44ad;">
+                <div class="info-viaje">
+                    <strong>🔄 Transferencia</strong>
+                    <div class="fecha">${v.fecha} • ${v.desde} → ${v.hacia}</div>
+                </div>
+                <div class="acciones">
+                    <span style="font-weight:700;color:#27ae60;">+${v.litros.toFixed(2)} L</span>
+                </div>
+            </div>
+            `;
+        }
+        
+        return `
+        <div class="historial-item">
+            <div class="info-viaje">
+                <strong>${v.origen} → ${v.destino}</strong>
+                <div class="fecha">${v.fecha} • ${v.puntos || 0} puntos</div>
+                <div class="fecha">⛽ ${(v.combustibleUsado || 0).toFixed(2)} L usados ${v.tieneDeuda ? '💰 CON DEUDA' : ''}</div>
+            </div>
+            <div class="acciones">
+                <span class="distancia">${v.distancia.toFixed(2)} km</span>
+                ${tieneRuta ? `<button class="btn-ver-mapa" onclick="verViajeEnMapa('${seccion}', ${realIndex})">🗺️</button>` : ''}
+                ${v.corregido ? '✅' : ''}
+                ${v.manual ? '✏️' : ''}
+            </div>
+        </div>
+    `;
+    }).join('');
+}
+
+// ============================================================
+// FUNCIONES DE MAPA (resumidas)
 // ============================================================
 function initMap() {
     const map = L.map('map').setView([-34.6037, -58.3816], 13);
@@ -1093,27 +1411,14 @@ function initMap() {
 function dibujarRuta(seccion) {
     const map = estado.mapa;
     if (!map) return;
-    
     const data = seccion === 'mili' ? estado.mili : estado.astro;
     const color = seccion === 'mili' ? '#e74c3c' : '#2ecc71';
     
     if (!estado.modoHistorial) {
-        if (estado.polyline) {
-            map.removeLayer(estado.polyline);
-            estado.polyline = null;
-        }
-        if (estado.marcadorOrigen) {
-            map.removeLayer(estado.marcadorOrigen);
-            estado.marcadorOrigen = null;
-        }
-        if (estado.marcadorDestino) {
-            map.removeLayer(estado.marcadorDestino);
-            estado.marcadorDestino = null;
-        }
-        if (estado.marcadorActual) {
-            map.removeLayer(estado.marcadorActual);
-            estado.marcadorActual = null;
-        }
+        if (estado.polyline) { map.removeLayer(estado.polyline); estado.polyline = null; }
+        if (estado.marcadorOrigen) { map.removeLayer(estado.marcadorOrigen); estado.marcadorOrigen = null; }
+        if (estado.marcadorDestino) { map.removeLayer(estado.marcadorDestino); estado.marcadorDestino = null; }
+        if (estado.marcadorActual) { map.removeLayer(estado.marcadorActual); estado.marcadorActual = null; }
     }
     
     if (data.ruta.length === 0) return;
@@ -1122,31 +1427,18 @@ function dibujarRuta(seccion) {
     estado.marcadorOrigen = L.marker([origen.lat, origen.lng], {
         icon: L.divIcon({ html: '🏁', className: 'custom-marker', iconSize: [30, 30] })
     }).addTo(map);
-    estado.marcadorOrigen.bindTooltip(data.nombreOrigen || 'Origen', {
-        permanent: true,
-        direction: 'top',
-        offset: [0, -10]
-    });
+    estado.marcadorOrigen.bindTooltip(data.nombreOrigen || 'Origen', { permanent: true, direction: 'top', offset: [0, -10] });
     
     if (data.ruta.length > 1) {
         const latlngs = data.ruta.map(p => [p.lat, p.lng]);
-        estado.polyline = L.polyline(latlngs, {
-            color: color,
-            weight: 4,
-            opacity: 0.8,
-            smoothFactor: 1
-        }).addTo(map);
+        estado.polyline = L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, smoothFactor: 1 }).addTo(map);
         map.fitBounds(estado.polyline.getBounds(), { padding: [30, 30] });
         
         const destino = data.ruta[data.ruta.length - 1];
         estado.marcadorDestino = L.marker([destino.lat, destino.lng], {
             icon: L.divIcon({ html: '🏆', className: 'custom-marker', iconSize: [30, 30] })
         }).addTo(map);
-        estado.marcadorDestino.bindTooltip(data.nombreDestino || 'Destino', {
-            permanent: true,
-            direction: 'top',
-            offset: [0, -10]
-        });
+        estado.marcadorDestino.bindTooltip(data.nombreDestino || 'Destino', { permanent: true, direction: 'top', offset: [0, -10] });
     } else {
         estado.marcadorActual = L.marker([origen.lat, origen.lng]).addTo(map);
         map.setView([origen.lat, origen.lng], 16);
@@ -1156,11 +1448,7 @@ function dibujarRuta(seccion) {
 function centrarMapa() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-        (pos) => {
-            if (estado.mapa) {
-                estado.mapa.setView([pos.coords.latitude, pos.coords.longitude], 16);
-            }
-        },
+        (pos) => { if (estado.mapa) estado.mapa.setView([pos.coords.latitude, pos.coords.longitude], 16); },
         () => alert('No se pudo obtener la ubicación.')
     );
 }
@@ -1171,6 +1459,7 @@ function limpiarMapa(limpiarHistorial = true) {
         if (estado.marcadorOrigen) { estado.mapa.removeLayer(estado.marcadorOrigen); estado.marcadorOrigen = null; }
         if (estado.marcadorDestino) { estado.mapa.removeLayer(estado.marcadorDestino); estado.marcadorDestino = null; }
         if (estado.marcadorActual) { estado.mapa.removeLayer(estado.marcadorActual); estado.marcadorActual = null; }
+        if (estado.marcadorDestinoManual) { estado.mapa.removeLayer(estado.marcadorDestinoManual); estado.marcadorDestinoManual = null; }
     }
     if (estado.routingControl) {
         estado.mapa.removeControl(estado.routingControl);
@@ -1187,84 +1476,243 @@ function limpiarMapaCompleto() {
     limpiarMapa(true);
     estado.mili.ruta = [];
     estado.astro.ruta = [];
-    if (estado.mapa) {
-        estado.mapa.setView([-34.6037, -58.3816], 13);
-    }
+    if (estado.mapa) estado.mapa.setView([-34.6037, -58.3816], 13);
     document.getElementById('mensajeEstado').textContent = '🧹 Mapa completamente limpiado.';
 }
 
-// ============================================================
-// FUNCIONES AUXILIARES
-// ============================================================
-function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const toRad = (deg) => deg * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-// ============================================================
-// ACTUALIZACIÓN DE UI
-// ============================================================
-function actualizarUI() {
-    document.getElementById('miliCombustible').textContent = estado.mili.combustible.toFixed(2) + ' L';
-    document.getElementById('miliKmRecorridos').textContent = estado.mili.kmRecorridos.toFixed(2) + ' km';
-    document.getElementById('miliKmRestantes').textContent = getKmRestantes('mili').toFixed(2) + ' km';
-    document.getElementById('miliViajes').textContent = estado.mili.viajes.length;
-    document.getElementById('miliPuntosContador').textContent = estado.mili.ruta.length;
-    
-    document.getElementById('astroCombustible').textContent = estado.astro.combustible.toFixed(2) + ' L';
-    document.getElementById('astroKmRecorridos').textContent = estado.astro.kmRecorridos.toFixed(2) + ' km';
-    document.getElementById('astroKmRestantes').textContent = getKmRestantes('astro').toFixed(2) + ' km';
-    document.getElementById('astroViajes').textContent = estado.astro.viajes.length;
-    document.getElementById('astroPuntosContador').textContent = estado.astro.ruta.length;
-    
-    mostrarHistorial('mili');
-    mostrarHistorial('astro');
-}
-
-function actualizarGlobales() {
-    const totalCombustible = estado.mili.combustible + estado.astro.combustible;
-    const totalKm = estado.mili.kmRecorridos + estado.astro.kmRecorridos;
-    const totalKmRestantes = getKmRestantes('mili') + getKmRestantes('astro');
-    
-    document.getElementById('combustibleGlobal').textContent = totalCombustible.toFixed(2) + ' L';
-    document.getElementById('kmGlobal').textContent = totalKm.toFixed(2) + ' km';
-    document.getElementById('kmRestantesGlobal').textContent = totalKmRestantes.toFixed(2) + ' km';
-}
-
-function mostrarHistorial(seccion) {
+function verViajeEnMapa(seccion, index) {
     const data = seccion === 'mili' ? estado.mili : estado.astro;
-    const container = document.getElementById(seccion + 'Historial');
+    const viaje = data.viajes[index];
+    if (!viaje || !viaje.ruta || viaje.ruta.length < 2) {
+        alert('Este viaje no tiene una ruta guardada.');
+        return;
+    }
+    limpiarMapa(false);
+    estado.modoHistorial = true;
+    estado.viajeHistorialMostrando = { seccion, index };
+    const map = estado.mapa;
+    if (!map) return;
+    const color = seccion === 'mili' ? '#e74c3c' : '#2ecc71';
+    const latlngs = viaje.ruta.map(p => [p.lat, p.lng]);
+    estado.polyline = L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, smoothFactor: 1 }).addTo(map);
+    map.fitBounds(estado.polyline.getBounds(), { padding: [30, 30] });
+    const origen = viaje.ruta[0];
+    estado.marcadorOrigen = L.marker([origen.lat, origen.lng], {
+        icon: L.divIcon({ html: '🏁', className: 'custom-marker', iconSize: [30, 30] })
+    }).addTo(map);
+    estado.marcadorOrigen.bindTooltip(viaje.origen || 'Origen', { permanent: true, direction: 'top', offset: [0, -10] });
+    const destino = viaje.ruta[viaje.ruta.length - 1];
+    estado.marcadorDestino = L.marker([destino.lat, destino.lng], {
+        icon: L.divIcon({ html: '🏆', className: 'custom-marker', iconSize: [30, 30] })
+    }).addTo(map);
+    estado.marcadorDestino.bindTooltip(viaje.destino || 'Destino', { permanent: true, direction: 'top', offset: [0, -10] });
+    document.getElementById('mensajeEstado').textContent = `📜 ${viaje.origen} → ${viaje.destino} (${viaje.distancia.toFixed(2)} km)`;
+}
+
+function cerrarHistorialMapa() {
+    estado.modoHistorial = false;
+    estado.viajeHistorialMostrando = null;
+    limpiarMapa(true);
+    document.getElementById('mensajeEstado').textContent = '💡 Historial cerrado.';
+    if (estado.routingControl) {
+        estado.mapa.removeControl(estado.routingControl);
+        estado.routingControl = null;
+    }
+    if (estado.seccionActiva) {
+        const data = estado.seccionActiva === 'mili' ? estado.mili : estado.astro;
+        if (data.viajeActivo && data.ruta.length > 0) {
+            dibujarRuta(estado.seccionActiva);
+        }
+    }
+}
+
+function activarModoManual(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    const btn = document.getElementById(seccion + 'BtnManual');
     
-    if (data.viajes.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:#95a5a6;padding:15px;">No hay viajes registrados</div>';
+    if (!data.viajeActivo) {
+        alert(`⚠️ Primero inicia un viaje en ${nombre}.`);
         return;
     }
     
-    const viajesMostrar = [...data.viajes].reverse().slice(0, 10);
-    container.innerHTML = viajesMostrar.map((v, index) => {
-        const realIndex = data.viajes.length - 1 - index;
-        const tieneRuta = v.ruta && v.ruta.length >= 2;
-        return `
-        <div class="historial-item">
-            <div class="info-viaje">
-                <strong>${v.origen} → ${v.destino}</strong>
-                <div class="fecha">${v.fecha} • ${v.puntos || 0} puntos ${v.corregido ? '• 🔄 corregido' : ''}</div>
-            </div>
-            <div class="acciones">
-                <span class="distancia">${v.distancia.toFixed(2)} km</span>
-                ${tieneRuta ? `<button class="btn-ver-mapa" onclick="verViajeEnMapa('${seccion}', ${realIndex})">🗺️ Ver</button>` : ''}
-                ${v.corregido ? '<span class="corregido">✅ Corregido</span>' : ''}
-            </div>
-        </div>
-    `;
-    }).join('');
+    data.modoManual = !data.modoManual;
+    
+    if (data.modoManual) {
+        btn.textContent = '📍 GPS';
+        btn.classList.add('activo');
+        if (data.watchId) {
+            navigator.geolocation.clearWatch(data.watchId);
+            data.watchId = null;
+        }
+        if (estado.timeoutGps) {
+            clearInterval(estado.timeoutGps);
+            estado.timeoutGps = null;
+        }
+        const dragInstruction = document.getElementById(seccion + 'DragInstruction');
+        if (dragInstruction) dragInstruction.classList.add('visible');
+        document.getElementById('mensajeEstado').textContent = `✏️ Manual activado en ${nombre}. Arrastra 🏆.`;
+        
+        if (data.ruta.length > 0) {
+            const ultimoPunto = data.ruta[data.ruta.length - 1];
+            crearMarcadorArrastrable(seccion, ultimoPunto.lat, ultimoPunto.lng);
+        }
+        
+        const estadoEl = document.getElementById(seccion + 'EstadoViaje');
+        if (estadoEl) {
+            estadoEl.className = 'estado-viaje manual';
+            estadoEl.textContent = `✏️ Manual (${data.ruta.length})`;
+        }
+        alert(`✏️ Manual activado en ${nombre}\n🖱️ Arrastra 🏆 para cambiar destino.`);
+    } else {
+        btn.textContent = '✏️ Manual';
+        btn.classList.remove('activo');
+        const dragInstruction = document.getElementById(seccion + 'DragInstruction');
+        if (dragInstruction) dragInstruction.classList.remove('visible');
+        if (estado.marcadorDestinoManual) {
+            estado.mapa.removeLayer(estado.marcadorDestinoManual);
+            estado.marcadorDestinoManual = null;
+        }
+        if (data.viajeActivo) {
+            iniciarWatchGPS(seccion);
+        }
+        document.getElementById('mensajeEstado').textContent = `📍 GPS reactivado en ${nombre}.`;
+    }
+    guardarEstadoCompleto();
+    actualizarUI();
+}
+
+function crearMarcadorArrastrable(seccion, lat, lng) {
+    const map = estado.mapa;
+    if (!map) return;
+    if (estado.marcadorDestinoManual) {
+        map.removeLayer(estado.marcadorDestinoManual);
+        estado.marcadorDestinoManual = null;
+    }
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const marker = L.marker([lat, lng], {
+        draggable: true,
+        icon: L.divIcon({ html: '🏆', className: 'custom-marker', iconSize: [35, 35] })
+    }).addTo(map);
+    marker.bindTooltip('🖱️ Arrástrame', { permanent: true, direction: 'top', offset: [0, -15] });
+    marker.on('dragend', function(e) {
+        const pos = marker.getLatLng();
+        data.destinoManual = { lat: pos.lat, lng: pos.lng };
+        document.getElementById('mensajeEstado').textContent = `📍 Generando ruta...`;
+        generarRutaEntrePuntos(seccion, data.ruta[0], data.destinoManual);
+    });
+    estado.marcadorDestinoManual = marker;
+}
+
+function generarRutaEntrePuntos(seccion, origen, destino) {
+    const map = estado.mapa;
+    if (!map) return;
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const color = seccion === 'mili' ? '#e74c3c' : '#2ecc71';
+    
+    document.getElementById('mensajeEstado').textContent = `🔄 Generando ruta...`;
+    if (estado.routingControl) {
+        map.removeControl(estado.routingControl);
+        estado.routingControl = null;
+    }
+    const corrigiendo = document.getElementById(seccion + 'Corrigiendo');
+    if (corrigiendo) corrigiendo.classList.add('visible');
+    
+    const control = L.Routing.control({
+        waypoints: [L.latLng(origen.lat, origen.lng), L.latLng(destino.lat, destino.lng)],
+        routeWhileDragging: false,
+        showAlternatives: false,
+        fitBounds: true,
+        lineOptions: { styles: [{ color: color, weight: 4, opacity: 0.8 }] }
+    }).addTo(map);
+    estado.routingControl = control;
+    
+    control.on('routesfound', function(e) {
+        const coordinates = e.routes[0].coordinates;
+        const puntos = coordinates.map(c => ({ lat: c.lat, lng: c.lng }));
+        data.ruta = puntos;
+        guardarEstadoCompleto();
+        const contador = document.getElementById(seccion + 'PuntosContador');
+        if (contador) contador.textContent = puntos.length;
+        if (corrigiendo) corrigiendo.classList.remove('visible');
+        document.getElementById('mensajeEstado').textContent = `✅ Ruta generada: ${puntos.length} puntos`;
+        dibujarRuta(seccion);
+        actualizarUI();
+    });
+    
+    control.on('routingerror', function(e) {
+        if (corrigiendo) corrigiendo.classList.remove('visible');
+        document.getElementById('mensajeEstado').textContent = '⚠️ Error generando ruta.';
+        if (estado.routingControl) {
+            map.removeControl(estado.routingControl);
+            estado.routingControl = null;
+        }
+    });
+    
+    setTimeout(() => {
+        if (estado.routingControl) {
+            map.removeControl(estado.routingControl);
+            estado.routingControl = null;
+        }
+        if (corrigiendo) corrigiendo.classList.remove('visible');
+    }, 15000);
+}
+
+function resetearSeccion(seccion) {
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    if (!confirm(`¿Resetear TODOS los datos de ${nombre}?`)) return;
+    
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    if (data.watchId) navigator.geolocation.clearWatch(data.watchId);
+    if (estado.timeoutGps) clearInterval(estado.timeoutGps);
+    if (estado.routingControl) {
+        estado.mapa.removeControl(estado.routingControl);
+        estado.routingControl = null;
+    }
+    if (estado.marcadorDestinoManual) {
+        estado.mapa.removeLayer(estado.marcadorDestinoManual);
+        estado.marcadorDestinoManual = null;
+    }
+    const dragInstruction = document.getElementById(seccion + 'DragInstruction');
+    if (dragInstruction) dragInstruction.classList.remove('visible');
+    const btn = document.getElementById(seccion + 'BtnManual');
+    if (btn) { btn.textContent = '✏️ Manual'; btn.classList.remove('activo'); }
+    
+    data.combustible = 0;
+    data.kmRecorridos = 0;
+    data.viajes = [];
+    data.viajeActivo = false;
+    data.ruta = [];
+    data.watchId = null;
+    data.nombreOrigen = '';
+    data.nombreDestino = '';
+    data.gpsActivo = true;
+    data.ultimoPuntoValido = null;
+    data.reconectando = false;
+    data.modoManual = false;
+    data.destinoManual = null;
+    data.deuda = 0;
+    
+    if (estado.seccionActiva === seccion) estado.seccionActiva = null;
+    
+    actualizarUI();
+    actualizarGlobales();
+    guardarDatos();
+    guardarEstadoCompleto();
+    mostrarHistorial(seccion);
+    limpiarMapa();
+    document.getElementById('mensajeEstado').textContent = `🔄 ${nombre} reseteado.`;
+}
+
+function limpiarHistorial(seccion) {
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    if (!confirm(`¿Eliminar historial de ${nombre}?`)) return;
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    data.viajes = [];
+    guardarDatos();
+    guardarEstadoCompleto();
+    mostrarHistorial(seccion);
+    actualizarUI();
 }
 
 // ============================================================
