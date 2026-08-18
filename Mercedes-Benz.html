@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <style>
-        /* ... estilos anteriores ... */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 15px; min-height: 100vh; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -80,7 +79,6 @@
         .info-combustible .campo .valor.rojo { color: #e74c3c; }
         .info-combustible .campo .valor.azul { color: #3498db; }
         .info-combustible .campo .valor.naranja { color: #e67e22; }
-        .info-combustible .campo .valor.negativo { color: #e74c3c; }
 
         .input-group { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
         .input-group input {
@@ -330,7 +328,6 @@
     </div>
 
     <div class="secciones-grid">
-        <!-- SECCIÓN MILI -->
         <div class="seccion mili" id="seccionMili">
             <div class="seccion-titulo">
                 🔴 Mili <span class="badge">Personal</span>
@@ -376,7 +373,6 @@
             </div>
         </div>
 
-        <!-- SECCIÓN ASTROLAND -->
         <div class="seccion astroland" id="seccionAstroland">
             <div class="seccion-titulo">
                 🟢 Astroland <span class="badge">Empresarial</span>
@@ -437,7 +433,6 @@
         </div>
     </div>
 
-    <!-- MODAL TRANSFERENCIA -->
     <div id="modalTransferencia" class="modal">
         <div class="modal-content">
             <button class="modal-close" onclick="cerrarTransferencia()">×</button>
@@ -452,7 +447,7 @@
         </div>
     </div>
 
-    <div class="footer">🚗 Gestor de Viajes v7.0 | Transferencia entre secciones | Deuda automática</div>
+    <div class="footer">🚗 Gestor de Viajes v8.0 | GPS Persistente | Transferencia entre secciones</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -465,7 +460,6 @@
 const RENDIMIENTO = 63 / 13.908;
 const CONSUMO_LITROS_POR_KM = 13.908 / 63;
 const MIN_PUNTOS_REALES = 2;
-const INTERVALO_GPS = 2000;
 const SALTO_MAXIMO_METROS = 100;
 
 // ============================================================
@@ -486,7 +480,8 @@ let estado = {
         reconectando: false,
         modoManual: false,
         destinoManual: null,
-        deuda: 0 // Litros de deuda (combustible usado de otra sección)
+        deuda: 0,
+        ultimaPosicion: null
     },
     astro: {
         combustible: 0,
@@ -502,7 +497,8 @@ let estado = {
         reconectando: false,
         modoManual: false,
         destinoManual: null,
-        deuda: 0
+        deuda: 0,
+        ultimaPosicion: null
     },
     mapa: null,
     polyline: null,
@@ -513,9 +509,9 @@ let estado = {
     seccionActiva: null,
     modoHistorial: false,
     viajeHistorialMostrando: null,
-    timeoutGps: null,
     routingControl: null,
-    transferencia: { desde: null, hacia: null }
+    transferencia: { desde: null, hacia: null },
+    gpsReconectando: false
 };
 
 // ============================================================
@@ -528,8 +524,99 @@ function init() {
     actualizarGlobales();
     restaurarViajeActivo();
     
+    // Manejar eventos de visibilidad y foco
     document.addEventListener('visibilitychange', manejarVisibilidad);
+    window.addEventListener('focus', manejarFocus);
     window.addEventListener('beforeunload', guardarEstadoCompleto);
+    
+    console.log('🚗 Gestor de Viajes iniciado');
+}
+
+// ============================================================
+// MANEJO DE VISIBILIDAD Y FOCUS - CORREGIDO
+// ============================================================
+function manejarVisibilidad() {
+    if (document.hidden) {
+        console.log('📱 App en segundo plano - GPS continuará activo');
+        // No detenemos nada, solo registramos
+    } else {
+        console.log('📱 App visible - Verificando estado del GPS');
+        // Cuando la app vuelve a ser visible, verificamos el GPS
+        verificarYReconectarGPS();
+    }
+}
+
+function manejarFocus() {
+    console.log('📱 App recuperó el foco - Forzando actualización GPS');
+    // Forzar una actualización inmediata del GPS
+    forzarActualizacionGPS();
+}
+
+function verificarYReconectarGPS() {
+    if (!estado.seccionActiva) return;
+    
+    const data = estado.seccionActiva === 'mili' ? estado.mili : estado.astro;
+    const nombre = estado.seccionActiva === 'mili' ? 'Mili' : 'Astroland';
+    
+    if (data.viajeActivo && !data.modoManual) {
+        console.log(`🔄 Verificando GPS para ${nombre}`);
+        
+        // Verificar si el GPS está activo
+        if (!data.gpsActivo || data.reconectando) {
+            console.log(`🔄 Reconectando GPS para ${nombre}`);
+            // Limpiar watch anterior si existe
+            if (data.watchId) {
+                navigator.geolocation.clearWatch(data.watchId);
+                data.watchId = null;
+            }
+            // Reiniciar GPS
+            setTimeout(() => {
+                iniciarWatchGPS(estado.seccionActiva);
+            }, 500);
+        } else {
+            // Forzar una lectura para mantenerlo activo
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    console.log(`📍 GPS forzado exitoso para ${nombre}`);
+                    data.gpsActivo = true;
+                    data.reconectando = false;
+                    actualizarAlertGPS(estado.seccionActiva);
+                },
+                (err) => {
+                    console.warn(`⚠️ GPS forzado falló para ${nombre}:`, err.message);
+                    // Si falla, reiniciar watch
+                    if (data.watchId) {
+                        navigator.geolocation.clearWatch(data.watchId);
+                        data.watchId = null;
+                    }
+                    setTimeout(() => {
+                        iniciarWatchGPS(estado.seccionActiva);
+                    }, 1000);
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+    }
+}
+
+function forzarActualizacionGPS() {
+    if (!estado.seccionActiva) return;
+    
+    const data = estado.seccionActiva === 'mili' ? estado.mili : estado.astro;
+    if (data.viajeActivo && !data.modoManual) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const newLat = pos.coords.latitude;
+                const newLng = pos.coords.longitude;
+                console.log(`📍 Actualización forzada: ${newLat}, ${newLng}`);
+                procesarPuntoGPS(estado.seccionActiva, newLat, newLng);
+            },
+            (err) => {
+                console.warn('⚠️ Error en GPS forzado:', err.message);
+            },
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    }
 }
 
 // ============================================================
@@ -565,7 +652,8 @@ function guardarEstadoCompleto() {
             nombreDestino: estado.mili.nombreDestino,
             gpsActivo: estado.mili.gpsActivo,
             modoManual: estado.mili.modoManual,
-            deuda: estado.mili.deuda
+            deuda: estado.mili.deuda,
+            ultimaPosicion: estado.mili.ultimaPosicion
         },
         astro: {
             combustible: estado.astro.combustible,
@@ -577,7 +665,8 @@ function guardarEstadoCompleto() {
             nombreDestino: estado.astro.nombreDestino,
             gpsActivo: estado.astro.gpsActivo,
             modoManual: estado.astro.modoManual,
-            deuda: estado.astro.deuda
+            deuda: estado.astro.deuda,
+            ultimaPosicion: estado.astro.ultimaPosicion
         },
         seccionActiva: estado.seccionActiva
     };
@@ -585,9 +674,9 @@ function guardarEstadoCompleto() {
 }
 
 function cargarDatos() {
-    const datos = localStorage.getItem('gestorViajes');
-    if (datos) {
-        try {
+    try {
+        const datos = localStorage.getItem('gestorViajes');
+        if (datos) {
             const parsed = JSON.parse(datos);
             if (parsed.mili) {
                 estado.mili.combustible = parsed.mili.combustible || 0;
@@ -601,12 +690,12 @@ function cargarDatos() {
                 estado.astro.viajes = parsed.astro.viajes || [];
                 estado.astro.deuda = parsed.astro.deuda || 0;
             }
-        } catch (e) { console.warn('Error al cargar datos:', e); }
-    }
+        }
+    } catch (e) { console.warn('Error al cargar datos:', e); }
     
-    const estadoCompleto = localStorage.getItem('gestorViajesEstadoCompleto');
-    if (estadoCompleto) {
-        try {
+    try {
+        const estadoCompleto = localStorage.getItem('gestorViajesEstadoCompleto');
+        if (estadoCompleto) {
             const parsed = JSON.parse(estadoCompleto);
             if (parsed.mili) {
                 estado.mili.viajeActivo = parsed.mili.viajeActivo || false;
@@ -616,6 +705,7 @@ function cargarDatos() {
                 estado.mili.gpsActivo = parsed.mili.gpsActivo !== undefined ? parsed.mili.gpsActivo : true;
                 estado.mili.modoManual = parsed.mili.modoManual || false;
                 estado.mili.deuda = parsed.mili.deuda || 0;
+                estado.mili.ultimaPosicion = parsed.mili.ultimaPosicion || null;
             }
             if (parsed.astro) {
                 estado.astro.viajeActivo = parsed.astro.viajeActivo || false;
@@ -625,14 +715,45 @@ function cargarDatos() {
                 estado.astro.gpsActivo = parsed.astro.gpsActivo !== undefined ? parsed.astro.gpsActivo : true;
                 estado.astro.modoManual = parsed.astro.modoManual || false;
                 estado.astro.deuda = parsed.astro.deuda || 0;
+                estado.astro.ultimaPosicion = parsed.astro.ultimaPosicion || null;
             }
             estado.seccionActiva = parsed.seccionActiva || null;
-        } catch (e) { console.warn('Error al cargar estado completo:', e); }
+        }
+    } catch (e) { console.warn('Error al cargar estado completo:', e); }
+}
+
+function restaurarViajeActivo() {
+    if (estado.seccionActiva) {
+        const data = estado.seccionActiva === 'mili' ? estado.mili : estado.astro;
+        const nombre = estado.seccionActiva === 'mili' ? 'Mili' : 'Astroland';
+        
+        if (data.viajeActivo) {
+            console.log(`🔄 Restaurando viaje activo en: ${nombre}`);
+            
+            // Restaurar la visualización de la ruta
+            if (data.ruta.length > 0) {
+                dibujarRuta(estado.seccionActiva);
+            }
+            
+            // Actualizar UI
+            actualizarUI();
+            actualizarGlobales();
+            
+            // Iniciar GPS después de un breve retraso
+            setTimeout(() => {
+                if (!data.modoManual) {
+                    console.log(`🔄 Iniciando GPS para ${nombre} después de restaurar`);
+                    iniciarWatchGPS(estado.seccionActiva);
+                }
+                document.getElementById('mensajeEstado').textContent = 
+                    `🔄 Viaje restaurado en ${nombre} - ${data.ruta.length} puntos`;
+            }, 1000);
+        }
     }
 }
 
 // ============================================================
-// FUNCIONES DE COMBUSTIBLE CON DEUDA
+// FUNCIONES DE COMBUSTIBLE
 // ============================================================
 function cargarCombustible(seccion) {
     const inputId = seccion === 'mili' ? 'miliLitros' : 'astroLitros';
@@ -647,21 +768,14 @@ function cargarCombustible(seccion) {
     const data = seccion === 'mili' ? estado.mili : estado.astro;
     const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
     
-    // Primero, pagar deuda si existe
     if (data.deuda > 0) {
         const pagarDeuda = Math.min(litros, data.deuda);
         data.deuda -= pagarDeuda;
         data.combustible += (litros - pagarDeuda);
-        
-        // Buscar a quién se le debe y reducir su combustible
-        const otraSeccion = seccion === 'mili' ? 'astro' : 'mili';
-        const otraData = otraSeccion === 'mili' ? estado.mili : estado.astro;
-        // La deuda ya se descontó en el momento que se usó, no hay que hacer nada más
-        
-        alert(`✅ Se cargaron ${litros.toFixed(2)} litros a ${nombre}.\n💰 ${pagarDeuda.toFixed(2)} L usados para pagar deuda.\n⛽ ${(litros - pagarDeuda).toFixed(2)} L disponibles.`);
+        alert(`✅ Se cargaron ${litros.toFixed(2)} L a ${nombre}.\n💰 ${pagarDeuda.toFixed(2)} L usados para pagar deuda.\n⛽ ${(litros - pagarDeuda).toFixed(2)} L disponibles.`);
     } else {
         data.combustible += litros;
-        alert(`✅ Se cargaron ${litros.toFixed(2)} litros a ${nombre}.`);
+        alert(`✅ Se cargaron ${litros.toFixed(2)} L a ${nombre}.`);
     }
     
     input.value = '';
@@ -677,17 +791,6 @@ function getKmRestantes(seccion) {
     return Math.max(0, kmPosibles - data.kmRecorridos);
 }
 
-function getCombustibleDisponible(seccion) {
-    const data = seccion === 'mili' ? estado.mili : estado.astro;
-    // El combustible disponible es lo que tiene menos la deuda
-    return Math.max(0, data.combustible - data.deuda);
-}
-
-function getDeudaTotal(seccion) {
-    const data = seccion === 'mili' ? estado.mili : estado.astro;
-    return data.deuda;
-}
-
 function getConsumo(seccion) {
     const data = seccion === 'mili' ? estado.mili : estado.astro;
     if (data.kmRecorridos === 0) return 0;
@@ -696,7 +799,7 @@ function getConsumo(seccion) {
 }
 
 // ============================================================
-// TRANSFERENCIA DE COMBUSTIBLE
+// TRANSFERENCIA
 // ============================================================
 function abrirTransferencia(seccion) {
     const modal = document.getElementById('modalTransferencia');
@@ -704,9 +807,8 @@ function abrirTransferencia(seccion) {
     const otraSeccion = seccion === 'mili' ? 'astro' : 'mili';
     const otraNombre = otraSeccion === 'mili' ? 'Mili' : 'Astroland';
     
-    // Guardar la transferencia
-    estado.transferencia.desde = otraSeccion; // De quién sale el combustible
-    estado.transferencia.hacia = seccion; // A quién va
+    estado.transferencia.desde = otraSeccion;
+    estado.transferencia.hacia = seccion;
     
     document.getElementById('modalInfo').innerHTML = 
         `De <strong>${otraNombre}</strong> a <strong>${nombre}</strong>`;
@@ -756,11 +858,9 @@ function ejecutarTransferencia() {
         return;
     }
     
-    // Realizar transferencia
     dataDesde.combustible -= litros;
     dataHacia.combustible += litros;
     
-    // Registrar en el historial de la sección destino como "Transferencia"
     const transferenciaRegistro = {
         fecha: new Date().toLocaleString(),
         origen: `Transferencia desde ${nombreDesde}`,
@@ -770,7 +870,7 @@ function ejecutarTransferencia() {
         ruta: [],
         corregido: false,
         manual: false,
-        combustibleUsado: -litros, // Negativo porque es una carga
+        combustibleUsado: -litros,
         esTransferencia: true,
         desde: nombreDesde,
         hacia: nombreHacia,
@@ -789,7 +889,7 @@ function ejecutarTransferencia() {
 }
 
 // ============================================================
-// FUNCIONES DE VIAJE CON CONTROL DE DEUDA
+// FUNCIONES DE VIAJE
 // ============================================================
 function iniciarViaje(seccion) {
     if (estado.seccionActiva) {
@@ -800,10 +900,9 @@ function iniciarViaje(seccion) {
     const data = seccion === 'mili' ? estado.mili : estado.astro;
     const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
     
-    // Verificar si hay combustible disponible (combustible - deuda)
     const disponible = data.combustible - data.deuda;
     if (disponible <= 0) {
-        alert(`⛽ ¡SIN COMBUSTIBLE DISPONIBLE en ${nombre}!\n\n💰 Deuda: ${data.deuda.toFixed(2)} L\n⛽ Combustible: ${data.combustible.toFixed(2)} L\n📊 Disponible: ${disponible.toFixed(2)} L\n\nCarga combustible o transfiere desde otra sección.`);
+        alert(`⛽ ¡SIN COMBUSTIBLE DISPONIBLE en ${nombre}!\n\n💰 Deuda: ${data.deuda.toFixed(2)} L\n⛽ Combustible: ${data.combustible.toFixed(2)} L\n📊 Disponible: ${disponible.toFixed(2)} L`);
         return;
     }
     
@@ -835,6 +934,7 @@ function iniciarViaje(seccion) {
             data.reconectando = false;
             data.modoManual = false;
             data.destinoManual = null;
+            data.ultimaPosicion = { lat, lng };
             
             estado.seccionActiva = seccion;
             estado.modoHistorial = false;
@@ -857,11 +957,10 @@ function iniciarViaje(seccion) {
                 btn.classList.remove('activo');
             }
             
-            const kmAutonomia = data.combustible * RENDIMIENTO;
             document.getElementById('mensajeEstado').textContent = `✅ Viaje iniciado en ${nombre}`;
             dibujarRuta(seccion);
             
-            alert(`📍 Viaje iniciado en ${nombre}\n\n⛽ Combustible: ${data.combustible.toFixed(2)} L\n💰 Deuda: ${data.deuda.toFixed(2)} L\n🚗 Autonomía: ${kmAutonomia.toFixed(1)} km`);
+            alert(`📍 Viaje iniciado en ${nombre}\n\n⛽ Combustible: ${data.combustible.toFixed(2)} L\n💰 Deuda: ${data.deuda.toFixed(2)} L`);
         },
         (error) => {
             alert(`❌ Error GPS: ${error.message}`);
@@ -871,70 +970,49 @@ function iniciarViaje(seccion) {
     );
 }
 
-function iniciarWatchGPS(seccion) {
+function procesarPuntoGPS(seccion, newLat, newLng) {
     const data = seccion === 'mili' ? estado.mili : estado.astro;
     const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
     
-    if (data.modoManual) return;
-    if (!data.viajeActivo) return;
-    if (!navigator.geolocation) {
-        data.gpsActivo = false;
-        actualizarAlertGPS(seccion);
+    if (!data.viajeActivo || data.modoManual) return;
+    
+    const disponible = data.combustible - data.deuda;
+    if (disponible <= 0) {
+        document.getElementById('mensajeEstado').textContent = `⛽ ¡SIN COMBUSTIBLE! ${nombre} tiene deuda.`;
         return;
     }
     
-    if (data.watchId) {
-        navigator.geolocation.clearWatch(data.watchId);
-        data.watchId = null;
+    if (data.reconectando) {
+        data.reconectando = false;
+        document.getElementById('mensajeEstado').textContent = `✅ GPS reconectado en ${nombre}`;
+        actualizarAlertGPS(seccion);
     }
     
-    data.reconectando = false;
+    data.gpsActivo = true;
+    actualizarAlertGPS(seccion);
     
-    data.watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-            if (!data.viajeActivo || data.modoManual) return;
+    const ultimo = data.ruta[data.ruta.length - 1];
+    data.ultimaPosicion = { lat: newLat, lng: newLng };
+    
+    if (ultimo) {
+        const dist = calcularDistancia(ultimo.lat, ultimo.lng, newLat, newLng);
+        const km = dist / 1000;
+        
+        if (km > 0.001) {
+            const litrosConsumidos = km * CONSUMO_LITROS_POR_KM;
             
-            // Verificar si hay combustible disponible (incluyendo deuda)
-            const disponible = data.combustible - data.deuda;
-            if (disponible <= 0) {
-                document.getElementById('mensajeEstado').textContent = `⛽ ¡SIN COMBUSTIBLE! ${nombre} tiene deuda.`;
-                return;
-            }
-            
-            if (data.reconectando) {
-                data.reconectando = false;
-                document.getElementById('mensajeEstado').textContent = `✅ GPS reconectado en ${nombre}`;
-                actualizarAlertGPS(seccion);
-            }
-            
-            data.gpsActivo = true;
-            actualizarAlertGPS(seccion);
-            
-            const newLat = pos.coords.latitude;
-            const newLng = pos.coords.longitude;
-            const ultimo = data.ruta[data.ruta.length - 1];
-            
-            if (ultimo) {
-                const dist = calcularDistancia(ultimo.lat, ultimo.lng, newLat, newLng);
-                const km = dist / 1000;
-                const litrosConsumidos = km * CONSUMO_LITROS_POR_KM;
+            if (data.combustible >= litrosConsumidos) {
+                data.combustible -= litrosConsumidos;
+                data.kmRecorridos += km;
+            } else {
+                const restante = data.combustible;
+                data.combustible = 0;
+                data.deuda += (litrosConsumidos - restante);
+                data.kmRecorridos += km;
                 
-                // Descontar del combustible, si no hay suficiente, aumentar deuda
-                if (data.combustible >= litrosConsumidos) {
-                    data.combustible -= litrosConsumidos;
-                    data.kmRecorridos += km;
-                } else {
-                    // No hay suficiente combustible, usar deuda
-                    const restante = data.combustible;
-                    data.combustible = 0;
-                    data.deuda += (litrosConsumidos - restante);
-                    data.kmRecorridos += km;
-                    
-                    // Mostrar alerta de deuda
-                    document.getElementById('mensajeEstado').textContent = `💰 ${nombre} en DEUDA: ${data.deuda.toFixed(2)} L`;
-                    const alertDeuda = document.getElementById(seccion + 'AlertDeuda');
-                    if (alertDeuda) alertDeuda.classList.add('visible');
-                }
+                document.getElementById('mensajeEstado').textContent = `💰 ${nombre} en DEUDA: ${data.deuda.toFixed(2)} L`;
+                const alertDeuda = document.getElementById(seccion + 'AlertDeuda');
+                if (alertDeuda) alertDeuda.classList.add('visible');
             }
             
             data.ruta.push({ lat: newLat, lng: newLng });
@@ -948,8 +1026,7 @@ function iniciarWatchGPS(seccion) {
             
             const horaEl = document.getElementById(seccion + 'UltimoPunto');
             if (horaEl) {
-                const ahora = new Date();
-                horaEl.textContent = ahora.toLocaleTimeString();
+                horaEl.textContent = new Date().toLocaleTimeString();
             }
             
             actualizarUI();
@@ -975,9 +1052,48 @@ function iniciarWatchGPS(seccion) {
                     estadoEl.textContent = `▶ Activo (${data.ruta.length})`;
                 }
             }
+        }
+    } else {
+        data.ruta.push({ lat: newLat, lng: newLng });
+        data.ultimoPuntoValido = new Date().getTime();
+        dibujarRuta(seccion);
+        guardarEstadoCompleto();
+        actualizarUI();
+        actualizarGlobales();
+    }
+}
+
+function iniciarWatchGPS(seccion) {
+    const data = seccion === 'mili' ? estado.mili : estado.astro;
+    const nombre = seccion === 'mili' ? 'Mili' : 'Astroland';
+    
+    if (data.modoManual) return;
+    if (!data.viajeActivo) return;
+    if (!navigator.geolocation) {
+        data.gpsActivo = false;
+        actualizarAlertGPS(seccion);
+        return;
+    }
+    
+    // Limpiar watch anterior
+    if (data.watchId) {
+        navigator.geolocation.clearWatch(data.watchId);
+        data.watchId = null;
+    }
+    
+    data.reconectando = false;
+    data.gpsActivo = true;
+    
+    console.log(`📍 Iniciando watch GPS para ${nombre}`);
+    
+    data.watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            const newLat = pos.coords.latitude;
+            const newLng = pos.coords.longitude;
+            procesarPuntoGPS(seccion, newLat, newLng);
         },
         (error) => {
-            console.warn('Error GPS:', error);
+            console.warn(`⚠️ Error GPS en ${nombre}:`, error.message);
             data.gpsActivo = false;
             data.reconectando = true;
             actualizarAlertGPS(seccion);
@@ -986,31 +1102,26 @@ function iniciarWatchGPS(seccion) {
                 document.getElementById('mensajeEstado').textContent = `⚠️ GPS desactivado en ${nombre}.`;
             } else if (error.code === 2 || error.code === 3) {
                 document.getElementById('mensajeEstado').textContent = `📡 Sin señal GPS en ${nombre}. Reintentando...`;
+                
+                // Intentar reconectar automáticamente
+                if (data.watchId) {
+                    navigator.geolocation.clearWatch(data.watchId);
+                    data.watchId = null;
+                }
+                setTimeout(() => {
+                    if (data.viajeActivo && !data.modoManual) {
+                        console.log(`🔄 Reintentando GPS para ${nombre}`);
+                        iniciarWatchGPS(seccion);
+                    }
+                }, 3000);
             }
         },
         { 
             enableHighAccuracy: true, 
-            maximumAge: 500,
-            timeout: 5000
+            maximumAge: 1000,
+            timeout: 15000
         }
     );
-    
-    if (estado.timeoutGps) clearInterval(estado.timeoutGps);
-    estado.timeoutGps = setInterval(() => {
-        if (!data.viajeActivo || data.modoManual) {
-            clearInterval(estado.timeoutGps);
-            return;
-        }
-        const ahora = new Date().getTime();
-        const ultimoPunto = data.ultimoPuntoValido || 0;
-        
-        if (ahora - ultimoPunto > 5000) {
-            data.gpsActivo = false;
-            data.reconectando = true;
-            actualizarAlertGPS(seccion);
-            document.getElementById('mensajeEstado').textContent = `📡 RECONECTANDO GPS en ${nombre}`;
-        }
-    }, 2000);
 }
 
 function actualizarAlertGPS(seccion) {
@@ -1019,11 +1130,10 @@ function actualizarAlertGPS(seccion) {
     const alertDeuda = document.getElementById(seccion + 'AlertDeuda');
     const estadoEl = document.getElementById(seccion + 'EstadoViaje');
     
-    // Actualizar alerta de deuda
     if (data.deuda > 0 && data.viajeActivo) {
         if (alertDeuda) {
             alertDeuda.classList.add('visible');
-            alertDeuda.textContent = `💰 DEUDA: ${data.deuda.toFixed(2)} L - Combustible usado de otra sección`;
+            alertDeuda.textContent = `💰 DEUDA: ${data.deuda.toFixed(2)} L`;
         }
     } else {
         if (alertDeuda) alertDeuda.classList.remove('visible');
@@ -1033,7 +1143,7 @@ function actualizarAlertGPS(seccion) {
         if (alertEl) {
             alertEl.classList.add('visible');
             alertEl.classList.add('sincombustible');
-            alertEl.textContent = '⛽ ¡SIN COMBUSTIBLE! Carga combustible.';
+            alertEl.textContent = '⛽ ¡SIN COMBUSTIBLE!';
         }
         if (estadoEl) {
             estadoEl.className = 'estado-viaje sincombustible';
@@ -1051,7 +1161,7 @@ function actualizarAlertGPS(seccion) {
                 alertEl.textContent = '📡 RECONECTANDO GPS...';
             } else {
                 alertEl.classList.remove('reconectando');
-                alertEl.textContent = '📡 SIN SEÑAL GPS - Reintentando...';
+                alertEl.textContent = '📡 SIN SEÑAL GPS';
             }
         }
         if (estadoEl) {
@@ -1113,7 +1223,6 @@ async function finalizarViaje(seccion) {
         }
     }
     
-    // Calcular distancia REAL
     let distanciaTotal = 0;
     for (let i = 1; i < rutaFinal.length; i++) {
         const p1 = rutaFinal[i-1];
@@ -1122,7 +1231,6 @@ async function finalizarViaje(seccion) {
     }
     const km = distanciaTotal / 1000;
     
-    // Calcular combustible usado en este viaje
     const litrosUsados = km * CONSUMO_LITROS_POR_KM;
     
     const viaje = {
@@ -1142,14 +1250,9 @@ async function finalizarViaje(seccion) {
     };
     data.viajes.push(viaje);
     
-    // Limpiar recursos
     if (data.watchId) {
         navigator.geolocation.clearWatch(data.watchId);
         data.watchId = null;
-    }
-    if (estado.timeoutGps) {
-        clearInterval(estado.timeoutGps);
-        estado.timeoutGps = null;
     }
     if (estado.routingControl) {
         estado.mapa.removeControl(estado.routingControl);
@@ -1165,6 +1268,7 @@ async function finalizarViaje(seccion) {
     
     data.viajeActivo = false;
     data.modoManual = false;
+    data.ultimaPosicion = null;
     estado.seccionActiva = null;
     
     actualizarUI();
@@ -1174,10 +1278,9 @@ async function finalizarViaje(seccion) {
     mostrarHistorial(seccion);
     dibujarRuta(seccion);
     
-    let mensajeFinal = `✅ Viaje completado!\n📏 Distancia: ${km.toFixed(2)} km\n⛽ Usado: ${litrosUsados.toFixed(2)} L\n💰 Deuda: ${data.deuda.toFixed(2)} L\n📍 ${data.nombreOrigen} → ${nombreDestino.trim()}`;
+    let mensajeFinal = `✅ Viaje completado!\n📏 Distancia: ${km.toFixed(2)} km\n⛽ Usado: ${litrosUsados.toFixed(2)} L\n💰 Deuda: ${data.deuda.toFixed(2)} L`;
     if (data.deuda > 0) {
-        mensajeFinal += `\n\n⚠️ DEUDA: ${data.deuda.toFixed(2)} L de combustible usado de otra sección.`;
-        mensajeFinal += `\n💡 Carga combustible en ${nombre} para pagar la deuda automáticamente.`;
+        mensajeFinal += `\n\n⚠️ DEUDA: ${data.deuda.toFixed(2)} L`;
     }
     if (corregido) {
         mensajeFinal += `\n🔄 Ruta corregida (${saltosEliminados} saltos)`;
@@ -1189,7 +1292,7 @@ async function finalizarViaje(seccion) {
 }
 
 // ============================================================
-// FUNCIONES DE MAPA Y RUTAS (resumidas)
+// FUNCIONES DE MAPA Y RUTAS
 // ============================================================
 function detectarSaltos(ruta) {
     if (ruta.length < 2) return { tieneSaltos: false, saltos: [] };
@@ -1282,7 +1385,6 @@ function actualizarUI() {
     document.getElementById('miliConsumo').textContent = getConsumo('mili').toFixed(2) + ' L/100km';
     document.getElementById('miliDeuda').textContent = miliData.deuda.toFixed(2) + ' L';
     
-    // Barra Mili - mostrar deuda como parte negativa
     const miliTotal = miliData.combustible + miliData.deuda || 0.01;
     const miliPorcentaje = Math.min(100, (miliData.combustible / miliTotal) * 100);
     const miliRelleno = document.getElementById('miliBarraRelleno');
@@ -1312,7 +1414,6 @@ function actualizarUI() {
     document.getElementById('astroConsumo').textContent = getConsumo('astro').toFixed(2) + ' L/100km';
     document.getElementById('astroDeuda').textContent = astroData.deuda.toFixed(2) + ' L';
     
-    // Barra Astroland
     const astroTotal = astroData.combustible + astroData.deuda || 0.01;
     const astroPorcentaje = Math.min(100, (astroData.combustible / astroTotal) * 100);
     const astroRelleno = document.getElementById('astroBarraRelleno');
@@ -1362,7 +1463,6 @@ function mostrarHistorial(seccion) {
         const realIndex = data.viajes.length - 1 - index;
         const tieneRuta = v.ruta && v.ruta.length >= 2;
         
-        // Si es transferencia, mostrar de forma especial
         if (v.esTransferencia) {
             return `
             <div class="historial-item" style="border-left-color: #8e44ad;">
@@ -1396,7 +1496,7 @@ function mostrarHistorial(seccion) {
 }
 
 // ============================================================
-// FUNCIONES DE MAPA (resumidas)
+// FUNCIONES DE MAPA
 // ============================================================
 function initMap() {
     const map = L.map('map').setView([-34.6037, -58.3816], 13);
@@ -1545,10 +1645,6 @@ function activarModoManual(seccion) {
             navigator.geolocation.clearWatch(data.watchId);
             data.watchId = null;
         }
-        if (estado.timeoutGps) {
-            clearInterval(estado.timeoutGps);
-            estado.timeoutGps = null;
-        }
         const dragInstruction = document.getElementById(seccion + 'DragInstruction');
         if (dragInstruction) dragInstruction.classList.add('visible');
         document.getElementById('mensajeEstado').textContent = `✏️ Manual activado en ${nombre}. Arrastra 🏆.`;
@@ -1664,7 +1760,6 @@ function resetearSeccion(seccion) {
     
     const data = seccion === 'mili' ? estado.mili : estado.astro;
     if (data.watchId) navigator.geolocation.clearWatch(data.watchId);
-    if (estado.timeoutGps) clearInterval(estado.timeoutGps);
     if (estado.routingControl) {
         estado.mapa.removeControl(estado.routingControl);
         estado.routingControl = null;
@@ -1692,6 +1787,7 @@ function resetearSeccion(seccion) {
     data.modoManual = false;
     data.destinoManual = null;
     data.deuda = 0;
+    data.ultimaPosicion = null;
     
     if (estado.seccionActiva === seccion) estado.seccionActiva = null;
     
