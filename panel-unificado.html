@@ -1657,6 +1657,7 @@
                 </span>
             </div>
 
+            <!-- Filtro de sucursales - SOLO las 3 principales -->
             <div class="catalogo-filtro-sucursal" id="catalogoFiltros">
                 <button class="active" data-sucursal="todas">
                     📊 Todas <span class="count" id="countTodas">0</span>
@@ -2061,7 +2062,8 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getDatabase, ref, get, child, remove, update, set, push, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-    const sucursalesConfig = [
+    // ✅ SUCURSALES ACTIVAS EN EL CATÁLOGO (excluyendo Lambaré)
+    const sucursalesCatalogo = [
         { nombre: "Villa Morra", id: "villa-morra", config: {
             apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
             authDomain: "villa-morra.firebaseapp.com",
@@ -2080,15 +2082,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
             messagingSenderId: "523096933391",
             appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a"
         }},
-        { nombre: "Lambaré", id: "lambare", config: {
-            apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
-            authDomain: "lambare-85124.firebaseapp.com",
-            databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
-            projectId: "lambare-85124",
-            storageBucket: "lambare-85124.firebasestorage.app",
-            messagingSenderId: "683666735879",
-            appId: "1:683666735879:web:88a7f147d57165ad60bba2"
-        }},
         { nombre: "Villa Elisa", id: "villa-elisa", config: {
             apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ",
             authDomain: "villa-elisa-3adbe.firebaseapp.com",
@@ -2100,9 +2093,23 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
         }}
     ];
 
+    // ✅ SUCURSALES COMPLETAS (incluyendo Lambaré para filtros y contadores)
+    const sucursalesCompletas = [
+        ...sucursalesCatalogo,
+        { nombre: "Lambaré", id: "lambare", config: {
+            apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
+            authDomain: "lambare-85124.firebaseapp.com",
+            databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
+            projectId: "lambare-85124",
+            storageBucket: "lambare-85124.firebasestorage.app",
+            messagingSenderId: "683666735879",
+            appId: "1:683666735879:web:88a7f147d57165ad60bba2"
+        }}
+    ];
+
     // Mapeo rápido de sucursal a configuración
     const sucursalToConfig = {};
-    sucursalesConfig.forEach(s => { sucursalToConfig[s.nombre] = s; });
+    sucursalesCompletas.forEach(s => { sucursalToConfig[s.nombre] = s; });
 
     // ============================================================
     // 2. ESTADO
@@ -2116,7 +2123,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
         fechasConDatos: [],
         tema: 'light',
         eliminando: false,
-        catalogoData: [], // Datos del catálogo unificado
+        catalogoData: [],
         catalogoFiltro: 'todas',
         catalogoSearch: '',
         currentProduct: null,
@@ -2142,7 +2149,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     const CIERRE_CODES = ['000-09', '000-10'];
     const STOCK_INICIAL = 100;
 
-    // Variable para almacenar el item a eliminar
     let pendingDelete = null;
 
     // ============================================================
@@ -2157,7 +2163,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
             const target = document.getElementById(this.dataset.tab);
             if (target) target.style.display = 'block';
 
-            // Si es el tab de catálogo, cargar los datos
             if (this.dataset.tab === 'tab-catalogo') {
                 cargarCatalogoUnificado();
             }
@@ -2206,7 +2211,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     });
 
     // ============================================================
-    // 6. FUNCIONES DE ELIMINACIÓN (igual que antes)
+    // 6. FUNCIONES DE ELIMINACIÓN
     // ============================================================
     async function eliminarDelCarrito(sucursal, firebaseKey) {
         const config = sucursalToConfig[sucursal];
@@ -2368,7 +2373,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
         const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
         let totalItems = 0;
 
-        for (const suc of sucursalesConfig) {
+        for (const suc of sucursalesCompletas) {
             try {
                 const app = initializeApp(suc.config, suc.id);
                 const db = getDatabase(app);
@@ -2542,7 +2547,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     }
 
     // ============================================================
-    // 11. CATÁLOGO UNIFICADO
+    // 11. CATÁLOGO UNIFICADO - SOLO 3 SUCURSALES
     // ============================================================
     async function cargarCatalogoUnificado() {
         const container = document.getElementById('catalogoContainer');
@@ -2555,10 +2560,9 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
 
         const productos = [];
 
-        // Generar la lista de productos de cada sucursal
-        for (const suc of sucursalesConfig) {
+        // ✅ USAR SOLO LAS 3 SUCURSALES DEL CATÁLOGO
+        for (const suc of sucursalesCatalogo) {
             try {
-                // Obtener el stock de la sucursal
                 const app = initializeApp(suc.config, suc.id);
                 const db = getDatabase(app);
                 const stockSnap = await get(ref(db, 'stock'));
@@ -2648,7 +2652,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                     }
                 }
 
-                // Guardar el stock de esta sucursal para referencia rápida
                 estado.catalogoStock[suc.nombre] = stockData;
 
             } catch (error) {
@@ -2671,6 +2674,9 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
         return stockData[code] ?? STOCK_INICIAL;
     }
 
+    // ============================================================
+    // 12. RENDERIZAR CATÁLOGO CON IMÁGENES
+    // ============================================================
     function renderCatalogo(productos) {
         const container = document.getElementById('catalogoContainer');
         const filtro = estado.catalogoFiltro;
@@ -2678,18 +2684,15 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
 
         let filtrados = productos;
 
-        // Filtrar por sucursal
         if (filtro !== 'todas') {
             filtrados = filtrados.filter(p => p.sucursal === filtro);
         }
 
-        // Filtrar por búsqueda (primeros 3 dígitos)
         if (search) {
             const codigoBusqueda = search.padStart(3, '0').substring(0, 3);
             filtrados = filtrados.filter(p => p.code.startsWith(codigoBusqueda));
         }
 
-        // Ordenar por código
         filtrados.sort((a, b) => a.code.localeCompare(b.code));
 
         // Actualizar contadores
@@ -2715,7 +2718,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
             return;
         }
 
-        // Generar HTML
         const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
 
         let html = '';
@@ -2723,8 +2725,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
             const colorIndex = p.code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
             const stockClass = p.stock <= 0 ? 'sin-stock' : '';
             const outOfStock = p.stock <= 0 && !CIERRE_CODES.includes(p.code);
-
-            // Si es un código especial, no se oculta
             const isSpecial = CIERRE_CODES.includes(p.code) || p.code === '000-11';
 
             html += `
@@ -2744,28 +2744,43 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
             `;
         });
 
-        // Cargar imágenes después de renderizar
         container.innerHTML = html;
 
-        // Cargar imágenes asíncronamente
-        container.querySelectorAll('.catalogo-item').forEach(item => {
+        // ✅ FUNCIÓN MEJORADA PARA CARGAR IMÁGENES
+        cargarImagenesCatalogo(container);
+    }
+
+    // ============================================================
+    // 13. FUNCIÓN MEJORADA PARA CARGAR IMÁGENES
+    // ============================================================
+    function cargarImagenesCatalogo(container) {
+        const items = container.querySelectorAll('.catalogo-item');
+
+        items.forEach(item => {
             const code = item.dataset.code;
+            const placeholder = item.querySelector('.img-placeholder');
+
+            // Si ya tiene una imagen, no hacer nada
+            if (item.querySelector('img')) return;
+
+            // Intentar cargar la imagen
             const img = new Image();
-            img.onload = () => {
-                const placeholder = item.querySelector('.img-placeholder');
+            img.onload = function() {
                 if (placeholder) {
-                    placeholder.outerHTML = `<img src="../imagenes/${code}.jpg" alt="${code}" loading="lazy">`;
+                    placeholder.outerHTML = `<img src="../imagenes/${code}.jpg" alt="${code}" loading="lazy" onerror="this.style.display='none'">`;
                 }
             };
-            img.onerror = () => {
-                // Mantener el placeholder si la imagen no existe
+            img.onerror = function() {
+                // Si la imagen no existe, mantener el placeholder
+                // pero mostrar un mensaje en consola solo para debug
+                // console.log(`Imagen no encontrada: ../imagenes/${code}.jpg`);
             };
             img.src = `../imagenes/${code}.jpg`;
         });
     }
 
     // ============================================================
-    // 12. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
+    // 14. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
     // ============================================================
     window.handleCatalogoClick = function(element) {
         const code = element.dataset.code;
@@ -2776,24 +2791,20 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
         const sucursal = element.dataset.sucursal;
         const name = element.querySelector('p')?.textContent || code;
 
-        // Obtener la configuración de la sucursal
         const config = sucursalToConfig[sucursal];
         if (!config) {
             showToast('❌ Sucursal no encontrada', 'error');
             return;
         }
 
-        // Guardar la referencia a la sucursal actual
         estado.currentSucursal = sucursal;
         estado.currentApp = null;
         estado.currentDB = null;
 
-        // Inicializar la app de la sucursal para las operaciones
         const app = initializeApp(config.config, config.id);
         estado.currentApp = app;
         estado.currentDB = getDatabase(app);
 
-        // Cargar el stock actualizado
         cargarStockSucursal(sucursal).then(() => {
             const stockActual = estado.stock[sucursal] || {};
 
@@ -2812,7 +2823,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                 return;
             }
 
-            // Manejar códigos especiales
             if (code === '000-09') {
                 abrirModalCierre('Efectivo', 'Registrar monto de cierre en EFECTIVO - ' + sucursal);
                 return;
@@ -2834,7 +2844,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                 return;
             }
 
-            // Preparar el producto para el modal
             estado.currentProduct = {
                 code,
                 price,
@@ -2854,7 +2863,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                 sucursal: sucursal
             };
 
-            // Mostrar el modal de compra
             const movimientosTab = document.querySelector('#purchaseModal .tab-btn-compras[data-tab="movimientos"]');
             if (shouldShowMovimientosTab(code)) {
                 movimientosTab.style.display = 'block';
@@ -2896,7 +2904,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
             `;
             document.getElementById('unidadesInput').value = 1;
 
-            // Cargar opciones de máquinas
             const destinoSelect = document.getElementById('movimientoDestino');
             destinoSelect.innerHTML = '<option value="stock">📦 Stock</option>';
             for (let i = 1; i <= 20; i++) {
@@ -2924,7 +2931,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     }
 
     // ============================================================
-    // 13. FUNCIONES DE UTILIDAD PARA EL MODAL
+    // 15. FUNCIONES DE UTILIDAD PARA EL MODAL
     // ============================================================
     function shouldShowQuantity(code) {
         return code === '005-13' || code === '000-00';
@@ -2970,7 +2977,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     };
 
     // ============================================================
-    // 14. FUNCIONES DEL MODAL DE COMPRA
+    // 16. FUNCIONES DEL MODAL DE COMPRA
     // ============================================================
     window.closeModal = function() {
         document.getElementById('purchaseModal').style.display = 'none';
@@ -3025,7 +3032,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                     return;
                 }
 
-                // Usar la app ya inicializada o crear una nueva
                 let db;
                 if (estado.currentDB) {
                     db = estado.currentDB;
@@ -3045,7 +3051,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                     cantidadRestar = qty;
                 }
 
-                // Verificar stock antes de la transacción
                 const stockSnap = await get(ref(db, `stock/${stockKey}`));
                 let stockActual = stockSnap.val() ?? STOCK_INICIAL;
                 if (stockActual < cantidadRestar) {
@@ -3075,7 +3080,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                     sucursalOrigen: sucursal
                 };
 
-                // Realizar transacción atómica
                 const resultadoStock = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
                     if (currentValue === null) currentValue = STOCK_INICIAL;
                     const nuevoValor = currentValue - cantidadRestar;
@@ -3089,18 +3093,14 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                     return;
                 }
 
-                // Agregar al carrito
                 const cartRef = ref(db, 'carrito');
                 await push(cartRef, cartData);
 
-                // Actualizar stock local
                 if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
                 estado.stock[sucursal][stockKey] = resultadoStock.snapshot.val();
 
-                // Recargar el catálogo
                 await cargarCatalogoUnificado();
 
-                // Cerrar modal y mostrar mensaje
                 closeModal();
                 showToast(`✅ ${qty} unidad(es) agregada(s) al carrito de ${sucursal}`, 'success');
 
@@ -3116,7 +3116,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     };
 
     // ============================================================
-    // 15. MOVIMIENTOS DE UNIDADES
+    // 17. MOVIMIENTOS DE UNIDADES
     // ============================================================
     window.agregarUnidades = async function() {
         if (window.agregarUnidadesLock) return;
@@ -3160,7 +3160,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
             let cantidadMovimiento;
 
             if (destino === 'stock') {
-                // Agregar al stock: sumar
                 if (consumo > 0 && !isIndependentCode) {
                     stockKey = '000-00';
                     cantidadMovimiento = consumo * cantidad;
@@ -3207,7 +3206,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                     alert('❌ Error en la transacción de stock');
                 }
             } else {
-                // Máquina: restar del stock
                 if (consumo > 0 && !isIndependentCode) {
                     stockKey = '000-00';
                     cantidadMovimiento = consumo * cantidad;
@@ -3216,7 +3214,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                     cantidadMovimiento = cantidad;
                 }
 
-                // Verificar stock
                 const stockSnap = await get(ref(db, `stock/${stockKey}`));
                 let stockActual = stockSnap.val() ?? STOCK_INICIAL;
                 if (stockActual < cantidadMovimiento) {
@@ -3315,7 +3312,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
             let cantidadMovimiento;
 
             if (destino === 'stock') {
-                // Quitar del stock: restar
                 if (consumo > 0 && !isIndependentCode) {
                     stockKey = '000-00';
                     cantidadMovimiento = consumo * cantidad;
@@ -3372,7 +3368,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
                     alert('❌ Error en la transacción de stock');
                 }
             } else {
-                // Máquina: devolver al stock (sumar)
                 if (consumo > 0 && !isIndependentCode) {
                     stockKey = '000-00';
                     cantidadMovimiento = consumo * cantidad;
@@ -3428,11 +3423,9 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     };
 
     // ============================================================
-    // 16. FICHAS GRATIS
+    // 18. FICHAS GRATIS
     // ============================================================
     async function procesarFichaGratis(code, fichasAConsumir) {
-        // Usar la sucursal actual desde el contexto del catálogo
-        // En este caso, obtenemos la sucursal del elemento clickeado
         const catalogoItem = document.querySelector('.catalogo-item[data-code="' + code + '"]');
         if (!catalogoItem) {
             showToast('❌ Producto no encontrado', 'error');
@@ -3504,7 +3497,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     }
 
     // ============================================================
-    // 17. CIERRES DE CAJA
+    // 19. CIERRES DE CAJA
     // ============================================================
     function abrirModalCierre(tipo, descripcion) {
         document.getElementById('cierreTitulo').innerHTML = `💰 Cierre de Caja - ${tipo}`;
@@ -3530,7 +3523,6 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
         let montoNum = parseFloat(monto);
         if (isNaN(montoNum)) montoNum = 0;
 
-        // Obtener la sucursal actual desde el contexto
         const catalogoItem = document.querySelector('.catalogo-item[data-code="000-09"]') || document.querySelector('.catalogo-item[data-code="000-10"]');
         const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
 
@@ -3577,10 +3569,9 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     }
 
     // ============================================================
-    // 18. CONTADORES DE MÁQUINAS
+    // 20. CONTADORES DE MÁQUINAS
     // ============================================================
     window.openContadoresModal = async function() {
-        // Obtener la sucursal actual
         const catalogoItem = document.querySelector('.catalogo-item[data-code="000-11"]');
         const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
         estado.currentSucursalContadores = sucursal;
@@ -3699,7 +3690,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     };
 
     // ============================================================
-    // 19. FILTROS DEL CATÁLOGO
+    // 21. FILTROS DEL CATÁLOGO
     // ============================================================
     document.getElementById('catalogoFiltros').addEventListener('click', function(e) {
         const btn = e.target.closest('button');
@@ -3718,7 +3709,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     });
 
     // ============================================================
-    // 20. FILTROS AVANZADOS (igual que antes)
+    // 22. FILTROS AVANZADOS
     // ============================================================
     async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -3781,9 +3772,9 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
 
         let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
-            sucursalesACargar = sucursalesConfig;
+            sucursalesACargar = sucursalesCompletas;
         } else {
-            const encontrada = sucursalesConfig.find(s => s.nombre === sucursalFiltro);
+            const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
             if (encontrada) sucursalesACargar = [encontrada];
         }
 
@@ -4022,7 +4013,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     };
 
     // ============================================================
-    // 21. CONTADORES DE MÁQUINAS (Panel)
+    // 23. CONTADORES DE MÁQUINAS (Panel)
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -4074,9 +4065,9 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
 
         let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
-            sucursalesACargar = sucursalesConfig;
+            sucursalesACargar = sucursalesCompletas;
         } else {
-            const encontrada = sucursalesConfig.find(s => s.nombre === sucursalFiltro);
+            const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
             if (encontrada) sucursalesACargar = [encontrada];
         }
 
@@ -4295,7 +4286,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     }
 
     // ============================================================
-    // 22. PDF
+    // 24. PDF
     // ============================================================
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
@@ -4469,13 +4460,11 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     }
 
     // ============================================================
-    // 23. INICIALIZACIÓN
+    // 25. INICIALIZACIÓN
     // ============================================================
-    // Cargar carritos y catálogo al iniciar
     cargarCarritos();
     cargarCatalogoUnificado();
 
-    // Configurar fechas por defecto
     const hoy = new Date();
     const hace7Dias = new Date();
     hace7Dias.setDate(hoy.getDate() - 7);
@@ -4488,17 +4477,16 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 3.0 - Catálogo Unificado');
-    console.log('🗑️ Puedes eliminar items del historial desde la tabla de filtros');
-    console.log('📦 Catálogo combinado de todas las sucursales en tiempo real');
+    console.log('🏷️ Versión: 3.1 - Catálogo Unificado (sin Lambaré)');
+    console.log('📦 Catálogo combinado de Villa Morra, Los Laureles y Villa Elisa');
+    console.log('🖼️ Imágenes cargadas desde ../imagenes/');
 
-    // Listener para cambios en tiempo real del stock
-    for (const suc of sucursalesConfig) {
+    // Listener para cambios en tiempo real del stock (solo 3 sucursales)
+    for (const suc of sucursalesCatalogo) {
         try {
             const app = initializeApp(suc.config, suc.id);
             const db = getDatabase(app);
             onValue(ref(db, 'stock'), () => {
-                // Recargar catálogo cuando cambia el stock
                 if (document.getElementById('tab-catalogo').style.display !== 'none') {
                     cargarCatalogoUnificado();
                 }
@@ -4509,7 +4497,7 @@ MODALES DE COMPRA (copiados de los catálogos individuales)
     }
 
     // Listener para cambios en tiempo real del carrito
-    for (const suc of sucursalesConfig) {
+    for (const suc of sucursalesCompletas) {
         try {
             const app = initializeApp(suc.config, suc.id);
             const db = getDatabase(app);
