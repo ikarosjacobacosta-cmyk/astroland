@@ -46,10 +46,10 @@
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
@@ -513,11 +513,11 @@
         .unidades-maquina {
             font-weight: bold;
         }
-        .unidades-positivo { 
-            color: #4CAF50; 
+        .unidades-positivo {
+            color: #4CAF50;
         }
-        .unidades-negativo { 
-            color: #f44336; 
+        .unidades-negativo {
+            color: #f44336;
         }
 
         /* ============================================================
@@ -883,6 +883,159 @@
         }
 
         /* ============================================================
+           CATÁLOGO UNIFICADO
+           ============================================================ */
+        .catalogo-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        }
+
+        .catalogo-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            border: 1px solid var(--gray-200);
+        }
+
+        .catalogo-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--gold);
+        }
+
+        .catalogo-item .sucursal-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: var(--primary);
+            color: white;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .catalogo-item .stock-indicator {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(33, 150, 243, 0.9);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .catalogo-item .stock-indicator.sin-stock {
+            background: var(--danger);
+        }
+
+        .catalogo-item img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: contain;
+            background: #f9f9f9;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+        }
+
+        .catalogo-item .img-placeholder {
+            width: 100%;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .catalogo-item p {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: var(--gray-700);
+            font-weight: 500;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .catalogo-item.out-of-stock {
+            display: none;
+        }
+
+        .catalogo-filtro-sucursal {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .catalogo-filtro-sucursal button {
+            padding: 6px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 20px;
+            background: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--gray-600);
+        }
+
+        .catalogo-filtro-sucursal button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .catalogo-filtro-sucursal button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .catalogo-filtro-sucursal button .count {
+            background: rgba(255,255,255,0.2);
+            padding: 0 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+
+        .catalogo-filtro-sucursal button.active .count {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .catalogo-search {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            margin-bottom: 16px;
+        }
+
+        .catalogo-search:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 27, 74, 0.1);
+        }
+
+        /* ============================================================
            RESPONSIVE
            ============================================================ */
         @media (max-width: 992px) {
@@ -907,6 +1060,7 @@
             .table-premium thead th { font-size: 0.6rem; padding: 8px 4px; }
             .table-premium tbody td { padding: 8px 4px; }
             .calendar-day { width: 30px; height: 30px; font-size: 0.7rem; }
+            .catalogo-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 480px) {
@@ -916,21 +1070,8 @@
             .header-logo { width: 36px; height: 36px; font-size: 18px; }
             .header-title h1 { font-size: 1.1rem; }
             .header-badge { font-size: 0.7rem; padding: 4px 10px; }
-        }
-
-        /* ============================================================
-           TOOLTIP
-           ============================================================ */
-        .tooltip-trigger {
-            cursor: help;
-            border-bottom: 1px dashed var(--gray-300);
-        }
-
-        /* ============================================================
-           SCROLL SUAVE
-           ============================================================ */
-        html {
-            scroll-behavior: smooth;
+            .catalogo-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .catalogo-item { padding: 8px; }
         }
 
         /* ============================================================
@@ -1046,6 +1187,349 @@
         .modal-box .modal-actions .btn-cancel:hover {
             background: var(--gray-300);
         }
+
+        /* ============================================================
+           MODALES DE COMPRA (copiados de los catálogos individuales)
+           ============================================================ */
+        .modal-compra {
+            display: none;
+            position: fixed;
+            z-index: 9997;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-compra .modal-content {
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            width: 100%;
+            min-height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-compra .close {
+            color: #aaa;
+            float: right;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            z-index: 10;
+            background: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-compra .close:hover { color: #000; background: #eee; }
+
+        .modal-compra h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            font-size: 1.6rem;
+            text-align: center;
+        }
+
+        .modal-compra .tabs-compras {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .modal-compra .tab-btn-compras {
+            flex: 1;
+            padding: 14px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+
+        .modal-compra .tab-btn-compras.active {
+            background: #2196F3;
+            color: white;
+        }
+
+        .modal-compra .tab-pane-compras {
+            display: none;
+        }
+
+        .modal-compra .tab-pane-compras.active {
+            display: block;
+        }
+
+        .modal-compra .product-info,
+        .modal-compra .stock-info {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 1.2rem;
+        }
+
+        .modal-compra .stock-info {
+            background: #e3f2fd;
+            text-align: center;
+            font-weight: bold;
+            color: #1976D2;
+        }
+
+        .modal-compra .payment-options {
+            margin: 20px 0;
+        }
+
+        .modal-compra .payment-option {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .modal-compra .payment-option label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .modal-compra .payment-option input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .modal-compra .auto-calc {
+            font-size: 1rem;
+            margin-top: 8px;
+            color: #666;
+        }
+
+        .modal-compra .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-compra .modal-buttons button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            touch-action: manipulation;
+        }
+
+        .modal-compra #addToCart { background: #4CAF50; color: white; }
+        .modal-compra #cancelModal { background: #f44336; color: white; }
+
+        .modal-compra .modal-qty-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f0f7ff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #cce5ff;
+        }
+
+        .modal-compra .modal-qty-row label {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #004085;
+        }
+
+        .modal-compra #productQuantity {
+            width: 100px;
+            padding: 12px;
+            font-size: 1.1rem;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-weight: bold;
+            background: white;
+            -webkit-appearance: none;
+        }
+
+        .modal-compra .maquina-input {
+            width: 100%;
+            padding: 18px;
+            font-size: 16px;
+            text-align: center;
+            margin: 15px 0;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .modal-compra .maquina-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .modal-compra .maquina-buttons button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+
+        .modal-compra .btn-agregar { background: #4CAF50; color: white; }
+        .modal-compra .btn-quitar { background: #f44336; color: white; }
+        .modal-compra .btn-cancelar { background: #666; color: white; }
+
+        .cierre-modal .modal-content {
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            width: 100%;
+            min-height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cierre-modal input {
+            width: 100%;
+            padding: 18px;
+            font-size: 16px;
+            text-align: center;
+            margin: 15px 0;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .cierre-modal button {
+            padding: 14px 20px;
+            margin: 8px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+
+        .overlay-mensaje {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 10000;
+            white-space: nowrap;
+            pointer-events: none;
+            font-family: monospace;
+        }
+
+        .password-input { display: none; margin-top: 10px; text-align: center; }
+        .password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 16px; -webkit-appearance: none; appearance: none; }
+        .password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; touch-action: manipulation; }
+
+        .contadores-modal .modal-content {
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            width: 100%;
+            min-height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contadores-modal .contadores-form {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .contadores-modal .contadores-field {
+            margin-bottom: 20px;
+        }
+
+        .contadores-modal .contadores-field label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .contadores-modal .contadores-field select,
+        .contadores-modal .contadores-field input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background: white;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .contadores-modal .contadores-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .contadores-modal .contadores-buttons button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            touch-action: manipulation;
+        }
+        .btn-guardar-contadores { background: #4CAF50; color: white; }
+        .btn-ver-contadores { background: #2196F3; color: white; }
     </style>
 </head>
 <body>
@@ -1092,6 +1576,10 @@
         <button class="nav-tab active" data-tab="tab-carritos">
             <i class="fas fa-shopping-cart"></i> Carritos
             <span class="tab-badge" id="tabCarritosBadge">0</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-catalogo">
+            <i class="fas fa-th"></i> Catálogo
+            <span class="tab-badge" id="tabCatalogoBadge">0</span>
         </button>
         <button class="nav-tab" data-tab="tab-filtros">
             <i class="fas fa-filter"></i> Filtros
@@ -1155,7 +1643,48 @@
     </section>
 
     <!-- ============================================================
-    TAB 2: FILTROS AVANZADOS
+    TAB 2: CATÁLOGO UNIFICADO
+    ============================================================ -->
+    <section id="tab-catalogo" class="tab-content" style="display:none;">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2>
+                    <span class="icon">📦</span>
+                    Catálogo Unificado
+                </h2>
+                <span class="badge-count" id="catalogoTotalBadge">
+                    <i class="fas fa-store"></i> <strong id="catalogoTotalCount">0</strong> productos
+                </span>
+            </div>
+
+            <div class="catalogo-filtro-sucursal" id="catalogoFiltros">
+                <button class="active" data-sucursal="todas">
+                    📊 Todas <span class="count" id="countTodas">0</span>
+                </button>
+                <button data-sucursal="Villa Morra">
+                    🏢 Villa Morra <span class="count" id="countVilla Morra">0</span>
+                </button>
+                <button data-sucursal="Los Laureles">
+                    🏢 Los Laureles <span class="count" id="countLos Laureles">0</span>
+                </button>
+                <button data-sucursal="Villa Elisa">
+                    🏢 Villa Elisa <span class="count" id="countVilla Elisa">0</span>
+                </button>
+            </div>
+
+            <input type="text" class="catalogo-search" id="catalogoSearch" placeholder="🔍 Buscar por código (ej: 005)..." inputmode="numeric">
+
+            <div id="catalogoContainer" class="catalogo-grid">
+                <div class="loader-premium" style="grid-column: 1 / -1;">
+                    <div class="spinner"></div>
+                    <span>Cargando catálogo...</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+    TAB 3: FILTROS AVANZADOS
     ============================================================ -->
     <section id="tab-filtros" class="tab-content" style="display:none;">
         <div class="card-premium">
@@ -1198,7 +1727,7 @@
             <div class="info-box-premium">
                 <i class="fas fa-lightbulb"></i>
                 <div>
-                    <strong>¿Cómo funciona?</strong> El historial agrupa las operaciones por <strong>día laboral</strong> (fechaEliminacion). 
+                    <strong>¿Cómo funciona?</strong> El historial agrupa las operaciones por <strong>día laboral</strong> (fechaEliminacion).
                     Una operación del 22/06 a las 00:01hs aparece en el historial con fecha <strong>21/06</strong> porque el cierre fue el 21.
                 </div>
             </div>
@@ -1277,7 +1806,7 @@
     </section>
 
     <!-- ============================================================
-    TAB 3: CONTADORES DE MÁQUINAS
+    TAB 4: CONTADORES DE MÁQUINAS
     ============================================================ -->
     <section id="tab-contadores" class="tab-content" style="display:none;">
         <div class="card-premium">
@@ -1358,7 +1887,7 @@
     </section>
 
     <!-- ============================================================
-    TAB 4: REPORTES PDF
+    TAB 5: REPORTES PDF
     ============================================================ -->
     <section id="tab-pdf" class="tab-content" style="display:none;">
         <div class="card-premium">
@@ -1390,6 +1919,126 @@
     </section>
 </div>
 
+<!-- ============================================================
+MODALES DE COMPRA (copiados de los catálogos individuales)
+============================================================ -->
+<!-- Modal de compra -->
+<div id="purchaseModal" class="modal-compra">
+    <div class="modal-content">
+        <button class="close" onclick="closeModal()">&times;</button>
+        <h3>🛍️ Producto</h3>
+
+        <div class="tabs-compras">
+            <button class="tab-btn-compras active" data-tab="compra">🛒 Compra</button>
+            <button class="tab-btn-compras" data-tab="movimientos">🔄 Movimientos</button>
+        </div>
+
+        <div id="tabCompra" class="tab-pane-compras active">
+            <div id="modalProductInfo" class="product-info"></div>
+            <div id="modalStockInfo" class="stock-info"></div>
+
+            <div id="quantityRow" class="modal-qty-row">
+                <label>📦 Cantidad:</label>
+                <input type="number" id="productQuantity" min="1" step="1" value="1" onfocus="this.select()">
+            </div>
+
+            <div class="payment-options">
+                <div class="payment-option">
+                    <label>🎯 Pagar con Puntos</label>
+                    <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" inputmode="numeric">
+                    <div class="auto-calc">💰 Total del producto: G.<span id="totalPrice">0</span></div>
+                </div>
+                <div class="payment-option">
+                    <label>💵 Completar con Dinero (G.)</label>
+                    <input type="number" id="moneyInput" min="0" step="1000" value="0" readonly style="background-color:#f5f5f5;">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="addToCart" type="button" onclick="addToCart()">✅ Agregar al Carrito</button>
+                <button id="cancelModal" onclick="closeModal()">❌ Cancelar</button>
+            </div>
+        </div>
+
+        <div id="tabMovimientos" class="tab-pane-compras">
+            <div id="movimientosProductInfo" class="product-info"></div>
+            <select id="movimientoDestino" class="maquina-input" style="padding:12px;">
+                <option value="stock">📦 Stock</option>
+            </select>
+            <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades" onfocus="this.select()">
+            <div class="maquina-buttons">
+                <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
+                <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
+                <button class="btn-cancelar" onclick="closeModal()">❌ Cancelar</button>
+            </div>
+            <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
+                📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
+                🖥️ <strong>Máquina:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cierre -->
+<div id="cierreModal" class="cierre-modal" style="display:none; position:fixed; z-index:9997; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.95); overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div class="modal-content">
+        <button class="close" onclick="closeCierreModal()">&times;</button>
+        <h3 id="cierreTitulo">💰 Cierre de Caja</h3>
+        <p id="cierreDescripcion" style="font-size:1.1rem; text-align:center;"></p>
+        <input type="text" id="cierreMonto" placeholder="Ingrese el monto" inputmode="numeric">
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="cierreBtnConfirmar" style="background:#4CAF50; color:white;">✅ Confirmar</button>
+            <button onclick="closeCierreModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Contadores -->
+<div id="contadoresModal" class="contadores-modal" style="display:none; position:fixed; z-index:9997; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.95); overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div class="modal-content">
+        <button class="close" onclick="closeContadoresModal()">&times;</button>
+        <h3>📊 Contadores de Máquinas - Código 000-11</h3>
+
+        <div class="contadores-form">
+            <div class="contadores-field">
+                <label>🖥️ Seleccionar Máquina:</label>
+                <select id="maquinaSelect">
+                    <option value="">-- Seleccionar --</option>
+                </select>
+            </div>
+
+            <div class="contadores-field">
+                <label>📅 Fecha de Anotación:</label>
+                <input type="date" id="fechaContador" value="">
+            </div>
+
+            <div class="contadores-field">
+                <label>🎴 Contador de Fichas:</label>
+                <input type="number" id="contadorFichas" min="0" step="1" value="0" placeholder="Fichas ingresadas">
+            </div>
+
+            <div class="contadores-field">
+                <label>🏆 Contador de Premios:</label>
+                <input type="number" id="contadorPremios" min="0" step="1" value="0" placeholder="Premios entregados">
+            </div>
+
+            <div class="contadores-field">
+                <label>🧪 Fichas de Prueba:</label>
+                <input type="number" id="fichasPrueba" min="0" step="1" value="0" placeholder="Fichas de prueba">
+            </div>
+
+            <div class="contadores-field">
+                <label>🎁 Premios de Prueba:</label>
+                <input type="number" id="premiosPrueba" min="0" step="1" value="0" placeholder="Premios de prueba">
+            </div>
+
+            <div class="contadores-buttons">
+                <button class="btn-guardar-contadores" onclick="guardarContadoresMaquina()">💾 Guardar</button>
+                <button class="btn-ver-contadores" onclick="cargarContadoresMaquina()">🔄 Cargar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal de confirmación -->
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
@@ -1410,7 +2059,7 @@
     // 1. IMPORTACIONES Y CONFIGURACIÓN
     // ============================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getDatabase, ref, get, child, remove, update } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+    import { getDatabase, ref, get, child, remove, update, set, push, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
     const sucursalesConfig = [
         { nombre: "Villa Morra", id: "villa-morra", config: {
@@ -1466,8 +2115,32 @@
         contadoresFiltrados: {},
         fechasConDatos: [],
         tema: 'light',
-        eliminando: false
+        eliminando: false,
+        catalogoData: [], // Datos del catálogo unificado
+        catalogoFiltro: 'todas',
+        catalogoSearch: '',
+        currentProduct: null,
+        currentMovimientosProduct: null,
+        cart: [],
+        stock: {},
+        addToCartLock: false,
+        agregarUnidadesLock: false,
+        quitarUnidadesLock: false,
+        catalogoProductos: [],
+        catalogoStock: {}
     };
+
+    // Constantes de los catálogos individuales
+    const FICHA_CONSUMPTION = {
+        '000-00': 1,
+        '000-01': 16,
+        '000-02': 36,
+        '000-05': 1,
+        '000-06': 7
+    };
+    const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
+    const CIERRE_CODES = ['000-09', '000-10'];
+    const STOCK_INICIAL = 100;
 
     // Variable para almacenar el item a eliminar
     let pendingDelete = null;
@@ -1479,10 +2152,15 @@
         tab.addEventListener('click', function() {
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            
+
             this.classList.add('active');
             const target = document.getElementById(this.dataset.tab);
             if (target) target.style.display = 'block';
+
+            // Si es el tab de catálogo, cargar los datos
+            if (this.dataset.tab === 'tab-catalogo') {
+                cargarCatalogoUnificado();
+            }
         });
     });
 
@@ -1523,18 +2201,17 @@
         document.getElementById('confirmModal').classList.remove('active');
     }
 
-    // Cerrar modal con ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeConfirmModal();
     });
 
     // ============================================================
-    // 6. FUNCIONES DE ELIMINACIÓN
+    // 6. FUNCIONES DE ELIMINACIÓN (igual que antes)
     // ============================================================
     async function eliminarDelCarrito(sucursal, firebaseKey) {
         const config = sucursalToConfig[sucursal];
         if (!config) return { success: false, error: 'Sucursal no encontrada' };
-        
+
         try {
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
@@ -1549,38 +2226,29 @@
     async function eliminarItemHistorial(sucursal, firebaseKey, indexVenta) {
         const config = sucursalToConfig[sucursal];
         if (!config) return { success: false, error: 'Sucursal no encontrada: ' + sucursal };
-        
+
         try {
-            console.log(`🔍 Intentando eliminar de ${sucursal}: firebaseKey=${firebaseKey}, indexVenta=${indexVenta}`);
-            
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
-            
-            // Obtener el registro completo
+
             const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
             if (!snapshot.exists()) {
-                console.error(`❌ Registro no encontrado: ${firebaseKey}`);
                 return { success: false, error: 'Registro no encontrado en ' + sucursal };
             }
-            
+
             const registro = snapshot.val();
             const ventas = registro.ventas || [];
-            
-            // Verificar que el índice existe
+
             if (indexVenta === null || indexVenta === undefined || indexVenta < 0 || indexVenta >= ventas.length) {
-                console.error(`❌ Índice inválido: ${indexVenta}, total ventas: ${ventas.length}`);
                 return { success: false, error: 'Item no encontrado en el índice ' + indexVenta };
             }
-            
-            // Eliminar el item del array
+
             ventas.splice(indexVenta, 1);
-            
-            // Recalcular totales
+
             const totalDinero = ventas.reduce((s, v) => s + (v.money || 0), 0);
             const totalPuntos = ventas.reduce((s, v) => s + (v.points || 0), 0);
             const totalFichas = ventas.reduce((s, v) => s + (Math.abs(v.fichaConsumption || 0)), 0);
-            
-            // Actualizar el registro en Firebase
+
             await update(ref(db, `historial_ventas/${firebaseKey}`), {
                 ventas: ventas,
                 totalVentas: ventas.length,
@@ -1589,12 +2257,10 @@
                 totalFichas: totalFichas,
                 actualizado: new Date().toISOString()
             });
-            
-            console.log(`✅ Item eliminado correctamente de ${sucursal}`);
+
             return { success: true };
-            
         } catch (error) {
-            console.error(`❌ Error eliminando item del historial de ${sucursal}:`, error);
+            console.error(`Error eliminando item del historial de ${sucursal}:`, error);
             return { success: false, error: error.message };
         }
     }
@@ -1602,61 +2268,48 @@
     async function eliminarRegistroHistorial(sucursal, firebaseKey) {
         const config = sucursalToConfig[sucursal];
         if (!config) return { success: false, error: 'Sucursal no encontrada: ' + sucursal };
-        
+
         try {
-            console.log(`🔍 Intentando eliminar registro completo de ${sucursal}: firebaseKey=${firebaseKey}`);
-            
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
             await remove(ref(db, `historial_ventas/${firebaseKey}`));
-            
-            console.log(`✅ Registro completo eliminado de ${sucursal}`);
             return { success: true };
         } catch (error) {
-            console.error(`❌ Error eliminando registro de ${sucursal}:`, error);
+            console.error(`Error eliminando registro de ${sucursal}:`, error);
             return { success: false, error: error.message };
         }
     }
 
-    // ============================================================
-    // 7. FUNCIÓN GLOBAL DE ELIMINACIÓN
-    // ============================================================
     window.eliminarItem = function(sucursal, firebaseKey, fuente, ventaIndex = null, nombre = '') {
         if (estado.eliminando) {
             showToast('⏳ Ya hay una eliminación en proceso...', 'warning');
             return;
         }
-        
-        // Validar datos
+
         if (!sucursal || !firebaseKey) {
             showToast('❌ Datos incompletos para eliminar', 'error');
-            console.error('Datos inválidos:', { sucursal, firebaseKey, fuente, ventaIndex });
             return;
         }
-        
-        const mensaje = fuente === 'carrito' 
+
+        const mensaje = fuente === 'carrito'
             ? `¿Estás seguro de eliminar este item del carrito de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`
             : `¿Estás seguro de eliminar este item del HISTORIAL de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`;
-        
-        // Guardar datos para la eliminación
+
         pendingDelete = { sucursal, firebaseKey, fuente, ventaIndex };
-        
-        // Mostrar modal de confirmación
+
         openConfirmModal(mensaje, async () => {
             estado.eliminando = true;
-            
+
             try {
                 let resultado;
-                
-                console.log(`🗑️ Eliminando:`, pendingDelete);
-                
+
                 if (pendingDelete.fuente === 'carrito') {
                     resultado = await eliminarDelCarrito(pendingDelete.sucursal, pendingDelete.firebaseKey);
                 } else if (pendingDelete.fuente === 'historial') {
                     if (pendingDelete.ventaIndex !== null && pendingDelete.ventaIndex !== undefined) {
                         resultado = await eliminarItemHistorial(
-                            pendingDelete.sucursal, 
-                            pendingDelete.firebaseKey, 
+                            pendingDelete.sucursal,
+                            pendingDelete.firebaseKey,
                             pendingDelete.ventaIndex
                         );
                     } else {
@@ -1668,20 +2321,16 @@
                     pendingDelete = null;
                     return;
                 }
-                
+
                 if (resultado.success) {
                     showToast(`✅ Item eliminado correctamente de ${pendingDelete.sucursal}`, 'success');
-                    // Recargar los filtros
                     await aplicarFiltros();
-                    // Recargar carritos también
                     await cargarCarritos();
                 } else {
                     showToast(`❌ Error al eliminar: ${resultado.error}`, 'error');
-                    console.error('Error en eliminación:', resultado);
                 }
             } catch (error) {
                 showToast(`❌ Error inesperado: ${error.message}`, 'error');
-                console.error('Error inesperado:', error);
             } finally {
                 estado.eliminando = false;
                 pendingDelete = null;
@@ -1690,10 +2339,11 @@
     };
 
     // ============================================================
-    // 8. FUNCIONES GLOBALES (window)
+    // 7. FUNCIONES GLOBALES
     // ============================================================
     window.recargarDatos = function() {
         cargarCarritos();
+        cargarCatalogoUnificado();
         showToast('🔄 Datos actualizados', 'info');
     };
 
@@ -1707,14 +2357,14 @@
     };
 
     // ============================================================
-    // 9. CARGAR CARRITOS
+    // 8. CARGAR CARRITOS
     // ============================================================
     async function cargarCarritos() {
         const tbody = document.getElementById('carritosBody');
         tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px;">
             <div class="loader-premium"><div class="spinner"></div><span>Cargando...</span></div>
         </td></tr>`;
-        
+
         const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
         let totalItems = 0;
 
@@ -1724,12 +2374,12 @@
                 const db = getDatabase(app);
                 const dbRef = ref(db);
                 const cartSnap = await get(child(dbRef, 'carrito'));
-                
+
                 let items = [];
                 if (cartSnap.exists()) {
                     const data = cartSnap.val();
-                    items = Object.entries(data).map(([k, v]) => ({ 
-                        ...v, 
+                    items = Object.entries(data).map(([k, v]) => ({
+                        ...v,
                         firebaseKey: k,
                         fuente: 'carrito',
                         sucursal: suc.nombre
@@ -1750,7 +2400,7 @@
     }
 
     // ============================================================
-    // 10. RENDERIZAR CARRITOS
+    // 9. RENDERIZAR CARRITOS
     // ============================================================
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
@@ -1797,9 +2447,6 @@
         tbody.innerHTML = html;
     }
 
-    // ============================================================
-    // 11. FUNCIONES DE CÁLCULO
-    // ============================================================
     function calcularEstadisticas(items) {
         let totalMonto = 0, cierreEfectivo = 0, cierreBancard = 0;
         let fichasMonto = 0, juguetesMonto = 0, pulserasMonto = 0, billarMonto = 0;
@@ -1809,7 +2456,7 @@
             const money = item.money || 0;
             const code = item.code || '';
             const unidades = item.unidades || 1;
-            
+
             if (code === '000-09') { cierreEfectivo += money; return; }
             if (code === '000-10') { cierreBancard += money; return; }
 
@@ -1840,11 +2487,11 @@
             if (fuente === 'carrito') items = estado.carritos[nombre] || [];
             else if (fuente === 'historial') items = estado.historial[nombre] || [];
             else items = [...(estado.carritos[nombre] || []), ...(estado.historial[nombre] || [])];
-            
+
             if (soloVentas) {
                 items = items.filter(item => !item.esMovimiento && !item.esCierre);
             }
-            
+
             const stats = calcularEstadisticas(items);
             total.totalMonto += stats.totalMonto;
             total.cierreEfectivo += stats.cierreEfectivo;
@@ -1875,7 +2522,7 @@
     }
 
     // ============================================================
-    // 12. FUNCIONES DE FECHA
+    // 10. FUNCIONES DE FECHA
     // ============================================================
     function obtenerDiaLaboral(item) {
         if (item.fechaEliminacion) return item.fechaEliminacion;
@@ -1895,7 +2542,1183 @@
     }
 
     // ============================================================
-    // 13. FILTROS AVANZADOS
+    // 11. CATÁLOGO UNIFICADO
+    // ============================================================
+    async function cargarCatalogoUnificado() {
+        const container = document.getElementById('catalogoContainer');
+        container.innerHTML = `
+            <div class="loader-premium" style="grid-column: 1 / -1;">
+                <div class="spinner"></div>
+                <span>Cargando catálogo...</span>
+            </div>
+        `;
+
+        const productos = [];
+
+        // Generar la lista de productos de cada sucursal
+        for (const suc of sucursalesConfig) {
+            try {
+                // Obtener el stock de la sucursal
+                const app = initializeApp(suc.config, suc.id);
+                const db = getDatabase(app);
+                const stockSnap = await get(ref(db, 'stock'));
+                const stockData = stockSnap.val() || {};
+
+                // Generar los productos de esta sucursal
+                const categorias = [
+                    { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
+                        { codigo: "000-00", precio: 5000 },
+                        { codigo: "000-01", precio: 50000 },
+                        { codigo: "000-02", precio: 100000 },
+                        { codigo: "000-05", precio: 0 },
+                        { codigo: "000-06", precio: 0 },
+                        { codigo: "000-07", precio: 15000 },
+                        { codigo: "000-08", precio: 15000 },
+                        { codigo: "000-09", precio: 0 },
+                        { codigo: "000-10", precio: 0 },
+                        { codigo: "000-11", precio: 0 }
+                    ]},
+                    { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 18 } },
+                    { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 74 } },
+                    { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 75 } },
+                    { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 59 } },
+                    { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 63 } },
+                    { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 38 } },
+                    { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 53 } },
+                    { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 10 } },
+                    { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 39 } },
+                    { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
+                    { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 5 } },
+                    { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 3 } },
+                    { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
+                        { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 },
+                        { sufijo: "03", precio: 60000 }
+                    ]},
+                    { nombre: "800 puntos", categoria: "800", puntos: 800, productos: [
+                        { codigo: "800-00", precio: 250000 }, { codigo: "800-01", precio: 250000 }
+                    ]}
+                ];
+
+                for (const cat of categorias) {
+                    if (cat.rango) {
+                        for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
+                            const codigo = `${cat.categoria}-${i.toString().padStart(2,'0')}`;
+                            const precio = codigo === '100-38' ? 10000 : cat.precioBase;
+                            const stockVal = getProductStockForSucursal(codigo, stockData);
+                            productos.push({
+                                code: codigo,
+                                price: precio,
+                                points: cat.puntos,
+                                sucursal: suc.nombre,
+                                stock: stockVal,
+                                fichaConsumption: FICHA_CONSUMPTION[codigo] || 0,
+                                category: cat.categoria,
+                                nombre: codigo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '')
+                            });
+                        }
+                    } else if (cat.productosEspeciales) {
+                        for (const p of cat.productosEspeciales) {
+                            const codigo = `${cat.categoria}-${p.sufijo}`;
+                            const stockVal = getProductStockForSucursal(codigo, stockData);
+                            productos.push({
+                                code: codigo,
+                                price: p.precio,
+                                points: cat.puntos,
+                                sucursal: suc.nombre,
+                                stock: stockVal,
+                                fichaConsumption: FICHA_CONSUMPTION[codigo] || 0,
+                                category: cat.categoria,
+                                nombre: codigo + (p.precio > 0 ? ` - G.${p.precio.toLocaleString('es-PY')}` : '')
+                            });
+                        }
+                    } else if (cat.productos) {
+                        for (const p of cat.productos) {
+                            const stockVal = getProductStockForSucursal(p.codigo, stockData);
+                            productos.push({
+                                code: p.codigo,
+                                price: p.precio,
+                                points: cat.puntos,
+                                sucursal: suc.nombre,
+                                stock: stockVal,
+                                fichaConsumption: FICHA_CONSUMPTION[p.codigo] || 0,
+                                category: cat.categoria,
+                                nombre: p.codigo + (p.precio > 0 ? ` - G.${p.precio.toLocaleString('es-PY')}` : '')
+                            });
+                        }
+                    }
+                }
+
+                // Guardar el stock de esta sucursal para referencia rápida
+                estado.catalogoStock[suc.nombre] = stockData;
+
+            } catch (error) {
+                console.error(`Error generando catálogo para ${suc.nombre}:`, error);
+            }
+        }
+
+        estado.catalogoProductos = productos;
+        renderCatalogo(productos);
+    }
+
+    function getProductStockForSucursal(code, stockData) {
+        if (NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code)) {
+            return stockData[code] ?? STOCK_INICIAL;
+        }
+        if (FICHA_CONSUMPTION[code]) {
+            const fichaStock = stockData['000-00'] ?? STOCK_INICIAL;
+            return Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
+        }
+        return stockData[code] ?? STOCK_INICIAL;
+    }
+
+    function renderCatalogo(productos) {
+        const container = document.getElementById('catalogoContainer');
+        const filtro = estado.catalogoFiltro;
+        const search = estado.catalogoSearch.toLowerCase();
+
+        let filtrados = productos;
+
+        // Filtrar por sucursal
+        if (filtro !== 'todas') {
+            filtrados = filtrados.filter(p => p.sucursal === filtro);
+        }
+
+        // Filtrar por búsqueda (primeros 3 dígitos)
+        if (search) {
+            const codigoBusqueda = search.padStart(3, '0').substring(0, 3);
+            filtrados = filtrados.filter(p => p.code.startsWith(codigoBusqueda));
+        }
+
+        // Ordenar por código
+        filtrados.sort((a, b) => a.code.localeCompare(b.code));
+
+        // Actualizar contadores
+        const todasCount = productos.length;
+        const counts = {};
+        productos.forEach(p => {
+            counts[p.sucursal] = (counts[p.sucursal] || 0) + 1;
+        });
+        document.getElementById('countTodas').textContent = todasCount;
+        document.getElementById('countVilla Morra').textContent = counts['Villa Morra'] || 0;
+        document.getElementById('countLos Laureles').textContent = counts['Los Laureles'] || 0;
+        document.getElementById('countVilla Elisa').textContent = counts['Villa Elisa'] || 0;
+        document.getElementById('catalogoTotalCount').textContent = filtrados.length;
+        document.getElementById('tabCatalogoBadge').textContent = filtrados.length;
+
+        if (filtrados.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align:center; padding:40px; color:var(--gray-400);">
+                    <i class="fas fa-box-open" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
+                    No se encontraron productos con los filtros seleccionados
+                </div>
+            `;
+            return;
+        }
+
+        // Generar HTML
+        const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
+
+        let html = '';
+        filtrados.forEach((p, idx) => {
+            const colorIndex = p.code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
+            const stockClass = p.stock <= 0 ? 'sin-stock' : '';
+            const outOfStock = p.stock <= 0 && !CIERRE_CODES.includes(p.code);
+
+            // Si es un código especial, no se oculta
+            const isSpecial = CIERRE_CODES.includes(p.code) || p.code === '000-11';
+
+            html += `
+                <div class="catalogo-item ${outOfStock && !isSpecial ? 'out-of-stock' : ''}"
+                     data-sucursal="${p.sucursal}"
+                     data-code="${p.code}"
+                     data-price="${p.price}"
+                     data-points="${p.points}"
+                     data-stock="${p.stock}"
+                     data-fichaconsumption="${p.fichaConsumption}"
+                     onclick="handleCatalogoClick(this)">
+                    <span class="sucursal-badge">${p.sucursal}</span>
+                    <span class="stock-indicator ${stockClass}">${p.stock}</span>
+                    <div class="img-placeholder" style="background: ${colores[colorIndex]};">${p.code.replace('-', ' ')}</div>
+                    <p>${p.nombre}</p>
+                </div>
+            `;
+        });
+
+        // Cargar imágenes después de renderizar
+        container.innerHTML = html;
+
+        // Cargar imágenes asíncronamente
+        container.querySelectorAll('.catalogo-item').forEach(item => {
+            const code = item.dataset.code;
+            const img = new Image();
+            img.onload = () => {
+                const placeholder = item.querySelector('.img-placeholder');
+                if (placeholder) {
+                    placeholder.outerHTML = `<img src="../imagenes/${code}.jpg" alt="${code}" loading="lazy">`;
+                }
+            };
+            img.onerror = () => {
+                // Mantener el placeholder si la imagen no existe
+            };
+            img.src = `../imagenes/${code}.jpg`;
+        });
+    }
+
+    // ============================================================
+    // 12. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
+    // ============================================================
+    window.handleCatalogoClick = function(element) {
+        const code = element.dataset.code;
+        const price = parseFloat(element.dataset.price);
+        const points = parseInt(element.dataset.points);
+        const stockVal = parseInt(element.dataset.stock);
+        const consumo = parseInt(element.dataset.fichaconsumption) || 0;
+        const sucursal = element.dataset.sucursal;
+        const name = element.querySelector('p')?.textContent || code;
+
+        // Obtener la configuración de la sucursal
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        // Guardar la referencia a la sucursal actual
+        estado.currentSucursal = sucursal;
+        estado.currentApp = null;
+        estado.currentDB = null;
+
+        // Inicializar la app de la sucursal para las operaciones
+        const app = initializeApp(config.config, config.id);
+        estado.currentApp = app;
+        estado.currentDB = getDatabase(app);
+
+        // Cargar el stock actualizado
+        cargarStockSucursal(sucursal).then(() => {
+            const stockActual = estado.stock[sucursal] || {};
+
+            let stockValActual;
+            if (NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code)) {
+                stockValActual = stockActual[code] ?? STOCK_INICIAL;
+            } else if (FICHA_CONSUMPTION[code]) {
+                const fichaStock = stockActual['000-00'] ?? STOCK_INICIAL;
+                stockValActual = Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
+            } else {
+                stockValActual = stockActual[code] ?? STOCK_INICIAL;
+            }
+
+            if (stockValActual <= 0 && !CIERRE_CODES.includes(code)) {
+                showToast('⚠️ Sin stock en ' + sucursal, 'warning');
+                return;
+            }
+
+            // Manejar códigos especiales
+            if (code === '000-09') {
+                abrirModalCierre('Efectivo', 'Registrar monto de cierre en EFECTIVO - ' + sucursal);
+                return;
+            }
+            if (code === '000-10') {
+                abrirModalCierre('Tarjeta', 'Registrar monto de cierre por TARJETA - ' + sucursal);
+                return;
+            }
+            if (code === '000-11') {
+                openContadoresModal();
+                return;
+            }
+            if (code === '000-05') {
+                procesarFichaGratis(code, 1);
+                return;
+            }
+            if (code === '000-06') {
+                procesarFichaGratis(code, 7);
+                return;
+            }
+
+            // Preparar el producto para el modal
+            estado.currentProduct = {
+                code,
+                price,
+                points,
+                name: name,
+                stock: stockValActual,
+                fichaConsumption: consumo,
+                sucursal: sucursal
+            };
+            estado.currentMovimientosProduct = {
+                code,
+                price,
+                points,
+                name: name,
+                stock: stockValActual,
+                fichaConsumption: consumo,
+                sucursal: sucursal
+            };
+
+            // Mostrar el modal de compra
+            const movimientosTab = document.querySelector('#purchaseModal .tab-btn-compras[data-tab="movimientos"]');
+            if (shouldShowMovimientosTab(code)) {
+                movimientosTab.style.display = 'block';
+            } else {
+                movimientosTab.style.display = 'none';
+                if (document.querySelector('#purchaseModal .tab-btn-compras.active').getAttribute('data-tab') === 'movimientos') {
+                    document.querySelector('#purchaseModal .tab-btn-compras[data-tab="compra"]').click();
+                }
+            }
+
+            document.querySelector('#purchaseModal .tab-btn-compras[data-tab="compra"]').click();
+
+            const quantityRow = document.getElementById('quantityRow');
+            if (shouldShowQuantity(code)) {
+                quantityRow.style.display = 'flex';
+            } else {
+                quantityRow.style.display = 'none';
+            }
+
+            document.getElementById('productQuantity').value = 1;
+
+            document.getElementById('modalProductInfo').innerHTML = `
+                <strong>${estado.currentProduct.name}</strong>
+                <br>🎯 Puntos base: ${estado.currentProduct.points}
+                <br>💰 Precio unitario: G.${estado.currentProduct.price.toLocaleString()}
+                <br>🏢 Sucursal: ${sucursal}
+            `;
+            document.getElementById('modalStockInfo').innerHTML = `📦 Stock disponible en ${sucursal}: <strong>${stockValActual} unidades</strong>`;
+            document.getElementById('pointsInput').value = '';
+            document.getElementById('pointsInput').max = estado.currentProduct.points || 999999;
+            updateModalTotalsBasedOnQuantity();
+            document.getElementById('addToCart').disabled = (stockValActual <= 0);
+
+            document.getElementById('movimientosProductInfo').innerHTML = `
+                <strong>${estado.currentMovimientosProduct.name}</strong>
+                <br>📦 Stock actual en ${sucursal}: ${stockValActual} unidades
+                <br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}
+                <br><small style="color:#666;">➕ Agregar: suma al stock (si es Máquina, resta) | ➖ Quitar: resta del stock (si es Máquina, suma)</small>
+            `;
+            document.getElementById('unidadesInput').value = 1;
+
+            // Cargar opciones de máquinas
+            const destinoSelect = document.getElementById('movimientoDestino');
+            destinoSelect.innerHTML = '<option value="stock">📦 Stock</option>';
+            for (let i = 1; i <= 20; i++) {
+                destinoSelect.innerHTML += `<option value="maq${i}">⚙️ Maq ${i}</option>`;
+            }
+
+            document.getElementById('purchaseModal').style.display = 'block';
+            blockBodyScroll();
+        });
+    };
+
+    async function cargarStockSucursal(sucursal) {
+        const config = sucursalToConfig[sucursal];
+        if (!config) return;
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            const stockSnap = await get(ref(db, 'stock'));
+            estado.stock[sucursal] = stockSnap.val() || {};
+        } catch (error) {
+            console.error('Error cargando stock de', sucursal, error);
+            estado.stock[sucursal] = {};
+        }
+    }
+
+    // ============================================================
+    // 13. FUNCIONES DE UTILIDAD PARA EL MODAL
+    // ============================================================
+    function shouldShowQuantity(code) {
+        return code === '005-13' || code === '000-00';
+    }
+
+    function shouldShowMovimientosTab(code) {
+        const prefix = code.substring(0, 3);
+        if (code === '000-00' || code === '000-07' || code === '000-08') return true;
+        const numPrefix = parseInt(prefix);
+        if (!isNaN(numPrefix) && numPrefix >= 5) return true;
+        return false;
+    }
+
+    function blockBodyScroll() { document.body.style.overflow = 'hidden'; }
+    function unblockBodyScroll() { document.body.style.overflow = ''; }
+
+    function updateModalTotalsBasedOnQuantity() {
+        if (!estado.currentProduct) return;
+        const qty = parseInt(document.getElementById('productQuantity').value) || 1;
+        const unitPrice = estado.currentProduct.price;
+        const totalPriceValue = unitPrice * qty;
+        const pointsValue = parseInt(document.getElementById('pointsInput').value) || 0;
+        let moneyToPay = totalPriceValue;
+
+        if (estado.currentProduct.points > 0) {
+            const pointsUsed = Math.min(pointsValue, estado.currentProduct.points * qty);
+            moneyToPay = Math.round(totalPriceValue * (1 - pointsUsed / (estado.currentProduct.points * qty)));
+            if (moneyToPay < 0) moneyToPay = 0;
+            const maxPointsPossible = estado.currentProduct.points * qty;
+            if (pointsValue > maxPointsPossible) {
+                document.getElementById('pointsInput').value = maxPointsPossible;
+                updateModalTotalsBasedOnQuantity();
+                return;
+            }
+        }
+
+        document.getElementById('totalPrice').textContent = totalPriceValue.toLocaleString();
+        document.getElementById('moneyInput').value = Math.floor(moneyToPay);
+    }
+
+    window.calculateRemainingMoney = function() {
+        updateModalTotalsBasedOnQuantity();
+    };
+
+    // ============================================================
+    // 14. FUNCIONES DEL MODAL DE COMPRA
+    // ============================================================
+    window.closeModal = function() {
+        document.getElementById('purchaseModal').style.display = 'none';
+        unblockBodyScroll();
+    };
+
+    window.addToCart = function() {
+        if (window.addToCartLock) return;
+        if (!estado.currentProduct) return;
+
+        window.addToCartLock = true;
+
+        const procesar = async () => {
+            try {
+                const code = estado.currentProduct.code;
+                const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
+                const consumo = estado.currentProduct.fichaConsumption || 0;
+                const sucursal = estado.currentProduct.sucursal;
+
+                const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+                const points = parseInt(document.getElementById('pointsInput').value) || 0;
+                const money = parseFloat(document.getElementById('moneyInput').value) || 0;
+                const unitPrice = estado.currentProduct.price;
+                const totalPriceValue = unitPrice * qty;
+
+                if (estado.currentProduct.points > 0 && points > (estado.currentProduct.points * qty)) {
+                    alert(`Máximo ${estado.currentProduct.points * qty} puntos`);
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                if (estado.currentProduct.points > 0) {
+                    const esperado = Math.round(totalPriceValue * (1 - points / (estado.currentProduct.points * qty)));
+                    if (Math.abs(money - esperado) > 1) {
+                        alert('Error en cálculo de pago');
+                        window.addToCartLock = false;
+                        return;
+                    }
+                }
+
+                if (points === 0 && money === 0 && totalPriceValue > 0) {
+                    alert('Debes pagar con puntos o dinero');
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                const config = sucursalToConfig[sucursal];
+                if (!config) {
+                    alert('❌ Sucursal no encontrada');
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                // Usar la app ya inicializada o crear una nueva
+                let db;
+                if (estado.currentDB) {
+                    db = estado.currentDB;
+                } else {
+                    const app = initializeApp(config.config, config.id);
+                    db = getDatabase(app);
+                }
+
+                let stockKey;
+                let cantidadRestar;
+
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadRestar = consumo * qty;
+                } else {
+                    stockKey = code;
+                    cantidadRestar = qty;
+                }
+
+                // Verificar stock antes de la transacción
+                const stockSnap = await get(ref(db, `stock/${stockKey}`));
+                let stockActual = stockSnap.val() ?? STOCK_INICIAL;
+                if (stockActual < cantidadRestar) {
+                    alert(`❌ Stock insuficiente. Disponible: ${stockActual}, necesario: ${cantidadRestar}`);
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                const ahora = new Date();
+                const fecha = ahora.toLocaleDateString('es-PY');
+                const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                const cartData = {
+                    code,
+                    name: estado.currentProduct.name,
+                    points: points,
+                    money: money,
+                    totalPrice: totalPriceValue,
+                    unitPrice: unitPrice,
+                    qty: qty,
+                    fecha,
+                    hora,
+                    timestamp: fecha + ' ' + hora,
+                    timestampCompleto: ahora.getTime(),
+                    fichaConsumption: consumo * qty,
+                    unidades: qty,
+                    sucursalOrigen: sucursal
+                };
+
+                // Realizar transacción atómica
+                const resultadoStock = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    const nuevoValor = currentValue - cantidadRestar;
+                    if (nuevoValor < 0) return;
+                    return nuevoValor;
+                });
+
+                if (!resultadoStock.committed) {
+                    alert('❌ Error: Stock insuficiente o conflicto en la transacción');
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                // Agregar al carrito
+                const cartRef = ref(db, 'carrito');
+                await push(cartRef, cartData);
+
+                // Actualizar stock local
+                if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                estado.stock[sucursal][stockKey] = resultadoStock.snapshot.val();
+
+                // Recargar el catálogo
+                await cargarCatalogoUnificado();
+
+                // Cerrar modal y mostrar mensaje
+                closeModal();
+                showToast(`✅ ${qty} unidad(es) agregada(s) al carrito de ${sucursal}`, 'success');
+
+            } catch (error) {
+                console.error('Error en addToCart:', error);
+                alert('❌ Error inesperado al procesar la venta');
+            } finally {
+                window.addToCartLock = false;
+            }
+        };
+
+        procesar();
+    };
+
+    // ============================================================
+    // 15. MOVIMIENTOS DE UNIDADES
+    // ============================================================
+    window.agregarUnidades = async function() {
+        if (window.agregarUnidadesLock) return;
+        window.agregarUnidadesLock = true;
+
+        if (!estado.currentMovimientosProduct) {
+            window.agregarUnidadesLock = false;
+            return;
+        }
+
+        const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+        const destino = document.getElementById('movimientoDestino').value;
+        const code = estado.currentMovimientosProduct.code;
+        const consumo = estado.currentMovimientosProduct.fichaConsumption || 0;
+        const sucursal = estado.currentMovimientosProduct.sucursal;
+        const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+        if (cantidad <= 0) {
+            alert('Cantidad inválida');
+            window.agregarUnidadesLock = false;
+            return;
+        }
+
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            alert('❌ Sucursal no encontrada');
+            window.agregarUnidadesLock = false;
+            return;
+        }
+
+        try {
+            let db;
+            if (estado.currentDB) {
+                db = estado.currentDB;
+            } else {
+                const app = initializeApp(config.config, config.id);
+                db = getDatabase(app);
+            }
+
+            let stockKey;
+            let cantidadMovimiento;
+
+            if (destino === 'stock') {
+                // Agregar al stock: sumar
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadMovimiento = consumo * cantidad;
+                } else {
+                    stockKey = code;
+                    cantidadMovimiento = cantidad;
+                }
+
+                const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    return currentValue + cantidadMovimiento;
+                });
+
+                if (resultado.committed) {
+                    if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                    estado.stock[sucursal][stockKey] = resultado.snapshot.val();
+
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleDateString('es-PY');
+                    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                    await push(ref(db, 'carrito'), {
+                        code,
+                        name: estado.currentMovimientosProduct.name,
+                        points: 0,
+                        money: 0,
+                        unidades: cantidad,
+                        esMovimiento: true,
+                        tipoMovimiento: 'agregar',
+                        destinoMovimiento: destino,
+                        totalPrice: 0,
+                        fecha,
+                        hora,
+                        timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(),
+                        fichaConsumption: 0,
+                        sucursalOrigen: sucursal
+                    });
+
+                    await cargarCatalogoUnificado();
+                    closeModal();
+                    showToast(`✅ Agregado +${cantidad} unidad(es) a STOCK de ${sucursal}`, 'success');
+                } else {
+                    alert('❌ Error en la transacción de stock');
+                }
+            } else {
+                // Máquina: restar del stock
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadMovimiento = consumo * cantidad;
+                } else {
+                    stockKey = code;
+                    cantidadMovimiento = cantidad;
+                }
+
+                // Verificar stock
+                const stockSnap = await get(ref(db, `stock/${stockKey}`));
+                let stockActual = stockSnap.val() ?? STOCK_INICIAL;
+                if (stockActual < cantidadMovimiento) {
+                    alert(`❌ Stock insuficiente en ${sucursal}. Disponible: ${stockActual}, necesario: ${cantidadMovimiento}`);
+                    window.agregarUnidadesLock = false;
+                    return;
+                }
+
+                const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    const nuevoValor = currentValue - cantidadMovimiento;
+                    if (nuevoValor < 0) return;
+                    return nuevoValor;
+                });
+
+                if (resultado.committed) {
+                    if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                    estado.stock[sucursal][stockKey] = resultado.snapshot.val();
+
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleDateString('es-PY');
+                    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                    await push(ref(db, 'carrito'), {
+                        code,
+                        name: estado.currentMovimientosProduct.name,
+                        points: 0,
+                        money: 0,
+                        unidades: cantidad,
+                        esMovimiento: true,
+                        tipoMovimiento: 'agregar',
+                        destinoMovimiento: destino,
+                        totalPrice: 0,
+                        fecha,
+                        hora,
+                        timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(),
+                        fichaConsumption: 0,
+                        sucursalOrigen: sucursal
+                    });
+
+                    await cargarCatalogoUnificado();
+                    closeModal();
+                    showToast(`✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) de ${sucursal}`, 'success');
+                } else {
+                    alert('❌ Error en la transacción de stock');
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('❌ Error al procesar el movimiento');
+        } finally {
+            window.agregarUnidadesLock = false;
+        }
+    };
+
+    window.quitarUnidades = async function() {
+        if (window.quitarUnidadesLock) return;
+        window.quitarUnidadesLock = true;
+
+        if (!estado.currentMovimientosProduct) {
+            window.quitarUnidadesLock = false;
+            return;
+        }
+
+        const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+        const destino = document.getElementById('movimientoDestino').value;
+        const code = estado.currentMovimientosProduct.code;
+        const consumo = estado.currentMovimientosProduct.fichaConsumption || 0;
+        const sucursal = estado.currentMovimientosProduct.sucursal;
+        const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+        if (cantidad <= 0) {
+            alert('Cantidad inválida');
+            window.quitarUnidadesLock = false;
+            return;
+        }
+
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            alert('❌ Sucursal no encontrada');
+            window.quitarUnidadesLock = false;
+            return;
+        }
+
+        try {
+            let db;
+            if (estado.currentDB) {
+                db = estado.currentDB;
+            } else {
+                const app = initializeApp(config.config, config.id);
+                db = getDatabase(app);
+            }
+
+            let stockKey;
+            let cantidadMovimiento;
+
+            if (destino === 'stock') {
+                // Quitar del stock: restar
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadMovimiento = consumo * cantidad;
+                } else {
+                    stockKey = code;
+                    cantidadMovimiento = cantidad;
+                }
+
+                const stockSnap = await get(ref(db, `stock/${stockKey}`));
+                let stockActual = stockSnap.val() ?? STOCK_INICIAL;
+                if (stockActual < cantidadMovimiento) {
+                    alert(`❌ Stock insuficiente en ${sucursal}. Disponible: ${stockActual}, necesario: ${cantidadMovimiento}`);
+                    window.quitarUnidadesLock = false;
+                    return;
+                }
+
+                const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    const nuevoValor = currentValue - cantidadMovimiento;
+                    if (nuevoValor < 0) return;
+                    return nuevoValor;
+                });
+
+                if (resultado.committed) {
+                    if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                    estado.stock[sucursal][stockKey] = resultado.snapshot.val();
+
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleDateString('es-PY');
+                    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                    await push(ref(db, 'carrito'), {
+                        code,
+                        name: estado.currentMovimientosProduct.name,
+                        points: 0,
+                        money: 0,
+                        unidades: cantidad,
+                        esMovimiento: true,
+                        tipoMovimiento: 'quitar',
+                        destinoMovimiento: destino,
+                        totalPrice: 0,
+                        fecha,
+                        hora,
+                        timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(),
+                        fichaConsumption: 0,
+                        sucursalOrigen: sucursal
+                    });
+
+                    await cargarCatalogoUnificado();
+                    closeModal();
+                    showToast(`✅ Quitado -${cantidad} unidad(es) del STOCK de ${sucursal}`, 'success');
+                } else {
+                    alert('❌ Error en la transacción de stock');
+                }
+            } else {
+                // Máquina: devolver al stock (sumar)
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadMovimiento = consumo * cantidad;
+                } else {
+                    stockKey = code;
+                    cantidadMovimiento = cantidad;
+                }
+
+                const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    return currentValue + cantidadMovimiento;
+                });
+
+                if (resultado.committed) {
+                    if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                    estado.stock[sucursal][stockKey] = resultado.snapshot.val();
+
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleDateString('es-PY');
+                    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                    await push(ref(db, 'carrito'), {
+                        code,
+                        name: estado.currentMovimientosProduct.name,
+                        points: 0,
+                        money: 0,
+                        unidades: cantidad,
+                        esMovimiento: true,
+                        tipoMovimiento: 'quitar',
+                        destinoMovimiento: destino,
+                        totalPrice: 0,
+                        fecha,
+                        hora,
+                        timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(),
+                        fichaConsumption: 0,
+                        sucursalOrigen: sucursal
+                    });
+
+                    await cargarCatalogoUnificado();
+                    closeModal();
+                    showToast(`✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) a ${sucursal}`, 'success');
+                } else {
+                    alert('❌ Error en la transacción de stock');
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('❌ Error al procesar el movimiento');
+        } finally {
+            window.quitarUnidadesLock = false;
+        }
+    };
+
+    // ============================================================
+    // 16. FICHAS GRATIS
+    // ============================================================
+    async function procesarFichaGratis(code, fichasAConsumir) {
+        // Usar la sucursal actual desde el contexto del catálogo
+        // En este caso, obtenemos la sucursal del elemento clickeado
+        const catalogoItem = document.querySelector('.catalogo-item[data-code="' + code + '"]');
+        if (!catalogoItem) {
+            showToast('❌ Producto no encontrado', 'error');
+            return;
+        }
+
+        const sucursal = catalogoItem.dataset.sucursal;
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+
+            const stockSnap = await get(ref(db, 'stock/000-00'));
+            let stockActual = stockSnap.val() ?? STOCK_INICIAL;
+
+            if (stockActual < fichasAConsumir) {
+                showToast(`❌ No hay suficientes fichas en ${sucursal}. Necesitas ${fichasAConsumir} fichas`, 'error');
+                return;
+            }
+
+            const resultado = await runTransaction(ref(db, 'stock/000-00'), (currentValue) => {
+                if (currentValue === null) currentValue = STOCK_INICIAL;
+                const nuevoValor = currentValue - fichasAConsumir;
+                if (nuevoValor < 0) return;
+                return nuevoValor;
+            });
+
+            if (!resultado.committed) {
+                showToast('❌ Error: Stock insuficiente o conflicto', 'error');
+                return;
+            }
+
+            const ahora = new Date();
+            const fecha = ahora.toLocaleDateString('es-PY');
+            const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
+
+            await push(ref(db, 'carrito'), {
+                code,
+                name: nombreProducto,
+                points: 0,
+                money: 0,
+                totalPrice: 0,
+                fecha,
+                hora,
+                timestamp: fecha + ' ' + hora,
+                timestampCompleto: ahora.getTime(),
+                fichaConsumption: fichasAConsumir,
+                esFichaGratis: true,
+                unidades: 1,
+                sucursalOrigen: sucursal
+            });
+
+            if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+            estado.stock[sucursal]['000-00'] = resultado.snapshot.val();
+
+            await cargarCatalogoUnificado();
+            showToast(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code} en ${sucursal}`, 'success');
+
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Error al procesar ficha gratis', 'error');
+        }
+    }
+
+    // ============================================================
+    // 17. CIERRES DE CAJA
+    // ============================================================
+    function abrirModalCierre(tipo, descripcion) {
+        document.getElementById('cierreTitulo').innerHTML = `💰 Cierre de Caja - ${tipo}`;
+        document.getElementById('cierreDescripcion').innerHTML = descripcion;
+        document.getElementById('cierreMonto').value = '';
+        document.getElementById('cierreModal').style.display = 'block';
+        blockBodyScroll();
+
+        const btnConfirmar = document.getElementById('cierreBtnConfirmar');
+        const nuevoBtn = btnConfirmar.cloneNode(true);
+        btnConfirmar.parentNode.replaceChild(nuevoBtn, btnConfirmar);
+        nuevoBtn.onclick = () => confirmarCierre(tipo);
+    }
+
+    window.closeCierreModal = function() {
+        document.getElementById('cierreModal').style.display = 'none';
+        unblockBodyScroll();
+    };
+
+    async function confirmarCierre(tipo) {
+        let monto = document.getElementById('cierreMonto').value;
+        monto = monto.replace(/\./g, '');
+        let montoNum = parseFloat(monto);
+        if (isNaN(montoNum)) montoNum = 0;
+
+        // Obtener la sucursal actual desde el contexto
+        const catalogoItem = document.querySelector('.catalogo-item[data-code="000-09"]') || document.querySelector('.catalogo-item[data-code="000-10"]');
+        const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
+
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+
+            const ahora = new Date();
+            const fecha = ahora.toLocaleDateString('es-PY');
+            const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            const code = tipo === 'Efectivo' ? '000-09' : '000-10';
+            const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
+
+            await push(ref(db, 'carrito'), {
+                code,
+                name,
+                points: 0,
+                money: montoNum,
+                totalPrice: montoNum,
+                fecha,
+                hora,
+                timestamp: fecha + ' ' + hora,
+                timestampCompleto: ahora.getTime(),
+                fichaConsumption: 0,
+                esCierre: true,
+                unidades: 1,
+                sucursalOrigen: sucursal
+            });
+
+            closeCierreModal();
+            showToast(`✅ Cierre de ${tipo} registrado en ${sucursal}: Gs. ${montoNum.toLocaleString()}`, 'success');
+            await cargarCatalogoUnificado();
+
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Error al registrar cierre', 'error');
+        }
+    }
+
+    // ============================================================
+    // 18. CONTADORES DE MÁQUINAS
+    // ============================================================
+    window.openContadoresModal = async function() {
+        // Obtener la sucursal actual
+        const catalogoItem = document.querySelector('.catalogo-item[data-code="000-11"]');
+        const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
+        estado.currentSucursalContadores = sucursal;
+
+        await cargarListaMaquinas(sucursal);
+
+        const hoy = new Date();
+        const fechaHoy = hoy.toISOString().split('T')[0];
+        document.getElementById('fechaContador').value = fechaHoy;
+
+        document.getElementById('contadoresModal').style.display = 'block';
+        blockBodyScroll();
+    };
+
+    window.closeContadoresModal = function() {
+        document.getElementById('contadoresModal').style.display = 'none';
+        unblockBodyScroll();
+    };
+
+    async function cargarListaMaquinas(sucursal) {
+        const select = document.getElementById('maquinaSelect');
+        select.innerHTML = '<option value="">-- Seleccionar --</option>';
+        for (let i = 1; i <= 20; i++) {
+            const num = i.toString().padStart(2, '0');
+            select.innerHTML += `<option value="maq${num}">🖥️ Máquina ${num}</option>`;
+        }
+    }
+
+    window.cargarContadoresMaquina = async function() {
+        const maquina = document.getElementById('maquinaSelect').value;
+        if (!maquina) {
+            alert('Seleccione una máquina primero');
+            return;
+        }
+
+        const fecha = document.getElementById('fechaContador').value;
+        if (!fecha) {
+            alert('Seleccione una fecha');
+            return;
+        }
+
+        const sucursal = estado.currentSucursalContadores || 'Villa Morra';
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            const contSnap = await get(ref(db, `contadores_maquinas/${maquina}/${fecha}`));
+
+            const datos = contSnap.exists() ? contSnap.val() : {
+                fichas: 0,
+                premios: 0,
+                fichasPrueba: 0,
+                premiosPrueba: 0
+            };
+
+            document.getElementById('contadorFichas').value = datos.fichas || 0;
+            document.getElementById('contadorPremios').value = datos.premios || 0;
+            document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
+            document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
+
+            showToast(`✅ Datos cargados para ${maquina} - ${fecha}`, 'success');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Error al cargar contadores', 'error');
+        }
+    };
+
+    window.guardarContadoresMaquina = async function() {
+        const maquina = document.getElementById('maquinaSelect').value;
+        if (!maquina) {
+            alert('Seleccione una máquina primero');
+            return;
+        }
+
+        const fecha = document.getElementById('fechaContador').value;
+        if (!fecha) {
+            alert('Seleccione una fecha');
+            return;
+        }
+
+        const fichas = parseInt(document.getElementById('contadorFichas').value) || 0;
+        const premios = parseInt(document.getElementById('contadorPremios').value) || 0;
+        const fichasPrueba = parseInt(document.getElementById('fichasPrueba').value) || 0;
+        const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
+
+        const sucursal = estado.currentSucursalContadores || 'Villa Morra';
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+
+            await set(ref(db, `contadores_maquinas/${maquina}/${fecha}`), {
+                fichas: fichas,
+                premios: premios,
+                fichasPrueba: fichasPrueba,
+                premiosPrueba: premiosPrueba,
+                ultimaActualizacion: new Date().toISOString()
+            });
+
+            showToast(`✅ Datos guardados para ${maquina} - ${fecha}`, 'success');
+            closeContadoresModal();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Error al guardar contadores', 'error');
+        }
+    };
+
+    // ============================================================
+    // 19. FILTROS DEL CATÁLOGO
+    // ============================================================
+    document.getElementById('catalogoFiltros').addEventListener('click', function(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        document.querySelectorAll('#catalogoFiltros button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        estado.catalogoFiltro = btn.dataset.sucursal;
+        renderCatalogo(estado.catalogoProductos);
+    });
+
+    document.getElementById('catalogoSearch').addEventListener('input', function() {
+        estado.catalogoSearch = this.value;
+        renderCatalogo(estado.catalogoProductos);
+    });
+
+    // ============================================================
+    // 20. FILTROS AVANZADOS (igual que antes)
     // ============================================================
     async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -1907,7 +3730,7 @@
             const dbRef = ref(db);
             const histSnap = await get(child(dbRef, 'historial_ventas'));
             let items = [];
-            
+
             if (histSnap.exists()) {
                 const data = histSnap.val();
                 Object.entries(data).forEach(([firebaseKey, registro]) => {
@@ -1927,9 +3750,8 @@
                     }
                 });
             }
-            
+
             estado.historialCache[key] = items;
-            console.log(`📜 Historial de ${key}: ${items.length} items cargados`);
             return items;
         } catch (error) {
             console.error(`Error cargando historial de ${sucursalConfig.nombre}:`, error);
@@ -2040,20 +3862,20 @@
 
         const itemsSinCierres = items.filter(item => item.code !== '000-09' && item.code !== '000-10');
         const cierres = items.filter(item => item.code === '000-09' || item.code === '000-10');
-        
+
         document.getElementById('statTotalItems').textContent = items.length.toLocaleString();
         document.getElementById('statTotalMoney').textContent = `Gs. ${itemsSinCierres.reduce((s, i) => s + (i.money || 0), 0).toLocaleString()}`;
         document.getElementById('statTotalPoints').textContent = items.reduce((s, i) => s + (i.points || 0), 0).toLocaleString();
         document.getElementById('statTotalFichas').textContent = items.reduce((s, i) => s + (Math.abs(i.fichaConsumption || 0)), 0).toLocaleString();
         document.getElementById('statTotalCierres').textContent = `Gs. ${cierres.reduce((s, i) => s + (i.money || 0), 0).toLocaleString()}`;
-        
+
         const dias = new Set(items.map(i => i._diaLaboral).filter(Boolean));
         document.getElementById('statDiasLaborales').textContent = dias.size;
     }
 
     function renderResultadosFiltrados(items) {
         const container = document.getElementById('resultadosFiltrados');
-        
+
         if (items.length === 0) {
             container.innerHTML = `
                 <div class="filter-summary-premium">
@@ -2092,15 +3914,14 @@
 
         let contador = 0, ultimoDia = '';
 
-        // 🔥 CORREGIDO: Eliminado el límite de 200 items, ahora muestra todos
         items.forEach(item => {
             contador++;
             const ts = item.timestampCompleto || item.timestamp || 0;
             const fecha = ts ? new Date(ts) : null;
             const horaStr = item.hora || (fecha ? fecha.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '-');
-            
+
             const diaLaboral = item._diaLaboral || '-';
-            
+
             if (diaLaboral !== ultimoDia) {
                 html += `<tr class="dia-separator">
                     <td colspan="14"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
@@ -2111,12 +3932,12 @@
             const esCierre = item.esCierre || item.code === '000-09' || item.code === '000-10';
             const esMovimiento = item.esMovimiento === true;
             const esFichaGratis = item.esFichaGratis === true;
-            
+
             let tipo = '🛒 Venta';
             let movimientoTexto = '';
             let movimientoClase = '';
             const cantidad = item.unidades || item.qty || 1;
-            
+
             if (esCierre) {
                 tipo = '💰 Cierre';
                 movimientoTexto = '💰 Cierre';
@@ -2144,7 +3965,7 @@
             } else {
                 movimientoTexto = '-';
             }
-            
+
             const fuente = item.fuente === 'historial' ? '📜' : '🛒';
             const clase = esCierre ? 'cierre-row' : '';
             const nombreItem = item.name || item.code || 'Sin nombre';
@@ -2169,7 +3990,7 @@
                 <td style="font-size:0.75rem;">${tipo}</td>
                 <td>
                     ${puedeEliminar ? `
-                        <button class="btn-delete" 
+                        <button class="btn-delete"
                                 onclick="eliminarItem('${item.sucursal}', '${firebaseKey}', '${item.fuente}', ${ventaIndex}, '${nombreItem.replace(/'/g, "\\'")}')"
                                 title="Eliminar este item">
                             <i class="fas fa-trash"></i>
@@ -2178,8 +3999,6 @@
                 </td>
             </tr>`;
         });
-
-        // 🔥 CORREGIDO: Eliminado el mensaje de "x items más"
 
         html += `</tbody></table></div>`;
         container.innerHTML = html;
@@ -2203,7 +4022,7 @@
     };
 
     // ============================================================
-    // 14. CONTADORES DE MÁQUINAS
+    // 21. CONTADORES DE MÁQUINAS (Panel)
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -2215,7 +4034,7 @@
             const dbRef = ref(db);
             const contSnap = await get(child(dbRef, 'contadores_maquinas'));
             let contadores = {};
-            
+
             if (contSnap.exists()) {
                 const data = contSnap.val();
                 Object.entries(data).forEach(([maquina, fechas]) => {
@@ -2230,7 +4049,7 @@
                     });
                 });
             }
-            
+
             estado.contadoresCache[key] = contadores;
             return contadores;
         } catch (error) {
@@ -2240,10 +4059,9 @@
     }
 
     window.cargarContadores = async function(event) {
-        // 🔥 CORREGIDO: Obtener el botón correctamente
         const btn = document.querySelector('.btn-premium.info');
         if (btn) btn.disabled = true;
-        
+
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
         const fechaDesde = document.getElementById('contadorFechaDesde').value;
         const fechaHasta = document.getElementById('contadorFechaHasta').value;
@@ -2268,7 +4086,7 @@
         for (const suc of sucursalesACargar) {
             const contadores = await cargarContadoresMaquina(suc);
             todosContadores[suc.nombre] = contadores;
-            
+
             Object.values(contadores).forEach(maquina => {
                 Object.keys(maquina).forEach(fecha => {
                     let fechaFormateada = fecha;
@@ -2286,7 +4104,6 @@
         estado.contadoresFiltrados = todosContadores;
         estado.fechasConDatos = Array.from(fechasConDatos).sort();
 
-        // 🔥 CORREGIDO: Verificar si hay datos antes de renderizar
         if (Object.keys(todosContadores).length === 0) {
             const container = document.getElementById('contadoresResultados');
             const summary = document.getElementById('contadoresSummary');
@@ -2310,7 +4127,7 @@
 
     function renderCalendario(fechasConDatos, fechaDesde, fechaHasta) {
         const container = document.getElementById('calendarioContainer');
-        
+
         if (!fechasConDatos || fechasConDatos.length === 0) {
             container.innerHTML = `
                 <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
@@ -2323,20 +4140,20 @@
         const fechasSet = new Set(fechasConDatos);
         const desde = new Date(fechaDesde);
         const hasta = new Date(fechaHasta);
-        
+
         let html = '';
         let currentDate = new Date(desde);
         let mesActual = '';
-        
+
         while (currentDate <= hasta) {
             const year = currentDate.getFullYear();
             const month = String(currentDate.getMonth() + 1).padStart(2, '0');
             const day = String(currentDate.getDate()).padStart(2, '0');
             const fechaStr = `${day}/${month}/${year}`;
             const fechaISO = `${year}-${month}-${day}`;
-            
+
             const tieneDatos = fechasSet.has(fechaStr) || fechasSet.has(fechaISO);
-            
+
             const nombreMes = currentDate.toLocaleString('es', { month: 'long' });
             const claveMes = `${year}-${month}`;
             if (claveMes !== mesActual) {
@@ -2344,23 +4161,23 @@
                 mesActual = claveMes;
                 html += `<div class="calendar-month"><i class="fas fa-calendar-alt"></i> ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${year}</div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">`;
             }
-            
+
             const diaSemana = currentDate.getDay();
             const esFinDeSemana = diaSemana === 0 || diaSemana === 6;
             const esHoy = fechaISO === new Date().toISOString().split('T')[0];
-            
+
             let clases = 'calendar-day';
             if (tieneDatos) clases += ' has-data';
             if (esFinDeSemana) clases += ' weekend';
             if (esHoy) clases += ' selected';
-            
+
             html += `<div class="${clases}" title="${fechaStr}${tieneDatos ? ' ✅ Tiene datos' : ' ❌ Sin datos'}">
                 ${currentDate.getDate()}
             </div>`;
-            
+
             currentDate.setDate(currentDate.getDate() + 1);
         }
-        
+
         html += '</div>';
         container.innerHTML = html;
     }
@@ -2369,9 +4186,9 @@
         const container = document.getElementById('contadoresResultados');
         const tbody = document.getElementById('contadoresBody');
         const summary = document.getElementById('contadoresSummary');
-        
+
         const maquinasData = [];
-        
+
         for (const [sucursal, maquinas] of Object.entries(contadores)) {
             for (const [maquina, fechas] of Object.entries(maquinas)) {
                 const fechasFiltradas = Object.entries(fechas).filter(([fecha]) => {
@@ -2384,7 +4201,7 @@
                     }
                     return fechaComparable >= fechaDesde && fechaComparable <= fechaHasta;
                 });
-                
+
                 if (fechasFiltradas.length >= 2) {
                     fechasFiltradas.sort((a, b) => {
                         let aDate = a[0], bDate = b[0];
@@ -2398,7 +4215,7 @@
                         }
                         return aDate.localeCompare(bDate);
                     });
-                    
+
                     maquinasData.push({
                         sucursal,
                         maquina,
@@ -2410,24 +4227,24 @@
                 }
             }
         }
-        
+
         if (maquinasData.length === 0) {
             container.style.display = 'none';
             summary.innerHTML = 'No se encontraron máquinas con al menos 2 fechas en el rango seleccionado.';
             return;
         }
-        
+
         container.style.display = 'block';
-        
+
         summary.innerHTML = `
             <span><i class="fas fa-server"></i> <strong>${maquinasData.length}</strong> máquinas</span>
             <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${fechaDesde} → ${fechaHasta}</span>
             <span class="filter-tag-premium"><i class="fas fa-store"></i> ${sucursalFiltro === 'todas' ? 'Todas' : sucursalFiltro}</span>
         `;
-        
+
         let html = '';
         let totalFichas = 0, totalPremios = 0;
-        
+
         maquinasData.forEach((data, index) => {
             const fichasInicio = data.inicio.fichas || 0;
             const fichasFin = data.fin.fichas || 0;
@@ -2437,18 +4254,18 @@
             const fichasPruebaFin = data.fin.fichasPrueba || 0;
             const premiosPruebaInicio = data.inicio.premiosPrueba || 0;
             const premiosPruebaFin = data.fin.premiosPrueba || 0;
-            
+
             const diffFichas = Math.max(fichasInicio, fichasFin) - Math.min(fichasInicio, fichasFin);
             const diffFichasPrueba = Math.max(fichasPruebaInicio, fichasPruebaFin) - Math.min(fichasPruebaInicio, fichasPruebaFin);
             const fichasVendidas = diffFichas - diffFichasPrueba;
-            
+
             const diffPremios = Math.max(premiosInicio, premiosFin) - Math.min(premiosInicio, premiosFin);
             const diffPremiosPrueba = Math.max(premiosPruebaInicio, premiosPruebaFin) - Math.min(premiosPruebaInicio, premiosPruebaFin);
             const premiosEntregados = diffPremios - diffPremiosPrueba;
-            
+
             totalFichas += fichasVendidas;
             totalPremios += premiosEntregados;
-            
+
             const claseFila = index % 2 === 0 ? '' : 'style="background:var(--gray-50);"';
             html += `<tr ${claseFila}>
                 <td><strong>${data.sucursal}</strong></td>
@@ -2465,7 +4282,7 @@
                 <td class="contadores-diff">${premiosEntregados}</td>
             </tr>`;
         });
-        
+
         html += `<tr class="contadores-total-row">
             <td colspan="2"><strong>TOTAL</strong></td>
             <td colspan="4"></td>
@@ -2473,12 +4290,12 @@
             <td><strong>${totalFichas}</strong></td>
             <td><strong>${totalPremios}</strong></td>
         </tr>`;
-        
+
         tbody.innerHTML = html;
     }
 
     // ============================================================
-    // 15. PDF
+    // 22. PDF
     // ============================================================
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
@@ -2505,7 +4322,7 @@
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.setFont("Times", "normal");
-        
+
         const diaDesde = document.getElementById('filtroDiaDesde').value || 'inicio';
         const diaHasta = document.getElementById('filtroDiaHasta').value || 'hoy';
         doc.text(`Reporte - Días Laborales: ${diaDesde} → ${diaHasta}`, 20, 50);
@@ -2522,7 +4339,7 @@
         const filas = [];
         let totalEfectivo = 0, totalBancard = 0;
         const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
-        
+
         orden.forEach(nombre => {
             const stats = calcularEstadisticas(sucursales[nombre] || []);
             filas.push({
@@ -2639,11 +4456,11 @@
             <table class="table-premium">
                 <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
                 <tbody>`;
-        
+
         tableRows.forEach(f => {
             html += `<tr><td>${f.sucursal}</td><td>Gs. ${f.efectivo.toLocaleString()}</td><td>Gs. ${f.bancard.toLocaleString()}</td><td>Gs. ${f.total.toLocaleString()}</td></tr>`;
         });
-        
+
         html += `</tbody></table>`;
         html += `<p style="margin-top:8px; font-size:0.7rem; color:var(--gray-400);">
             <i class="fas fa-info-circle"></i> Formato: Times New Roman, Azul Francia, fondo amarillo en títulos.
@@ -2652,24 +4469,57 @@
     }
 
     // ============================================================
-    // 16. INICIALIZACIÓN
+    // 23. INICIALIZACIÓN
     // ============================================================
+    // Cargar carritos y catálogo al iniciar
     cargarCarritos();
+    cargarCatalogoUnificado();
 
+    // Configurar fechas por defecto
     const hoy = new Date();
     const hace7Dias = new Date();
     hace7Dias.setDate(hoy.getDate() - 7);
     document.getElementById('filtroDiaDesde').value = hace7Dias.toISOString().split('T')[0];
     document.getElementById('filtroDiaHasta').value = hoy.toISOString().split('T')[0];
-    
+
     const hace30Dias = new Date();
     hace30Dias.setDate(hoy.getDate() - 30);
     document.getElementById('contadorFechaDesde').value = hace30Dias.toISOString().split('T')[0];
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 2.2 - Corregido límite de items y carga de contadores');
+    console.log('🏷️ Versión: 3.0 - Catálogo Unificado');
     console.log('🗑️ Puedes eliminar items del historial desde la tabla de filtros');
+    console.log('📦 Catálogo combinado de todas las sucursales en tiempo real');
+
+    // Listener para cambios en tiempo real del stock
+    for (const suc of sucursalesConfig) {
+        try {
+            const app = initializeApp(suc.config, suc.id);
+            const db = getDatabase(app);
+            onValue(ref(db, 'stock'), () => {
+                // Recargar catálogo cuando cambia el stock
+                if (document.getElementById('tab-catalogo').style.display !== 'none') {
+                    cargarCatalogoUnificado();
+                }
+            });
+        } catch (e) {
+            // Ignorar errores de inicialización
+        }
+    }
+
+    // Listener para cambios en tiempo real del carrito
+    for (const suc of sucursalesConfig) {
+        try {
+            const app = initializeApp(suc.config, suc.id);
+            const db = getDatabase(app);
+            onValue(ref(db, 'carrito'), () => {
+                cargarCarritos();
+            });
+        } catch (e) {
+            // Ignorar errores de inicialización
+        }
+    }
 </script>
 
 </body>
