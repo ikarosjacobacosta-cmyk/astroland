@@ -1,0 +1,4362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTROLAND - Panel de Control Premium</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ============================================================
+           CSS COMPLETO - (igual que antes, no lo repito por espacio)
+           ============================================================ */
+        /* ... el mismo CSS que ya tenías ... */
+        :root {
+            --primary: #0d1b4a;
+            --primary-light: #1a2d6e;
+            --primary-dark: #080f2b;
+            --gold: #c9a84c;
+            --gold-light: #f0e6b0;
+            --gold-dark: #a8892e;
+            --success: #2e7d32;
+            --success-light: #e8f5e9;
+            --danger: #c62828;
+            --danger-light: #ffebee;
+            --warning: #e65100;
+            --warning-light: #fff3e0;
+            --info: #0d47a1;
+            --info-light: #e3f2fd;
+            --gray-50: #f8f9fa;
+            --gray-100: #f0f2f5;
+            --gray-200: #e2e6ea;
+            --gray-300: #c8ced4;
+            --gray-400: #a0a8b4;
+            --gray-500: #6c7a8a;
+            --gray-600: #4a5568;
+            --gray-700: #2d3748;
+            --shadow-sm: 0 2px 8px rgba(13, 27, 74, 0.08);
+            --shadow-md: 0 4px 20px rgba(13, 27, 74, 0.12);
+            --shadow-lg: 0 8px 40px rgba(13, 27, 74, 0.16);
+            --shadow-xl: 0 12px 60px rgba(13, 27, 74, 0.2);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-700);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+        .app-container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .header-premium {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+            padding: 20px 32px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-premium::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: radial-gradient(ellipse, rgba(201, 168, 76, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header-premium::after {
+            content: '✦';
+            position: absolute;
+            bottom: 10px;
+            right: 30px;
+            font-size: 80px;
+            color: rgba(201, 168, 76, 0.06);
+            pointer-events: none;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 1;
+        }
+
+        .header-logo {
+            width: 48px;
+            height: 48px;
+            background: var(--gold);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
+        }
+
+        .header-title h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .header-title h1 span {
+            color: var(--gold);
+        }
+
+        .header-title small {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            font-weight: 400;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 1;
+            flex-wrap: wrap;
+        }
+
+        .header-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.8rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .header-badge .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot 2s infinite;
+        }
+
+        .header-badge .status-dot.online {
+            background: #4CAF50;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .btn-icon:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        .btn-icon.active {
+            background: var(--gold);
+            color: var(--primary-dark);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: white;
+            padding: 6px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+            flex-wrap: nowrap;
+        }
+
+        .nav-tab {
+            padding: 10px 22px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: var(--gray-500);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover {
+            background: var(--gray-100);
+            color: var(--primary);
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(13, 27, 74, 0.3);
+        }
+
+        .nav-tab .tab-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .nav-tab.active .tab-badge {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .card-premium {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 24px 28px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+            transition: var(--transition);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .card-premium:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-header h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-header h2 .icon {
+            font-size: 1.4rem;
+        }
+
+        .card-header .badge-count {
+            background: var(--gray-100);
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        .card-header .badge-count strong {
+            color: var(--primary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-premium {
+            padding: 8px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-premium:active {
+            transform: translateY(0);
+        }
+
+        .btn-premium.primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-premium.primary:hover {
+            background: var(--primary-light);
+        }
+
+        .btn-premium.success {
+            background: var(--success);
+            color: white;
+        }
+        .btn-premium.success:hover {
+            background: #1b5e20;
+        }
+
+        .btn-premium.warning {
+            background: var(--warning);
+            color: white;
+        }
+        .btn-premium.warning:hover {
+            background: #bf360c;
+        }
+
+        .btn-premium.info {
+            background: var(--info);
+            color: white;
+        }
+        .btn-premium.info:hover {
+            background: #0a3060;
+        }
+
+        .btn-premium.gold {
+            background: var(--gold);
+            color: var(--primary-dark);
+        }
+        .btn-premium.gold:hover {
+            background: var(--gold-dark);
+            color: white;
+        }
+
+        .btn-premium.outline {
+            background: transparent;
+            color: var(--gray-600);
+            border: 2px solid var(--gray-200);
+        }
+        .btn-premium.outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(13, 27, 74, 0.04);
+        }
+
+        .btn-premium.danger {
+            background: var(--danger);
+            color: white;
+        }
+        .btn-premium.danger:hover {
+            background: #b71c1c;
+        }
+
+        .btn-premium:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .table-premium {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .table-premium thead th {
+            background: var(--gray-50);
+            color: var(--gray-600);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 2px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table-premium tbody td {
+            padding: 11px 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--gray-100);
+            transition: var(--transition);
+            vertical-align: middle;
+        }
+
+        .table-premium tbody tr {
+            transition: var(--transition);
+        }
+
+        .table-premium tbody tr:hover td {
+            background: var(--gray-50);
+        }
+
+        .table-premium tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-premium .total-row td {
+            background: var(--warning-light) !important;
+            font-weight: 700;
+            border-top: 2px solid var(--gold);
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .table-premium .total-row:hover td {
+            background: #fff3e0 !important;
+        }
+
+        .table-premium .cierre-row td {
+            background: var(--gold-light) !important;
+        }
+
+        .table-premium .cierre-row:hover td {
+            background: #f5e6b0 !important;
+        }
+
+        .table-premium .dia-separator td {
+            background: var(--gray-100) !important;
+            font-weight: 700;
+            color: var(--gray-600);
+            padding: 8px 10px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .table-premium .dia-separator td i {
+            margin-right: 8px;
+            color: var(--gold);
+        }
+
+        .unidades-maquina {
+            font-weight: bold;
+        }
+        .unidades-positivo {
+            color: #4CAF50;
+        }
+        .unidades-negativo {
+            color: #f44336;
+        }
+
+        .filter-grid-premium {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 20px;
+            align-items: flex-end;
+            padding: 16px 0;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1 1 150px;
+            min-width: 130px;
+        }
+
+        .filter-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            transition: var(--transition);
+            background: white;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 27, 74, 0.1);
+        }
+
+        .filter-group .rango-inputs {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .filter-group .rango-inputs input {
+            width: 90px;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .filter-group .rango-inputs span {
+            color: var(--gray-400);
+            font-weight: 700;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .calendar-premium {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: var(--radius-sm);
+            margin: 10px 0 16px 0;
+            border: 1px solid var(--gray-200);
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .calendar-day {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: default;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            background: white;
+            color: var(--gray-600);
+            position: relative;
+        }
+
+        .calendar-day.has-data {
+            background: var(--gold-light) !important;
+            border-color: var(--gold);
+            color: var(--primary-dark);
+        }
+
+        .calendar-day.has-data::after {
+            content: '●';
+            font-size: 6px;
+            color: var(--gold-dark);
+            position: absolute;
+            bottom: 1px;
+        }
+
+        .calendar-day.weekend {
+            color: var(--danger);
+        }
+
+        .calendar-day.selected {
+            background: var(--primary) !important;
+            color: white !important;
+            border-color: var(--primary);
+        }
+
+        .calendar-month {
+            font-weight: 700;
+            color: var(--primary);
+            width: 100%;
+            margin: 4px 0 6px 0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .calendar-month i {
+            color: var(--gold);
+        }
+
+        .contadores-header th {
+            background: var(--primary) !important;
+            color: white !important;
+        }
+
+        .contadores-subheader th {
+            background: var(--primary-light) !important;
+            color: rgba(255,255,255,0.85) !important;
+            font-size: 0.7rem !important;
+            font-weight: 600 !important;
+        }
+
+        .contadores-total-row td {
+            background: var(--warning-light) !important;
+            font-weight: 700 !important;
+            border-top: 2px solid var(--gold) !important;
+        }
+
+        .contadores-diff {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .stats-grid-premium {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--gray-50);
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-card .number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .stat-card .number.gold {
+            color: var(--gold-dark);
+        }
+
+        .stat-card .number.green {
+            color: var(--success);
+        }
+
+        .stat-card .number.red {
+            color: var(--danger);
+        }
+
+        .stat-card .label {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 4px;
+        }
+
+        .stat-card.cierres {
+            border-left-color: var(--gold);
+        }
+
+        .stat-card.dias {
+            border-left-color: var(--success);
+        }
+
+        .info-box-premium {
+            background: var(--info-light);
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            color: var(--info);
+            border-left: 4px solid var(--info);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .info-box-premium i {
+            font-size: 1.2rem;
+            margin-top: 2px;
+            color: var(--info);
+        }
+
+        .info-box-premium strong {
+            color: var(--primary-dark);
+        }
+
+        .filter-summary-premium {
+            background: var(--gray-50);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            align-items: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .filter-tag-premium {
+            background: white;
+            padding: 3px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            border: 1px solid var(--gray-200);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--gray-600);
+        }
+
+        .filter-tag-premium i {
+            color: var(--primary);
+        }
+
+        .preview-pdf {
+            background: var(--gray-50);
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            border: 2px dashed var(--gray-300);
+            margin-top: 12px;
+            min-height: 60px;
+        }
+
+        .preview-pdf table {
+            font-size: 0.8rem;
+        }
+
+        .preview-pdf table th {
+            background: var(--primary);
+            color: white;
+            padding: 6px 10px;
+        }
+
+        .preview-pdf table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .loader-premium {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 30px;
+        }
+
+        .loader-premium .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-delete:hover {
+            background: #b71c1c;
+            transform: scale(1.05);
+        }
+
+        .btn-delete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ============================================================
+           CATÁLOGO UNIFICADO
+           ============================================================ */
+        .catalogo-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        }
+
+        .catalogo-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            border: 1px solid var(--gray-200);
+        }
+
+        .catalogo-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--gold);
+        }
+
+        .catalogo-item .sucursal-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: var(--primary);
+            color: white;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .catalogo-item .stock-indicator {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(33, 150, 243, 0.9);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .catalogo-item .stock-indicator.sin-stock {
+            background: var(--danger);
+        }
+
+        .catalogo-item img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: contain;
+            background: #f9f9f9;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+        }
+
+        .catalogo-item .img-placeholder {
+            width: 100%;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .catalogo-item p {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: var(--gray-700);
+            font-weight: 500;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .catalogo-item.out-of-stock {
+            display: none;
+        }
+
+        .catalogo-filtro-sucursal {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .catalogo-filtro-sucursal button {
+            padding: 6px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 20px;
+            background: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--gray-600);
+        }
+
+        .catalogo-filtro-sucursal button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .catalogo-filtro-sucursal button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .catalogo-filtro-sucursal button .count {
+            background: rgba(255,255,255,0.2);
+            padding: 0 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+
+        .catalogo-filtro-sucursal button.active .count {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .catalogo-search {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            margin-bottom: 16px;
+        }
+
+        .catalogo-search:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 27, 74, 0.1);
+        }
+
+        @media (max-width: 992px) {
+            .header-premium { padding: 16px 20px; }
+            .header-title h1 { font-size: 1.3rem; }
+            .stats-grid-premium { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header-premium { flex-direction: column; align-items: stretch; text-align: center; }
+            .header-left { justify-content: center; }
+            .header-right { justify-content: center; }
+            .card-premium { padding: 16px; }
+            .nav-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .nav-tab { padding: 8px 14px; font-size: 0.75rem; }
+            .stats-grid-premium { grid-template-columns: repeat(2, 1fr); }
+            .filter-grid-premium { flex-direction: column; }
+            .filter-group { flex: 1 1 100%; min-width: 100%; }
+            .filter-group .rango-inputs input { width: 100%; }
+            .table-premium { font-size: 0.75rem; }
+            .table-premium thead th { font-size: 0.6rem; padding: 8px 4px; }
+            .table-premium tbody td { padding: 8px 4px; }
+            .calendar-day { width: 30px; height: 30px; font-size: 0.7rem; }
+            .catalogo-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid-premium { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stat-card { padding: 10px; }
+            .stat-card .number { font-size: 1.2rem; }
+            .header-logo { width: 36px; height: 36px; font-size: 18px; }
+            .header-title h1 { font-size: 1.1rem; }
+            .header-badge { font-size: 0.7rem; padding: 4px 10px; }
+            .catalogo-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .catalogo-item { padding: 8px; }
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--primary-dark);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid var(--gold);
+        }
+
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+        .toast.info { border-left-color: var(--info); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: var(--radius-md);
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow-xl);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-box h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .modal-box p {
+            margin-bottom: 16px;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .modal-box .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-box .modal-actions button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .modal-box .modal-actions .btn-confirm {
+            background: var(--danger);
+            color: white;
+        }
+
+        .modal-box .modal-actions .btn-confirm:hover {
+            background: #b71c1c;
+        }
+
+        .modal-box .modal-actions .btn-cancel {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        .modal-box .modal-actions .btn-cancel:hover {
+            background: var(--gray-300);
+        }
+
+        .modal-compra {
+            display: none;
+            position: fixed;
+            z-index: 9997;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-compra .modal-content {
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            width: 100%;
+            min-height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-compra .close {
+            color: #aaa;
+            float: right;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            z-index: 10;
+            background: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-compra .close:hover { color: #000; background: #eee; }
+
+        .modal-compra h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            font-size: 1.6rem;
+            text-align: center;
+        }
+
+        .modal-compra .tabs-compras {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .modal-compra .tab-btn-compras {
+            flex: 1;
+            padding: 14px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+
+        .modal-compra .tab-btn-compras.active {
+            background: #2196F3;
+            color: white;
+        }
+
+        .modal-compra .tab-pane-compras {
+            display: none;
+        }
+
+        .modal-compra .tab-pane-compras.active {
+            display: block;
+        }
+
+        .modal-compra .product-info,
+        .modal-compra .stock-info {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 1.2rem;
+        }
+
+        .modal-compra .stock-info {
+            background: #e3f2fd;
+            text-align: center;
+            font-weight: bold;
+            color: #1976D2;
+        }
+
+        .modal-compra .payment-options {
+            margin: 20px 0;
+        }
+
+        .modal-compra .payment-option {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .modal-compra .payment-option label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .modal-compra .payment-option input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .modal-compra .auto-calc {
+            font-size: 1rem;
+            margin-top: 8px;
+            color: #666;
+        }
+
+        .modal-compra .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-compra .modal-buttons button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            touch-action: manipulation;
+        }
+
+        .modal-compra #addToCart { background: #4CAF50; color: white; }
+        .modal-compra #cancelModal { background: #f44336; color: white; }
+
+        .modal-compra .modal-qty-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f0f7ff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #cce5ff;
+        }
+
+        .modal-compra .modal-qty-row label {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #004085;
+        }
+
+        .modal-compra #productQuantity {
+            width: 100px;
+            padding: 12px;
+            font-size: 1.1rem;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-weight: bold;
+            background: white;
+            -webkit-appearance: none;
+        }
+
+        .modal-compra .maquina-input {
+            width: 100%;
+            padding: 18px;
+            font-size: 16px;
+            text-align: center;
+            margin: 15px 0;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .modal-compra .maquina-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .modal-compra .maquina-buttons button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+
+        .modal-compra .btn-agregar { background: #4CAF50; color: white; }
+        .modal-compra .btn-quitar { background: #f44336; color: white; }
+        .modal-compra .btn-cancelar { background: #666; color: white; }
+
+        .cierre-modal .modal-content {
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            width: 100%;
+            min-height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cierre-modal input {
+            width: 100%;
+            padding: 18px;
+            font-size: 16px;
+            text-align: center;
+            margin: 15px 0;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .cierre-modal button {
+            padding: 14px 20px;
+            margin: 8px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+
+        .overlay-mensaje {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 10000;
+            white-space: nowrap;
+            pointer-events: none;
+            font-family: monospace;
+        }
+
+        .password-input { display: none; margin-top: 10px; text-align: center; }
+        .password-input input { padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; width: 60%; font-size: 16px; -webkit-appearance: none; appearance: none; }
+        .password-input button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; touch-action: manipulation; }
+
+        .contadores-modal .modal-content {
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            width: 100%;
+            min-height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contadores-modal .contadores-form {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .contadores-modal .contadores-field {
+            margin-bottom: 20px;
+        }
+
+        .contadores-modal .contadores-field label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .contadores-modal .contadores-field select,
+        .contadores-modal .contadores-field input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background: white;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .contadores-modal .contadores-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .contadores-modal .contadores-buttons button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            touch-action: manipulation;
+        }
+        .btn-guardar-contadores { background: #4CAF50; color: white; }
+        .btn-ver-contadores { background: #2196F3; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- HEADER PREMIUM -->
+    <header class="header-premium">
+        <div class="header-left">
+            <div class="header-logo">A</div>
+            <div class="header-title">
+                <h1>ASTROLAND <span>✦</span></h1>
+                <small>Panel de Control Unificado · Gestión de Sucursales</small>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-badge">
+                <span class="status-dot online"></span>
+                <span>Conectado</span>
+            </div>
+            <div class="header-badge">
+                <i class="fas fa-clock" style="color: var(--gold);"></i>
+                <span id="lastUpdate">Actualizando...</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-icon" onclick="recargarDatos()" title="Actualizar datos">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn-icon" onclick="toggleTheme()" title="Cambiar tema">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-icon" onclick="window.print()" title="Imprimir">
+                    <i class="fas fa-print"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="nav-tabs" id="mainNav">
+        <button class="nav-tab active" data-tab="tab-carritos">
+            <i class="fas fa-shopping-cart"></i> Carritos
+            <span class="tab-badge" id="tabCarritosBadge">0</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-catalogo">
+            <i class="fas fa-th"></i> Catálogo
+            <span class="tab-badge" id="tabCatalogoBadge">0</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-filtros">
+            <i class="fas fa-filter"></i> Filtros
+        </button>
+        <button class="nav-tab" data-tab="tab-contadores">
+            <i class="fas fa-calculator"></i> Contadores
+        </button>
+        <button class="nav-tab" data-tab="tab-pdf">
+            <i class="fas fa-file-pdf"></i> Reportes
+        </button>
+    </nav>
+
+    <!-- TAB 1: CARRITOS -->
+    <section id="tab-carritos" class="tab-content active">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2><span class="icon">🛒</span> Carritos Actuales por Sucursal</h2>
+                <div class="card-actions">
+                    <span class="badge-count"><i class="fas fa-box"></i> <strong id="totalItemsBadge">0</strong> items</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table-premium" id="carritosTable">
+                    <thead>
+                        <tr>
+                            <th>Sucursal</th>
+                            <th>Monto Total</th>
+                            <th>Cierre Efectivo</th>
+                            <th>Cierre Bancard</th>
+                            <th>Total Cierre</th>
+                            <th>Fichas</th>
+                            <th>Juguetes</th>
+                            <th>Pulseras</th>
+                            <th>Billar</th>
+                            <th>Detalle Fichas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carritosBody">
+                        <tr><td colspan="10" style="text-align:center; padding:30px;">
+                            <div class="loader-premium"><div class="spinner"></div><span>Cargando...</span></div>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:12px; font-size:0.75rem; color:var(--gray-400); display:flex; gap:16px; flex-wrap:wrap;">
+                <span><i class="fas fa-info-circle" style="color:var(--info);"></i> El monto total no incluye cierres</span>
+                <span><i class="fas fa-circle" style="color:var(--gold);"></i> Cierres: 000-09 / 000-10</span>
+                <span><i class="fas fa-circle" style="color:var(--success);"></i> Fichas: 000-00 al 000-02</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- TAB 2: CATÁLOGO UNIFICADO -->
+    <section id="tab-catalogo" class="tab-content" style="display:none;">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2><span class="icon">📦</span> Catálogo Unificado</h2>
+                <span class="badge-count" id="catalogoTotalBadge">
+                    <i class="fas fa-store"></i> <strong id="catalogoTotalCount">0</strong> productos
+                </span>
+            </div>
+
+            <div class="catalogo-filtro-sucursal" id="catalogoFiltros">
+                <button class="active" data-sucursal="todas">
+                    📊 Todas <span class="count" id="countTodas">0</span>
+                </button>
+                <button data-sucursal="Villa Morra">
+                    🏢 Villa Morra <span class="count" id="countVilla Morra">0</span>
+                </button>
+                <button data-sucursal="Los Laureles">
+                    🏢 Los Laureles <span class="count" id="countLos Laureles">0</span>
+                </button>
+                <button data-sucursal="Villa Elisa">
+                    🏢 Villa Elisa <span class="count" id="countVilla Elisa">0</span>
+                </button>
+            </div>
+
+            <input type="text" class="catalogo-search" id="catalogoSearch" placeholder="🔍 Buscar por código (ej: 005)..." inputmode="numeric">
+
+            <div id="catalogoContainer" class="catalogo-grid">
+                <div class="loader-premium" style="grid-column: 1 / -1;">
+                    <div class="spinner"></div>
+                    <span>Cargando catálogo...</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TAB 3: FILTROS -->
+    <section id="tab-filtros" class="tab-content" style="display:none;">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2><span class="icon">🔍</span> Filtros Avanzados</h2>
+                <span class="badge-count">Carrito + Historial</span>
+            </div>
+
+            <div class="stats-grid-premium" id="statsGrid" style="display:none;">
+                <div class="stat-card"><div class="number" id="statTotalItems">0</div><div class="label">📦 Total Items</div></div>
+                <div class="stat-card"><div class="number gold" id="statTotalMoney">Gs. 0</div><div class="label">💰 Dinero Total</div></div>
+                <div class="stat-card"><div class="number" id="statTotalPoints">0</div><div class="label">🎯 Puntos</div></div>
+                <div class="stat-card"><div class="number green" id="statTotalFichas">0</div><div class="label">🎴 Fichas</div></div>
+                <div class="stat-card cierres"><div class="number gold" id="statTotalCierres">Gs. 0</div><div class="label">💰 Total Cierres</div></div>
+                <div class="stat-card dias"><div class="number green" id="statDiasLaborales">0</div><div class="label">📅 Días Laborales</div></div>
+            </div>
+
+            <div class="info-box-premium">
+                <i class="fas fa-lightbulb"></i>
+                <div>
+                    <strong>¿Cómo funciona?</strong> El historial agrupa las operaciones por <strong>día laboral</strong> (fechaEliminacion).
+                    Una operación del 22/06 a las 00:01hs aparece en el historial con fecha <strong>21/06</strong> porque el cierre fue el 21.
+                </div>
+            </div>
+
+            <div class="filter-grid-premium">
+                <div class="filter-group">
+                    <label><i class="fas fa-store"></i> Sucursal</label>
+                    <select id="filtroSucursal">
+                        <option value="todas">📊 Todas</option>
+                        <option value="Villa Morra">🏢 Villa Morra</option>
+                        <option value="Los Laureles">🏢 Los Laureles</option>
+                        <option value="Lambaré">🏢 Lambaré</option>
+                        <option value="Villa Elisa">🏢 Villa Elisa</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Desde</label>
+                    <input type="date" id="filtroDiaDesde">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Hasta</label>
+                    <input type="date" id="filtroDiaHasta">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-tag"></i> Rango de Códigos</label>
+                    <div class="rango-inputs">
+                        <input type="text" id="filtroCodigoDesde" placeholder="000-00">
+                        <span>→</span>
+                        <input type="text" id="filtroCodigoHasta" placeholder="000-02">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-list"></i> Tipo</label>
+                    <select id="filtroTipoOperacion">
+                        <option value="todos">📊 Todos</option>
+                        <option value="venta">🛒 Venta</option>
+                        <option value="puntos">🎯 Puntos</option>
+                        <option value="movimiento">🔄 Movimiento</option>
+                        <option value="stock">📦 Stock</option>
+                        <option value="maquina">🖥️ Máquina</option>
+                        <option value="fichas_gratis">🎁 Fichas Gratis</option>
+                        <option value="cierres">💰 Cierres</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-database"></i> Fuente</label>
+                    <select id="filtroFuente">
+                        <option value="carrito">🛒 Carrito</option>
+                        <option value="historial">📜 Historial</option>
+                        <option value="todos">📊 Ambos</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-premium primary" onclick="aplicarFiltros()" id="btnFiltrar">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <button class="btn-premium outline" onclick="limpiarFiltros()">
+                        <i class="fas fa-undo"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultadosFiltrados" class="mt-20">
+                <p style="text-align:center; color:var(--gray-400); padding:20px;">
+                    <i class="fas fa-search" style="margin-right:8px;"></i>
+                    Selecciona filtros y presiona "Buscar"
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TAB 4: CONTADORES -->
+    <section id="tab-contadores" class="tab-content" style="display:none;">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2><span class="icon">🖥️</span> Contadores de Máquinas</h2>
+                <span class="badge-count">Por Días Laborales</span>
+            </div>
+
+            <div class="info-box-premium">
+                <i class="fas fa-calculator"></i>
+                <div>
+                    <strong>Fichas:</strong> (Mayor - Menor) - Prueba = Vendidas &nbsp;|&nbsp;
+                    <strong>Premios:</strong> (Mayor - Menor) - Prueba = Entregados
+                </div>
+            </div>
+
+            <div class="filter-grid-premium">
+                <div class="filter-group">
+                    <label><i class="fas fa-store"></i> Sucursal</label>
+                    <select id="contadorSucursal">
+                        <option value="todas">📊 Todas</option>
+                        <option value="Villa Morra">🏢 Villa Morra</option>
+                        <option value="Los Laureles">🏢 Los Laureles</option>
+                        <option value="Lambaré">🏢 Lambaré</option>
+                        <option value="Villa Elisa">🏢 Villa Elisa</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Desde</label>
+                    <input type="date" id="contadorFechaDesde">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Hasta</label>
+                    <input type="date" id="contadorFechaHasta">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-premium info" onclick="cargarContadores(event)">
+                        <i class="fas fa-chart-bar"></i> Cargar Contadores
+                    </button>
+                </div>
+            </div>
+
+            <div id="calendarioContainer" class="calendar-premium">
+                <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
+                    <i class="fas fa-calendar-day"></i> Selecciona fechas y presiona "Cargar Contadores"
+                </p>
+            </div>
+
+            <div id="contadoresResultados" style="display:none; margin-top:16px;">
+                <div class="filter-summary-premium" id="contadoresSummary"></div>
+                <div class="table-responsive">
+                    <table class="table-premium" id="contadoresTable">
+                        <thead>
+                            <tr class="contadores-header">
+                                <th rowspan="2" style="min-width:80px;">Sucursal</th>
+                                <th rowspan="2" style="min-width:60px;">Máquina</th>
+                                <th colspan="4" style="min-width:200px;">Fecha Inicio</th>
+                                <th colspan="4" style="min-width:200px;">Fecha Fin</th>
+                                <th colspan="2" style="min-width:120px;">Diferencia</th>
+                            </tr>
+                            <tr class="contadores-subheader">
+                                <th>Fichas</th><th>Premios</th><th>Fichas Prueba</th><th>Premios Prueba</th>
+                                <th>Fichas</th><th>Premios</th><th>Fichas Prueba</th><th>Premios Prueba</th>
+                                <th>Fichas</th><th>Premios</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contadoresBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TAB 5: PDF -->
+    <section id="tab-pdf" class="tab-content" style="display:none;">
+        <div class="card-premium">
+            <div class="card-header">
+                <h2><span class="icon">📄</span> Generar Reporte PDF</h2>
+                <span class="badge-count">Basado en filtros</span>
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+                <button class="btn-premium success" onclick="generarPDFconFiltros()">
+                    <i class="fas fa-file-pdf"></i> PDF con Filtros
+                </button>
+                <span style="font-size:0.8rem; color:var(--gray-400); display:flex; align-items:center;">
+                    <i class="fas fa-info-circle" style="margin-right:6px;"></i>
+                    Se genera con los filtros aplicados
+                </span>
+            </div>
+
+            <div class="preview-pdf" id="previewPDF">
+                <p style="text-align:center; color:var(--gray-400);">
+                    <i class="fas fa-file-pdf" style="margin-right:8px;"></i>
+                    Aplica filtros para ver la vista previa
+                </p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- MODALES -->
+<!-- Modal de compra -->
+<div id="purchaseModal" class="modal-compra">
+    <div class="modal-content">
+        <button class="close" onclick="closeModal()">&times;</button>
+        <h3>🛍️ Producto</h3>
+        <div class="tabs-compras">
+            <button class="tab-btn-compras active" data-tab="compra">🛒 Compra</button>
+            <button class="tab-btn-compras" data-tab="movimientos">🔄 Movimientos</button>
+        </div>
+        <div id="tabCompra" class="tab-pane-compras active">
+            <div id="modalProductInfo" class="product-info"></div>
+            <div id="modalStockInfo" class="stock-info"></div>
+            <div id="quantityRow" class="modal-qty-row">
+                <label>📦 Cantidad:</label>
+                <input type="number" id="productQuantity" min="1" step="1" value="1" onfocus="this.select()">
+            </div>
+            <div class="payment-options">
+                <div class="payment-option">
+                    <label>🎯 Pagar con Puntos</label>
+                    <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" inputmode="numeric">
+                    <div class="auto-calc">💰 Total del producto: G.<span id="totalPrice">0</span></div>
+                </div>
+                <div class="payment-option">
+                    <label>💵 Completar con Dinero (G.)</label>
+                    <input type="number" id="moneyInput" min="0" step="1000" value="0" readonly style="background-color:#f5f5f5;">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="addToCart" type="button" onclick="addToCart()">✅ Agregar al Carrito</button>
+                <button id="cancelModal" onclick="closeModal()">❌ Cancelar</button>
+            </div>
+        </div>
+        <div id="tabMovimientos" class="tab-pane-compras">
+            <div id="movimientosProductInfo" class="product-info"></div>
+            <select id="movimientoDestino" class="maquina-input" style="padding:12px;">
+                <option value="stock">📦 Stock</option>
+            </select>
+            <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades" onfocus="this.select()">
+            <div class="maquina-buttons">
+                <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
+                <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
+                <button class="btn-cancelar" onclick="closeModal()">❌ Cancelar</button>
+            </div>
+            <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
+                📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
+                🖥️ <strong>Máquina:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cierre -->
+<div id="cierreModal" class="cierre-modal" style="display:none; position:fixed; z-index:9997; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.95); overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div class="modal-content">
+        <button class="close" onclick="closeCierreModal()">&times;</button>
+        <h3 id="cierreTitulo">💰 Cierre de Caja</h3>
+        <p id="cierreDescripcion" style="font-size:1.1rem; text-align:center;"></p>
+        <input type="text" id="cierreMonto" placeholder="Ingrese el monto" inputmode="numeric">
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="cierreBtnConfirmar" style="background:#4CAF50; color:white;">✅ Confirmar</button>
+            <button onclick="closeCierreModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Contadores -->
+<div id="contadoresModal" class="contadores-modal" style="display:none; position:fixed; z-index:9997; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.95); overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div class="modal-content">
+        <button class="close" onclick="closeContadoresModal()">&times;</button>
+        <h3>📊 Contadores de Máquinas - Código 000-11</h3>
+        <div class="contadores-form">
+            <div class="contadores-field">
+                <label>🖥️ Seleccionar Máquina:</label>
+                <select id="maquinaSelect"><option value="">-- Seleccionar --</option></select>
+            </div>
+            <div class="contadores-field">
+                <label>📅 Fecha de Anotación:</label>
+                <input type="date" id="fechaContador" value="">
+            </div>
+            <div class="contadores-field">
+                <label>🎴 Contador de Fichas:</label>
+                <input type="number" id="contadorFichas" min="0" step="1" value="0" placeholder="Fichas ingresadas">
+            </div>
+            <div class="contadores-field">
+                <label>🏆 Contador de Premios:</label>
+                <input type="number" id="contadorPremios" min="0" step="1" value="0" placeholder="Premios entregados">
+            </div>
+            <div class="contadores-field">
+                <label>🧪 Fichas de Prueba:</label>
+                <input type="number" id="fichasPrueba" min="0" step="1" value="0" placeholder="Fichas de prueba">
+            </div>
+            <div class="contadores-field">
+                <label>🎁 Premios de Prueba:</label>
+                <input type="number" id="premiosPrueba" min="0" step="1" value="0" placeholder="Premios de prueba">
+            </div>
+            <div class="contadores-buttons">
+                <button class="btn-guardar-contadores" onclick="guardarContadoresMaquina()">💾 Guardar</button>
+                <button class="btn-ver-contadores" onclick="cargarContadoresMaquina()">🔄 Cargar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <h3><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> Confirmar Eliminación</h3>
+        <p id="confirmModalMessage">¿Estás seguro de eliminar este registro?</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
+            <button class="btn-confirm" id="confirmDeleteBtn">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script type="module">
+    // ============================================================
+    // 1. IMPORTACIONES Y CONFIGURACIÓN
+    // ============================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getDatabase, ref, get, child, remove, update, set, push, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+    // ✅ SUCURSALES ACTIVAS EN EL CATÁLOGO (excluyendo Lambaré)
+    const sucursalesCatalogo = [
+        { nombre: "Villa Morra", id: "villa-morra", config: {
+            apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
+            authDomain: "villa-morra.firebaseapp.com",
+            databaseURL: "https://villa-morra-default-rtdb.firebaseio.com",
+            projectId: "villa-morra",
+            storageBucket: "villa-morra.firebasestorage.app",
+            messagingSenderId: "184849063287",
+            appId: "1:184849063287:web:15f360231ade1b85ab5572"
+        }},
+        { nombre: "Los Laureles", id: "los-laureles", config: {
+            apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
+            authDomain: "los-laureles-49117.firebaseapp.com",
+            databaseURL: "https://los-laureles-49117-default-rtdb.firebaseio.com",
+            projectId: "los-laureles-49117",
+            storageBucket: "los-laureles-49117.firebasestorage.app",
+            messagingSenderId: "523096933391",
+            appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a"
+        }},
+        { nombre: "Villa Elisa", id: "villa-elisa", config: {
+            apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ",
+            authDomain: "villa-elisa-3adbe.firebaseapp.com",
+            databaseURL: "https://villa-elisa-3adbe-default-rtdb.firebaseio.com",
+            projectId: "villa-elisa-3adbe",
+            storageBucket: "villa-elisa-3adbe.firebasestorage.app",
+            messagingSenderId: "147294403718",
+            appId: "1:147294403718:web:96d8289e6d3d3c7ce72507"
+        }}
+    ];
+
+    // ✅ SUCURSALES COMPLETAS (incluyendo Lambaré para filtros y contadores)
+    const sucursalesCompletas = [
+        ...sucursalesCatalogo,
+        { nombre: "Lambaré", id: "lambare", config: {
+            apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
+            authDomain: "lambare-85124.firebaseapp.com",
+            databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
+            projectId: "lambare-85124",
+            storageBucket: "lambare-85124.firebasestorage.app",
+            messagingSenderId: "683666735879",
+            appId: "1:683666735879:web:88a7f147d57165ad60bba2"
+        }}
+    ];
+
+    const sucursalToConfig = {};
+    sucursalesCompletas.forEach(s => { sucursalToConfig[s.nombre] = s; });
+
+    // ============================================================
+    // 2. ESTADO
+    // ============================================================
+    const estado = {
+        carritos: {},
+        historialCache: {},
+        contadoresCache: {},
+        datosFiltrados: [],
+        contadoresFiltrados: {},
+        fechasConDatos: [],
+        tema: 'light',
+        eliminando: false,
+        catalogoProductos: [],
+        catalogoStock: {},
+        catalogoFiltro: 'todas',
+        catalogoSearch: '',
+        currentProduct: null,
+        currentMovimientosProduct: null,
+        currentSucursal: null,
+        currentDB: null,
+        currentApp: null,
+        stock: {},
+        addToCartLock: false,
+        agregarUnidadesLock: false,
+        quitarUnidadesLock: false,
+        currentSucursalContadores: 'Villa Morra'
+    };
+
+    const FICHA_CONSUMPTION = {
+        '000-00': 1,
+        '000-01': 16,
+        '000-02': 36,
+        '000-05': 1,
+        '000-06': 7
+    };
+    const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
+    const CIERRE_CODES = ['000-09', '000-10'];
+    const STOCK_INICIAL = 100;
+
+    let pendingDelete = null;
+
+    // ============================================================
+    // 3. NAVEGACIÓN POR TABS
+    // ============================================================
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+
+            this.classList.add('active');
+            const target = document.getElementById(this.dataset.tab);
+            if (target) target.style.display = 'block';
+
+            if (this.dataset.tab === 'tab-catalogo') {
+                cargarCatalogoUnificado();
+            }
+        });
+    });
+
+    // ============================================================
+    // 4. TOAST Y MODALES
+    // ============================================================
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+        toast.innerHTML = `${icon} ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    function openConfirmModal(message, onConfirm) {
+        document.getElementById('confirmModalMessage').textContent = message;
+        document.getElementById('confirmModal').classList.add('active');
+        const btn = document.getElementById('confirmDeleteBtn');
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', function() {
+            closeConfirmModal();
+            if (onConfirm) onConfirm();
+        });
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeConfirmModal();
+    });
+
+    // ============================================================
+    // 5. FUNCIONES DE ELIMINACIÓN
+    // ============================================================
+    async function eliminarDelCarrito(sucursal, firebaseKey) {
+        const config = sucursalToConfig[sucursal];
+        if (!config) return { success: false, error: 'Sucursal no encontrada' };
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            await remove(ref(db, `carrito/${firebaseKey}`));
+            return { success: true };
+        } catch (error) {
+            console.error('Error eliminando del carrito:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async function eliminarItemHistorial(sucursal, firebaseKey, indexVenta) {
+        const config = sucursalToConfig[sucursal];
+        if (!config) return { success: false, error: 'Sucursal no encontrada: ' + sucursal };
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+
+            const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
+            if (!snapshot.exists()) {
+                return { success: false, error: 'Registro no encontrado en ' + sucursal };
+            }
+
+            const registro = snapshot.val();
+            const ventas = registro.ventas || [];
+
+            if (indexVenta === null || indexVenta === undefined || indexVenta < 0 || indexVenta >= ventas.length) {
+                return { success: false, error: 'Item no encontrado en el índice ' + indexVenta };
+            }
+
+            ventas.splice(indexVenta, 1);
+
+            const totalDinero = ventas.reduce((s, v) => s + (v.money || 0), 0);
+            const totalPuntos = ventas.reduce((s, v) => s + (v.points || 0), 0);
+            const totalFichas = ventas.reduce((s, v) => s + (Math.abs(v.fichaConsumption || 0)), 0);
+
+            await update(ref(db, `historial_ventas/${firebaseKey}`), {
+                ventas: ventas,
+                totalVentas: ventas.length,
+                totalDinero: totalDinero,
+                totalPuntos: totalPuntos,
+                totalFichas: totalFichas,
+                actualizado: new Date().toISOString()
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error(`Error eliminando item del historial de ${sucursal}:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async function eliminarRegistroHistorial(sucursal, firebaseKey) {
+        const config = sucursalToConfig[sucursal];
+        if (!config) return { success: false, error: 'Sucursal no encontrada: ' + sucursal };
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            await remove(ref(db, `historial_ventas/${firebaseKey}`));
+            return { success: true };
+        } catch (error) {
+            console.error(`Error eliminando registro de ${sucursal}:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    window.eliminarItem = function(sucursal, firebaseKey, fuente, ventaIndex = null, nombre = '') {
+        if (estado.eliminando) {
+            showToast('⏳ Ya hay una eliminación en proceso...', 'warning');
+            return;
+        }
+
+        if (!sucursal || !firebaseKey) {
+            showToast('❌ Datos incompletos para eliminar', 'error');
+            return;
+        }
+
+        const mensaje = fuente === 'carrito'
+            ? `¿Estás seguro de eliminar este item del carrito de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`
+            : `¿Estás seguro de eliminar este item del HISTORIAL de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`;
+
+        pendingDelete = { sucursal, firebaseKey, fuente, ventaIndex };
+
+        openConfirmModal(mensaje, async () => {
+            estado.eliminando = true;
+
+            try {
+                let resultado;
+
+                if (pendingDelete.fuente === 'carrito') {
+                    resultado = await eliminarDelCarrito(pendingDelete.sucursal, pendingDelete.firebaseKey);
+                } else if (pendingDelete.fuente === 'historial') {
+                    if (pendingDelete.ventaIndex !== null && pendingDelete.ventaIndex !== undefined) {
+                        resultado = await eliminarItemHistorial(
+                            pendingDelete.sucursal,
+                            pendingDelete.firebaseKey,
+                            pendingDelete.ventaIndex
+                        );
+                    } else {
+                        resultado = await eliminarRegistroHistorial(pendingDelete.sucursal, pendingDelete.firebaseKey);
+                    }
+                } else {
+                    showToast(`❌ Fuente desconocida: ${pendingDelete.fuente}`, 'error');
+                    estado.eliminando = false;
+                    pendingDelete = null;
+                    return;
+                }
+
+                if (resultado.success) {
+                    showToast(`✅ Item eliminado correctamente de ${pendingDelete.sucursal}`, 'success');
+                    await aplicarFiltros();
+                    await cargarCarritos();
+                } else {
+                    showToast(`❌ Error al eliminar: ${resultado.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`❌ Error inesperado: ${error.message}`, 'error');
+            } finally {
+                estado.eliminando = false;
+                pendingDelete = null;
+            }
+        });
+    };
+
+    // ============================================================
+    // 6. FUNCIONES GLOBALES
+    // ============================================================
+    window.recargarDatos = function() {
+        cargarCarritos();
+        cargarCatalogoUnificado();
+        showToast('🔄 Datos actualizados', 'info');
+    };
+
+    window.toggleTheme = function() {
+        document.body.classList.toggle('dark-theme');
+        const icon = document.querySelector('.btn-icon .fa-moon');
+        if (icon) {
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+        }
+    };
+
+    // ============================================================
+    // 7. CARGAR CARRITOS
+    // ============================================================
+    async function cargarCarritos() {
+        const tbody = document.getElementById('carritosBody');
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px;">
+            <div class="loader-premium"><div class="spinner"></div><span>Cargando...</span></div>
+        </td></tr>`;
+
+        const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+        let totalItems = 0;
+
+        for (const suc of sucursalesCompletas) {
+            try {
+                const app = initializeApp(suc.config, suc.id);
+                const db = getDatabase(app);
+                const dbRef = ref(db);
+                const cartSnap = await get(child(dbRef, 'carrito'));
+
+                let items = [];
+                if (cartSnap.exists()) {
+                    const data = cartSnap.val();
+                    items = Object.entries(data).map(([k, v]) => ({
+                        ...v,
+                        firebaseKey: k,
+                        fuente: 'carrito',
+                        sucursal: suc.nombre
+                    }));
+                }
+                estado.carritos[suc.nombre] = items;
+                totalItems += items.length;
+            } catch (error) {
+                console.error(`Error cargando ${suc.nombre}:`, error);
+                estado.carritos[suc.nombre] = [];
+            }
+        }
+
+        renderCarritos();
+        document.getElementById('totalItemsBadge').textContent = totalItems;
+        document.getElementById('tabCarritosBadge').textContent = totalItems;
+        document.getElementById('lastUpdate').textContent = `✅ ${new Date().toLocaleTimeString()}`;
+    }
+
+    function renderCarritos() {
+        const tbody = document.getElementById('carritosBody');
+        const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+        let html = '';
+
+        ordenSucursales.forEach(sucursal => {
+            const items = estado.carritos[sucursal] || [];
+            const itemsVenta = items.filter(item => !item.esMovimiento && !item.esCierre);
+            const stats = calcularEstadisticas(itemsVenta);
+
+            html += `<tr>
+                <td><strong>${sucursal}</strong></td>
+                <td>${stats.totalMonto.toLocaleString()}</td>
+                <td>${stats.cierreEfectivo.toLocaleString()}</td>
+                <td>${stats.cierreBancard.toLocaleString()}</td>
+                <td>${stats.totalCierre.toLocaleString()}</td>
+                <td>${stats.fichasMonto.toLocaleString()}</td>
+                <td>${stats.juguetesMonto.toLocaleString()}</td>
+                <td>${stats.pulserasMonto.toLocaleString()}</td>
+                <td>${stats.billarMonto.toLocaleString()}</td>
+                <td style="font-size:0.75rem; text-align:left;">
+                    ${renderDetalleFichas(stats.detalleFichas)}
+                </td>
+            </tr>`;
+        });
+
+        const totalStats = calcularEstadisticasTotales(ordenSucursales, 'carrito', false);
+        html += `<tr class="total-row">
+            <td><strong>TOTAL</strong></td>
+            <td>${totalStats.totalMonto.toLocaleString()}</td>
+            <td>${totalStats.cierreEfectivo.toLocaleString()}</td>
+            <td>${totalStats.cierreBancard.toLocaleString()}</td>
+            <td>${totalStats.totalCierre.toLocaleString()}</td>
+            <td>${totalStats.fichasMonto.toLocaleString()}</td>
+            <td>${totalStats.juguetesMonto.toLocaleString()}</td>
+            <td>${totalStats.pulserasMonto.toLocaleString()}</td>
+            <td>${totalStats.billarMonto.toLocaleString()}</td>
+            <td style="font-size:0.7rem; text-align:left;">
+                ${renderDetalleFichas(totalStats.detalleFichas)}
+            </td>
+        </tr>`;
+
+        tbody.innerHTML = html;
+    }
+
+    function calcularEstadisticas(items) {
+        let totalMonto = 0, cierreEfectivo = 0, cierreBancard = 0;
+        let fichasMonto = 0, juguetesMonto = 0, pulserasMonto = 0, billarMonto = 0;
+        let detalleFichas = { '000-00': 0, '000-01': 0, '000-02': 0, '000-05': 0, '000-06': 0 };
+
+        items.forEach(item => {
+            const money = item.money || 0;
+            const code = item.code || '';
+            const unidades = item.unidades || 1;
+
+            if (code === '000-09') { cierreEfectivo += money; return; }
+            if (code === '000-10') { cierreBancard += money; return; }
+
+            totalMonto += money;
+
+            if (code.startsWith('000-') && code !== '000-09' && code !== '000-10') {
+                if (['000-00', '000-01', '000-02'].includes(code)) fichasMonto += money;
+                if (code === '000-07') pulserasMonto += money;
+                if (code === '000-08') billarMonto += money;
+                if (detalleFichas.hasOwnProperty(code)) detalleFichas[code] += unidades;
+            } else if (code && parseInt(code.substring(0,3)) >= 5) {
+                juguetesMonto += money;
+            }
+        });
+
+        return { totalMonto, cierreEfectivo, cierreBancard, totalCierre: cierreEfectivo + cierreBancard, fichasMonto, juguetesMonto, pulserasMonto, billarMonto, detalleFichas };
+    }
+
+    function calcularEstadisticasTotales(sucursales, fuente = null, soloVentas = false) {
+        const total = {
+            totalMonto: 0, cierreEfectivo: 0, cierreBancard: 0, totalCierre: 0,
+            fichasMonto: 0, juguetesMonto: 0, pulserasMonto: 0, billarMonto: 0,
+            detalleFichas: { '000-00': 0, '000-01': 0, '000-02': 0, '000-05': 0, '000-06': 0 }
+        };
+
+        sucursales.forEach(nombre => {
+            let items = [];
+            if (fuente === 'carrito') items = estado.carritos[nombre] || [];
+            else if (fuente === 'historial') items = estado.historial[nombre] || [];
+            else items = [...(estado.carritos[nombre] || []), ...(estado.historial[nombre] || [])];
+
+            if (soloVentas) {
+                items = items.filter(item => !item.esMovimiento && !item.esCierre);
+            }
+
+            const stats = calcularEstadisticas(items);
+            total.totalMonto += stats.totalMonto;
+            total.cierreEfectivo += stats.cierreEfectivo;
+            total.cierreBancard += stats.cierreBancard;
+            total.totalCierre += stats.totalCierre;
+            total.fichasMonto += stats.fichasMonto;
+            total.juguetesMonto += stats.juguetesMonto;
+            total.pulserasMonto += stats.pulserasMonto;
+            total.billarMonto += stats.billarMonto;
+            for (let key in total.detalleFichas) {
+                total.detalleFichas[key] += stats.detalleFichas[key] || 0;
+            }
+        });
+        return total;
+    }
+
+    function renderDetalleFichas(detalle) {
+        if (!detalle) return '-';
+        return `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px 8px; font-size:0.7rem;">
+                <span>Unitarias: ${detalle['000-00']}</span>
+                <span>Combo 50k: ${detalle['000-01']}</span>
+                <span>Combo 100k: ${detalle['000-02']}</span>
+                <span>Error: ${detalle['000-05']}</span>
+                <span style="grid-column: span 2; text-align:center;">Cápsulas: ${detalle['000-06']}</span>
+            </div>
+        `;
+    }
+
+    // ============================================================
+    // 8. FUNCIONES DE FECHA
+    // ============================================================
+    function obtenerDiaLaboral(item) {
+        if (item.fechaEliminacion) return item.fechaEliminacion;
+        if (item.fecha) return item.fecha;
+        return null;
+    }
+
+    function convertirFechaParaComparar(fechaStr) {
+        if (!fechaStr) return null;
+        try {
+            const partes = fechaStr.split('/');
+            if (partes.length === 3) {
+                return `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
+            }
+            return fechaStr;
+        } catch(e) { return fechaStr; }
+    }
+
+    // ============================================================
+    // 9. CATÁLOGO UNIFICADO - SOLO 3 SUCURSALES
+    // ============================================================
+    async function cargarCatalogoUnificado() {
+        const container = document.getElementById('catalogoContainer');
+        container.innerHTML = `
+            <div class="loader-premium" style="grid-column: 1 / -1;">
+                <div class="spinner"></div>
+                <span>Cargando catálogo...</span>
+            </div>
+        `;
+
+        const productos = [];
+
+        for (const suc of sucursalesCatalogo) {
+            try {
+                const app = initializeApp(suc.config, suc.id);
+                const db = getDatabase(app);
+                const stockSnap = await get(ref(db, 'stock'));
+                const stockData = stockSnap.val() || {};
+
+                const categorias = [
+                    { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
+                        { codigo: "000-00", precio: 5000 },
+                        { codigo: "000-01", precio: 50000 },
+                        { codigo: "000-02", precio: 100000 },
+                        { codigo: "000-05", precio: 0 },
+                        { codigo: "000-06", precio: 0 },
+                        { codigo: "000-07", precio: 15000 },
+                        { codigo: "000-08", precio: 15000 },
+                        { codigo: "000-09", precio: 0 },
+                        { codigo: "000-10", precio: 0 },
+                        { codigo: "000-11", precio: 0 }
+                    ]},
+                    { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 18 } },
+                    { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 74 } },
+                    { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 75 } },
+                    { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 59 } },
+                    { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 63 } },
+                    { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 38 } },
+                    { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 53 } },
+                    { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 10 } },
+                    { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 39 } },
+                    { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
+                    { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 5 } },
+                    { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 3 } },
+                    { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
+                        { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 },
+                        { sufijo: "03", precio: 60000 }
+                    ]},
+                    { nombre: "800 puntos", categoria: "800", puntos: 800, productos: [
+                        { codigo: "800-00", precio: 250000 }, { codigo: "800-01", precio: 250000 }
+                    ]}
+                ];
+
+                for (const cat of categorias) {
+                    if (cat.rango) {
+                        for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
+                            const codigo = `${cat.categoria}-${i.toString().padStart(2,'0')}`;
+                            const precio = codigo === '100-38' ? 10000 : cat.precioBase;
+                            const stockVal = getProductStockForSucursal(codigo, stockData);
+                            productos.push({
+                                code: codigo,
+                                price: precio,
+                                points: cat.puntos,
+                                sucursal: suc.nombre,
+                                stock: stockVal,
+                                fichaConsumption: FICHA_CONSUMPTION[codigo] || 0,
+                                category: cat.categoria,
+                                nombre: codigo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '')
+                            });
+                        }
+                    } else if (cat.productosEspeciales) {
+                        for (const p of cat.productosEspeciales) {
+                            const codigo = `${cat.categoria}-${p.sufijo}`;
+                            const stockVal = getProductStockForSucursal(codigo, stockData);
+                            productos.push({
+                                code: codigo,
+                                price: p.precio,
+                                points: cat.puntos,
+                                sucursal: suc.nombre,
+                                stock: stockVal,
+                                fichaConsumption: FICHA_CONSUMPTION[codigo] || 0,
+                                category: cat.categoria,
+                                nombre: codigo + (p.precio > 0 ? ` - G.${p.precio.toLocaleString('es-PY')}` : '')
+                            });
+                        }
+                    } else if (cat.productos) {
+                        for (const p of cat.productos) {
+                            const stockVal = getProductStockForSucursal(p.codigo, stockData);
+                            productos.push({
+                                code: p.codigo,
+                                price: p.precio,
+                                points: cat.puntos,
+                                sucursal: suc.nombre,
+                                stock: stockVal,
+                                fichaConsumption: FICHA_CONSUMPTION[p.codigo] || 0,
+                                category: cat.categoria,
+                                nombre: p.codigo + (p.precio > 0 ? ` - G.${p.precio.toLocaleString('es-PY')}` : '')
+                            });
+                        }
+                    }
+                }
+
+                estado.catalogoStock[suc.nombre] = stockData;
+
+            } catch (error) {
+                console.error(`Error generando catálogo para ${suc.nombre}:`, error);
+            }
+        }
+
+        estado.catalogoProductos = productos;
+        renderCatalogo(productos);
+    }
+
+    function getProductStockForSucursal(code, stockData) {
+        if (NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code)) {
+            return stockData[code] ?? STOCK_INICIAL;
+        }
+        if (FICHA_CONSUMPTION[code]) {
+            const fichaStock = stockData['000-00'] ?? STOCK_INICIAL;
+            return Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
+        }
+        return stockData[code] ?? STOCK_INICIAL;
+    }
+
+    // ============================================================
+    // 10. RENDERIZAR CATÁLOGO CON IMÁGENES (RUTA CORREGIDA)
+    // ============================================================
+    function renderCatalogo(productos) {
+        const container = document.getElementById('catalogoContainer');
+        const filtro = estado.catalogoFiltro;
+        const search = estado.catalogoSearch.toLowerCase();
+
+        let filtrados = productos;
+
+        if (filtro !== 'todas') {
+            filtrados = filtrados.filter(p => p.sucursal === filtro);
+        }
+
+        if (search) {
+            const codigoBusqueda = search.padStart(3, '0').substring(0, 3);
+            filtrados = filtrados.filter(p => p.code.startsWith(codigoBusqueda));
+        }
+
+        filtrados.sort((a, b) => a.code.localeCompare(b.code));
+
+        // Actualizar contadores
+        const todasCount = productos.length;
+        const counts = {};
+        productos.forEach(p => {
+            counts[p.sucursal] = (counts[p.sucursal] || 0) + 1;
+        });
+        document.getElementById('countTodas').textContent = todasCount;
+        document.getElementById('countVilla Morra').textContent = counts['Villa Morra'] || 0;
+        document.getElementById('countLos Laureles').textContent = counts['Los Laureles'] || 0;
+        document.getElementById('countVilla Elisa').textContent = counts['Villa Elisa'] || 0;
+        document.getElementById('catalogoTotalCount').textContent = filtrados.length;
+        document.getElementById('tabCatalogoBadge').textContent = filtrados.length;
+
+        if (filtrados.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align:center; padding:40px; color:var(--gray-400);">
+                    <i class="fas fa-box-open" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
+                    No se encontraron productos con los filtros seleccionados
+                </div>
+            `;
+            return;
+        }
+
+        const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
+
+        let html = '';
+        filtrados.forEach((p, idx) => {
+            const colorIndex = p.code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
+            const stockClass = p.stock <= 0 ? 'sin-stock' : '';
+            const outOfStock = p.stock <= 0 && !CIERRE_CODES.includes(p.code);
+            const isSpecial = CIERRE_CODES.includes(p.code) || p.code === '000-11';
+
+            html += `
+                <div class="catalogo-item ${outOfStock && !isSpecial ? 'out-of-stock' : ''}"
+                     data-sucursal="${p.sucursal}"
+                     data-code="${p.code}"
+                     data-price="${p.price}"
+                     data-points="${p.points}"
+                     data-stock="${p.stock}"
+                     data-fichaconsumption="${p.fichaConsumption}"
+                     onclick="handleCatalogoClick(this)">
+                    <span class="sucursal-badge">${p.sucursal}</span>
+                    <span class="stock-indicator ${stockClass}">${p.stock}</span>
+                    <div class="img-placeholder" style="background: ${colores[colorIndex]};">${p.code.replace('-', ' ')}</div>
+                    <p>${p.nombre}</p>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+        // ✅ CARGAR IMÁGENES CON RUTA CORRECTA: ../imagenes/
+        cargarImagenesCatalogo(container);
+    }
+
+    // ============================================================
+    // 11. FUNCIÓN PARA CARGAR IMÁGENES (RUTA ../imagenes/)
+    // ============================================================
+    function cargarImagenesCatalogo(container) {
+        const items = container.querySelectorAll('.catalogo-item');
+
+        items.forEach(item => {
+            const code = item.dataset.code;
+            const placeholder = item.querySelector('.img-placeholder');
+
+            if (item.querySelector('img')) return;
+
+            const img = new Image();
+            img.onload = function() {
+                if (placeholder) {
+                    placeholder.outerHTML = `<img src="../imagenes/${code}.jpg" alt="${code}" loading="lazy">`;
+                }
+            };
+            img.onerror = function() {
+                // Mantener placeholder si la imagen no existe
+                // console.log(`ℹ️ Imagen no encontrada: ../imagenes/${code}.jpg`);
+            };
+            // ✅ RUTA CORRECTA: ../imagenes/ (asumiendo que el panel está dentro de la carpeta sucursales)
+            img.src = `../imagenes/${code}.jpg`;
+        });
+    }
+
+    // ============================================================
+    // 12. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
+    // ============================================================
+    window.handleCatalogoClick = function(element) {
+        const code = element.dataset.code;
+        const price = parseFloat(element.dataset.price);
+        const points = parseInt(element.dataset.points);
+        const stockVal = parseInt(element.dataset.stock);
+        const consumo = parseInt(element.dataset.fichaconsumption) || 0;
+        const sucursal = element.dataset.sucursal;
+        const name = element.querySelector('p')?.textContent || code;
+
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        estado.currentSucursal = sucursal;
+        estado.currentApp = null;
+        estado.currentDB = null;
+
+        const app = initializeApp(config.config, config.id);
+        estado.currentApp = app;
+        estado.currentDB = getDatabase(app);
+
+        cargarStockSucursal(sucursal).then(() => {
+            const stockActual = estado.stock[sucursal] || {};
+
+            let stockValActual;
+            if (NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code)) {
+                stockValActual = stockActual[code] ?? STOCK_INICIAL;
+            } else if (FICHA_CONSUMPTION[code]) {
+                const fichaStock = stockActual['000-00'] ?? STOCK_INICIAL;
+                stockValActual = Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
+            } else {
+                stockValActual = stockActual[code] ?? STOCK_INICIAL;
+            }
+
+            if (stockValActual <= 0 && !CIERRE_CODES.includes(code)) {
+                showToast('⚠️ Sin stock en ' + sucursal, 'warning');
+                return;
+            }
+
+            if (code === '000-09') {
+                abrirModalCierre('Efectivo', 'Registrar monto de cierre en EFECTIVO - ' + sucursal);
+                return;
+            }
+            if (code === '000-10') {
+                abrirModalCierre('Tarjeta', 'Registrar monto de cierre por TARJETA - ' + sucursal);
+                return;
+            }
+            if (code === '000-11') {
+                openContadoresModal();
+                return;
+            }
+            if (code === '000-05') {
+                procesarFichaGratis(code, 1);
+                return;
+            }
+            if (code === '000-06') {
+                procesarFichaGratis(code, 7);
+                return;
+            }
+
+            estado.currentProduct = {
+                code,
+                price,
+                points,
+                name: name,
+                stock: stockValActual,
+                fichaConsumption: consumo,
+                sucursal: sucursal
+            };
+            estado.currentMovimientosProduct = {
+                code,
+                price,
+                points,
+                name: name,
+                stock: stockValActual,
+                fichaConsumption: consumo,
+                sucursal: sucursal
+            };
+
+            const movimientosTab = document.querySelector('#purchaseModal .tab-btn-compras[data-tab="movimientos"]');
+            if (shouldShowMovimientosTab(code)) {
+                movimientosTab.style.display = 'block';
+            } else {
+                movimientosTab.style.display = 'none';
+                if (document.querySelector('#purchaseModal .tab-btn-compras.active').getAttribute('data-tab') === 'movimientos') {
+                    document.querySelector('#purchaseModal .tab-btn-compras[data-tab="compra"]').click();
+                }
+            }
+
+            document.querySelector('#purchaseModal .tab-btn-compras[data-tab="compra"]').click();
+
+            const quantityRow = document.getElementById('quantityRow');
+            if (shouldShowQuantity(code)) {
+                quantityRow.style.display = 'flex';
+            } else {
+                quantityRow.style.display = 'none';
+            }
+
+            document.getElementById('productQuantity').value = 1;
+
+            document.getElementById('modalProductInfo').innerHTML = `
+                <strong>${estado.currentProduct.name}</strong>
+                <br>🎯 Puntos base: ${estado.currentProduct.points}
+                <br>💰 Precio unitario: G.${estado.currentProduct.price.toLocaleString()}
+                <br>🏢 Sucursal: ${sucursal}
+            `;
+            document.getElementById('modalStockInfo').innerHTML = `📦 Stock disponible en ${sucursal}: <strong>${stockValActual} unidades</strong>`;
+            document.getElementById('pointsInput').value = '';
+            document.getElementById('pointsInput').max = estado.currentProduct.points || 999999;
+            updateModalTotalsBasedOnQuantity();
+            document.getElementById('addToCart').disabled = (stockValActual <= 0);
+
+            document.getElementById('movimientosProductInfo').innerHTML = `
+                <strong>${estado.currentMovimientosProduct.name}</strong>
+                <br>📦 Stock actual en ${sucursal}: ${stockValActual} unidades
+                <br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}
+                <br><small style="color:#666;">➕ Agregar: suma al stock (si es Máquina, resta) | ➖ Quitar: resta del stock (si es Máquina, suma)</small>
+            `;
+            document.getElementById('unidadesInput').value = 1;
+
+            const destinoSelect = document.getElementById('movimientoDestino');
+            destinoSelect.innerHTML = '<option value="stock">📦 Stock</option>';
+            for (let i = 1; i <= 20; i++) {
+                destinoSelect.innerHTML += `<option value="maq${i}">⚙️ Maq ${i}</option>`;
+            }
+
+            document.getElementById('purchaseModal').style.display = 'block';
+            blockBodyScroll();
+        });
+    };
+
+    async function cargarStockSucursal(sucursal) {
+        const config = sucursalToConfig[sucursal];
+        if (!config) return;
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            const stockSnap = await get(ref(db, 'stock'));
+            estado.stock[sucursal] = stockSnap.val() || {};
+        } catch (error) {
+            console.error('Error cargando stock de', sucursal, error);
+            estado.stock[sucursal] = {};
+        }
+    }
+
+    // ============================================================
+    // 13. FUNCIONES DE UTILIDAD PARA EL MODAL
+    // ============================================================
+    function shouldShowQuantity(code) {
+        return code === '005-13' || code === '000-00';
+    }
+
+    function shouldShowMovimientosTab(code) {
+        const prefix = code.substring(0, 3);
+        if (code === '000-00' || code === '000-07' || code === '000-08') return true;
+        const numPrefix = parseInt(prefix);
+        if (!isNaN(numPrefix) && numPrefix >= 5) return true;
+        return false;
+    }
+
+    function blockBodyScroll() { document.body.style.overflow = 'hidden'; }
+    function unblockBodyScroll() { document.body.style.overflow = ''; }
+
+    function updateModalTotalsBasedOnQuantity() {
+        if (!estado.currentProduct) return;
+        const qty = parseInt(document.getElementById('productQuantity').value) || 1;
+        const unitPrice = estado.currentProduct.price;
+        const totalPriceValue = unitPrice * qty;
+        const pointsValue = parseInt(document.getElementById('pointsInput').value) || 0;
+        let moneyToPay = totalPriceValue;
+
+        if (estado.currentProduct.points > 0) {
+            const pointsUsed = Math.min(pointsValue, estado.currentProduct.points * qty);
+            moneyToPay = Math.round(totalPriceValue * (1 - pointsUsed / (estado.currentProduct.points * qty)));
+            if (moneyToPay < 0) moneyToPay = 0;
+            const maxPointsPossible = estado.currentProduct.points * qty;
+            if (pointsValue > maxPointsPossible) {
+                document.getElementById('pointsInput').value = maxPointsPossible;
+                updateModalTotalsBasedOnQuantity();
+                return;
+            }
+        }
+
+        document.getElementById('totalPrice').textContent = totalPriceValue.toLocaleString();
+        document.getElementById('moneyInput').value = Math.floor(moneyToPay);
+    }
+
+    window.calculateRemainingMoney = function() {
+        updateModalTotalsBasedOnQuantity();
+    };
+
+    // ============================================================
+    // 14. FUNCIONES DEL MODAL DE COMPRA
+    // ============================================================
+    window.closeModal = function() {
+        document.getElementById('purchaseModal').style.display = 'none';
+        unblockBodyScroll();
+    };
+
+    window.addToCart = function() {
+        if (window.addToCartLock) return;
+        if (!estado.currentProduct) return;
+
+        window.addToCartLock = true;
+
+        const procesar = async () => {
+            try {
+                const code = estado.currentProduct.code;
+                const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
+                const consumo = estado.currentProduct.fichaConsumption || 0;
+                const sucursal = estado.currentProduct.sucursal;
+
+                const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+                const points = parseInt(document.getElementById('pointsInput').value) || 0;
+                const money = parseFloat(document.getElementById('moneyInput').value) || 0;
+                const unitPrice = estado.currentProduct.price;
+                const totalPriceValue = unitPrice * qty;
+
+                if (estado.currentProduct.points > 0 && points > (estado.currentProduct.points * qty)) {
+                    alert(`Máximo ${estado.currentProduct.points * qty} puntos`);
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                if (estado.currentProduct.points > 0) {
+                    const esperado = Math.round(totalPriceValue * (1 - points / (estado.currentProduct.points * qty)));
+                    if (Math.abs(money - esperado) > 1) {
+                        alert('Error en cálculo de pago');
+                        window.addToCartLock = false;
+                        return;
+                    }
+                }
+
+                if (points === 0 && money === 0 && totalPriceValue > 0) {
+                    alert('Debes pagar con puntos o dinero');
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                const config = sucursalToConfig[sucursal];
+                if (!config) {
+                    alert('❌ Sucursal no encontrada');
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                let db;
+                if (estado.currentDB) {
+                    db = estado.currentDB;
+                } else {
+                    const app = initializeApp(config.config, config.id);
+                    db = getDatabase(app);
+                }
+
+                let stockKey;
+                let cantidadRestar;
+
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadRestar = consumo * qty;
+                } else {
+                    stockKey = code;
+                    cantidadRestar = qty;
+                }
+
+                const stockSnap = await get(ref(db, `stock/${stockKey}`));
+                let stockActual = stockSnap.val() ?? STOCK_INICIAL;
+                if (stockActual < cantidadRestar) {
+                    alert(`❌ Stock insuficiente. Disponible: ${stockActual}, necesario: ${cantidadRestar}`);
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                const ahora = new Date();
+                const fecha = ahora.toLocaleDateString('es-PY');
+                const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                const cartData = {
+                    code,
+                    name: estado.currentProduct.name,
+                    points: points,
+                    money: money,
+                    totalPrice: totalPriceValue,
+                    unitPrice: unitPrice,
+                    qty: qty,
+                    fecha,
+                    hora,
+                    timestamp: fecha + ' ' + hora,
+                    timestampCompleto: ahora.getTime(),
+                    fichaConsumption: consumo * qty,
+                    unidades: qty,
+                    sucursalOrigen: sucursal
+                };
+
+                const resultadoStock = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    const nuevoValor = currentValue - cantidadRestar;
+                    if (nuevoValor < 0) return;
+                    return nuevoValor;
+                });
+
+                if (!resultadoStock.committed) {
+                    alert('❌ Error: Stock insuficiente o conflicto en la transacción');
+                    window.addToCartLock = false;
+                    return;
+                }
+
+                const cartRef = ref(db, 'carrito');
+                await push(cartRef, cartData);
+
+                if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                estado.stock[sucursal][stockKey] = resultadoStock.snapshot.val();
+
+                await cargarCatalogoUnificado();
+
+                closeModal();
+                showToast(`✅ ${qty} unidad(es) agregada(s) al carrito de ${sucursal}`, 'success');
+
+            } catch (error) {
+                console.error('Error en addToCart:', error);
+                alert('❌ Error inesperado al procesar la venta');
+            } finally {
+                window.addToCartLock = false;
+            }
+        };
+
+        procesar();
+    };
+
+    // ============================================================
+    // 15. MOVIMIENTOS DE UNIDADES
+    // ============================================================
+    window.agregarUnidades = async function() {
+        if (window.agregarUnidadesLock) return;
+        window.agregarUnidadesLock = true;
+
+        if (!estado.currentMovimientosProduct) {
+            window.agregarUnidadesLock = false;
+            return;
+        }
+
+        const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+        const destino = document.getElementById('movimientoDestino').value;
+        const code = estado.currentMovimientosProduct.code;
+        const consumo = estado.currentMovimientosProduct.fichaConsumption || 0;
+        const sucursal = estado.currentMovimientosProduct.sucursal;
+        const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+        if (cantidad <= 0) {
+            alert('Cantidad inválida');
+            window.agregarUnidadesLock = false;
+            return;
+        }
+
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            alert('❌ Sucursal no encontrada');
+            window.agregarUnidadesLock = false;
+            return;
+        }
+
+        try {
+            let db;
+            if (estado.currentDB) {
+                db = estado.currentDB;
+            } else {
+                const app = initializeApp(config.config, config.id);
+                db = getDatabase(app);
+            }
+
+            let stockKey;
+            let cantidadMovimiento;
+
+            if (destino === 'stock') {
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadMovimiento = consumo * cantidad;
+                } else {
+                    stockKey = code;
+                    cantidadMovimiento = cantidad;
+                }
+
+                const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    return currentValue + cantidadMovimiento;
+                });
+
+                if (resultado.committed) {
+                    if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                    estado.stock[sucursal][stockKey] = resultado.snapshot.val();
+
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleDateString('es-PY');
+                    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                    await push(ref(db, 'carrito'), {
+                        code,
+                        name: estado.currentMovimientosProduct.name,
+                        points: 0,
+                        money: 0,
+                        unidades: cantidad,
+                        esMovimiento: true,
+                        tipoMovimiento: 'agregar',
+                        destinoMovimiento: destino,
+                        totalPrice: 0,
+                        fecha,
+                        hora,
+                        timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(),
+                        fichaConsumption: 0,
+                        sucursalOrigen: sucursal
+                    });
+
+                    await cargarCatalogoUnificado();
+                    closeModal();
+                    showToast(`✅ Agregado +${cantidad} unidad(es) a STOCK de ${sucursal}`, 'success');
+                } else {
+                    alert('❌ Error en la transacción de stock');
+                }
+            } else {
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadMovimiento = consumo * cantidad;
+                } else {
+                    stockKey = code;
+                    cantidadMovimiento = cantidad;
+                }
+
+                const stockSnap = await get(ref(db, `stock/${stockKey}`));
+                let stockActual = stockSnap.val() ?? STOCK_INICIAL;
+                if (stockActual < cantidadMovimiento) {
+                    alert(`❌ Stock insuficiente en ${sucursal}. Disponible: ${stockActual}, necesario: ${cantidadMovimiento}`);
+                    window.agregarUnidadesLock = false;
+                    return;
+                }
+
+                const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    const nuevoValor = currentValue - cantidadMovimiento;
+                    if (nuevoValor < 0) return;
+                    return nuevoValor;
+                });
+
+                if (resultado.committed) {
+                    if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                    estado.stock[sucursal][stockKey] = resultado.snapshot.val();
+
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleDateString('es-PY');
+                    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                    await push(ref(db, 'carrito'), {
+                        code,
+                        name: estado.currentMovimientosProduct.name,
+                        points: 0,
+                        money: 0,
+                        unidades: cantidad,
+                        esMovimiento: true,
+                        tipoMovimiento: 'agregar',
+                        destinoMovimiento: destino,
+                        totalPrice: 0,
+                        fecha,
+                        hora,
+                        timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(),
+                        fichaConsumption: 0,
+                        sucursalOrigen: sucursal
+                    });
+
+                    await cargarCatalogoUnificado();
+                    closeModal();
+                    showToast(`✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) de ${sucursal}`, 'success');
+                } else {
+                    alert('❌ Error en la transacción de stock');
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('❌ Error al procesar el movimiento');
+        } finally {
+            window.agregarUnidadesLock = false;
+        }
+    };
+
+    window.quitarUnidades = async function() {
+        if (window.quitarUnidadesLock) return;
+        window.quitarUnidadesLock = true;
+
+        if (!estado.currentMovimientosProduct) {
+            window.quitarUnidadesLock = false;
+            return;
+        }
+
+        const cantidad = parseInt(document.getElementById('unidadesInput').value) || 1;
+        const destino = document.getElementById('movimientoDestino').value;
+        const code = estado.currentMovimientosProduct.code;
+        const consumo = estado.currentMovimientosProduct.fichaConsumption || 0;
+        const sucursal = estado.currentMovimientosProduct.sucursal;
+        const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+        if (cantidad <= 0) {
+            alert('Cantidad inválida');
+            window.quitarUnidadesLock = false;
+            return;
+        }
+
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            alert('❌ Sucursal no encontrada');
+            window.quitarUnidadesLock = false;
+            return;
+        }
+
+        try {
+            let db;
+            if (estado.currentDB) {
+                db = estado.currentDB;
+            } else {
+                const app = initializeApp(config.config, config.id);
+                db = getDatabase(app);
+            }
+
+            let stockKey;
+            let cantidadMovimiento;
+
+            if (destino === 'stock') {
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadMovimiento = consumo * cantidad;
+                } else {
+                    stockKey = code;
+                    cantidadMovimiento = cantidad;
+                }
+
+                const stockSnap = await get(ref(db, `stock/${stockKey}`));
+                let stockActual = stockSnap.val() ?? STOCK_INICIAL;
+                if (stockActual < cantidadMovimiento) {
+                    alert(`❌ Stock insuficiente en ${sucursal}. Disponible: ${stockActual}, necesario: ${cantidadMovimiento}`);
+                    window.quitarUnidadesLock = false;
+                    return;
+                }
+
+                const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    const nuevoValor = currentValue - cantidadMovimiento;
+                    if (nuevoValor < 0) return;
+                    return nuevoValor;
+                });
+
+                if (resultado.committed) {
+                    if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                    estado.stock[sucursal][stockKey] = resultado.snapshot.val();
+
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleDateString('es-PY');
+                    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                    await push(ref(db, 'carrito'), {
+                        code,
+                        name: estado.currentMovimientosProduct.name,
+                        points: 0,
+                        money: 0,
+                        unidades: cantidad,
+                        esMovimiento: true,
+                        tipoMovimiento: 'quitar',
+                        destinoMovimiento: destino,
+                        totalPrice: 0,
+                        fecha,
+                        hora,
+                        timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(),
+                        fichaConsumption: 0,
+                        sucursalOrigen: sucursal
+                    });
+
+                    await cargarCatalogoUnificado();
+                    closeModal();
+                    showToast(`✅ Quitado -${cantidad} unidad(es) del STOCK de ${sucursal}`, 'success');
+                } else {
+                    alert('❌ Error en la transacción de stock');
+                }
+            } else {
+                if (consumo > 0 && !isIndependentCode) {
+                    stockKey = '000-00';
+                    cantidadMovimiento = consumo * cantidad;
+                } else {
+                    stockKey = code;
+                    cantidadMovimiento = cantidad;
+                }
+
+                const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
+                    if (currentValue === null) currentValue = STOCK_INICIAL;
+                    return currentValue + cantidadMovimiento;
+                });
+
+                if (resultado.committed) {
+                    if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+                    estado.stock[sucursal][stockKey] = resultado.snapshot.val();
+
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleDateString('es-PY');
+                    const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+                    await push(ref(db, 'carrito'), {
+                        code,
+                        name: estado.currentMovimientosProduct.name,
+                        points: 0,
+                        money: 0,
+                        unidades: cantidad,
+                        esMovimiento: true,
+                        tipoMovimiento: 'quitar',
+                        destinoMovimiento: destino,
+                        totalPrice: 0,
+                        fecha,
+                        hora,
+                        timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(),
+                        fichaConsumption: 0,
+                        sucursalOrigen: sucursal
+                    });
+
+                    await cargarCatalogoUnificado();
+                    closeModal();
+                    showToast(`✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) a ${sucursal}`, 'success');
+                } else {
+                    alert('❌ Error en la transacción de stock');
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('❌ Error al procesar el movimiento');
+        } finally {
+            window.quitarUnidadesLock = false;
+        }
+    };
+
+    // ============================================================
+    // 16. FICHAS GRATIS
+    // ============================================================
+    async function procesarFichaGratis(code, fichasAConsumir) {
+        const catalogoItem = document.querySelector('.catalogo-item[data-code="' + code + '"]');
+        if (!catalogoItem) {
+            showToast('❌ Producto no encontrado', 'error');
+            return;
+        }
+
+        const sucursal = catalogoItem.dataset.sucursal;
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+
+            const stockSnap = await get(ref(db, 'stock/000-00'));
+            let stockActual = stockSnap.val() ?? STOCK_INICIAL;
+
+            if (stockActual < fichasAConsumir) {
+                showToast(`❌ No hay suficientes fichas en ${sucursal}. Necesitas ${fichasAConsumir} fichas`, 'error');
+                return;
+            }
+
+            const resultado = await runTransaction(ref(db, 'stock/000-00'), (currentValue) => {
+                if (currentValue === null) currentValue = STOCK_INICIAL;
+                const nuevoValor = currentValue - fichasAConsumir;
+                if (nuevoValor < 0) return;
+                return nuevoValor;
+            });
+
+            if (!resultado.committed) {
+                showToast('❌ Error: Stock insuficiente o conflicto', 'error');
+                return;
+            }
+
+            const ahora = new Date();
+            const fecha = ahora.toLocaleDateString('es-PY');
+            const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
+
+            await push(ref(db, 'carrito'), {
+                code,
+                name: nombreProducto,
+                points: 0,
+                money: 0,
+                totalPrice: 0,
+                fecha,
+                hora,
+                timestamp: fecha + ' ' + hora,
+                timestampCompleto: ahora.getTime(),
+                fichaConsumption: fichasAConsumir,
+                esFichaGratis: true,
+                unidades: 1,
+                sucursalOrigen: sucursal
+            });
+
+            if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
+            estado.stock[sucursal]['000-00'] = resultado.snapshot.val();
+
+            await cargarCatalogoUnificado();
+            showToast(`✅ Consumidas ${fichasAConsumir} ficha(s) de ${code} en ${sucursal}`, 'success');
+
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Error al procesar ficha gratis', 'error');
+        }
+    }
+
+    // ============================================================
+    // 17. CIERRES DE CAJA
+    // ============================================================
+    function abrirModalCierre(tipo, descripcion) {
+        document.getElementById('cierreTitulo').innerHTML = `💰 Cierre de Caja - ${tipo}`;
+        document.getElementById('cierreDescripcion').innerHTML = descripcion;
+        document.getElementById('cierreMonto').value = '';
+        document.getElementById('cierreModal').style.display = 'block';
+        blockBodyScroll();
+
+        const btnConfirmar = document.getElementById('cierreBtnConfirmar');
+        const nuevoBtn = btnConfirmar.cloneNode(true);
+        btnConfirmar.parentNode.replaceChild(nuevoBtn, btnConfirmar);
+        nuevoBtn.onclick = () => confirmarCierre(tipo);
+    }
+
+    window.closeCierreModal = function() {
+        document.getElementById('cierreModal').style.display = 'none';
+        unblockBodyScroll();
+    };
+
+    async function confirmarCierre(tipo) {
+        let monto = document.getElementById('cierreMonto').value;
+        monto = monto.replace(/\./g, '');
+        let montoNum = parseFloat(monto);
+        if (isNaN(montoNum)) montoNum = 0;
+
+        const catalogoItem = document.querySelector('.catalogo-item[data-code="000-09"]') || document.querySelector('.catalogo-item[data-code="000-10"]');
+        const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
+
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+
+            const ahora = new Date();
+            const fecha = ahora.toLocaleDateString('es-PY');
+            const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            const code = tipo === 'Efectivo' ? '000-09' : '000-10';
+            const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
+
+            await push(ref(db, 'carrito'), {
+                code,
+                name,
+                points: 0,
+                money: montoNum,
+                totalPrice: montoNum,
+                fecha,
+                hora,
+                timestamp: fecha + ' ' + hora,
+                timestampCompleto: ahora.getTime(),
+                fichaConsumption: 0,
+                esCierre: true,
+                unidades: 1,
+                sucursalOrigen: sucursal
+            });
+
+            closeCierreModal();
+            showToast(`✅ Cierre de ${tipo} registrado en ${sucursal}: Gs. ${montoNum.toLocaleString()}`, 'success');
+            await cargarCatalogoUnificado();
+
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Error al registrar cierre', 'error');
+        }
+    }
+
+    // ============================================================
+    // 18. CONTADORES DE MÁQUINAS
+    // ============================================================
+    window.openContadoresModal = async function() {
+        const catalogoItem = document.querySelector('.catalogo-item[data-code="000-11"]');
+        const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
+        estado.currentSucursalContadores = sucursal;
+
+        await cargarListaMaquinas(sucursal);
+
+        const hoy = new Date();
+        const fechaHoy = hoy.toISOString().split('T')[0];
+        document.getElementById('fechaContador').value = fechaHoy;
+
+        document.getElementById('contadoresModal').style.display = 'block';
+        blockBodyScroll();
+    };
+
+    window.closeContadoresModal = function() {
+        document.getElementById('contadoresModal').style.display = 'none';
+        unblockBodyScroll();
+    };
+
+    async function cargarListaMaquinas(sucursal) {
+        const select = document.getElementById('maquinaSelect');
+        select.innerHTML = '<option value="">-- Seleccionar --</option>';
+        for (let i = 1; i <= 20; i++) {
+            const num = i.toString().padStart(2, '0');
+            select.innerHTML += `<option value="maq${num}">🖥️ Máquina ${num}</option>`;
+        }
+    }
+
+    window.cargarContadoresMaquina = async function() {
+        const maquina = document.getElementById('maquinaSelect').value;
+        if (!maquina) {
+            alert('Seleccione una máquina primero');
+            return;
+        }
+
+        const fecha = document.getElementById('fechaContador').value;
+        if (!fecha) {
+            alert('Seleccione una fecha');
+            return;
+        }
+
+        const sucursal = estado.currentSucursalContadores || 'Villa Morra';
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+            const contSnap = await get(ref(db, `contadores_maquinas/${maquina}/${fecha}`));
+
+            const datos = contSnap.exists() ? contSnap.val() : {
+                fichas: 0,
+                premios: 0,
+                fichasPrueba: 0,
+                premiosPrueba: 0
+            };
+
+            document.getElementById('contadorFichas').value = datos.fichas || 0;
+            document.getElementById('contadorPremios').value = datos.premios || 0;
+            document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
+            document.getElementById('premiosPrueba').value = datos.premiosPrueba || 0;
+
+            showToast(`✅ Datos cargados para ${maquina} - ${fecha}`, 'success');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Error al cargar contadores', 'error');
+        }
+    };
+
+    window.guardarContadoresMaquina = async function() {
+        const maquina = document.getElementById('maquinaSelect').value;
+        if (!maquina) {
+            alert('Seleccione una máquina primero');
+            return;
+        }
+
+        const fecha = document.getElementById('fechaContador').value;
+        if (!fecha) {
+            alert('Seleccione una fecha');
+            return;
+        }
+
+        const fichas = parseInt(document.getElementById('contadorFichas').value) || 0;
+        const premios = parseInt(document.getElementById('contadorPremios').value) || 0;
+        const fichasPrueba = parseInt(document.getElementById('fichasPrueba').value) || 0;
+        const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
+
+        const sucursal = estado.currentSucursalContadores || 'Villa Morra';
+        const config = sucursalToConfig[sucursal];
+        if (!config) {
+            showToast('❌ Sucursal no encontrada', 'error');
+            return;
+        }
+
+        try {
+            const app = initializeApp(config.config, config.id);
+            const db = getDatabase(app);
+
+            await set(ref(db, `contadores_maquinas/${maquina}/${fecha}`), {
+                fichas: fichas,
+                premios: premios,
+                fichasPrueba: fichasPrueba,
+                premiosPrueba: premiosPrueba,
+                ultimaActualizacion: new Date().toISOString()
+            });
+
+            showToast(`✅ Datos guardados para ${maquina} - ${fecha}`, 'success');
+            closeContadoresModal();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('❌ Error al guardar contadores', 'error');
+        }
+    };
+
+    // ============================================================
+    // 19. FILTROS DEL CATÁLOGO
+    // ============================================================
+    document.getElementById('catalogoFiltros').addEventListener('click', function(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        document.querySelectorAll('#catalogoFiltros button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        estado.catalogoFiltro = btn.dataset.sucursal;
+        renderCatalogo(estado.catalogoProductos);
+    });
+
+    document.getElementById('catalogoSearch').addEventListener('input', function() {
+        estado.catalogoSearch = this.value;
+        renderCatalogo(estado.catalogoProductos);
+    });
+
+    // ============================================================
+    // 20. FILTROS AVANZADOS
+    // ============================================================
+    async function cargarHistorialPorSucursal(sucursalConfig) {
+        const key = sucursalConfig.nombre;
+        if (estado.historialCache[key]) return estado.historialCache[key];
+
+        try {
+            const app = initializeApp(sucursalConfig.config, sucursalConfig.id);
+            const db = getDatabase(app);
+            const dbRef = ref(db);
+            const histSnap = await get(child(dbRef, 'historial_ventas'));
+            let items = [];
+
+            if (histSnap.exists()) {
+                const data = histSnap.val();
+                Object.entries(data).forEach(([firebaseKey, registro]) => {
+                    const fechaEliminacion = registro.fechaEliminacion || '';
+                    if (registro.ventas && Array.isArray(registro.ventas)) {
+                        registro.ventas.forEach((venta, index) => {
+                            items.push({
+                                ...venta,
+                                firebaseKey: firebaseKey,
+                                fuente: 'historial',
+                                sucursal: sucursalConfig.nombre,
+                                fechaEliminacion: fechaEliminacion,
+                                ventaIndex: index,
+                                _esItemHistorial: true
+                            });
+                        });
+                    }
+                });
+            }
+
+            estado.historialCache[key] = items;
+            return items;
+        } catch (error) {
+            console.error(`Error cargando historial de ${sucursalConfig.nombre}:`, error);
+            return [];
+        }
+    }
+
+    window.aplicarFiltros = async function() {
+        const btn = document.getElementById('btnFiltrar');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+
+        const sucursalFiltro = document.getElementById('filtroSucursal').value;
+        const diaDesde = document.getElementById('filtroDiaDesde').value;
+        const diaHasta = document.getElementById('filtroDiaHasta').value;
+        const codigoDesde = document.getElementById('filtroCodigoDesde').value.trim();
+        const codigoHasta = document.getElementById('filtroCodigoHasta').value.trim();
+        const tipoOperacion = document.getElementById('filtroTipoOperacion').value;
+        const fuenteFiltro = document.getElementById('filtroFuente').value;
+
+        if (!diaDesde && !diaHasta) {
+            alert('⚠️ Debes seleccionar al menos un día laboral');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search"></i> Buscar';
+            return;
+        }
+
+        let sucursalesACargar = [];
+        if (sucursalFiltro === 'todas') {
+            sucursalesACargar = sucursalesCompletas;
+        } else {
+            const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
+            if (encontrada) sucursalesACargar = [encontrada];
+        }
+
+        let todosItems = [];
+
+        for (const suc of sucursalesACargar) {
+            if (fuenteFiltro === 'todos' || fuenteFiltro === 'carrito') {
+                const carritoItems = estado.carritos[suc.nombre] || [];
+                carritoItems.forEach(item => {
+                    todosItems.push({ ...item, sucursal: suc.nombre, fuente: 'carrito', fechaEliminacion: item.fecha || '' });
+                });
+            }
+
+            if (fuenteFiltro === 'todos' || fuenteFiltro === 'historial') {
+                const historialItems = await cargarHistorialPorSucursal(suc);
+                historialItems.forEach(item => {
+                    todosItems.push({ ...item, sucursal: suc.nombre, fuente: 'historial' });
+                });
+            }
+        }
+
+        let filtrados = todosItems.filter(item => {
+            const diaLaboral = obtenerDiaLaboral(item);
+            if (!diaLaboral) return false;
+            const diaStr = convertirFechaParaComparar(diaLaboral);
+            if (!diaStr) return false;
+            let enRango = true;
+            if (diaDesde && diaStr < diaDesde) enRango = false;
+            if (diaHasta && diaStr > diaHasta) enRango = false;
+            return enRango;
+        });
+
+        if (codigoDesde || codigoHasta) {
+            filtrados = filtrados.filter(item => {
+                const code = item.code || '';
+                if (codigoDesde && codigoHasta) return code >= codigoDesde && code <= codigoHasta;
+                if (codigoDesde) return code >= codigoDesde;
+                if (codigoHasta) return code <= codigoHasta;
+                return true;
+            });
+        }
+
+        if (tipoOperacion !== 'todos') {
+            filtrados = filtrados.filter(item => {
+                switch(tipoOperacion) {
+                    case 'venta': return !item.esMovimiento && !item.esFichaGratis && !item.esCierre && (item.money || 0) > 0;
+                    case 'puntos': return (item.points || 0) > 0;
+                    case 'movimiento': return item.esMovimiento === true;
+                    case 'stock': return item.esMovimiento && item.destinoMovimiento === 'stock';
+                    case 'maquina': return item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento.startsWith('maq');
+                    case 'fichas_gratis': return item.esFichaGratis === true;
+                    case 'cierres': return item.esCierre === true || item.code === '000-09' || item.code === '000-10';
+                    default: return true;
+                }
+            });
+        }
+
+        filtrados.sort((a, b) => (a.timestampCompleto || a.timestamp || 0) - (b.timestampCompleto || b.timestamp || 0));
+        filtrados = filtrados.map(item => {
+            const diaLaboral = obtenerDiaLaboral(item) || 'sin fecha';
+            return { ...item, _diaLaboral: diaLaboral };
+        });
+
+        estado.datosFiltrados = filtrados;
+        renderResultadosFiltrados(filtrados);
+        actualizarEstadisticasFiltradas(filtrados);
+        actualizarPreviewPDF(filtrados);
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search"></i> Buscar';
+    };
+
+    function actualizarEstadisticasFiltradas(items) {
+        const statsGrid = document.getElementById('statsGrid');
+        statsGrid.style.display = 'grid';
+
+        const itemsSinCierres = items.filter(item => item.code !== '000-09' && item.code !== '000-10');
+        const cierres = items.filter(item => item.code === '000-09' || item.code === '000-10');
+
+        document.getElementById('statTotalItems').textContent = items.length.toLocaleString();
+        document.getElementById('statTotalMoney').textContent = `Gs. ${itemsSinCierres.reduce((s, i) => s + (i.money || 0), 0).toLocaleString()}`;
+        document.getElementById('statTotalPoints').textContent = items.reduce((s, i) => s + (i.points || 0), 0).toLocaleString();
+        document.getElementById('statTotalFichas').textContent = items.reduce((s, i) => s + (Math.abs(i.fichaConsumption || 0)), 0).toLocaleString();
+        document.getElementById('statTotalCierres').textContent = `Gs. ${cierres.reduce((s, i) => s + (i.money || 0), 0).toLocaleString()}`;
+
+        const dias = new Set(items.map(i => i._diaLaboral).filter(Boolean));
+        document.getElementById('statDiasLaborales').textContent = dias.size;
+    }
+
+    function renderResultadosFiltrados(items) {
+        const container = document.getElementById('resultadosFiltrados');
+
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="filter-summary-premium">
+                    <span><i class="fas fa-search"></i> <strong>0</strong> resultados</span>
+                </div>
+                <p style="text-align:center; color:var(--gray-400); padding:20px;">
+                    No se encontraron operaciones en el rango seleccionado
+                </p>
+            `;
+            return;
+        }
+
+        let html = `<div class="filter-summary-premium">
+            <span><i class="fas fa-list"></i> <strong>${items.length}</strong> items</span>
+            <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${new Set(items.map(i => i._diaLaboral)).size} días</span>
+            <span class="filter-tag-premium"><i class="fas fa-trash" style="color:var(--danger);"></i> Puedes eliminar items del historial</span>
+        </div>`;
+
+        html += `<div class="table-responsive"><table class="table-premium">
+            <thead><tr>
+                <th>#</th>
+                <th>Día Laboral</th>
+                <th>Sucursal</th>
+                <th>Fuente</th>
+                <th>Código</th>
+                <th>Producto</th>
+                <th>🎯 Pts</th>
+                <th>💰 Gs.</th>
+                <th>🎴 Fichas</th>
+                <th>🔄 Mov</th>
+                <th>📅 Fecha</th>
+                <th>⏰ Hora</th>
+                <th>Tipo</th>
+                <th>Acción</th>
+            </tr></thead><tbody>`;
+
+        let contador = 0, ultimoDia = '';
+
+        items.forEach(item => {
+            contador++;
+            const ts = item.timestampCompleto || item.timestamp || 0;
+            const fecha = ts ? new Date(ts) : null;
+            const horaStr = item.hora || (fecha ? fecha.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '-');
+
+            const diaLaboral = item._diaLaboral || '-';
+
+            if (diaLaboral !== ultimoDia) {
+                html += `<tr class="dia-separator">
+                    <td colspan="14"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
+                </tr>`;
+                ultimoDia = diaLaboral;
+            }
+
+            const esCierre = item.esCierre || item.code === '000-09' || item.code === '000-10';
+            const esMovimiento = item.esMovimiento === true;
+            const esFichaGratis = item.esFichaGratis === true;
+
+            let tipo = '🛒 Venta';
+            let movimientoTexto = '';
+            let movimientoClase = '';
+            const cantidad = item.unidades || item.qty || 1;
+
+            if (esCierre) {
+                tipo = '💰 Cierre';
+                movimientoTexto = '💰 Cierre';
+            } else if (esMovimiento) {
+                const tipoMov = item.tipoMovimiento || '';
+                if (tipoMov === 'agregar') {
+                    movimientoTexto = `+${cantidad}`;
+                    movimientoClase = 'unidades-positivo';
+                } else if (tipoMov === 'quitar') {
+                    movimientoTexto = `-${cantidad}`;
+                    movimientoClase = 'unidades-negativo';
+                } else {
+                    movimientoTexto = `${cantidad}`;
+                }
+                const destino = item.destinoMovimiento || '';
+                if (destino && destino !== 'stock') {
+                    movimientoTexto += ` → ${destino.toUpperCase()}`;
+                } else if (destino === 'stock') {
+                    movimientoTexto += ` → Stock`;
+                }
+                tipo = '🔄 Movimiento';
+            } else if (esFichaGratis) {
+                tipo = '🎁 Gratis';
+                movimientoTexto = '🎁 Gratis';
+            } else {
+                movimientoTexto = '-';
+            }
+
+            const fuente = item.fuente === 'historial' ? '📜' : '🛒';
+            const clase = esCierre ? 'cierre-row' : '';
+            const nombreItem = item.name || item.code || 'Sin nombre';
+
+            const puedeEliminar = item.fuente === 'historial' || item.fuente === 'carrito';
+            const ventaIndex = item.ventaIndex !== undefined ? item.ventaIndex : null;
+            const firebaseKey = item.firebaseKey || '';
+
+            html += `<tr class="${clase}">
+                <td style="color:var(--gray-400); font-size:0.7rem;">${contador}</td>
+                <td style="font-weight:600; font-size:0.75rem; color:var(--primary);">${diaLaboral}</td>
+                <td><strong>${item.sucursal || '-'}</strong></td>
+                <td>${fuente}</td>
+                <td>${item.code || '-'}</td>
+                <td style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${nombreItem}">${nombreItem}</td>
+                <td>${(item.points || 0).toLocaleString()}</td>
+                <td>${(item.money || 0).toLocaleString()}</td>
+                <td>${Math.abs(item.fichaConsumption || 0)}</td>
+                <td class="unidades-maquina ${movimientoClase}" style="font-weight:bold;">${movimientoTexto}</td>
+                <td>${item.fecha || '-'}</td>
+                <td style="font-family:monospace; font-size:0.75rem;">${horaStr}</td>
+                <td style="font-size:0.75rem;">${tipo}</td>
+                <td>
+                    ${puedeEliminar ? `
+                        <button class="btn-delete"
+                                onclick="eliminarItem('${item.sucursal}', '${firebaseKey}', '${item.fuente}', ${ventaIndex}, '${nombreItem.replace(/'/g, "\\'")}')"
+                                title="Eliminar este item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : '<span style="color:var(--gray-400); font-size:0.7rem;">-</span>'}
+                </td>
+            </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+    }
+
+    window.limpiarFiltros = function() {
+        document.getElementById('filtroSucursal').value = 'todas';
+        document.getElementById('filtroDiaDesde').value = '';
+        document.getElementById('filtroDiaHasta').value = '';
+        document.getElementById('filtroCodigoDesde').value = '';
+        document.getElementById('filtroCodigoHasta').value = '';
+        document.getElementById('filtroTipoOperacion').value = 'todos';
+        document.getElementById('filtroFuente').value = 'carrito';
+        document.getElementById('resultadosFiltrados').innerHTML = `
+            <p style="text-align:center; color:var(--gray-400); padding:20px;">
+                <i class="fas fa-search" style="margin-right:8px;"></i>
+                Selecciona filtros y presiona "Buscar"
+            </p>`;
+        document.getElementById('statsGrid').style.display = 'none';
+        estado.datosFiltrados = [];
+    };
+
+    // ============================================================
+    // 21. CONTADORES DE MÁQUINAS (Panel)
+    // ============================================================
+    async function cargarContadoresMaquina(sucursalConfig) {
+        const key = sucursalConfig.nombre;
+        if (estado.contadoresCache[key]) return estado.contadoresCache[key];
+
+        try {
+            const app = initializeApp(sucursalConfig.config, sucursalConfig.id);
+            const db = getDatabase(app);
+            const dbRef = ref(db);
+            const contSnap = await get(child(dbRef, 'contadores_maquinas'));
+            let contadores = {};
+
+            if (contSnap.exists()) {
+                const data = contSnap.val();
+                Object.entries(data).forEach(([maquina, fechas]) => {
+                    if (!contadores[maquina]) contadores[maquina] = {};
+                    Object.entries(fechas).forEach(([fecha, valores]) => {
+                        contadores[maquina][fecha] = {
+                            fichas: valores.fichas || 0,
+                            premios: valores.premios || 0,
+                            fichasPrueba: valores.fichasPrueba || 0,
+                            premiosPrueba: valores.premiosPrueba || 0
+                        };
+                    });
+                });
+            }
+
+            estado.contadoresCache[key] = contadores;
+            return contadores;
+        } catch (error) {
+            console.error(`Error cargando contadores de ${sucursalConfig.nombre}:`, error);
+            return {};
+        }
+    }
+
+    window.cargarContadores = async function(event) {
+        const btn = document.querySelector('.btn-premium.info');
+        if (btn) btn.disabled = true;
+
+        const sucursalFiltro = document.getElementById('contadorSucursal').value;
+        const fechaDesde = document.getElementById('contadorFechaDesde').value;
+        const fechaHasta = document.getElementById('contadorFechaHasta').value;
+
+        if (!fechaDesde || !fechaHasta) {
+            alert('⚠️ Debes seleccionar un rango de fechas');
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        let sucursalesACargar = [];
+        if (sucursalFiltro === 'todas') {
+            sucursalesACargar = sucursalesCompletas;
+        } else {
+            const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
+            if (encontrada) sucursalesACargar = [encontrada];
+        }
+
+        let todosContadores = {};
+        let fechasConDatos = new Set();
+
+        for (const suc of sucursalesACargar) {
+            const contadores = await cargarContadoresMaquina(suc);
+            todosContadores[suc.nombre] = contadores;
+
+            Object.values(contadores).forEach(maquina => {
+                Object.keys(maquina).forEach(fecha => {
+                    let fechaFormateada = fecha;
+                    if (fecha.includes('-')) {
+                        const partes = fecha.split('-');
+                        if (partes.length === 3) {
+                            fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                        }
+                    }
+                    fechasConDatos.add(fechaFormateada);
+                });
+            });
+        }
+
+        estado.contadoresFiltrados = todosContadores;
+        estado.fechasConDatos = Array.from(fechasConDatos).sort();
+
+        if (Object.keys(todosContadores).length === 0) {
+            const container = document.getElementById('contadoresResultados');
+            const summary = document.getElementById('contadoresSummary');
+            container.style.display = 'block';
+            summary.innerHTML = 'No se encontraron contadores en el rango seleccionado.';
+            document.getElementById('contadoresBody').innerHTML = '';
+            document.getElementById('calendarioContainer').innerHTML = `
+                <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
+                    <i class="fas fa-calendar-day"></i> No hay datos de contadores en el rango seleccionado
+                </p>
+            `;
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        renderCalendario(estado.fechasConDatos, fechaDesde, fechaHasta);
+        renderTablaContadores(todosContadores, fechaDesde, fechaHasta, sucursalFiltro);
+
+        if (btn) btn.disabled = false;
+    };
+
+    function renderCalendario(fechasConDatos, fechaDesde, fechaHasta) {
+        const container = document.getElementById('calendarioContainer');
+
+        if (!fechasConDatos || fechasConDatos.length === 0) {
+            container.innerHTML = `
+                <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
+                    <i class="fas fa-calendar-day"></i> No hay datos de contadores en el rango seleccionado
+                </p>
+            `;
+            return;
+        }
+
+        const fechasSet = new Set(fechasConDatos);
+        const desde = new Date(fechaDesde);
+        const hasta = new Date(fechaHasta);
+
+        let html = '';
+        let currentDate = new Date(desde);
+        let mesActual = '';
+
+        while (currentDate <= hasta) {
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            const fechaStr = `${day}/${month}/${year}`;
+            const fechaISO = `${year}-${month}-${day}`;
+
+            const tieneDatos = fechasSet.has(fechaStr) || fechasSet.has(fechaISO);
+
+            const nombreMes = currentDate.toLocaleString('es', { month: 'long' });
+            const claveMes = `${year}-${month}`;
+            if (claveMes !== mesActual) {
+                if (html) html += '</div>';
+                mesActual = claveMes;
+                html += `<div class="calendar-month"><i class="fas fa-calendar-alt"></i> ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${year}</div><div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">`;
+            }
+
+            const diaSemana = currentDate.getDay();
+            const esFinDeSemana = diaSemana === 0 || diaSemana === 6;
+            const esHoy = fechaISO === new Date().toISOString().split('T')[0];
+
+            let clases = 'calendar-day';
+            if (tieneDatos) clases += ' has-data';
+            if (esFinDeSemana) clases += ' weekend';
+            if (esHoy) clases += ' selected';
+
+            html += `<div class="${clases}" title="${fechaStr}${tieneDatos ? ' ✅ Tiene datos' : ' ❌ Sin datos'}">
+                ${currentDate.getDate()}
+            </div>`;
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function renderTablaContadores(contadores, fechaDesde, fechaHasta, sucursalFiltro) {
+        const container = document.getElementById('contadoresResultados');
+        const tbody = document.getElementById('contadoresBody');
+        const summary = document.getElementById('contadoresSummary');
+
+        const maquinasData = [];
+
+        for (const [sucursal, maquinas] of Object.entries(contadores)) {
+            for (const [maquina, fechas] of Object.entries(maquinas)) {
+                const fechasFiltradas = Object.entries(fechas).filter(([fecha]) => {
+                    let fechaComparable = fecha;
+                    if (fecha.includes('/')) {
+                        const partes = fecha.split('/');
+                        if (partes.length === 3) {
+                            fechaComparable = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                        }
+                    }
+                    return fechaComparable >= fechaDesde && fechaComparable <= fechaHasta;
+                });
+
+                if (fechasFiltradas.length >= 2) {
+                    fechasFiltradas.sort((a, b) => {
+                        let aDate = a[0], bDate = b[0];
+                        if (aDate.includes('/')) {
+                            const partes = aDate.split('/');
+                            aDate = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                        }
+                        if (bDate.includes('/')) {
+                            const partes = bDate.split('/');
+                            bDate = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                        }
+                        return aDate.localeCompare(bDate);
+                    });
+
+                    maquinasData.push({
+                        sucursal,
+                        maquina,
+                        fechaInicio: fechasFiltradas[0][0],
+                        fechaFin: fechasFiltradas[fechasFiltradas.length - 1][0],
+                        inicio: fechasFiltradas[0][1],
+                        fin: fechasFiltradas[fechasFiltradas.length - 1][1]
+                    });
+                }
+            }
+        }
+
+        if (maquinasData.length === 0) {
+            container.style.display = 'none';
+            summary.innerHTML = 'No se encontraron máquinas con al menos 2 fechas en el rango seleccionado.';
+            return;
+        }
+
+        container.style.display = 'block';
+
+        summary.innerHTML = `
+            <span><i class="fas fa-server"></i> <strong>${maquinasData.length}</strong> máquinas</span>
+            <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${fechaDesde} → ${fechaHasta}</span>
+            <span class="filter-tag-premium"><i class="fas fa-store"></i> ${sucursalFiltro === 'todas' ? 'Todas' : sucursalFiltro}</span>
+        `;
+
+        let html = '';
+        let totalFichas = 0, totalPremios = 0;
+
+        maquinasData.forEach((data, index) => {
+            const fichasInicio = data.inicio.fichas || 0;
+            const fichasFin = data.fin.fichas || 0;
+            const premiosInicio = data.inicio.premios || 0;
+            const premiosFin = data.fin.premios || 0;
+            const fichasPruebaInicio = data.inicio.fichasPrueba || 0;
+            const fichasPruebaFin = data.fin.fichasPrueba || 0;
+            const premiosPruebaInicio = data.inicio.premiosPrueba || 0;
+            const premiosPruebaFin = data.fin.premiosPrueba || 0;
+
+            const diffFichas = Math.max(fichasInicio, fichasFin) - Math.min(fichasInicio, fichasFin);
+            const diffFichasPrueba = Math.max(fichasPruebaInicio, fichasPruebaFin) - Math.min(fichasPruebaInicio, fichasPruebaFin);
+            const fichasVendidas = diffFichas - diffFichasPrueba;
+
+            const diffPremios = Math.max(premiosInicio, premiosFin) - Math.min(premiosInicio, premiosFin);
+            const diffPremiosPrueba = Math.max(premiosPruebaInicio, premiosPruebaFin) - Math.min(premiosPruebaInicio, premiosPruebaFin);
+            const premiosEntregados = diffPremios - diffPremiosPrueba;
+
+            totalFichas += fichasVendidas;
+            totalPremios += premiosEntregados;
+
+            const claseFila = index % 2 === 0 ? '' : 'style="background:var(--gray-50);"';
+            html += `<tr ${claseFila}>
+                <td><strong>${data.sucursal}</strong></td>
+                <td><strong>${data.maquina.toUpperCase()}</strong></td>
+                <td>${fichasInicio}</td>
+                <td>${premiosInicio}</td>
+                <td>${fichasPruebaInicio}</td>
+                <td>${premiosPruebaInicio}</td>
+                <td>${fichasFin}</td>
+                <td>${premiosFin}</td>
+                <td>${fichasPruebaFin}</td>
+                <td>${premiosPruebaFin}</td>
+                <td class="contadores-diff">${fichasVendidas}</td>
+                <td class="contadores-diff">${premiosEntregados}</td>
+            </tr>`;
+        });
+
+        html += `<tr class="contadores-total-row">
+            <td colspan="2"><strong>TOTAL</strong></td>
+            <td colspan="4"></td>
+            <td colspan="4"></td>
+            <td><strong>${totalFichas}</strong></td>
+            <td><strong>${totalPremios}</strong></td>
+        </tr>`;
+
+        tbody.innerHTML = html;
+    }
+
+    // ============================================================
+    // 22. PDF
+    // ============================================================
+    window.generarPDFconFiltros = function() {
+        const items = estado.datosFiltrados || [];
+        if (items.length === 0) {
+            alert('⚠️ No hay datos filtrados. Aplica filtros primero.');
+            return;
+        }
+        generarPDFconDatos(items);
+    };
+
+    function generarPDFconDatos(items) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        doc.setFont("Times", "Roman");
+        doc.setFontSize(22);
+        doc.setTextColor(0, 0, 139);
+        doc.setFont("Times", "bold");
+        doc.text("ASTROLAND", 105, 25, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text("IN GOD WE TRUST", 105, 35, { align: 'center' });
+        doc.line(20, 40, 190, 40);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.setFont("Times", "normal");
+
+        const diaDesde = document.getElementById('filtroDiaDesde').value || 'inicio';
+        const diaHasta = document.getElementById('filtroDiaHasta').value || 'hoy';
+        doc.text(`Reporte - Días Laborales: ${diaDesde} → ${diaHasta}`, 20, 50);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 57);
+        doc.text(`Items: ${items.length}`, 20, 64);
+
+        const sucursales = {};
+        items.forEach(item => {
+            const suc = item.sucursal || 'Sin Sucursal';
+            if (!sucursales[suc]) sucursales[suc] = [];
+            sucursales[suc].push(item);
+        });
+
+        const filas = [];
+        let totalEfectivo = 0, totalBancard = 0;
+        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
+
+        orden.forEach(nombre => {
+            const stats = calcularEstadisticas(sucursales[nombre] || []);
+            filas.push({
+                sucursal: nombre,
+                efectivo: stats.cierreEfectivo,
+                bancard: stats.cierreBancard,
+                total: stats.totalCierre
+            });
+            totalEfectivo += stats.cierreEfectivo;
+            totalBancard += stats.cierreBancard;
+        });
+
+        const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
+        if (tableRows.length === 0) {
+            tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
+        }
+
+        const bodyRows = tableRows.map(f => [f.sucursal, f.efectivo.toLocaleString(), f.bancard.toLocaleString(), f.total.toLocaleString()]);
+
+        const footRows = [];
+        if (tableRows.length > 1) {
+            footRows.push(['Total', totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), (totalEfectivo + totalBancard).toLocaleString()]);
+        }
+
+        doc.autoTable({
+            head: [['Sucursal', 'Efectivo', 'Bancard', 'Total']],
+            body: bodyRows,
+            foot: footRows,
+            startY: 72,
+            theme: 'plain',
+            styles: {
+                font: 'Times',
+                fontSize: 14,
+                textColor: [0, 0, 139],
+                lineColor: [0, 0, 0],
+                lineWidth: 0.5,
+            },
+            headStyles: {
+                fillColor: [255, 215, 0],
+                textColor: [0, 0, 0],
+                fontSize: 14,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: {
+                fontSize: 14,
+                halign: 'center'
+            },
+            footStyles: {
+                fillColor: [255, 215, 0],
+                textColor: [0, 0, 0],
+                fontSize: 14,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            margin: { left: 20, right: 20 },
+            tableWidth: 'auto'
+        });
+
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text("Gracias Dios nuestro", 20, doc.internal.pageSize.height - 15);
+            doc.text(`Hoja ${i} / ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 15);
+        }
+
+        const fechaStr = new Date().toISOString().split('T')[0];
+        const sucursalFiltro = document.getElementById('filtroSucursal').value;
+        const sufijo = sucursalFiltro && sucursalFiltro !== 'todas' ? `_${sucursalFiltro.replace(' ', '_')}` : '';
+        doc.save(`ASTROLAND_DiasLaborales${sufijo}_${fechaStr}.pdf`);
+    }
+
+    function actualizarPreviewPDF(items) {
+        const container = document.getElementById('previewPDF');
+        if (!items || items.length === 0) {
+            container.innerHTML = `
+                <p style="text-align:center; color:var(--gray-400);">
+                    <i class="fas fa-file-pdf" style="margin-right:8px;"></i>
+                    Aplica filtros para ver la vista previa
+                </p>
+            `;
+            return;
+        }
+
+        const sucursales = {};
+        items.forEach(item => {
+            const suc = item.sucursal || 'Sin Sucursal';
+            if (!sucursales[suc]) sucursales[suc] = [];
+            sucursales[suc].push(item);
+        });
+
+        const filas = [];
+        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
+        orden.forEach(nombre => {
+            const stats = calcularEstadisticas(sucursales[nombre] || []);
+            filas.push({ sucursal: nombre, efectivo: stats.cierreEfectivo, bancard: stats.cierreBancard, total: stats.totalCierre });
+        });
+
+        const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
+        if (tableRows.length === 0) tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
+
+        const diaDesde = document.getElementById('filtroDiaDesde').value || 'inicio';
+        const diaHasta = document.getElementById('filtroDiaHasta').value || 'hoy';
+        const dias = new Set(items.map(i => i._diaLaboral).filter(Boolean));
+
+        let html = `
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px; font-size:0.8rem; color:var(--gray-500);">
+                <span><i class="fas fa-calendar"></i> ${diaDesde} → ${diaHasta}</span>
+                <span><i class="fas fa-calendar-day"></i> ${dias.size} días</span>
+                <span><i class="fas fa-list"></i> ${items.length} items</span>
+            </div>
+            <table class="table-premium">
+                <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
+                <tbody>`;
+
+        tableRows.forEach(f => {
+            html += `<tr><td>${f.sucursal}</td><td>Gs. ${f.efectivo.toLocaleString()}</td><td>Gs. ${f.bancard.toLocaleString()}</td><td>Gs. ${f.total.toLocaleString()}</td></tr>`;
+        });
+
+        html += `</tbody></table>`;
+        html += `<p style="margin-top:8px; font-size:0.7rem; color:var(--gray-400);">
+            <i class="fas fa-info-circle"></i> Formato: Times New Roman, Azul Francia, fondo amarillo en títulos.
+        </p>`;
+        container.innerHTML = html;
+    }
+
+    // ============================================================
+    // 23. INICIALIZACIÓN
+    // ============================================================
+    cargarCarritos();
+    cargarCatalogoUnificado();
+
+    const hoy = new Date();
+    const hace7Dias = new Date();
+    hace7Dias.setDate(hoy.getDate() - 7);
+    document.getElementById('filtroDiaDesde').value = hace7Dias.toISOString().split('T')[0];
+    document.getElementById('filtroDiaHasta').value = hoy.toISOString().split('T')[0];
+
+    const hace30Dias = new Date();
+    hace30Dias.setDate(hoy.getDate() - 30);
+    document.getElementById('contadorFechaDesde').value = hace30Dias.toISOString().split('T')[0];
+    document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
+
+    console.log('✅ Panel ASTROLAND Premium cargado correctamente');
+    console.log('🏷️ Versión: 3.2 - Catálogo Unificado con ruta de imágenes corregida');
+    console.log('📁 Ruta de imágenes: ../imagenes/ (panel dentro de carpeta sucursales)');
+    console.log('📦 Catálogo combinado de Villa Morra, Los Laureles y Villa Elisa');
+
+    // Listener para cambios en tiempo real del stock
+    for (const suc of sucursalesCatalogo) {
+        try {
+            const app = initializeApp(suc.config, suc.id);
+            const db = getDatabase(app);
+            onValue(ref(db, 'stock'), () => {
+                if (document.getElementById('tab-catalogo').style.display !== 'none') {
+                    cargarCatalogoUnificado();
+                }
+            });
+        } catch (e) { /* Ignorar */ }
+    }
+
+    // Listener para cambios en tiempo real del carrito
+    for (const suc of sucursalesCompletas) {
+        try {
+            const app = initializeApp(suc.config, suc.id);
+            const db = getDatabase(app);
+            onValue(ref(db, 'carrito'), () => {
+                cargarCarritos();
+            });
+        } catch (e) { /* Ignorar */ }
+    }
+</script>
+
+</body>
+</html>
