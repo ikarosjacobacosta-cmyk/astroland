@@ -1187,7 +1187,13 @@ body { padding-top: 80px; }
     fechaHasta: ''
   };
 
-  // ========== FUNCIÓN PARA ASIGNAR EVENTOS A LOS PRODUCTOS (CORREGIDA PARA iOS/Android) ==========
+  // ========== VARIABLES PARA DETECTAR SCROLL EN TÁCTIL ==========
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchEndX = 0;
+  let touchEndY = 0;
+
+  // ========== FUNCIÓN PARA ASIGNAR EVENTOS A LOS PRODUCTOS (CORREGIDA PARA iOS) ==========
 
   function handleProductClick(e) {
     if (e) e.preventDefault();
@@ -1306,6 +1312,24 @@ body { padding-top: 80px; }
   }
 
   function handleTouchStart(e) {
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+  }
+
+  function handleTouchEnd(e) {
+    const touch = e.changedTouches[0];
+    touchEndX = touch.clientX;
+    touchEndY = touch.clientY;
+    
+    const diffX = Math.abs(touchEndX - touchStartX);
+    const diffY = Math.abs(touchEndY - touchStartY);
+    
+    // Si el deslizamiento es mayor a 15px, es un scroll, NO abrir modal
+    if (diffX > 15 || diffY > 15) {
+      return;
+    }
+    
     e.preventDefault();
     
     let target = e.target;
@@ -1330,10 +1354,12 @@ body { padding-top: 80px; }
   function asignarEventosProductos() {
     document.querySelectorAll('.imagen-item').forEach(item => {
       item.removeEventListener('touchstart', handleTouchStart);
+      item.removeEventListener('touchend', handleTouchEnd);
       item.removeEventListener('pointerup', handleProductClick);
       item.removeEventListener('click', handleProductClick);
       
       item.addEventListener('touchstart', handleTouchStart, { passive: true });
+      item.addEventListener('touchend', handleTouchEnd, { passive: false });
       item.addEventListener('click', handleProductClick);
     });
   }
@@ -1647,10 +1673,6 @@ body { padding-top: 80px; }
       return;
     }
     
-    const confirmar = confirm(`💵 PAGAR CON EFECTIVO\n\n📦 ${qty} x ${currentProduct.name}\n💰 Total: Gs. ${totalPrice.toLocaleString()}\n🎯 Puntos a usar: ${points}\n💵 Efectivo: Gs. ${money.toLocaleString()}\n\n¿Confirmar?`);
-    
-    if (!confirmar) return;
-    
     procesarVenta(currentProduct, qty, points, money, 'efectivo');
   }
 
@@ -1667,10 +1689,6 @@ body { padding-top: 80px; }
       return;
     }
     
-    const confirmar = confirm(`💳 PAGAR CON POS\n\n📦 ${qty} x ${currentProduct.name}\n💰 Total: Gs. ${totalPrice.toLocaleString()}\n🎯 Puntos a usar: ${points}\n💳 POS: Gs. ${money.toLocaleString()}\n\n¿Confirmar?`);
-    
-    if (!confirmar) return;
-    
     procesarVenta(currentProduct, qty, points, money, 'pos');
   }
 
@@ -1686,10 +1704,6 @@ body { padding-top: 80px; }
       alert(`❌ Faltan puntos. Necesitas ${puntosNecesarios} puntos para canjear ${qty} unidad(es).`);
       return;
     }
-    
-    const confirmar = confirm(`🎯 CANJEAR PRODUCTO\n\n📦 ${qty} x ${currentProduct.name}\n💰 Valor: Gs. ${totalPrice.toLocaleString()}\n🎯 Puntos a usar: ${points}\n💵 Dinero: Gs. 0\n\n¿Confirmar?`);
-    
-    if (!confirmar) return;
     
     procesarVenta(currentProduct, qty, points, 0, 'canje');
   }
@@ -1742,22 +1756,14 @@ body { padding-top: 80px; }
       return;
     }
     
-    const confirmar = confirm(
-      `💳 CONFIRMAR PAGO MIXTO\n\n` +
-      `📦 ${qty} x ${currentProduct.name}\n` +
-      `💰 Total del producto: Gs. ${totalPrice.toLocaleString()}\n` +
-      `🎯 Puntos a usar: ${points}\n` +
-      `💵 EFECTIVO: Gs. ${efectivoNum.toLocaleString()}\n` +
-      `💳 POS: Gs. ${posNum.toLocaleString()}\n` +
-      `💰 Total pagado: Gs. ${money.toLocaleString()}\n\n` +
-      `¿Confirmar?`
-    );
-    
-    if (!confirmar) return;
-    
-    const code = currentProduct.code;
-    const consumo = currentProduct.fichaConsumption || 0;
+    procesarVentaMixto(currentProduct, qty, points, money, efectivoNum, posNum);
+  }
+
+  function procesarVentaMixto(product, qty, points, money, efectivoNum, posNum) {
+    const code = product.code;
+    const consumo = product.fichaConsumption || 0;
     const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+    const totalPrice = product.price * qty;
     
     let stockKey;
     let cantidadRestar;
@@ -1775,20 +1781,20 @@ body { padding-top: 80px; }
     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     
     const cartData = {
-      code: currentProduct.code,
-      name: currentProduct.name,
+      code: product.code,
+      name: product.name,
       points: points,
       money: money,
       efectivo: efectivoNum,
       pos: posNum,
       totalPrice: totalPrice,
-      unitPrice: currentProduct.price,
+      unitPrice: product.price,
       qty: qty,
       fecha: fecha,
       hora: hora,
       timestamp: fecha + ' ' + hora,
       timestampCompleto: ahora.getTime(),
-      fichaConsumption: currentProduct.fichaConsumption * qty,
+      fichaConsumption: product.fichaConsumption * qty,
       unidades: qty,
       metodoPago: 'mixto',
       esMixto: true
@@ -1804,7 +1810,7 @@ body { padding-top: 80px; }
         closeModal();
         alert(
           `✅ PAGO MIXTO EXITOSO!\n\n` +
-          `📦 ${qty} x ${currentProduct.name}\n` +
+          `📦 ${qty} x ${product.name}\n` +
           `💰 Total producto: Gs. ${totalPrice.toLocaleString()}\n` +
           `🎯 Puntos usados: ${points}\n` +
           `💵 EFECTIVO: Gs. ${efectivoNum.toLocaleString()}\n` +
