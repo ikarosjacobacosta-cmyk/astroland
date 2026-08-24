@@ -205,9 +205,9 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   flex-direction: column;
 }
 .close {
-  color: #aaa;
+  color: #f44336;
   float: right;
-  font-size: 32px;
+  font-size: 40px;
   font-weight: bold;
   cursor: pointer;
   position: absolute;
@@ -216,14 +216,19 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   z-index: 10;
   background: none;
   border: none;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
 }
-.close:hover { color: #000; background: #eee; }
+.close:hover { 
+  color: #d32f2f;
+  background: rgba(244, 67, 54, 0.1);
+  transform: scale(1.1);
+}
 .modal h3, .maquina-modal h3, .cierre-modal h3, .cart-content h3, .contadores-modal h3 { 
   margin-top: 0; 
   border-bottom: 2px solid #eee; 
@@ -333,7 +338,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 }
 .btn-agregar { background: #4CAF50; color: white; }
 .btn-quitar { background: #f44336; color: white; }
-.btn-cancelar { background: #666; color: white; }
+.btn-cancelar { background: #f44336; color: white; padding: 16px 24px; font-size: 1.2rem; }
 
 .contadores-form {
   background: #f5f5f5;
@@ -1182,52 +1187,62 @@ body { padding-top: 80px; }
     fechaHasta: ''
   };
 
-  // ========== FUNCIÓN PARA ASIGNAR EVENTOS A LOS PRODUCTOS ==========
+  // ========== FUNCIÓN PARA ASIGNAR EVENTOS A LOS PRODUCTOS (CORREGIDA PARA iOS/Android) ==========
 
   function handleProductClick(e) {
-    if (this._clickTimeout) return;
+    if (e) e.preventDefault();
     
-    this._clickTimeout = setTimeout(() => {
-      const code = this.getAttribute('data-code');
-      const points = parseInt(this.getAttribute('data-points'));
+    let target = e ? e.target : this;
+    if (!target) return;
+    
+    while (target && !target.classList.contains('imagen-item')) {
+      target = target.parentElement;
+    }
+    if (!target) return;
+    
+    if (target._clickTimeout) return;
+    
+    target._clickTimeout = setTimeout(() => {
+      const code = target.getAttribute('data-code');
+      const points = parseInt(target.getAttribute('data-points'));
       
       if (code === '000-09') {
         abrirModalCierre('Efectivo', 'Registrar monto de cierre en EFECTIVO');
-        this._clickTimeout = null;
+        target._clickTimeout = null;
         return;
       }
       if (code === '000-10') {
         abrirModalCierre('Tarjeta', 'Registrar monto de cierre por TARJETA');
-        this._clickTimeout = null;
+        target._clickTimeout = null;
         return;
       }
       if (code === '000-11') {
         openContadoresModal();
-        this._clickTimeout = null;
+        target._clickTimeout = null;
         return;
       }
       
       if (code === '000-05') {
         procesarFichaGratis(code, 1);
-        this._clickTimeout = null;
+        target._clickTimeout = null;
         return;
       }
       if (code === '000-06') {
         procesarFichaGratis(code, 7);
-        this._clickTimeout = null;
+        target._clickTimeout = null;
         return;
       }
       
       let stockVal = getProductStock(code);
       if (stockVal <= 0) { 
         alert('Sin stock'); 
-        this._clickTimeout = null;
+        target._clickTimeout = null;
         return; 
       }
       
-      const price = parseFloat(this.getAttribute('data-price'));
+      const price = parseFloat(target.getAttribute('data-price'));
       const consumo = FICHA_CONSUMPTION[code] || 0;
-      const name = this.querySelector('p').textContent;
+      const name = target.querySelector('p')?.textContent || code;
       
       currentProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
       currentMovimientosProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
@@ -1286,16 +1301,39 @@ body { padding-top: 80px; }
         blockBodyScroll();
       }
       
-      this._clickTimeout = null;
-    }, 50);
+      target._clickTimeout = null;
+    }, 150);
+  }
+
+  function handleTouchStart(e) {
+    e.preventDefault();
+    
+    let target = e.target;
+    while (target && !target.classList.contains('imagen-item')) {
+      target = target.parentElement;
+    }
+    if (!target) return;
+    
+    if (target._touchTimeout) return;
+    
+    target._touchTimeout = setTimeout(() => {
+      const clickEvent = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true
+      });
+      target.dispatchEvent(clickEvent);
+      target._touchTimeout = null;
+    }, 100);
   }
 
   function asignarEventosProductos() {
     document.querySelectorAll('.imagen-item').forEach(item => {
+      item.removeEventListener('touchstart', handleTouchStart);
       item.removeEventListener('pointerup', handleProductClick);
       item.removeEventListener('click', handleProductClick);
       
-      item.addEventListener('pointerup', handleProductClick);
+      item.addEventListener('touchstart', handleTouchStart, { passive: true });
       item.addEventListener('click', handleProductClick);
     });
   }
@@ -1327,7 +1365,6 @@ body { padding-top: 80px; }
       return true;
     });
     
-    // ✅ CÁLCULO CORRECTO: EFECTIVO + POS + MIXTO desglosado
     let totalEfectivo = 0;
     let totalPOS = 0;
     
@@ -1470,7 +1507,6 @@ body { padding-top: 80px; }
   function exportToExcel() {
     if (cart.length === 0) { alert('Carrito vacío'); return; }
     
-    // ✅ CÁLCULO CORRECTO
     let totalEfectivo = 0;
     let totalPOS = 0;
     
@@ -1548,7 +1584,6 @@ body { padding-top: 80px; }
     const puntosIngresados = parseInt(pointsInput.value) || 0;
     const tienePuntos = currentProduct && currentProduct.points > 0;
     
-    // CASO 1: Dinero = 0 Y hay puntos ingresados Y el producto tiene puntos
     if (dinero === 0 && puntosIngresados > 0 && tienePuntos) {
       btnEfectivo.textContent = '🎯 CANJEAR';
       btnEfectivo.style.background = '#4CAF50';
@@ -1570,7 +1605,6 @@ body { padding-top: 80px; }
       return;
     }
     
-    // CASO 2: Dinero > 0 (con o sin puntos)
     btnEfectivo.textContent = '💵 EFECTIVO';
     btnEfectivo.style.background = '#4CAF50';
     btnEfectivo.style.color = 'white';
@@ -1685,7 +1719,7 @@ body { padding-top: 80px; }
       `🎯 Puntos a usar: ${points}\n\n` +
       `¿Cuánto deseas pagar en EFECTIVO?\n` +
       `(El resto se pagará con POS)`,
-      Math.floor(money / 2)
+      ''
     );
     
     if (efectivo === null) return;
@@ -3752,7 +3786,11 @@ body { padding-top: 80px; }
 
   setTimeout(() => {
     asignarEventosProductos();
-  }, 200);
+  }, 300);
+
+  window.addEventListener('resize', () => {
+    setTimeout(asignarEventosProductos, 100);
+  });
 
   window.addEventListener('online', () => mostrarMensajeTemporal('✅ Conexión restablecida'));
   window.addEventListener('offline', () => mostrarMensajeTemporal('❌ Sin conexión a internet', true));
@@ -3818,7 +3856,6 @@ body { padding-top: 80px; }
     
     if (itemsFiltrados.length === 0) { alert('No hay items para exportar con los filtros actuales'); return; }
     
-    // ✅ CÁLCULO CORRECTO
     let totalEfectivo = 0;
     let totalPOS = 0;
     
