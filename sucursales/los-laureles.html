@@ -659,7 +659,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 @media (min-width: 901px) and (max-width:1199px) { .stock-gallery { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width:600px) { .stock-gallery { grid-template-columns: repeat(3, 1fr); } }
 
-.stock-item { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.stock-item { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e0e0e0; }
 .stock-item img { width: 100%; aspect-ratio: 1/1; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 120px; }
 .stock-item p { margin: 8px 0; font-size: 0.8rem; text-align: center; font-weight: 500; }
 .stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; justify-content: center; width: 100%; }
@@ -980,8 +980,9 @@ body { padding-top: 80px; }
         <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." inputmode="numeric">
       </div>
       <div id="stockItemsContainer"></div>
-      <div class="modal-buttons" style="margin-top:20px;">
-        <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
+      <div class="modal-buttons" style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button onclick="reordenarGaleria()" style="background:#FF9800; color:white; padding:12px 20px; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">🔄 Reordenar</button>
+        <button onclick="saveAllStock()" style="background:#4CAF50; color:white; padding:12px 20px; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">💾 Guardar Todos</button>
       </div>
     </div>
   </div>
@@ -1149,6 +1150,7 @@ body { padding-top: 80px; }
   const stockRef = ref(database, 'stock');
   const historialRef = ref(database, 'historial_ventas');
   const contadoresRef = ref(database, 'contadores_maquinas');
+  const preciosRef = ref(database, 'precios');
 
   let currentProduct = null;
   let currentMovimientosProduct = null;
@@ -1158,10 +1160,12 @@ body { padding-top: 80px; }
   let modoEdicionFecha = null;
   let contadoresMaquinas = {};
   let vaciarSeleccionados = [];
+  let precios = {};
   
   const PASSWORD_STOCK = "deisy";
   const PASSWORD_GENERAL = "majo";
   const PASSWORD_SPECIAL_CODES = "majo";
+  const PASSWORD_EDITAR = "majo";
   const STOCK_INICIAL = 100;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
@@ -1325,7 +1329,6 @@ body { padding-top: 80px; }
     const diffX = Math.abs(touchEndX - touchStartX);
     const diffY = Math.abs(touchEndY - touchStartY);
     
-    // Si el deslizamiento es mayor a 15px, es un scroll, NO abrir modal
     if (diffX > 15 || diffY > 15) {
       return;
     }
@@ -1933,6 +1936,474 @@ body { padding-top: 80px; }
     updateModalTotalsBasedOnQuantity();
   });
 
+  // ========== FUNCIONES AUXILIARES PARA STOCK ==========
+
+  function obtenerProductosPorCategoria(categoria) {
+    const productos = [];
+    document.querySelectorAll('.imagen-item').forEach(item => {
+      const code = item.getAttribute('data-code');
+      if (code && code.startsWith(`${categoria}-`)) {
+        productos.push(code);
+      }
+    });
+    return productos;
+  }
+
+  function obtenerPrecio(code) {
+    const item = document.querySelector(`.imagen-item[data-code="${code}"]`);
+    if (item) {
+      return parseInt(item.getAttribute('data-price')) || 0;
+    }
+    return precios[code] || 0;
+  }
+
+  // ========== FUNCIONES DE REORDENAMIENTO ==========
+
+  window.cambiarCodigoStock = async function(input, codigoActual) {
+    const nuevoCodigo = input.value.trim();
+    if (!nuevoCodigo) {
+      input.value = codigoActual;
+      alert('❌ El código no puede estar vacío');
+      return;
+    }
+    
+    // Validar contraseña
+    const pwd = prompt('🔐 Ingrese la contraseña para modificar códigos:');
+    if (pwd !== PASSWORD_EDITAR) {
+      alert('❌ Contraseña incorrecta');
+      input.value = codigoActual;
+      return;
+    }
+    
+    // Validar formato (ej: 000-00)
+    if (!/^\d{3}-\d{2}$/.test(nuevoCodigo)) {
+      input.value = codigoActual;
+      alert('❌ Formato inválido. Usa: 000-00 (3 dígitos - 2 dígitos)');
+      return;
+    }
+    
+    if (nuevoCodigo === codigoActual) return;
+    
+    // Separar código en categoría y número
+    const [nuevaCategoria, nuevoNumero] = nuevoCodigo.split('-');
+    const [categoriaActual, numeroActual] = codigoActual.split('-');
+    
+    // Si es la misma categoría, solo cambiar el número dentro de la misma
+    if (nuevaCategoria === categoriaActual) {
+      reordenarDentroDeCategoria(categoriaActual, numeroActual, nuevoNumero, input, codigoActual);
+      return;
+    }
+    
+    const confirmar = confirm(
+      `🔄 MOVER PRODUCTO\n\n` +
+      `📦 ${codigoActual} → ${nuevoCodigo}\n\n` +
+      `⚠️ El producto se moverá a la categoría ${nuevaCategoria}\n` +
+      `🔹 Los productos en ${nuevaCategoria} AVANZAN una posición\n` +
+      `🔸 Los productos en ${categoriaActual} RETROCEDEN una posición\n\n` +
+      `¿Continuar?`
+    );
+    
+    if (!confirmar) {
+      input.value = codigoActual;
+      return;
+    }
+    
+    const item = input.closest('.stock-item');
+    const price = parseInt(item.getAttribute('data-price')) || 0;
+    const stockActual = stock[codigoActual] ?? STOCK_INICIAL;
+    
+    // Obtener todos los productos de la categoría destino
+    const productosDestino = obtenerProductosPorCategoria(nuevaCategoria);
+    const productosOrigen = obtenerProductosPorCategoria(categoriaActual);
+    
+    mostrarMensajeEnProceso('🔄 Reordenando productos...');
+    
+    try {
+      const stockUpdates = {};
+      const precioUpdates = {};
+      
+      // ========== 1. CATEGORÍA ORIGEN - RETROCEDEN ==========
+      const numActualInt = parseInt(numeroActual);
+      const origenSinMovido = productosOrigen.filter(p => p !== codigoActual);
+      const origenOrdenados = origenSinMovido.sort((a, b) => {
+        const numA = parseInt(a.split('-')[1]);
+        const numB = parseInt(b.split('-')[1]);
+        return numA - numB;
+      });
+      
+      // Eliminar el producto movido
+      stockUpdates[`stock/${codigoActual}`] = null;
+      precioUpdates[`precios/${codigoActual}`] = null;
+      
+      origenOrdenados.forEach(p => {
+        const [cat, num] = p.split('-');
+        const numInt = parseInt(num);
+        
+        if (numInt > numActualInt) {
+          const nuevoNum = (numInt - 1).toString().padStart(2, '0');
+          const nuevoCode = `${cat}-${nuevoNum}`;
+          const stockValor = stock[p] ?? STOCK_INICIAL;
+          const precioValor = obtenerPrecio(p);
+          stockUpdates[`stock/${nuevoCode}`] = stockValor;
+          precioUpdates[`precios/${nuevoCode}`] = precioValor;
+          if (p !== nuevoCode) {
+            stockUpdates[`stock/${p}`] = null;
+            precioUpdates[`precios/${p}`] = null;
+          }
+        } else {
+          const stockValor = stock[p] ?? STOCK_INICIAL;
+          const precioValor = obtenerPrecio(p);
+          stockUpdates[`stock/${p}`] = stockValor;
+          precioUpdates[`precios/${p}`] = precioValor;
+        }
+      });
+      
+      // ========== 2. CATEGORÍA DESTINO - AVANZAN ==========
+      const numDestinoInt = parseInt(nuevoNumero);
+      const destinoOrdenados = productosDestino.sort((a, b) => {
+        const numA = parseInt(a.split('-')[1]);
+        const numB = parseInt(b.split('-')[1]);
+        return numA - numB;
+      });
+      
+      let insertado = false;
+      
+      destinoOrdenados.forEach(p => {
+        const [cat, num] = p.split('-');
+        const numInt = parseInt(num);
+        const stockValor = stock[p] ?? STOCK_INICIAL;
+        const precioValor = obtenerPrecio(p);
+        
+        if (!insertado && numInt >= numDestinoInt) {
+          const nuevoCode = `${nuevaCategoria}-${numDestinoInt.toString().padStart(2, '0')}`;
+          stockUpdates[`stock/${nuevoCode}`] = stockActual;
+          precioUpdates[`precios/${nuevoCode}`] = price;
+          insertado = true;
+        }
+        
+        if (insertado || numInt >= numDestinoInt) {
+          const nuevoNum = (numInt + 1).toString().padStart(2, '0');
+          const nuevoCode = `${cat}-${nuevoNum}`;
+          stockUpdates[`stock/${nuevoCode}`] = stockValor;
+          precioUpdates[`precios/${nuevoCode}`] = precioValor;
+          if (p !== nuevoCode) {
+            stockUpdates[`stock/${p}`] = null;
+            precioUpdates[`precios/${p}`] = null;
+          }
+        } else {
+          stockUpdates[`stock/${p}`] = stockValor;
+          precioUpdates[`precios/${p}`] = precioValor;
+        }
+      });
+      
+      if (!insertado) {
+        const nuevoCode = `${nuevaCategoria}-${numDestinoInt.toString().padStart(2, '0')}`;
+        stockUpdates[`stock/${nuevoCode}`] = stockActual;
+        precioUpdates[`precios/${nuevoCode}`] = price;
+      }
+      
+      // ========== 3. EJECUTAR ACTUALIZACIONES ==========
+      const stockPromises = [];
+      for (const [key, value] of Object.entries(stockUpdates)) {
+        if (key !== 'stock/undefined' && key !== 'stock/null' && key !== 'stock/') {
+          stockPromises.push(set(ref(database, key), value));
+        }
+      }
+      
+      const precioPromises = [];
+      for (const [key, value] of Object.entries(precioUpdates)) {
+        if (key !== 'precios/undefined' && key !== 'precios/null' && key !== 'precios/') {
+          precioPromises.push(set(ref(database, key), value));
+        }
+      }
+      
+      await Promise.all([...stockPromises, ...precioPromises]);
+      
+      ocultarMensajeEnProceso();
+      
+      await loadInitialStock();
+      await loadPrecios();
+      loadAllStockItems();
+      reordenarGaleria();
+      updateAllStockIndicators();
+      
+      alert(`✅ PRODUCTO REUBICADO!\n\n📦 ${codigoActual} → ${nuevoCodigo}\n\n🔹 Productos en ${nuevaCategoria}: AVANZARON una posición\n🔸 Productos en ${categoriaActual}: RETROCEDIERON una posición`);
+      
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      console.error('Error reordenando:', error);
+      alert('❌ Error al reordenar los productos. Recarga la página.');
+      input.value = codigoActual;
+    }
+  };
+
+  function reordenarDentroDeCategoria(categoria, numActual, nuevoNum, input, codigoActual) {
+    const numActualInt = parseInt(numActual);
+    const nuevoNumInt = parseInt(nuevoNum);
+    
+    if (numActualInt === nuevoNumInt) {
+      input.value = codigoActual;
+      return;
+    }
+    
+    const confirmar = confirm(
+      `🔄 REORDENAR EN ${categoria}\n\n` +
+      `${codigoActual} → ${categoria}-${nuevoNum.toString().padStart(2, '0')}\n\n` +
+      `⚠️ Los productos entre medias se reordenarán.\n\n` +
+      `¿Continuar?`
+    );
+    
+    if (!confirmar) {
+      input.value = codigoActual;
+      return;
+    }
+    
+    const item = input.closest('.stock-item');
+    const price = parseInt(item.getAttribute('data-price')) || 0;
+    const stockActual = stock[codigoActual] ?? STOCK_INICIAL;
+    
+    const productos = obtenerProductosPorCategoria(categoria);
+    const productosSinMovido = productos.filter(p => p !== codigoActual);
+    const productosOrdenados = productosSinMovido.sort((a, b) => {
+      const numA = parseInt(a.split('-')[1]);
+      const numB = parseInt(b.split('-')[1]);
+      return numA - numB;
+    });
+    
+    mostrarMensajeEnProceso('🔄 Reordenando...');
+    
+    try {
+      const stockUpdates = {};
+      const precioUpdates = {};
+      
+      stockUpdates[`stock/${codigoActual}`] = null;
+      precioUpdates[`precios/${codigoActual}`] = null;
+      
+      const nuevaLista = [];
+      let insertado = false;
+      let contador = 0;
+      
+      for (let i = 0; i < productosOrdenados.length + 1; i++) {
+        if (i === nuevoNumInt) {
+          nuevaLista.push(codigoActual);
+          insertado = true;
+        } else {
+          if (contador < productosOrdenados.length) {
+            nuevaLista.push(productosOrdenados[contador]);
+            contador++;
+          }
+        }
+      }
+      
+      if (!insertado) {
+        nuevaLista.push(codigoActual);
+      }
+      
+      nuevaLista.forEach((code, index) => {
+        const nuevoNumero = index.toString().padStart(2, '0');
+        const nuevoCode = `${categoria}-${nuevoNumero}`;
+        
+        if (code === codigoActual) {
+          stockUpdates[`stock/${nuevoCode}`] = stockActual;
+          precioUpdates[`precios/${nuevoCode}`] = price;
+        } else {
+          const stockValor = stock[code] ?? STOCK_INICIAL;
+          const precioValor = obtenerPrecio(code);
+          stockUpdates[`stock/${nuevoCode}`] = stockValor;
+          precioUpdates[`precios/${nuevoCode}`] = precioValor;
+          if (code !== nuevoCode) {
+            stockUpdates[`stock/${code}`] = null;
+            precioUpdates[`precios/${code}`] = null;
+          }
+        }
+      });
+      
+      const stockPromises = [];
+      for (const [key, value] of Object.entries(stockUpdates)) {
+        if (key !== 'stock/undefined' && key !== 'stock/null' && key !== 'stock/') {
+          stockPromises.push(set(ref(database, key), value));
+        }
+      }
+      
+      const precioPromises = [];
+      for (const [key, value] of Object.entries(precioUpdates)) {
+        if (key !== 'precios/undefined' && key !== 'precios/null' && key !== 'precios/') {
+          precioPromises.push(set(ref(database, key), value));
+        }
+      }
+      
+      await Promise.all([...stockPromises, ...precioPromises]);
+      
+      ocultarMensajeEnProceso();
+      
+      loadAllStockItems();
+      reordenarGaleria();
+      updateAllStockIndicators();
+      
+      alert(`✅ REORDENADO EN ${categoria}!\n\n📦 ${codigoActual} → ${categoria}-${nuevoNum.toString().padStart(2, '0')}`);
+      
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      console.error('Error reordenando:', error);
+      alert('❌ Error al reordenar. Recarga la página.');
+      input.value = codigoActual;
+    }
+  }
+
+  window.cambiarPrecioStock = function(input, codigo) {
+    const nuevoPrecio = parseInt(input.value);
+    if (isNaN(nuevoPrecio) || nuevoPrecio < 0) {
+      input.value = input.defaultValue || 0;
+      alert('❌ Precio inválido');
+      return;
+    }
+    
+    // Validar contraseña
+    const pwd = prompt('🔐 Ingrese la contraseña para modificar precios:');
+    if (pwd !== PASSWORD_EDITAR) {
+      alert('❌ Contraseña incorrecta');
+      const item = input.closest('.stock-item');
+      input.value = item.getAttribute('data-price') || 0;
+      return;
+    }
+    
+    const item = input.closest('.stock-item');
+    const precioActual = parseInt(item.getAttribute('data-price')) || 0;
+    
+    if (nuevoPrecio === precioActual) return;
+    
+    const confirmar = confirm(`¿Cambiar precio de ${codigo} de Gs. ${precioActual.toLocaleString()} a Gs. ${nuevoPrecio.toLocaleString()}?`);
+    if (!confirmar) {
+      input.value = precioActual;
+      return;
+    }
+    
+    set(ref(database, `precios/${codigo}`), nuevoPrecio).then(() => {
+      precios[codigo] = nuevoPrecio;
+      item.setAttribute('data-price', nuevoPrecio);
+      const p = item.querySelector('p');
+      const codeText = item.getAttribute('data-code');
+      p.textContent = `${codeText} ${nuevoPrecio > 0 ? `- G.${nuevoPrecio.toLocaleString('es-PY')}` : ''}`;
+      // Actualizar también en el catálogo
+      const catItem = document.querySelector(`.imagen-item[data-code="${codigo}"]`);
+      if (catItem) {
+        catItem.setAttribute('data-price', nuevoPrecio);
+        const catP = catItem.querySelector('p');
+        if (catP) {
+          catP.textContent = `${codeText} ${nuevoPrecio > 0 ? `- G.${nuevoPrecio.toLocaleString('es-PY')}` : ''}`;
+        }
+      }
+      alert(`✅ Precio actualizado: ${codigo} → Gs. ${nuevoPrecio.toLocaleString()}`);
+    }).catch(e => {
+      console.error('Error guardando precio:', e);
+      alert('❌ Error al guardar el precio');
+      input.value = precioActual;
+    });
+  };
+
+  function reordenarGaleria() {
+    const categorias = document.querySelectorAll('.categoria');
+    
+    categorias.forEach(cat => {
+      const items = Array.from(cat.querySelectorAll('.imagen-item'));
+      const galeria = cat.querySelector('.galeria');
+      
+      items.sort((a, b) => {
+        const codeA = a.getAttribute('data-code');
+        const codeB = b.getAttribute('data-code');
+        const numA = parseInt(codeA.replace('-', ''));
+        const numB = parseInt(codeB.replace('-', ''));
+        return numA - numB;
+      });
+      
+      items.forEach(item => galeria.appendChild(item));
+    });
+    
+    updateAllStockIndicators();
+  }
+
+  window.reordenarGaleria = reordenarGaleria;
+
+  // ========== FUNCIONES DE STOCK ==========
+
+  function loadAllStockItems() {
+    const container = document.getElementById('stockItemsContainer');
+    const categories = {};
+    
+    document.querySelectorAll('.imagen-item').forEach(item => {
+      const cat = item.getAttribute('data-category');
+      if (!categories[cat]) categories[cat] = [];
+      const code = item.getAttribute('data-code');
+      const price = item.getAttribute('data-price');
+      const name = item.querySelector('p')?.textContent || code;
+      const img = item.querySelector('img')?.outerHTML || item.querySelector('.img-placeholder')?.outerHTML || '';
+      let display = getProductStock(code);
+      const isFichaBase = code === '000-00';
+      const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
+      const isIndependent = NON_FICHA_CODES.includes(code);
+      categories[cat].push({ code, price, name, img, currentStock: display, isFichaBase, isFichaProduct, isIndependent });
+    });
+    
+    const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a)-parseInt(b));
+    let html = '';
+    
+    for (let cat of sortedCats) {
+      html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
+      if (cat === '000') {
+        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
+        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(16), 000-02(36), 000-05(1), 000-06(7)</small></p>`;
+        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
+      }
+      
+      html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));">`;
+      const sortedProds = categories[cat].sort((a,b) => {
+        const numA = parseInt(a.code.split('-')[1]);
+        const numB = parseInt(b.code.split('-')[1]);
+        return numA - numB;
+      });
+      
+      sortedProds.forEach(p => {
+        const precioMostrar = p.price || 0;
+        html += `<div class="stock-item" data-code="${p.code}" data-price="${p.price}" style="border:1px solid #e0e0e0; border-radius:8px; padding:10px; background:#fff;">`;
+        html += p.img;
+        html += `<p style="font-weight:bold; margin:5px 0; font-size:0.8rem;">${p.name}</p>`;
+        
+        // Campo para CÓDIGO
+        html += `<div style="display:flex; gap:4px; margin:4px 0; align-items:center; flex-wrap:wrap;">`;
+        html += `<label style="font-size:0.65rem; font-weight:bold;">Código:</label>`;
+        html += `<input type="text" value="${p.code}" style="width:75px; padding:3px; font-size:0.7rem; border:1px solid #ccc; border-radius:4px; text-align:center;" onchange="cambiarCodigoStock(this, '${p.code}')">`;
+        html += `</div>`;
+        
+        // Campo para PRECIO
+        html += `<div style="display:flex; gap:4px; margin:4px 0; align-items:center; flex-wrap:wrap;">`;
+        html += `<label style="font-size:0.65rem; font-weight:bold;">Precio:</label>`;
+        html += `<input type="number" value="${p.price}" style="width:75px; padding:3px; font-size:0.7rem; border:1px solid #ccc; border-radius:4px; text-align:center;" onchange="cambiarPrecioStock(this, '${p.code}')">`;
+        html += `</div>`;
+        
+        // Stock
+        html += `<div class="stock-control" style="margin-top:4px;">`;
+        if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
+          html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)" style="width:55px; padding:3px; font-size:0.7rem; text-align:center; border:1px solid #ccc; border-radius:4px;"><span style="font-size:0.6rem; background:#999; color:white; padding:2px 5px; border-radius:4px;">Auto</span>`;
+        } else {
+          html += `<input type="number" value="${p.currentStock}" readonly disabled style="width:55px; padding:3px; font-size:0.7rem; text-align:center; border:1px solid #ccc; border-radius:4px; background:#f0f0f0;"><span style="font-size:0.6rem; background:#999; color:white; padding:2px 5px; border-radius:4px;">🎴</span>`;
+        }
+        html += `</div>`;
+        html += `</div>`;
+      });
+      html += `</div></div>`;
+    }
+    container.innerHTML = html;
+  }
+
+  async function loadPrecios() {
+    try {
+      const snap = await get(ref(database, 'precios'));
+      precios = snap.val() || {};
+    } catch {
+      precios = {};
+    }
+  }
+
   // ========== FUNCIONES EXISTENTES ==========
 
   async function buscarRegistroHistorialPorFecha(fecha) {
@@ -2474,45 +2945,42 @@ body { padding-top: 80px; }
     return names[code] || code + ' puntos';
   }
 
-  function loadAllStockItems() {
-    const container = document.getElementById('stockItemsContainer');
-    const categories = {};
-    document.querySelectorAll('.imagen-item').forEach(item => {
-      const cat = item.getAttribute('data-category');
-      if (!categories[cat]) categories[cat] = [];
-      const code = item.getAttribute('data-code');
-      const name = item.querySelector('p')?.textContent || code;
-      const img = item.querySelector('img')?.outerHTML || item.querySelector('.img-placeholder')?.outerHTML || '';
-      let display = getProductStock(code);
-      const isFichaBase = code === '000-00';
-      const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
-      const isIndependent = NON_FICHA_CODES.includes(code);
-      categories[cat].push({ code, name, img, currentStock: display, isFichaBase, isFichaProduct, isIndependent });
-    });
-    const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a)-parseInt(b));
-    let html = '';
-    for (let cat of sortedCats) {
-      html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
-      if (cat === '000') {
-        const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-        html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(16), 000-02(36), 000-05(1), 000-06(7)</small></p>`;
-        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
-      }
-      html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
-      const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
-      sortedProds.forEach(p => {
-        html += `<div class="stock-item" data-code="${p.code}">${p.img}<p>${p.name}</p><div class="stock-control">`;
-        if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
-          html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
-        } else {
-          html += `<input type="number" value="${p.currentStock}" readonly disabled><span>🎴 Stock de fichas</span>`;
-        }
-        html += `</div></div>`;
+  window.filterStockItems = function(term) {
+    document.querySelectorAll('.stock-category').forEach(cat => {
+      let any = false;
+      cat.querySelectorAll('.stock-item').forEach(item => {
+        const code = item.getAttribute('data-code').toLowerCase();
+        if (term === '' || code.startsWith(term)) { item.style.display = 'flex'; any = true; }
+        else { item.style.display = 'none'; }
       });
-      html += `</div></div>`;
-    }
-    container.innerHTML = html;
+      cat.style.display = any ? 'block' : 'none';
+    });
+  };
+
+  function configurarBusquedaStock() {
+      const input = document.getElementById('stockSearch');
+      if (!input) return;
+      
+      input.inputMode = 'numeric';
+      input.addEventListener('input', function(e) {
+          let v = this.value.replace(/[^0-9-]/g, '');
+          this.value = v;
+          
+          const match = v.match(/\d{3}/);
+          if (match && match[0].length === 3) {
+              filterStockItems(match[0]);
+          } else if (v === '') {
+              filterStockItems('');
+          }
+      });
   }
+
+  window.handleStockSearchInput = function(input) {
+    let v = input.value.replace(/\D/g, '');
+    if (v.length > 3) v = v.substring(0, 3);
+    input.value = v;
+    filterStockItems(v);
+  };
 
   window.guardarStockIndividual = function(code, valor) {
     if (code === '000-00' || code === '000-07') {
@@ -3801,10 +4269,11 @@ body { padding-top: 80px; }
   window.addEventListener('online', () => mostrarMensajeTemporal('✅ Conexión restablecida'));
   window.addEventListener('offline', () => mostrarMensajeTemporal('❌ Sin conexión a internet', true));
 
-  Promise.all([loadInitialCart(), loadInitialStock(), loadContadores()]).then(() => {
+  Promise.all([loadInitialCart(), loadInitialStock(), loadContadores(), loadPrecios()]).then(() => {
     onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
     onValue(stockRef, snap => { stock = snap.val() || {}; updateAllStockIndicators(); });
     onValue(contadoresRef, snap => { contadoresMaquinas = snap.val() || {}; });
+    onValue(ref(database, 'precios'), snap => { precios = snap.val() || {}; });
     
     const stockSearch = document.getElementById('stockSearch');
     if (stockSearch) {
@@ -3821,18 +4290,6 @@ body { padding-top: 80px; }
       });
     }
   });
-
-  function filterStockItems(term) {
-    document.querySelectorAll('.stock-category').forEach(cat => {
-      let any = false;
-      cat.querySelectorAll('.stock-item').forEach(item => {
-        const code = item.getAttribute('data-code').toLowerCase();
-        if (term === '' || code.startsWith(term)) { item.style.display = 'flex'; any = true; }
-        else { item.style.display = 'none'; }
-      });
-      cat.style.display = any ? 'block' : 'none';
-    });
-  }
 
   window.exportarFiltradoExcel = function() {
     const pwd = prompt('🔐 Contraseña para exportar filtrado:');
