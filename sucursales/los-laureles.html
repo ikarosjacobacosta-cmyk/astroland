@@ -1967,7 +1967,6 @@ body { padding-top: 80px; }
       return;
     }
     
-    // Validar contraseña
     const pwd = prompt('🔐 Ingrese la contraseña para modificar códigos:');
     if (pwd !== PASSWORD_EDITAR) {
       alert('❌ Contraseña incorrecta');
@@ -1975,7 +1974,6 @@ body { padding-top: 80px; }
       return;
     }
     
-    // Validar formato (ej: 000-00)
     if (!/^\d{3}-\d{2}$/.test(nuevoCodigo)) {
       input.value = codigoActual;
       alert('❌ Formato inválido. Usa: 000-00 (3 dígitos - 2 dígitos)');
@@ -1984,11 +1982,9 @@ body { padding-top: 80px; }
     
     if (nuevoCodigo === codigoActual) return;
     
-    // Separar código en categoría y número
     const [nuevaCategoria, nuevoNumero] = nuevoCodigo.split('-');
     const [categoriaActual, numeroActual] = codigoActual.split('-');
     
-    // Si es la misma categoría, solo cambiar el número dentro de la misma
     if (nuevaCategoria === categoriaActual) {
       reordenarDentroDeCategoria(categoriaActual, numeroActual, nuevoNumero, input, codigoActual);
       return;
@@ -2012,7 +2008,6 @@ body { padding-top: 80px; }
     const price = parseInt(item.getAttribute('data-price')) || 0;
     const stockActual = stock[codigoActual] ?? STOCK_INICIAL;
     
-    // Obtener todos los productos de la categoría destino
     const productosDestino = obtenerProductosPorCategoria(nuevaCategoria);
     const productosOrigen = obtenerProductosPorCategoria(categoriaActual);
     
@@ -2022,7 +2017,6 @@ body { padding-top: 80px; }
       const stockUpdates = {};
       const precioUpdates = {};
       
-      // ========== 1. CATEGORÍA ORIGEN - RETROCEDEN ==========
       const numActualInt = parseInt(numeroActual);
       const origenSinMovido = productosOrigen.filter(p => p !== codigoActual);
       const origenOrdenados = origenSinMovido.sort((a, b) => {
@@ -2031,7 +2025,6 @@ body { padding-top: 80px; }
         return numA - numB;
       });
       
-      // Eliminar el producto movido
       stockUpdates[`stock/${codigoActual}`] = null;
       precioUpdates[`precios/${codigoActual}`] = null;
       
@@ -2058,7 +2051,6 @@ body { padding-top: 80px; }
         }
       });
       
-      // ========== 2. CATEGORÍA DESTINO - AVANZAN ==========
       const numDestinoInt = parseInt(nuevoNumero);
       const destinoOrdenados = productosDestino.sort((a, b) => {
         const numA = parseInt(a.split('-')[1]);
@@ -2102,7 +2094,6 @@ body { padding-top: 80px; }
         precioUpdates[`precios/${nuevoCode}`] = price;
       }
       
-      // ========== 3. EJECUTAR ACTUALIZACIONES ==========
       const stockPromises = [];
       for (const [key, value] of Object.entries(stockUpdates)) {
         if (key !== 'stock/undefined' && key !== 'stock/null' && key !== 'stock/') {
@@ -2258,7 +2249,6 @@ body { padding-top: 80px; }
       return;
     }
     
-    // Validar contraseña
     const pwd = prompt('🔐 Ingrese la contraseña para modificar precios:');
     if (pwd !== PASSWORD_EDITAR) {
       alert('❌ Contraseña incorrecta');
@@ -2284,7 +2274,6 @@ body { padding-top: 80px; }
       const p = item.querySelector('p');
       const codeText = item.getAttribute('data-code');
       p.textContent = `${codeText} ${nuevoPrecio > 0 ? `- G.${nuevoPrecio.toLocaleString('es-PY')}` : ''}`;
-      // Actualizar también en el catálogo
       const catItem = document.querySelector(`.imagen-item[data-code="${codigo}"]`);
       if (catItem) {
         catItem.setAttribute('data-price', nuevoPrecio);
@@ -2368,19 +2357,16 @@ body { padding-top: 80px; }
         html += p.img;
         html += `<p style="font-weight:bold; margin:5px 0; font-size:0.8rem;">${p.name}</p>`;
         
-        // Campo para CÓDIGO
         html += `<div style="display:flex; gap:4px; margin:4px 0; align-items:center; flex-wrap:wrap;">`;
         html += `<label style="font-size:0.65rem; font-weight:bold;">Código:</label>`;
         html += `<input type="text" value="${p.code}" style="width:75px; padding:3px; font-size:0.7rem; border:1px solid #ccc; border-radius:4px; text-align:center;" onchange="cambiarCodigoStock(this, '${p.code}')">`;
         html += `</div>`;
         
-        // Campo para PRECIO
         html += `<div style="display:flex; gap:4px; margin:4px 0; align-items:center; flex-wrap:wrap;">`;
         html += `<label style="font-size:0.65rem; font-weight:bold;">Precio:</label>`;
         html += `<input type="number" value="${p.price}" style="width:75px; padding:3px; font-size:0.7rem; border:1px solid #ccc; border-radius:4px; text-align:center;" onchange="cambiarPrecioStock(this, '${p.code}')">`;
         html += `</div>`;
         
-        // Stock
         html += `<div class="stock-control" style="margin-top:4px;">`;
         if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
           html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)" style="width:55px; padding:3px; font-size:0.7rem; text-align:center; border:1px solid #ccc; border-radius:4px;"><span style="font-size:0.6rem; background:#999; color:white; padding:2px 5px; border-radius:4px;">Auto</span>`;
@@ -4072,12 +4058,9 @@ body { padding-top: 80px; }
     img.style.objectFit = 'contain';
     img.alt = code;
     
-    // Usar imagen local o placeholder
-    const imgPath = `../imagenes/${code}.jpg`;
-    img.src = imgPath;
+    img.src = `../imagenes/${code}.jpg`;
     
     img.onerror = function() {
-      // Si no carga la imagen, mostrar placeholder con colores
       this.style.display = 'none';
       const placeholder = document.createElement('div');
       const colores = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#38f9d7', '#fa709a', '#fee140'];
@@ -4199,15 +4182,8 @@ body { padding-top: 80px; }
           <p>${codigo} ${textoPrecio}</p>
           <div class="stock-indicator">${STOCK_INICIAL}</div>`;
         
-        // Intentar cargar la imagen
         const img = new Image();
-        img.onload = () => { 
-          const p = item.querySelector('.img-placeholder'); 
-          if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; 
-        };
-        img.onerror = () => {
-          // Si no carga, mantener el placeholder
-        };
+        img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; };
         img.src = `../imagenes/${codigo}.jpg`;
         return item;
       };
