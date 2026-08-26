@@ -354,16 +354,13 @@ function generarTodosLosProductos() {
       const index = codigo.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
       let textoPrecio = precio > 0 ? `- G.${precio.toLocaleString('es-PY')}` : '';
       
-      // Generar imagen con ruta correcta: ../imagenes/005-01.jpg
       item.innerHTML = `<div class="img-placeholder" style="background:${colores[index]};">${codigo.replace('-', ' ')}</div><p>${codigo} ${textoPrecio}</p><div class="stock-indicator">${STOCK_INICIAL}</div>`;
       
-      // Intentar cargar la imagen real desde ../imagenes/
       const img = new Image();
       img.onload = () => { 
         const p = item.querySelector('.img-placeholder'); 
         if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy" decoding="async">`; 
       };
-      // Si no existe la imagen, se queda el placeholder
       img.src = `../imagenes/${codigo}.jpg`;
       return item;
     };
@@ -500,21 +497,29 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
     await update(ref(database), updates);
     await update(ref(database), precioUpdates);
     
+    // ===== ACTUALIZAR DOM CON IMÁGENES CORREGIDAS =====
+    const timestamp = Date.now(); // Cache buster para forzar recarga de imágenes
+    
     for (const [codigoViejo, codigoNuevo] of Object.entries(productosReubicados)) {
+      // 1. Actualizar imagen-item (galería principal)
       const itemEl = document.querySelector(`.imagen-item[data-code="${codigoViejo}"]`);
       if (itemEl) {
         itemEl.setAttribute('data-code', codigoNuevo);
+        
+        // Actualizar imagen
         const img = itemEl.querySelector('img');
         if (img) {
-          img.src = `../imagenes/${codigoNuevo}.jpg`;
+          // Forzar recarga con cache buster
+          img.src = `../imagenes/${codigoNuevo}.jpg?t=${timestamp}`;
           img.alt = codigoNuevo;
         } else {
           const placeholder = itemEl.querySelector('.img-placeholder');
           if (placeholder) {
             const newImg = document.createElement('img');
-            newImg.src = `../imagenes/${codigoNuevo}.jpg`;
+            newImg.src = `../imagenes/${codigoNuevo}.jpg?t=${timestamp}`;
             newImg.alt = codigoNuevo;
             newImg.loading = 'lazy';
+            newImg.decoding = 'async';
             newImg.onerror = function() {
               this.style.display = 'none';
               const ph = document.createElement('div');
@@ -526,37 +531,49 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
             placeholder.parentNode.replaceChild(newImg, placeholder);
           }
         }
+        
+        // Actualizar texto
         const p = itemEl.querySelector('p');
         if (p) {
           const precio = nuevosPrecios[codigoNuevo] || 0;
           p.textContent = codigoNuevo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '');
         }
+        
+        // Actualizar stock
         const si = itemEl.querySelector('.stock-indicator');
         if (si) si.textContent = nuevosStocks[codigoNuevo] ?? STOCK_INICIAL;
       }
+      
+      // 2. Actualizar stock-item (panel de gestión)
       const stockItem = document.querySelector(`.stock-item[data-code="${codigoViejo}"]`);
       if (stockItem) {
         stockItem.setAttribute('data-code', codigoNuevo);
+        
+        // Actualizar imagen en stock
+        const imgStock = stockItem.querySelector('img');
+        if (imgStock) {
+          imgStock.src = `../imagenes/${codigoNuevo}.jpg?t=${timestamp}`;
+          imgStock.alt = codigoNuevo;
+        }
+        
+        // Actualizar campos
         const inputCode = stockItem.querySelector('input[type="text"]');
         if (inputCode) {
           inputCode.value = codigoNuevo;
           inputCode.setAttribute('onchange', `cambiarCodigoStock(this, '${codigoNuevo}')`);
         }
+        
         const inputStock = stockItem.querySelector(`#stock-${codigoViejo}`);
         if (inputStock) {
           inputStock.id = `stock-${codigoNuevo}`;
           inputStock.value = nuevosStocks[codigoNuevo] ?? STOCK_INICIAL;
           inputStock.setAttribute('onchange', `guardarStockIndividual('${codigoNuevo}', this.value)`);
         }
+        
         const p = stockItem.querySelector('p');
         if (p) {
           const precio = nuevosPrecios[codigoNuevo] || 0;
           p.textContent = codigoNuevo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '');
-        }
-        const imgStock = stockItem.querySelector('img');
-        if (imgStock) {
-          imgStock.src = `../imagenes/${codigoNuevo}.jpg`;
-          imgStock.alt = codigoNuevo;
         }
       }
     }
@@ -566,7 +583,7 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
     loadAllStockItems();
     reordenarGaleria();
     updateAllStockIndicators();
-    alert(`✅ PRODUCTO REUBICADO!\n📦 ${codigoActual} → ${nuevoCodigo}\n✅ Stocks e imágenes conservados.`);
+    alert(`✅ PRODUCTO REUBICADO!\n📦 ${codigoActual} → ${nuevoCodigo}\n✅ Stocks e imágenes actualizados correctamente.`);
   } catch(error) {
     ocultarMensajeEnProceso();
     console.error('Error:', error);
