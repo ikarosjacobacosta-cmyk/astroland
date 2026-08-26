@@ -291,6 +291,8 @@ const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
 const CIERRE_CODES = ['000-09', '000-10'];
 let filtroCarrito = { texto: '', tipo: 'todos', fechaDesde: '', fechaHasta: '' };
 let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
+// Mapeo de imágenes: código -> nombre de archivo de imagen
+let imagenMap = {};
 
 // ===== FUNCIONES DE GENERACIÓN DE PRODUCTOS =====
 function generarTodosLosProductos() {
@@ -354,6 +356,9 @@ function generarTodosLosProductos() {
       const index = codigo.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
       let textoPrecio = precio > 0 ? `- G.${precio.toLocaleString('es-PY')}` : '';
       
+      // Inicializar el mapeo de imágenes: cada código usa su propia imagen
+      imagenMap[codigo] = codigo + '.jpg';
+      
       item.innerHTML = `<div class="img-placeholder" style="background:${colores[index]};">${codigo.replace('-', ' ')}</div><p>${codigo} ${textoPrecio}</p><div class="stock-indicator">${STOCK_INICIAL}</div>`;
       
       const img = new Image();
@@ -403,6 +408,34 @@ function obtenerPrecio(code) {
   return item ? (parseInt(item.getAttribute('data-price')) || 0) : 0;
 }
 
+// Función para actualizar la imagen de un producto basado en el mapeo
+function actualizarImagenProducto(itemEl, codigo) {
+  const nombreImagen = imagenMap[codigo] || (codigo + '.jpg');
+  const img = itemEl.querySelector('img');
+  if (img) {
+    img.src = `../imagenes/${nombreImagen}?t=${Date.now()}`;
+    img.alt = codigo;
+  } else {
+    const placeholder = itemEl.querySelector('.img-placeholder');
+    if (placeholder) {
+      const newImg = document.createElement('img');
+      newImg.src = `../imagenes/${nombreImagen}?t=${Date.now()}`;
+      newImg.alt = codigo;
+      newImg.loading = 'lazy';
+      newImg.decoding = 'async';
+      newImg.onerror = function() {
+        this.style.display = 'none';
+        const ph = document.createElement('div');
+        ph.className = 'img-placeholder';
+        ph.style.cssText = 'width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-size:.9rem;font-weight:700;border-radius:8px;border:1px solid #e0e0e0;';
+        ph.textContent = codigo.replace('-', ' ');
+        this.parentNode.replaceChild(ph, this);
+      };
+      placeholder.parentNode.replaceChild(newImg, placeholder);
+    }
+  }
+}
+
 window.cambiarCodigoStock = async function(input, codigoActual) {
   const nuevoCodigo = input.value.trim();
   if (!nuevoCodigo) { input.value = codigoActual; alert('❌ El código no puede estar vacío'); return; }
@@ -435,6 +468,8 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
   try {
     const nuevosStocks = {}, nuevosPrecios = {};
     let productosReubicados = {};
+    // Nuevo mapeo de imágenes: código -> nombre de archivo de imagen
+    const nuevoImagenMap = {};
     
     if (nuevaCategoria === categoriaActual) {
       const numActualInt = parseInt(numeroActual), nuevoNumInt = parseInt(nuevoNumero);
@@ -448,6 +483,8 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
         nuevosStocks[nc] = mapStock[code] ?? STOCK_INICIAL;
         nuevosPrecios[nc] = mapPrecio[code] ?? 0;
         productosReubicados[code] = nc;
+        // Mantener la misma imagen para este producto (el archivo físico no cambia)
+        nuevoImagenMap[nc] = imagenMap[code] || (code + '.jpg');
       });
     } else {
       const numOrigenInt = parseInt(numeroActual), numDestinoInt = parseInt(nuevoNumero);
@@ -457,6 +494,7 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
         nuevosStocks[nc] = mapStock[code] ?? STOCK_INICIAL;
         nuevosPrecios[nc] = mapPrecio[code] ?? 0;
         productosReubicados[code] = nc;
+        nuevoImagenMap[nc] = imagenMap[code] || (code + '.jpg');
       });
       const destinoOrdenados = productosDestino.sort((a,b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
       let insertado = false;
@@ -466,6 +504,7 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
           nuevosStocks[nc] = mapStock[codigoActual] ?? STOCK_INICIAL;
           nuevosPrecios[nc] = mapPrecio[codigoActual] ?? 0;
           productosReubicados[codigoActual] = nc;
+          nuevoImagenMap[nc] = imagenMap[codigoActual] || (codigoActual + '.jpg');
           insertado = true;
         } else {
           const idxOrig = insertado ? i - 1 : i;
@@ -475,6 +514,7 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
             nuevosStocks[nc] = mapStock[code] ?? STOCK_INICIAL;
             nuevosPrecios[nc] = mapPrecio[code] ?? 0;
             productosReubicados[code] = nc;
+            nuevoImagenMap[nc] = imagenMap[code] || (code + '.jpg');
           }
         }
       }
@@ -483,6 +523,7 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
         nuevosStocks[nc] = mapStock[codigoActual] ?? STOCK_INICIAL;
         nuevosPrecios[nc] = mapPrecio[codigoActual] ?? 0;
         productosReubicados[codigoActual] = nc;
+        nuevoImagenMap[nc] = imagenMap[codigoActual] || (codigoActual + '.jpg');
       }
     }
     
@@ -497,79 +538,42 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
     await update(ref(database), updates);
     await update(ref(database), precioUpdates);
     
-    // ===== ACTUALIZAR DOM CON IMÁGENES CORREGIDAS =====
-    const timestamp = Date.now(); // Cache buster para forzar recarga de imágenes
+    // Actualizar el mapeo de imágenes
+    imagenMap = nuevoImagenMap;
     
+    // Actualizar DOM
     for (const [codigoViejo, codigoNuevo] of Object.entries(productosReubicados)) {
-      // 1. Actualizar imagen-item (galería principal)
       const itemEl = document.querySelector(`.imagen-item[data-code="${codigoViejo}"]`);
       if (itemEl) {
         itemEl.setAttribute('data-code', codigoNuevo);
+        // Actualizar imagen usando el mapeo
+        actualizarImagenProducto(itemEl, codigoNuevo);
         
-        // Actualizar imagen
-        const img = itemEl.querySelector('img');
-        if (img) {
-          // Forzar recarga con cache buster
-          img.src = `../imagenes/${codigoNuevo}.jpg?t=${timestamp}`;
-          img.alt = codigoNuevo;
-        } else {
-          const placeholder = itemEl.querySelector('.img-placeholder');
-          if (placeholder) {
-            const newImg = document.createElement('img');
-            newImg.src = `../imagenes/${codigoNuevo}.jpg?t=${timestamp}`;
-            newImg.alt = codigoNuevo;
-            newImg.loading = 'lazy';
-            newImg.decoding = 'async';
-            newImg.onerror = function() {
-              this.style.display = 'none';
-              const ph = document.createElement('div');
-              ph.className = 'img-placeholder';
-              ph.style.cssText = 'width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-size:.9rem;font-weight:700;border-radius:8px;border:1px solid #e0e0e0;';
-              ph.textContent = codigoNuevo.replace('-', ' ');
-              this.parentNode.replaceChild(ph, this);
-            };
-            placeholder.parentNode.replaceChild(newImg, placeholder);
-          }
-        }
-        
-        // Actualizar texto
         const p = itemEl.querySelector('p');
         if (p) {
           const precio = nuevosPrecios[codigoNuevo] || 0;
           p.textContent = codigoNuevo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '');
         }
-        
-        // Actualizar stock
         const si = itemEl.querySelector('.stock-indicator');
         if (si) si.textContent = nuevosStocks[codigoNuevo] ?? STOCK_INICIAL;
       }
       
-      // 2. Actualizar stock-item (panel de gestión)
       const stockItem = document.querySelector(`.stock-item[data-code="${codigoViejo}"]`);
       if (stockItem) {
         stockItem.setAttribute('data-code', codigoNuevo);
+        actualizarImagenProducto(stockItem, codigoNuevo);
         
-        // Actualizar imagen en stock
-        const imgStock = stockItem.querySelector('img');
-        if (imgStock) {
-          imgStock.src = `../imagenes/${codigoNuevo}.jpg?t=${timestamp}`;
-          imgStock.alt = codigoNuevo;
-        }
-        
-        // Actualizar campos
         const inputCode = stockItem.querySelector('input[type="text"]');
         if (inputCode) {
           inputCode.value = codigoNuevo;
           inputCode.setAttribute('onchange', `cambiarCodigoStock(this, '${codigoNuevo}')`);
         }
-        
         const inputStock = stockItem.querySelector(`#stock-${codigoViejo}`);
         if (inputStock) {
           inputStock.id = `stock-${codigoNuevo}`;
           inputStock.value = nuevosStocks[codigoNuevo] ?? STOCK_INICIAL;
           inputStock.setAttribute('onchange', `guardarStockIndividual('${codigoNuevo}', this.value)`);
         }
-        
         const p = stockItem.querySelector('p');
         if (p) {
           const precio = nuevosPrecios[codigoNuevo] || 0;
@@ -583,7 +587,7 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
     loadAllStockItems();
     reordenarGaleria();
     updateAllStockIndicators();
-    alert(`✅ PRODUCTO REUBICADO!\n📦 ${codigoActual} → ${nuevoCodigo}\n✅ Stocks e imágenes actualizados correctamente.`);
+    alert(`✅ PRODUCTO REUBICADO!\n📦 ${codigoActual} → ${nuevoCodigo}\n✅ Cada producto conserva su imagen original.`);
   } catch(error) {
     ocultarMensajeEnProceso();
     console.error('Error:', error);
@@ -592,130 +596,8 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
   }
 };
 
-window.cambiarPrecioStock = function(input, codigo) {
-  const nuevoPrecio = parseInt(input.value);
-  if (isNaN(nuevoPrecio) || nuevoPrecio < 0) { input.value = input.defaultValue || 0; alert('❌ Precio inválido'); return; }
-  const pwd = prompt('🔐 Contraseña para modificar precios:');
-  if (pwd !== PASSWORD_EDITAR) { const item = input.closest('.stock-item'); input.value = item.getAttribute('data-price') || 0; alert('❌ Contraseña incorrecta'); return; }
-  const item = input.closest('.stock-item');
-  const precioActual = parseInt(item.getAttribute('data-price')) || 0;
-  if (nuevoPrecio === precioActual) return;
-  if (!confirm(`¿Cambiar precio de ${codigo} de Gs. ${precioActual.toLocaleString()} a Gs. ${nuevoPrecio.toLocaleString()}?`)) { input.value = precioActual; return; }
-  set(ref(database, 'precios/' + codigo), nuevoPrecio).then(() => {
-    item.setAttribute('data-price', nuevoPrecio);
-    const p = item.querySelector('p');
-    if (p) p.textContent = codigo + (nuevoPrecio > 0 ? ` - G.${nuevoPrecio.toLocaleString('es-PY')}` : '');
-    const catItem = document.querySelector(`.imagen-item[data-code="${codigo}"]`);
-    if (catItem) {
-      catItem.setAttribute('data-price', nuevoPrecio);
-      const cp = catItem.querySelector('p');
-      if (cp) cp.textContent = codigo + (nuevoPrecio > 0 ? ` - G.${nuevoPrecio.toLocaleString('es-PY')}` : '');
-    }
-    alert(`✅ Precio actualizado: ${codigo} → Gs. ${nuevoPrecio.toLocaleString()}`);
-  }).catch(() => { alert('❌ Error al guardar el precio'); input.value = precioActual; });
-};
-
-function reordenarGaleria() {
-  document.querySelectorAll('.categoria').forEach(cat => {
-    const items = Array.from(cat.querySelectorAll('.imagen-item'));
-    const galeria = cat.querySelector('.galeria');
-    items.sort((a,b) => parseInt(a.getAttribute('data-code').replace('-','')) - parseInt(b.getAttribute('data-code').replace('-','')));
-    items.forEach(item => galeria.appendChild(item));
-  });
-  updateAllStockIndicators();
-}
-window.reordenarGaleria = reordenarGaleria;
-
-function loadAllStockItems() {
-  const container = document.getElementById('stockItemsContainer');
-  const categories = {};
-  document.querySelectorAll('.imagen-item').forEach(item => {
-    const cat = item.getAttribute('data-category');
-    if (!categories[cat]) categories[cat] = [];
-    const code = item.getAttribute('data-code');
-    const price = item.getAttribute('data-price');
-    const name = item.querySelector('p')?.textContent || code;
-    const img = item.querySelector('img')?.outerHTML || item.querySelector('.img-placeholder')?.outerHTML || '';
-    let display = getProductStock(code);
-    const isFichaBase = code === '000-00';
-    const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
-    const isIndependent = NON_FICHA_CODES.includes(code);
-    categories[cat].push({ code, price, name, img, currentStock: display, isFichaBase, isFichaProduct, isIndependent });
-  });
-  const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a) - parseInt(b));
-  let html = '';
-  for (const cat of sortedCats) {
-    html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
-    if (cat === '000') {
-      const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
-      html += `<p style="margin:10px 0;padding:8px;background:#e3f2fd;border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(16), 000-02(36), 000-05(1), 000-06(7)</small></p>
-               <p style="margin:5px 0;padding:5px;background:#fff3e0;border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
-    }
-    html += `<div class="stock-gallery" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">`;
-    const sortedProds = categories[cat].sort((a,b) => parseInt(a.code.split('-')[1]) - parseInt(b.code.split('-')[1]));
-    for (const p of sortedProds) {
-      html += `<div class="stock-item" data-code="${p.code}" data-price="${p.price}" style="border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:#fff;">${p.img}
-        <p style="font-weight:700;margin:5px 0;font-size:.8rem;">${p.name}</p>
-        <div style="display:flex;gap:4px;margin:4px 0;align-items:center;flex-wrap:wrap;">
-          <label style="font-size:.65rem;font-weight:700;">Código:</label>
-          <input type="text" value="${p.code}" style="width:75px;padding:3px;font-size:.7rem;border:1px solid #ccc;border-radius:4px;text-align:center;" onchange="cambiarCodigoStock(this, '${p.code}')">
-        </div>
-        <div style="display:flex;gap:4px;margin:4px 0;align-items:center;flex-wrap:wrap;">
-          <label style="font-size:.65rem;font-weight:700;">Precio:</label>
-          <input type="number" value="${p.price}" style="width:75px;padding:3px;font-size:.7rem;border:1px solid #ccc;border-radius:4px;text-align:center;" onchange="cambiarPrecioStock(this, '${p.code}')">
-        </div>
-        <div class="stock-control" style="margin-top:4px;">`;
-      if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
-        html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)" style="width:55px;padding:3px;font-size:.7rem;text-align:center;border:1px solid #ccc;border-radius:4px;"><span style="font-size:.6rem;background:#999;color:#fff;padding:2px 5px;border-radius:4px;">Auto</span>`;
-      } else {
-        html += `<input type="number" value="${p.currentStock}" readonly disabled style="width:55px;padding:3px;font-size:.7rem;text-align:center;border:1px solid #ccc;border-radius:4px;background:#f0f0f0;"><span style="font-size:.6rem;background:#999;color:#fff;padding:2px 5px;border-radius:4px;">🎴</span>`;
-      }
-      html += `</div></div>`;
-    }
-    html += `</div></div>`;
-  }
-  container.innerHTML = html;
-}
-
-window.guardarStockIndividual = function(code, valor) {
-  if (code === '000-00' || code === '000-07') {
-    const pwd = prompt(`🔐 Contraseña para modificar ${code}:`);
-    if (pwd !== PASSWORD_SPECIAL_CODES) { alert('❌ Contraseña incorrecta'); const inp = document.getElementById(`stock-${code}`); if(inp) inp.value = stock[code] ?? STOCK_INICIAL; return; }
-  }
-  const inp = document.getElementById(`stock-${code}`);
-  if (!inp) return;
-  let newStock = parseInt(valor, 10);
-  if (isNaN(newStock)) newStock = 0;
-  if (newStock < 0) newStock = 0;
-  inp.style.cssText = 'background:#d4edda;border:2px solid #4CAF50;transition:background .3s;';
-  set(ref(database, 'stock/' + code), newStock).then(() => {
-    stock[code] = newStock;
-    updateAllStockIndicators();
-    setTimeout(() => { inp.style.background = ''; inp.style.border = ''; }, 1000);
-  }).catch(() => {
-    inp.style.background = '#f8d7da';
-    inp.style.border = '2px solid #dc3545';
-    setTimeout(() => { inp.style.background = ''; inp.style.border = ''; }, 1000);
-  });
-};
-window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente al editar cada valor');
-
-function getCategoryName(code) {
-  const names = { '000':'000 puntos','005':'005 puntos','020':'20 puntos','035':'35 puntos','050':'50 puntos','075':'75 puntos','100':'100 puntos','150':'150 puntos','180':'180 puntos','200':'200 puntos','220':'220 puntos','250':'250 puntos','350':'350 puntos','420':'420 puntos','800':'800 puntos' };
-  return names[code] || code + ' puntos';
-}
-
-window.filterStockItems = function(term) {
-  document.querySelectorAll('.stock-category').forEach(cat => {
-    let any = false;
-    cat.querySelectorAll('.stock-item').forEach(item => {
-      const code = item.getAttribute('data-code').toLowerCase();
-      if (term === '' || code.startsWith(term)) { item.style.display = 'flex'; any = true; }
-      else item.style.display = 'none';
-    });
-    cat.style.display = any ? 'block' : 'none';
-  });
-};
+// ===== RESTO DEL CÓDIGO (sin cambios) =====
+// ... (el resto de las funciones son las mismas que antes)
 
 // ===== FUNCIONES DE BÚSQUEDA =====
 function configurarBusqueda() {
@@ -810,6 +692,131 @@ function shouldShowMovimientosTab(code) {
   const num = parseInt(prefix);
   return !isNaN(num) && num >= 5;
 }
+
+function reordenarGaleria() {
+  document.querySelectorAll('.categoria').forEach(cat => {
+    const items = Array.from(cat.querySelectorAll('.imagen-item'));
+    const galeria = cat.querySelector('.galeria');
+    items.sort((a,b) => parseInt(a.getAttribute('data-code').replace('-','')) - parseInt(b.getAttribute('data-code').replace('-','')));
+    items.forEach(item => galeria.appendChild(item));
+  });
+  updateAllStockIndicators();
+}
+window.reordenarGaleria = reordenarGaleria;
+
+function loadAllStockItems() {
+  const container = document.getElementById('stockItemsContainer');
+  const categories = {};
+  document.querySelectorAll('.imagen-item').forEach(item => {
+    const cat = item.getAttribute('data-category');
+    if (!categories[cat]) categories[cat] = [];
+    const code = item.getAttribute('data-code');
+    const price = item.getAttribute('data-price');
+    const name = item.querySelector('p')?.textContent || code;
+    const img = item.querySelector('img')?.outerHTML || item.querySelector('.img-placeholder')?.outerHTML || '';
+    let display = getProductStock(code);
+    const isFichaBase = code === '000-00';
+    const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
+    const isIndependent = NON_FICHA_CODES.includes(code);
+    categories[cat].push({ code, price, name, img, currentStock: display, isFichaBase, isFichaProduct, isIndependent });
+  });
+  const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a) - parseInt(b));
+  let html = '';
+  for (const cat of sortedCats) {
+    html += `<div class="stock-category" data-category="${cat}"><h4>${getCategoryName(cat)}</h4>`;
+    if (cat === '000') {
+      const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
+      html += `<p style="margin:10px 0;padding:8px;background:#e3f2fd;border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(16), 000-02(36), 000-05(1), 000-06(7)</small></p>
+               <p style="margin:5px 0;padding:5px;background:#fff3e0;border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
+    }
+    html += `<div class="stock-gallery" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">`;
+    const sortedProds = categories[cat].sort((a,b) => parseInt(a.code.split('-')[1]) - parseInt(b.code.split('-')[1]));
+    for (const p of sortedProds) {
+      html += `<div class="stock-item" data-code="${p.code}" data-price="${p.price}" style="border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:#fff;">${p.img}
+        <p style="font-weight:700;margin:5px 0;font-size:.8rem;">${p.name}</p>
+        <div style="display:flex;gap:4px;margin:4px 0;align-items:center;flex-wrap:wrap;">
+          <label style="font-size:.65rem;font-weight:700;">Código:</label>
+          <input type="text" value="${p.code}" style="width:75px;padding:3px;font-size:.7rem;border:1px solid #ccc;border-radius:4px;text-align:center;" onchange="cambiarCodigoStock(this, '${p.code}')">
+        </div>
+        <div style="display:flex;gap:4px;margin:4px 0;align-items:center;flex-wrap:wrap;">
+          <label style="font-size:.65rem;font-weight:700;">Precio:</label>
+          <input type="number" value="${p.price}" style="width:75px;padding:3px;font-size:.7rem;border:1px solid #ccc;border-radius:4px;text-align:center;" onchange="cambiarPrecioStock(this, '${p.code}')">
+        </div>
+        <div class="stock-control" style="margin-top:4px;">`;
+      if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
+        html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)" style="width:55px;padding:3px;font-size:.7rem;text-align:center;border:1px solid #ccc;border-radius:4px;"><span style="font-size:.6rem;background:#999;color:#fff;padding:2px 5px;border-radius:4px;">Auto</span>`;
+      } else {
+        html += `<input type="number" value="${p.currentStock}" readonly disabled style="width:55px;padding:3px;font-size:.7rem;text-align:center;border:1px solid #ccc;border-radius:4px;background:#f0f0f0;"><span style="font-size:.6rem;background:#999;color:#fff;padding:2px 5px;border-radius:4px;">🎴</span>`;
+      }
+      html += `</div></div>`;
+    }
+    html += `</div></div>`;
+  }
+  container.innerHTML = html;
+}
+
+window.guardarStockIndividual = function(code, valor) {
+  if (code === '000-00' || code === '000-07') {
+    const pwd = prompt(`🔐 Contraseña para modificar ${code}:`);
+    if (pwd !== PASSWORD_SPECIAL_CODES) { alert('❌ Contraseña incorrecta'); const inp = document.getElementById(`stock-${code}`); if(inp) inp.value = stock[code] ?? STOCK_INICIAL; return; }
+  }
+  const inp = document.getElementById(`stock-${code}`);
+  if (!inp) return;
+  let newStock = parseInt(valor, 10);
+  if (isNaN(newStock)) newStock = 0;
+  if (newStock < 0) newStock = 0;
+  inp.style.cssText = 'background:#d4edda;border:2px solid #4CAF50;transition:background .3s;';
+  set(ref(database, 'stock/' + code), newStock).then(() => {
+    stock[code] = newStock;
+    updateAllStockIndicators();
+    setTimeout(() => { inp.style.background = ''; inp.style.border = ''; }, 1000);
+  }).catch(() => {
+    inp.style.background = '#f8d7da';
+    inp.style.border = '2px solid #dc3545';
+    setTimeout(() => { inp.style.background = ''; inp.style.border = ''; }, 1000);
+  });
+};
+window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente al editar cada valor');
+
+window.cambiarPrecioStock = function(input, codigo) {
+  const nuevoPrecio = parseInt(input.value);
+  if (isNaN(nuevoPrecio) || nuevoPrecio < 0) { input.value = input.defaultValue || 0; alert('❌ Precio inválido'); return; }
+  const pwd = prompt('🔐 Contraseña para modificar precios:');
+  if (pwd !== PASSWORD_EDITAR) { const item = input.closest('.stock-item'); input.value = item.getAttribute('data-price') || 0; alert('❌ Contraseña incorrecta'); return; }
+  const item = input.closest('.stock-item');
+  const precioActual = parseInt(item.getAttribute('data-price')) || 0;
+  if (nuevoPrecio === precioActual) return;
+  if (!confirm(`¿Cambiar precio de ${codigo} de Gs. ${precioActual.toLocaleString()} a Gs. ${nuevoPrecio.toLocaleString()}?`)) { input.value = precioActual; return; }
+  set(ref(database, 'precios/' + codigo), nuevoPrecio).then(() => {
+    item.setAttribute('data-price', nuevoPrecio);
+    const p = item.querySelector('p');
+    if (p) p.textContent = codigo + (nuevoPrecio > 0 ? ` - G.${nuevoPrecio.toLocaleString('es-PY')}` : '');
+    const catItem = document.querySelector(`.imagen-item[data-code="${codigo}"]`);
+    if (catItem) {
+      catItem.setAttribute('data-price', nuevoPrecio);
+      const cp = catItem.querySelector('p');
+      if (cp) cp.textContent = codigo + (nuevoPrecio > 0 ? ` - G.${nuevoPrecio.toLocaleString('es-PY')}` : '');
+    }
+    alert(`✅ Precio actualizado: ${codigo} → Gs. ${nuevoPrecio.toLocaleString()}`);
+  }).catch(() => { alert('❌ Error al guardar el precio'); input.value = precioActual; });
+};
+
+function getCategoryName(code) {
+  const names = { '000':'000 puntos','005':'005 puntos','020':'20 puntos','035':'35 puntos','050':'50 puntos','075':'75 puntos','100':'100 puntos','150':'150 puntos','180':'180 puntos','200':'200 puntos','220':'220 puntos','250':'250 puntos','350':'350 puntos','420':'420 puntos','800':'800 puntos' };
+  return names[code] || code + ' puntos';
+}
+
+window.filterStockItems = function(term) {
+  document.querySelectorAll('.stock-category').forEach(cat => {
+    let any = false;
+    cat.querySelectorAll('.stock-item').forEach(item => {
+      const code = item.getAttribute('data-code').toLowerCase();
+      if (term === '' || code.startsWith(term)) { item.style.display = 'flex'; any = true; }
+      else item.style.display = 'none';
+    });
+    cat.style.display = any ? 'block' : 'none';
+  });
+};
 
 // ===== GESTIÓN DE STOCK (MODAL) =====
 window.showStockManagement = function() {
