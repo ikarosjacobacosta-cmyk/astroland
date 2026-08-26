@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes, maximum-scale=1" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>ASTROLAND - Los Laureles</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -4072,21 +4072,27 @@ body { padding-top: 80px; }
     img.style.objectFit = 'contain';
     img.alt = code;
     
-    img.src = `../imagenes/${code}.jpg`;
+    // Usar imagen local o placeholder
+    const imgPath = `../imagenes/${code}.jpg`;
+    img.src = imgPath;
     
-    img.onerror = () => {
-      img.style.display = 'none';
+    img.onerror = function() {
+      // Si no carga la imagen, mostrar placeholder con colores
+      this.style.display = 'none';
       const placeholder = document.createElement('div');
-      placeholder.style.width = '200px';
-      placeholder.style.height = '200px';
-      placeholder.style.backgroundColor = '#667eea';
-      placeholder.style.borderRadius = '12px';
+      const colores = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#38f9d7', '#fa709a', '#fee140'];
+      const index = code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
+      placeholder.style.width = '100%';
+      placeholder.style.aspectRatio = '1/1';
+      placeholder.style.background = `linear-gradient(135deg, ${colores[index]} 0%, ${colores[(index+1) % colores.length]} 100%)`;
+      placeholder.style.borderRadius = '8px';
       placeholder.style.display = 'flex';
       placeholder.style.alignItems = 'center';
       placeholder.style.justifyContent = 'center';
       placeholder.style.color = 'white';
       placeholder.style.fontSize = '1.2rem';
       placeholder.style.fontWeight = 'bold';
+      placeholder.style.border = '1px solid #e0e0e0';
       placeholder.textContent = code;
       content.insertBefore(placeholder, closeBtn.nextSibling);
     };
@@ -4193,8 +4199,15 @@ body { padding-top: 80px; }
           <p>${codigo} ${textoPrecio}</p>
           <div class="stock-indicator">${STOCK_INICIAL}</div>`;
         
+        // Intentar cargar la imagen
         const img = new Image();
-        img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; };
+        img.onload = () => { 
+          const p = item.querySelector('.img-placeholder'); 
+          if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; 
+        };
+        img.onerror = () => {
+          // Si no carga, mantener el placeholder
+        };
         img.src = `../imagenes/${codigo}.jpg`;
         return item;
       };
@@ -4290,6 +4303,18 @@ body { padding-top: 80px; }
       });
     }
   });
+
+  function filterStockItems(term) {
+    document.querySelectorAll('.stock-category').forEach(cat => {
+      let any = false;
+      cat.querySelectorAll('.stock-item').forEach(item => {
+        const code = item.getAttribute('data-code').toLowerCase();
+        if (term === '' || code.startsWith(term)) { item.style.display = 'flex'; any = true; }
+        else { item.style.display = 'none'; }
+      });
+      cat.style.display = any ? 'block' : 'none';
+    });
+  }
 
   window.exportarFiltradoExcel = function() {
     const pwd = prompt('🔐 Contraseña para exportar filtrado:');
