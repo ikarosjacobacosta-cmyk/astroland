@@ -353,9 +353,17 @@ function generarTodosLosProductos() {
       item.setAttribute('data-category', cat.categoria);
       const index = codigo.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
       let textoPrecio = precio > 0 ? `- G.${precio.toLocaleString('es-PY')}` : '';
+      
+      // Generar imagen con ruta correcta: ../imagenes/005-01.jpg
       item.innerHTML = `<div class="img-placeholder" style="background:${colores[index]};">${codigo.replace('-', ' ')}</div><p>${codigo} ${textoPrecio}</p><div class="stock-indicator">${STOCK_INICIAL}</div>`;
+      
+      // Intentar cargar la imagen real desde ../imagenes/
       const img = new Image();
-      img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; };
+      img.onload = () => { 
+        const p = item.querySelector('.img-placeholder'); 
+        if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy" decoding="async">`; 
+      };
+      // Si no existe la imagen, se queda el placeholder
       img.src = `../imagenes/${codigo}.jpg`;
       return item;
     };
@@ -383,7 +391,7 @@ function generarOpcionesMaquinas() {
   }
 }
 
-// ===== FUNCIONES DE STOCK (CORREGIDAS) =====
+// ===== FUNCIONES DE STOCK =====
 function obtenerProductosPorCategoria(categoria) {
   const productos = [];
   document.querySelectorAll('.imagen-item').forEach(item => {
@@ -409,7 +417,6 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
   const [nuevaCategoria, nuevoNumero] = nuevoCodigo.split('-');
   const [categoriaActual, numeroActual] = codigoActual.split('-');
   
-  // Obtener stocks y precios actuales
   const stockSnap = await get(stockRef);
   const stocksActuales = stockSnap.exists() ? stockSnap.val() : {};
   const preciosSnap = await get(ref(database, 'precios'));
@@ -418,7 +425,6 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
   const productosOrigen = obtenerProductosPorCategoria(categoriaActual);
   const productosDestino = obtenerProductosPorCategoria(nuevaCategoria);
   
-  // Mapa de stock por código
   const mapStock = {}, mapPrecio = {};
   for (const code of [...productosOrigen, ...productosDestino, codigoActual]) {
     mapStock[code] = stocksActuales[code] ?? STOCK_INICIAL;
@@ -434,7 +440,6 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
     let productosReubicados = {};
     
     if (nuevaCategoria === categoriaActual) {
-      // Misma categoría: reordenar
       const numActualInt = parseInt(numeroActual), nuevoNumInt = parseInt(nuevoNumero);
       if (numActualInt === nuevoNumInt) { ocultarMensajeEnProceso(); return; }
       const todos = obtenerProductosPorCategoria(categoriaActual).sort((a,b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
@@ -448,10 +453,7 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
         productosReubicados[code] = nc;
       });
     } else {
-      // Categoría diferente: mover
       const numOrigenInt = parseInt(numeroActual), numDestinoInt = parseInt(nuevoNumero);
-      
-      // Origen: quitar el producto y reordenar
       const origenSinMovido = productosOrigen.filter(p => p !== codigoActual).sort((a,b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
       origenSinMovido.forEach((code, i) => {
         const nc = categoriaActual + '-' + String(i).padStart(2,'0');
@@ -459,8 +461,6 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
         nuevosPrecios[nc] = mapPrecio[code] ?? 0;
         productosReubicados[code] = nc;
       });
-      
-      // Destino: insertar el producto
       const destinoOrdenados = productosDestino.sort((a,b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
       let insertado = false;
       for (let i = 0; i < destinoOrdenados.length + 1; i++) {
@@ -489,7 +489,6 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
       }
     }
     
-    // Guardar en Firebase
     const updates = {}, precioUpdates = {};
     for (const code of Object.keys(mapStock)) updates[`stock/${code}`] = null;
     for (const [code, val] of Object.entries(nuevosStocks)) {
@@ -501,9 +500,7 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
     await update(ref(database), updates);
     await update(ref(database), precioUpdates);
     
-    // Actualizar DOM con nuevos códigos e imágenes
     for (const [codigoViejo, codigoNuevo] of Object.entries(productosReubicados)) {
-      // Actualizar imagen-item
       const itemEl = document.querySelector(`.imagen-item[data-code="${codigoViejo}"]`);
       if (itemEl) {
         itemEl.setAttribute('data-code', codigoNuevo);
@@ -537,8 +534,6 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
         const si = itemEl.querySelector('.stock-indicator');
         if (si) si.textContent = nuevosStocks[codigoNuevo] ?? STOCK_INICIAL;
       }
-      
-      // Actualizar stock-item
       const stockItem = document.querySelector(`.stock-item[data-code="${codigoViejo}"]`);
       if (stockItem) {
         stockItem.setAttribute('data-code', codigoNuevo);
@@ -558,7 +553,6 @@ window.cambiarCodigoStock = async function(input, codigoActual) {
           const precio = nuevosPrecios[codigoNuevo] || 0;
           p.textContent = codigoNuevo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '');
         }
-        // Actualizar imagen en stock
         const imgStock = stockItem.querySelector('img');
         if (imgStock) {
           imgStock.src = `../imagenes/${codigoNuevo}.jpg`;
@@ -604,7 +598,6 @@ window.cambiarPrecioStock = function(input, codigo) {
   }).catch(() => { alert('❌ Error al guardar el precio'); input.value = precioActual; });
 };
 
-// ===== FUNCIONES DE STOCK (resto) =====
 function reordenarGaleria() {
   document.querySelectorAll('.categoria').forEach(cat => {
     const items = Array.from(cat.querySelectorAll('.imagen-item'));
@@ -775,7 +768,6 @@ function updateAllStockIndicators() {
     if (val <= 0 && !CIERRE_CODES.includes(code)) item.classList.add('out-of-stock');
     else item.classList.remove('out-of-stock');
   });
-  // Actualizar contadores de categoría
   const cats = {};
   document.querySelectorAll('.imagen-item').forEach(item => {
     const cat = item.getAttribute('data-category');
@@ -879,7 +871,7 @@ window.guardarContadoresMaquina = async function() {
   } catch(e) { ocultarMensajeEnProceso(); alert('❌ Error al guardar'); }
 };
 
-// ===== FUNCIONES DE PAGO (simplificadas) =====
+// ===== FUNCIONES DE PAGO =====
 function actualizarBotonesSegunDinero() {
   const moneyInput = document.getElementById('moneyInput');
   const btnEfectivo = document.getElementById('btnEfectivo');
@@ -1340,11 +1332,9 @@ window.confirmarAccionFecha = async function() {
     if (accion.tipo === 'vaciar_seleccionados') {
       const items = accion.items;
       const indices = accion.indices;
-      // Guardar en historial
       const historialData = items.map(item => ({ ...item }));
       const registro = { sucursal: 'Los Laureles', fechaEliminacion: fecha, timestamp: new Date(fecha).getTime(), ventas: historialData, totalVentas: items.length, totalDinero: items.reduce((s,v) => s + (v.money||0), 0), totalPuntos: items.reduce((s,v) => s + (v.points||0), 0) };
       await push(historialRef, registro);
-      // Eliminar del carrito
       const sorted = indices.sort((a,b) => b - a);
       for (const idx of sorted) {
         const item = cart[idx];
