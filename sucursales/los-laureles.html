@@ -659,7 +659,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 @media (min-width: 901px) and (max-width:1199px) { .stock-gallery { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width:600px) { .stock-gallery { grid-template-columns: repeat(3, 1fr); } }
 
-.stock-item { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e0e0e0; }
+.stock-item { display: flex; flex-direction: column; align-items: center; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .stock-item img { width: 100%; aspect-ratio: 1/1; object-fit: contain; border: 1px solid #e0e0e0; border-radius: 8px; max-width: 120px; }
 .stock-item p { margin: 8px 0; font-size: 0.8rem; text-align: center; font-weight: 500; }
 .stock-item .stock-control { display: flex; gap: 5px; margin-top: 5px; justify-content: center; width: 100%; }
@@ -843,7 +843,7 @@ body { padding-top: 80px; }
 <body>
 <div class="floating-search-container">
   <div class="busqueda-container">
-    <input type="text" id="busqueda" placeholder="Ej: 005 (escribe 3 d�gitos para buscar)" aria-label="Buscar" inputmode="numeric">
+    <input type="text" id="busqueda" placeholder="Ej: 005 (escribe 3 dígitos para buscar)" aria-label="Buscar" inputmode="numeric">
   </div>
 </div>
 
@@ -864,13 +864,13 @@ body { padding-top: 80px; }
 <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
 <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
 
-<!-- Modal de selecci�n para vaciar carrito -->
+<!-- Modal de selección para vaciar carrito -->
 <div id="vaciarSeleccionModal" class="vaciar-seleccion-modal">
   <div class="modal-content">
     <button class="close" onclick="closeVaciarSeleccionModal()">&times;</button>
     <h3>🗑️ Seleccionar items para vaciar</h3>
     <p style="color:#666; text-align:center; margin-bottom:15px;">
-      Selecciona los items que deseas mover al historial. Los no seleccionados permanecer�n en el carrito.
+      Selecciona los items que deseas mover al historial. Los no seleccionados permanecerán en el carrito.
     </p>
     <div id="vaciarListaContainer">
       <div class="vaciar-header">
@@ -947,7 +947,7 @@ body { padding-top: 80px; }
       </div>
       <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
         📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
-        🖥️ <strong>M�quina:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
+        🖥️ <strong>Máquina:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
       </p>
     </div>
   </div>
@@ -971,18 +971,17 @@ body { padding-top: 80px; }
     <button class="close-stock-floating" onclick="closeStockModal()">✕</button>
     <h3>📦 Gestionar Stock - Los Laureles</h3>
     <div id="stockPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
-      <input type="password" id="stockPassword" placeholder="Contrase�a para gestionar stock">
+      <input type="password" id="stockPassword" placeholder="Contraseña para gestionar stock">
       <button onclick="verifyStockPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
       <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
     </div>
     <div id="stockManagementContent" style="display:none;">
       <div class="stock-search-container">
-        <input type="text" id="stockSearch" placeholder="🔍 Buscar c�digo..." inputmode="numeric">
+        <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." inputmode="numeric">
       </div>
       <div id="stockItemsContainer"></div>
-      <div class="modal-buttons" style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
-        <button onclick="reordenarGaleria()" style="background:#FF9800; color:white; padding:12px 20px; border:none; border-radius:10px; cursor:pointer; font-weight:700;">🔄 Reordenar</button>
-        <button onclick="saveAllStock()" style="background:#4CAF50; color:white; padding:12px 20px; border:none; border-radius:10px; cursor:pointer; font-weight:700;">💾 Guardar Todos</button>
+      <div class="modal-buttons" style="margin-top:20px;">
+        <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
       </div>
     </div>
   </div>
@@ -1001,14 +1000,14 @@ body { padding-top: 80px; }
     <div id="filtrosCarritoSeccion" style="display: none;">
         <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
             <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                <h4 style="margin:0;">🔍 Filtros de an�lisis</h4>
+                <h4 style="margin:0;">🔍 Filtros de análisis</h4>
                 <button onclick="limpiarFiltrosCarrito()" style="background:#666; color:white; border:none; border-radius:20px; padding:5px 15px; cursor:pointer;">🗑️ Limpiar filtros</button>
             </div>
             
             <div style="display: flex; flex-wrap: wrap; gap: 12px;">
                 <div style="flex: 1; min-width: 150px;">
                     <label style="font-size:0.8rem;">🔎 Buscar producto:</label>
-                    <input type="text" id="filtroTexto" placeholder="C�digo completo (ej: 100-38)" value="" 
+                    <input type="text" id="filtroTexto" placeholder="Código completo (ej: 100-38)" value="" 
                            style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" 
                            inputmode="numeric">
                 </div>
@@ -1038,12 +1037,12 @@ body { padding-top: 80px; }
     </div>
     <div id="totalesCarritoSeccion" style="display: none;"></div>
     <div id="exportPasswordPrompt" class="password-input">
-      <input type="password" id="exportPassword" placeholder="Contrase�a">
+      <input type="password" id="exportPassword" placeholder="Contraseña">
       <button onclick="verifyAndExport()" style="background:#2196F3; color:white;">Confirmar</button>
       <button onclick="hideExportPrompt()" style="background:#f44336;">Cancelar</button>
     </div>
     <div id="clearPasswordPrompt" class="password-input">
-      <input type="password" id="clearPassword" placeholder="Contrase�a">
+      <input type="password" id="clearPassword" placeholder="Contraseña">
       <button onclick="verifyClearPasswordAndShowDate()" style="background:#2196F3; color:white;">Confirmar</button>
       <button onclick="hideClearPrompt()" style="background:#f44336;">Cancelar</button>
     </div>
@@ -1053,18 +1052,18 @@ body { padding-top: 80px; }
 <div id="contadoresModal" class="contadores-modal">
   <div class="modal-content">
     <button class="close" onclick="closeContadoresModal()">&times;</button>
-    <h3>📊 Contadores de M�quinas - C�digo 000-11</h3>
+    <h3>📊 Contadores de Máquinas - Código 000-11</h3>
     
     <div class="contadores-form">
       <div class="contadores-field">
-        <label>🖥️ Seleccionar M�quina:</label>
+        <label>🖥️ Seleccionar Máquina:</label>
         <select id="maquinaSelect">
           <option value="">-- Seleccionar --</option>
         </select>
       </div>
       
       <div class="contadores-field">
-        <label>📅 Fecha de Anotaci�n:</label>
+        <label>📅 Fecha de Anotación:</label>
         <input type="date" id="fechaContador" value="">
       </div>
       
@@ -1099,7 +1098,7 @@ body { padding-top: 80px; }
 <div id="fechaModal" class="fecha-modal">
   <div class="fecha-modal-content">
     <h4 id="fechaModalTitulo">📅 Seleccionar fecha para historial</h4>
-    <p id="fechaModalDescripcion" style="text-align:center; color:#666;">¿Qu� fecha quieres asignar a este registro? Si ya existe un cierre con esa fecha, se agregar�n a �l.</p>
+    <p id="fechaModalDescripcion" style="text-align:center; color:#666;">¿Qué fecha quieres asignar a este registro? Si ya existe un cierre con esa fecha, se agregarán a él.</p>
     <input type="date" id="fechaHistorialInput">
     <div class="fecha-modal-buttons">
       <button id="fechaModalConfirmar" style="background:#4CAF50; color:white;" onclick="confirmarAccionFecha()">✅ Confirmar</button>
@@ -1113,7 +1112,7 @@ body { padding-top: 80px; }
     <button class="close" onclick="closeHistorialModal()">&times;</button>
     <h3>📜 Historial de Ventas - Los Laureles</h3>
     <div id="historialPasswordPrompt" class="password-input" style="display:block;">
-      <input type="password" id="historialPassword" placeholder="Contrase�a">
+      <input type="password" id="historialPassword" placeholder="Contraseña">
       <button onclick="verifyHistorialPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
       <button onclick="closeHistorialModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
     </div>
@@ -1188,13 +1187,13 @@ body { padding-top: 80px; }
     fechaHasta: ''
   };
 
-  // ========== VARIABLES PARA DETECTAR SCROLL EN T�CTIL ==========
+  // ========== VARIABLES PARA DETECTAR SCROLL EN TÁCTIL ==========
   let touchStartX = 0;
   let touchStartY = 0;
   let touchEndX = 0;
   let touchEndY = 0;
 
-  // ========== FUNCI�N PARA ASIGNAR EVENTOS A LOS PRODUCTOS (CORREGIDA PARA iOS) ==========
+  // ========== FUNCIÓN PARA ASIGNAR EVENTOS A LOS PRODUCTOS (CORREGIDA PARA iOS) ==========
 
   function handleProductClick(e) {
     if (e) e.preventDefault();
@@ -1296,7 +1295,7 @@ body { padding-top: 80px; }
       
       const movimientosProductInfo = document.getElementById('movimientosProductInfo');
       if (movimientosProductInfo) {
-        movimientosProductInfo.innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (si es M�quina, resta) | ➖ Quitar: resta del stock (si es M�quina, suma)</small>`;
+        movimientosProductInfo.innerHTML = `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (si es Máquina, resta) | ➖ Quitar: resta del stock (si es Máquina, suma)</small>`;
       }
       
       const unidadesInput = document.getElementById('unidadesInput');
@@ -1443,7 +1442,7 @@ body { padding-top: 80px; }
       <span>Producto</span>
       <span>🎯 Pts</span>
       <span>💰 Gs.</span>
-      <span>💳 M�todo</span>
+      <span>💳 Método</span>
       <span>🔄 Mov</span>
       <span>🎴 Fichas</span>
       <span>📅 Fecha/Hora</span>
@@ -1531,7 +1530,7 @@ body { padding-top: 80px; }
   }
 
   function exportToExcel() {
-    if (cart.length === 0) { alert('Carrito vac�o'); return; }
+    if (cart.length === 0) { alert('Carrito vacío'); return; }
     
     let totalEfectivo = 0;
     let totalPOS = 0;
@@ -1557,7 +1556,7 @@ body { padding-top: 80px; }
       ['ASTROLAND - Los Laureles'], 
       ['RESUMEN DE VENTAS'], 
       [],
-      ['Producto', 'Puntos', 'Dinero (Gs.)', 'M�todo de Pago', 'Movimientos', 'Fichas Consumidas', 'Fichas Regaladas', 'Fichas Vendidas', 'Fecha', 'Hora', 'Cantidad'],
+      ['Producto', 'Puntos', 'Dinero (Gs.)', 'Método de Pago', 'Movimientos', 'Fichas Consumidas', 'Fichas Regaladas', 'Fichas Vendidas', 'Fecha', 'Hora', 'Cantidad'],
       ...cart.map(i => {
         let metodoPago = '-';
         if (i.metodoPago === 'efectivo') metodoPago = 'EFECTIVO';
@@ -1731,8 +1730,8 @@ body { padding-top: 80px; }
       `📦 ${qty} x ${currentProduct.name}\n` +
       `💰 Total a pagar: Gs. ${money.toLocaleString()}\n` +
       `🎯 Puntos a usar: ${points}\n\n` +
-      `¿Cu�nto deseas pagar en EFECTIVO?\n` +
-      `(El resto se pagar� con POS)`,
+      `¿Cuánto deseas pagar en EFECTIVO?\n` +
+      `(El resto se pagará con POS)`,
       ''
     );
     
@@ -1742,7 +1741,7 @@ body { padding-top: 80px; }
     const posNum = money - efectivoNum;
     
     if (efectivoNum < 0 || posNum < 0) {
-      alert('❌ Montos inv�lidos');
+      alert('❌ Montos inválidos');
       return;
     }
     
@@ -1752,7 +1751,7 @@ body { padding-top: 80px; }
     }
     
     if (efectivoNum === 0 || posNum === 0) {
-      alert('❌ Para pago mixto, ambos montos deben ser mayores a 0.\n\nUsa EFECTIVO o POS para pagar todo con un solo m�todo.');
+      alert('❌ Para pago mixto, ambos montos deben ser mayores a 0.\n\nUsa EFECTIVO o POS para pagar todo con un solo método.');
       return;
     }
     
@@ -1871,7 +1870,7 @@ body { padding-top: 80px; }
         resetSearch();
         closeModal();
         
-        let mensaje = `✅ OPERACI�N EXITOSA!\n\n📦 ${qty} x ${product.name}\n💰 Total: Gs. ${totalPrice.toLocaleString()}`;
+        let mensaje = `✅ OPERACIÓN EXITOSA!\n\n📦 ${qty} x ${product.name}\n💰 Total: Gs. ${totalPrice.toLocaleString()}`;
         
         if (metodo === 'canje') {
           mensaje += `\n🎯 CANJEADO por ${points} puntos`;
@@ -1883,12 +1882,12 @@ body { padding-top: 80px; }
         
         alert(mensaje);
       } else {
-        alert(`❌ ${resultado.error || 'Error al procesar la operaci�n'}`);
+        alert(`❌ ${resultado.error || 'Error al procesar la operación'}`);
       }
     });
   }
 
-  // ========== FUNCIONES DE ACTUALIZACI�N ==========
+  // ========== FUNCIONES DE ACTUALIZACIÓN ==========
 
   function updateModalTotalsBasedOnQuantity() {
     if (!currentProduct) return;
@@ -1956,15 +1955,15 @@ body { padding-top: 80px; }
     
     try {
       if (!fechaSeleccionada || fechaSeleccionada === '') {
-        console.error("❌ Fecha inv�lida");
-        alert("❌ Error: Fecha inv�lida");
+        console.error("❌ Fecha inválida");
+        alert("❌ Error: Fecha inválida");
         return false;
       }
       
       const fechaObj = new Date(fechaSeleccionada);
       if (isNaN(fechaObj.getTime())) {
-        console.error("❌ Fecha inv�lida:", fechaSeleccionada);
-        alert("❌ Error: Formato de fecha inv�lido");
+        console.error("❌ Fecha inválida:", fechaSeleccionada);
+        alert("❌ Error: Formato de fecha inválido");
         return false;
       }
       
@@ -2068,12 +2067,12 @@ body { padding-top: 80px; }
       
     } catch(e) { 
       console.error("❌ Error al guardar en historial:", e);
-      alert("❌ Error cr�tico al guardar en historial. Las ventas NO se eliminaron.");
+      alert("❌ Error crítico al guardar en historial. Las ventas NO se eliminaron.");
       return false;
     }
   }
 
-  // ========== FUNCIONES DE VENTA AT�MICA ==========
+  // ========== FUNCIONES DE VENTA ATÓMICA ==========
 
   async function modificarStockAtomico(stockKey, cantidad, minimo = 0) {
     const stockRefKey = ref(database, `stock/${stockKey}`);
@@ -2101,14 +2100,14 @@ body { padding-top: 80px; }
       } else {
         return { 
           success: false, 
-          error: 'Transacci�n abortada: stock insuficiente o conflicto'
+          error: 'Transacción abortada: stock insuficiente o conflicto'
         };
       }
     } catch (error) {
-      console.error('Error en transacci�n de stock:', error);
+      console.error('Error en transacción de stock:', error);
       return { 
         success: false, 
-        error: `Error de conexi�n: ${error.message}` 
+        error: `Error de conexión: ${error.message}` 
       };
     }
   }
@@ -2140,14 +2139,14 @@ body { padding-top: 80px; }
         ocultarMensajeEnProceso();
         return { 
           success: false, 
-          error: 'Stock insuficiente o conflicto en la transacci�n'
+          error: 'Stock insuficiente o conflicto en la transacción'
         };
       }
       
       const resultadoCarrito = await agregarAlCarritoAtomico(cartData);
       
       if (!resultadoCarrito.success) {
-        console.error('Carrito fall�, revirtiendo stock...');
+        console.error('Carrito falló, revirtiendo stock...');
         await modificarStockAtomico(stockKey, cantidadRestar, 0);
         ocultarMensajeEnProceso();
         return { 
@@ -2243,11 +2242,11 @@ body { padding-top: 80px; }
     if (document.getElementById('exportPassword').value === PASSWORD_GENERAL) { 
       exportToExcel(); 
       hideExportPrompt(); 
-    } else alert('Contrase�a incorrecta'); 
+    } else alert('Contraseña incorrecta'); 
   };
 
   window.mostrarPanelFiltrado = function() {
-    const pwd = prompt('🔐 Ingrese la contrase�a para mostrar los filtros y totales:');
+    const pwd = prompt('🔐 Ingrese la contraseña para mostrar los filtros y totales:');
     if (pwd === PASSWORD_GENERAL) {
       const seccionFiltros = document.getElementById('filtrosCarritoSeccion');
       const seccionTotales = document.getElementById('totalesCarritoSeccion');
@@ -2262,7 +2261,7 @@ body { padding-top: 80px; }
         limpiarFiltrosCarrito();
       }
     } else {
-      alert('Contrase�a incorrecta');
+      alert('Contraseña incorrecta');
     }
   };
 
@@ -2288,8 +2287,8 @@ body { padding-top: 80px; }
   };
 
   window.showDeletePrompt = function(firebaseKey) {
-    const pwd = prompt('🔐 Contrase�a para eliminar:');
-    if (pwd !== PASSWORD_GENERAL) { alert('Contrase�a incorrecta'); return; }
+    const pwd = prompt('🔐 Contraseña para eliminar:');
+    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
     const item = cart.find(i => i.firebaseKey === firebaseKey);
     if (!item) { alert('Item no encontrado'); return; }
     const consumo = item.fichaConsumption || 0;
@@ -2322,7 +2321,7 @@ body { padding-top: 80px; }
     remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
   };
 
-  // ========== FUNCIONES DE B�SQUEDA Y FILTRO ==========
+  // ========== FUNCIONES DE BÚSQUEDA Y FILTRO ==========
 
   let timeoutBusqueda = null;
 
@@ -2369,7 +2368,7 @@ body { padding-top: 80px; }
       }
     });
     
-    nuevoInput.placeholder = "Ej: 005 (escribe 3 d�gitos para buscar)";
+    nuevoInput.placeholder = "Ej: 005 (escribe 3 dígitos para buscar)";
   }
 
   function filterProducts(q) {
@@ -2465,7 +2464,7 @@ body { padding-top: 80px; }
       document.getElementById('stockManagementContent').style.display = 'block';
       loadAllStockItems();
     } else {
-      alert('Contrase�a incorrecta');
+      alert('Contraseña incorrecta');
     }
   };
 
@@ -2474,242 +2473,6 @@ body { padding-top: 80px; }
     return names[code] || code + ' puntos';
   }
 
-  // ========== MEJORAS DE STOCK (CAMBIO DE C�DIGO Y PRECIO) ==========
-  
-  let imagenMap = {};
-
-  function reordenarGaleria() {
-    document.querySelectorAll('.categoria').forEach(cat => {
-      const items = Array.from(cat.querySelectorAll('.imagen-item'));
-      const galeria = cat.querySelector('.galeria');
-      items.sort((a,b) => parseInt(a.getAttribute('data-code').replace('-','')) - parseInt(b.getAttribute('data-code').replace('-','')));
-      items.forEach(item => galeria.appendChild(item));
-    });
-    updateAllStockIndicators();
-  }
-  window.reordenarGaleria = reordenarGaleria;
-
-  function actualizarImagenProducto(itemEl, codigo) {
-    const nombreImagen = imagenMap[codigo] || (codigo + '.jpg');
-    const img = itemEl.querySelector('img');
-    if (img) {
-      img.src = `../imagenes/${nombreImagen}?t=${Date.now()}`;
-      img.alt = codigo;
-    } else {
-      const placeholder = itemEl.querySelector('.img-placeholder');
-      if (placeholder) {
-        const newImg = document.createElement('img');
-        newImg.src = `../imagenes/${nombreImagen}?t=${Date.now()}`;
-        newImg.alt = codigo;
-        newImg.loading = 'lazy';
-        newImg.decoding = 'async';
-        newImg.onerror = function() {
-          this.style.display = 'none';
-          const ph = document.createElement('div');
-          ph.className = 'img-placeholder';
-          ph.style.cssText = 'width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-size:.9rem;font-weight:700;border-radius:8px;border:1px solid #e0e0e0;';
-          ph.textContent = codigo.replace('-', ' ');
-          this.parentNode.replaceChild(ph, this);
-        };
-        placeholder.parentNode.replaceChild(newImg, placeholder);
-      }
-    }
-  }
-
-  window.cambiarCodigoStock = async function(input, codigoActual) {
-    const nuevoCodigo = input.value.trim();
-    if (!nuevoCodigo) { input.value = codigoActual; alert('❌ El c�digo no puede estar vac�o'); return; }
-    const pwd = prompt('🔐 Ingrese la contrase�a para modificar c�digos:');
-    if (pwd !== PASSWORD_SPECIAL_CODES) { input.value = codigoActual; alert('❌ Contrase�a incorrecta'); return; }
-    if (!/^\d{3}-\d{2}$/.test(nuevoCodigo)) { input.value = codigoActual; alert('❌ Formato inv�lido. Usa: 000-00'); return; }
-    if (nuevoCodigo === codigoActual) return;
-    
-    const [nuevaCategoria, nuevoNumero] = nuevoCodigo.split('-');
-    const [categoriaActual, numeroActual] = codigoActual.split('-');
-    
-    const stockSnap = await get(stockRef);
-    const stocksActuales = stockSnap.exists() ? stockSnap.val() : {};
-    const preciosSnap = await get(ref(database, 'precios'));
-    const preciosActuales = preciosSnap.exists() ? preciosSnap.val() : {};
-    
-    const productosOrigen = obtenerProductosPorCategoria(categoriaActual);
-    const productosDestino = obtenerProductosPorCategoria(nuevaCategoria);
-    
-    const mapStock = {}, mapPrecio = {};
-    for (const code of [...productosOrigen, ...productosDestino, codigoActual]) {
-      mapStock[code] = stocksActuales[code] ?? STOCK_INICIAL;
-      mapPrecio[code] = preciosActuales[code] ?? obtenerPrecio(code);
-    }
-    const itemElement = input.closest('.stock-item');
-    mapPrecio[codigoActual] = parseInt(itemElement.getAttribute('data-price')) || 0;
-    
-    mostrarMensajeEnProceso('🔄 Reordenando productos...');
-    
-    try {
-      const nuevosStocks = {}, nuevosPrecios = {};
-      let productosReubicados = {};
-      const nuevoImagenMap = {};
-      
-      if (nuevaCategoria === categoriaActual) {
-        const numActualInt = parseInt(numeroActual), nuevoNumInt = parseInt(nuevoNumero);
-        if (numActualInt === nuevoNumInt) { ocultarMensajeEnProceso(); return; }
-        const todos = obtenerProductosPorCategoria(categoriaActual).sort((a,b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
-        const idx = todos.indexOf(codigoActual);
-        if (idx !== -1) todos.splice(idx, 1);
-        todos.splice(nuevoNumInt, 0, codigoActual);
-        todos.forEach((code, i) => {
-          const nc = categoriaActual + '-' + String(i).padStart(2,'0');
-          nuevosStocks[nc] = mapStock[code] ?? STOCK_INICIAL;
-          nuevosPrecios[nc] = mapPrecio[code] ?? 0;
-          productosReubicados[code] = nc;
-          nuevoImagenMap[nc] = imagenMap[code] || (code + '.jpg');
-        });
-      } else {
-        const numOrigenInt = parseInt(numeroActual), numDestinoInt = parseInt(nuevoNumero);
-        const origenSinMovido = productosOrigen.filter(p => p !== codigoActual).sort((a,b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
-        origenSinMovido.forEach((code, i) => {
-          const nc = categoriaActual + '-' + String(i).padStart(2,'0');
-          nuevosStocks[nc] = mapStock[code] ?? STOCK_INICIAL;
-          nuevosPrecios[nc] = mapPrecio[code] ?? 0;
-          productosReubicados[code] = nc;
-          nuevoImagenMap[nc] = imagenMap[code] || (code + '.jpg');
-        });
-        const destinoOrdenados = productosDestino.sort((a,b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
-        let insertado = false;
-        for (let i = 0; i < destinoOrdenados.length + 1; i++) {
-          if (i === numDestinoInt && !insertado) {
-            const nc = nuevaCategoria + '-' + String(i).padStart(2,'0');
-            nuevosStocks[nc] = mapStock[codigoActual] ?? STOCK_INICIAL;
-            nuevosPrecios[nc] = mapPrecio[codigoActual] ?? 0;
-            productosReubicados[codigoActual] = nc;
-            nuevoImagenMap[nc] = imagenMap[codigoActual] || (codigoActual + '.jpg');
-            insertado = true;
-          } else {
-            const idxOrig = insertado ? i - 1 : i;
-            if (idxOrig < destinoOrdenados.length) {
-              const code = destinoOrdenados[idxOrig];
-              const nc = nuevaCategoria + '-' + String(i).padStart(2,'0');
-              nuevosStocks[nc] = mapStock[code] ?? STOCK_INICIAL;
-              nuevosPrecios[nc] = mapPrecio[code] ?? 0;
-              productosReubicados[code] = nc;
-              nuevoImagenMap[nc] = imagenMap[code] || (code + '.jpg');
-            }
-          }
-        }
-        if (!insertado) {
-          const nc = nuevaCategoria + '-' + String(destinoOrdenados.length).padStart(2,'0');
-          nuevosStocks[nc] = mapStock[codigoActual] ?? STOCK_INICIAL;
-          nuevosPrecios[nc] = mapPrecio[codigoActual] ?? 0;
-          productosReubicados[codigoActual] = nc;
-          nuevoImagenMap[nc] = imagenMap[codigoActual] || (codigoActual + '.jpg');
-        }
-      }
-      
-      const updates = {}, precioUpdates = {};
-      for (const code of Object.keys(mapStock)) updates[`stock/${code}`] = null;
-      for (const [code, val] of Object.entries(nuevosStocks)) {
-        if (code && code !== 'undefined' && code !== 'null') updates[`stock/${code}`] = val;
-      }
-      for (const [code, val] of Object.entries(nuevosPrecios)) {
-        if (code && code !== 'undefined' && code !== 'null') precioUpdates[`precios/${code}`] = val;
-      }
-      await update(ref(database), updates);
-      await update(ref(database), precioUpdates);
-      
-      imagenMap = nuevoImagenMap;
-      
-      for (const [codigoViejo, codigoNuevo] of Object.entries(productosReubicados)) {
-        const itemEl = document.querySelector(`.imagen-item[data-code="${codigoViejo}"]`);
-        if (itemEl) {
-          itemEl.setAttribute('data-code', codigoNuevo);
-          actualizarImagenProducto(itemEl, codigoNuevo);
-          
-          const p = itemEl.querySelector('p');
-          if (p) {
-            const precio = nuevosPrecios[codigoNuevo] || 0;
-            p.textContent = codigoNuevo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '');
-          }
-          const si = itemEl.querySelector('.stock-indicator');
-          if (si) si.textContent = nuevosStocks[codigoNuevo] ?? STOCK_INICIAL;
-        }
-        
-        const stockItem = document.querySelector(`.stock-item[data-code="${codigoViejo}"]`);
-        if (stockItem) {
-          stockItem.setAttribute('data-code', codigoNuevo);
-          actualizarImagenProducto(stockItem, codigoNuevo);
-          
-          const inputCode = stockItem.querySelector('input[type="text"]');
-          if (inputCode) {
-            inputCode.value = codigoNuevo;
-            inputCode.setAttribute('onchange', `cambiarCodigoStock(this, '${codigoNuevo}')`);
-          }
-          const inputStock = stockItem.querySelector(`#stock-${codigoViejo}`);
-          if (inputStock) {
-            inputStock.id = `stock-${codigoNuevo}`;
-            inputStock.value = nuevosStocks[codigoNuevo] ?? STOCK_INICIAL;
-            inputStock.setAttribute('onchange', `guardarStockIndividual('${codigoNuevo}', this.value)`);
-          }
-          const p = stockItem.querySelector('p');
-          if (p) {
-            const precio = nuevosPrecios[codigoNuevo] || 0;
-            p.textContent = codigoNuevo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '');
-          }
-        }
-      }
-      
-      ocultarMensajeEnProceso();
-      await loadInitialStock();
-      loadAllStockItems();
-      reordenarGaleria();
-      updateAllStockIndicators();
-      alert(`✅ PRODUCTO REUBICADO!\n📦 ${codigoActual} → ${nuevoCodigo}\n✅ Cada producto conserva su imagen original.`);
-    } catch(error) {
-      ocultarMensajeEnProceso();
-      console.error('Error:', error);
-      alert('❌ Error al reordenar. Recarga la p�gina.');
-      input.value = codigoActual;
-    }
-  };
-
-  function obtenerProductosPorCategoria(categoria) {
-    const productos = [];
-    document.querySelectorAll('.imagen-item').forEach(item => {
-      const code = item.getAttribute('data-code');
-      if (code && code.startsWith(`${categoria}-`)) productos.push(code);
-    });
-    return productos;
-  }
-
-  function obtenerPrecio(code) {
-    const item = document.querySelector(`.imagen-item[data-code="${code}"]`);
-    return item ? (parseInt(item.getAttribute('data-price')) || 0) : 0;
-  }
-
-  window.cambiarPrecioStock = function(input, codigo) {
-    const nuevoPrecio = parseInt(input.value);
-    if (isNaN(nuevoPrecio) || nuevoPrecio < 0) { input.value = input.defaultValue || 0; alert('❌ Precio inv�lido'); return; }
-    const pwd = prompt('🔐 Contrase�a para modificar precios:');
-    if (pwd !== PASSWORD_SPECIAL_CODES) { const item = input.closest('.stock-item'); input.value = item.getAttribute('data-price') || 0; alert('❌ Contrase�a incorrecta'); return; }
-    const item = input.closest('.stock-item');
-    const precioActual = parseInt(item.getAttribute('data-price')) || 0;
-    if (nuevoPrecio === precioActual) return;
-    if (!confirm(`�Cambiar precio de ${codigo} de Gs. ${precioActual.toLocaleString()} a Gs. ${nuevoPrecio.toLocaleString()}?`)) { input.value = precioActual; return; }
-    set(ref(database, 'precios/' + codigo), nuevoPrecio).then(() => {
-      item.setAttribute('data-price', nuevoPrecio);
-      const p = item.querySelector('p');
-      if (p) p.textContent = codigo + (nuevoPrecio > 0 ? ` - G.${nuevoPrecio.toLocaleString('es-PY')}` : '');
-      const catItem = document.querySelector(`.imagen-item[data-code="${codigo}"]`);
-      if (catItem) {
-        catItem.setAttribute('data-price', nuevoPrecio);
-        const cp = catItem.querySelector('p');
-        if (cp) cp.textContent = codigo + (nuevoPrecio > 0 ? ` - G.${nuevoPrecio.toLocaleString('es-PY')}` : '');
-      }
-      alert(`✅ Precio actualizado: ${codigo} → Gs. ${nuevoPrecio.toLocaleString()}`);
-    }).catch(() => { alert('❌ Error al guardar el precio'); input.value = precioActual; });
-  };
-
-  // ========== FUNCIONES DE STOCK (CONTINUACI�N) ==========
-
   function loadAllStockItems() {
     const container = document.getElementById('stockItemsContainer');
     const categories = {};
@@ -2717,14 +2480,13 @@ body { padding-top: 80px; }
       const cat = item.getAttribute('data-category');
       if (!categories[cat]) categories[cat] = [];
       const code = item.getAttribute('data-code');
-      const price = item.getAttribute('data-price');
       const name = item.querySelector('p')?.textContent || code;
       const img = item.querySelector('img')?.outerHTML || item.querySelector('.img-placeholder')?.outerHTML || '';
       let display = getProductStock(code);
       const isFichaBase = code === '000-00';
       const isFichaProduct = FICHA_CONSUMPTION[code] && !NON_FICHA_CODES.includes(code) && code !== '000-00';
       const isIndependent = NON_FICHA_CODES.includes(code);
-      categories[cat].push({ code, price, name, img, currentStock: display, isFichaBase, isFichaProduct, isIndependent });
+      categories[cat].push({ code, name, img, currentStock: display, isFichaBase, isFichaProduct, isIndependent });
     });
     const sortedCats = Object.keys(categories).sort((a,b) => parseInt(a)-parseInt(b));
     let html = '';
@@ -2733,26 +2495,16 @@ body { padding-top: 80px; }
       if (cat === '000') {
         const fichaStock = stock['000-00'] ?? STOCK_INICIAL;
         html += `<p style="margin:10px 0; padding:8px; background:#e3f2fd; border-radius:4px;"><strong>🎴 Stock de fichas:</strong> ${fichaStock} fichas disponibles<br><small>000-01(16), 000-02(36), 000-05(1), 000-06(7)</small></p>`;
-        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 C�digos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
+        html += `<p style="margin:5px 0; padding:5px; background:#fff3e0; border-radius:4px;"><strong>📦 Códigos independientes:</strong> 000-07, 000-08, 000-09, 000-11 (stock propio)</p>`;
       }
-      html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));">`;
-      const sortedProds = categories[cat].sort((a,b) => parseInt(a.code.split('-')[1]) - parseInt(b.code.split('-')[1]));
+      html += `<div class="stock-gallery" style="display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));">`;
+      const sortedProds = categories[cat].sort((a,b) => a.code.localeCompare(b.code));
       sortedProds.forEach(p => {
-        html += `<div class="stock-item" data-code="${p.code}" data-price="${p.price}" style="border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:#fff;">${p.img}
-          <p style="font-weight:700;margin:5px 0;font-size:.8rem;">${p.name}</p>
-          <div style="display:flex;gap:4px;margin:4px 0;align-items:center;flex-wrap:wrap;">
-            <label style="font-size:.65rem;font-weight:700;">C�digo:</label>
-            <input type="text" value="${p.code}" style="width:75px;padding:3px;font-size:.7rem;border:1px solid #ccc;border-radius:4px;text-align:center;" onchange="cambiarCodigoStock(this, '${p.code}')">
-          </div>
-          <div style="display:flex;gap:4px;margin:4px 0;align-items:center;flex-wrap:wrap;">
-            <label style="font-size:.65rem;font-weight:700;">Precio:</label>
-            <input type="number" value="${p.price}" style="width:75px;padding:3px;font-size:.7rem;border:1px solid #ccc;border-radius:4px;text-align:center;" onchange="cambiarPrecioStock(this, '${p.code}')">
-          </div>
-          <div class="stock-control" style="margin-top:4px;">`;
+        html += `<div class="stock-item" data-code="${p.code}">${p.img}<p>${p.name}</p><div class="stock-control">`;
         if (p.isFichaBase || p.isIndependent || (!p.isFichaProduct && !NON_FICHA_CODES.includes(p.code))) {
-          html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)" style="width:55px;padding:3px;font-size:.7rem;text-align:center;border:1px solid #ccc;border-radius:4px;"><span style="font-size:.6rem;background:#999;color:#fff;padding:2px 5px;border-radius:4px;">Auto</span>`;
+          html += `<input type="number" id="stock-${p.code}" value="${p.currentStock}" min="0" step="1" onfocus="this.select()" onchange="guardarStockIndividual('${p.code}', this.value)"><span>Auto</span>`;
         } else {
-          html += `<input type="number" value="${p.currentStock}" readonly disabled style="width:55px;padding:3px;font-size:.7rem;text-align:center;border:1px solid #ccc;border-radius:4px;background:#f0f0f0;"><span style="font-size:.6rem;background:#999;color:#fff;padding:2px 5px;border-radius:4px;">🎴</span>`;
+          html += `<input type="number" value="${p.currentStock}" readonly disabled><span>🎴 Stock de fichas</span>`;
         }
         html += `</div></div>`;
       });
@@ -2763,9 +2515,9 @@ body { padding-top: 80px; }
 
   window.guardarStockIndividual = function(code, valor) {
     if (code === '000-00' || code === '000-07') {
-      const passwordConfirm = prompt('🔐 Se requiere contrase�a para modificar el c�digo ' + code + ':');
+      const passwordConfirm = prompt('🔐 Se requiere contraseña para modificar el código ' + code + ':');
       if (passwordConfirm !== PASSWORD_SPECIAL_CODES) {
-        alert('❌ Contrase�a incorrecta. No se puede modificar el stock del c�digo ' + code);
+        alert('❌ Contraseña incorrecta. No se puede modificar el stock del código ' + code);
         const inp = document.getElementById(`stock-${code}`);
         if (inp) {
           inp.value = stock[code] ?? STOCK_INICIAL;
@@ -2803,7 +2555,7 @@ body { padding-top: 80px; }
     });
   };
 
-  window.saveAllStock = () => alert('✅ Los cambios se guardan autom�ticamente al editar cada valor');
+  window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente al editar cada valor');
 
   // ========== FUNCIONES DE CONTADORES ==========
 
@@ -2829,7 +2581,7 @@ body { padding-top: 80px; }
     select.innerHTML = '<option value="">-- Seleccionar --</option>';
     for (let i = 1; i <= 20; i++) {
       const num = i.toString().padStart(2, '0');
-      select.innerHTML += `<option value="maq${num}">🖥️ M�quina ${num}</option>`;
+      select.innerHTML += `<option value="maq${num}">🖥️ Máquina ${num}</option>`;
     }
   }
 
@@ -2841,7 +2593,7 @@ body { padding-top: 80px; }
     
     const maquina = document.getElementById('maquinaSelect').value;
     if (!maquina) {
-      alert('Seleccione una m�quina primero');
+      alert('Seleccione una máquina primero');
       return;
     }
     
@@ -2882,7 +2634,7 @@ body { padding-top: 80px; }
     
     const maquina = document.getElementById('maquinaSelect').value;
     if (!maquina) {
-      alert('Seleccione una m�quina primero');
+      alert('Seleccione una máquina primero');
       return;
     }
     
@@ -2940,7 +2692,7 @@ body { padding-top: 80px; }
     const destino = document.getElementById('movimientoDestino').value;
     
     if (cantidad <= 0) { 
-      alert('Cantidad inv�lida'); 
+      alert('Cantidad inválida'); 
       window.agregarUnidadesLock = false;
       return; 
     }
@@ -2960,7 +2712,7 @@ body { padding-top: 80px; }
           const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
           if (!resultado.success) {
             operacionExitosa = false;
-            alert('❌ Error en la transacci�n de stock');
+            alert('❌ Error en la transacción de stock');
           } else {
             mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK (equivale a ${consumo * cantidad} fichas)`;
           }
@@ -2968,7 +2720,7 @@ body { padding-top: 80px; }
           const resultado = await modificarStockAtomico(code, cantidad, 0);
           if (!resultado.success) {
             operacionExitosa = false;
-            alert('❌ Error en la transacci�n de stock');
+            alert('❌ Error en la transacción de stock');
           } else {
             mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
           }
@@ -2980,7 +2732,7 @@ body { padding-top: 80px; }
             operacionExitosa = false;
             alert(`No hay suficientes fichas en stock para ${destino}`);
           } else {
-            mensaje = `✅ M�quina ${destino.toUpperCase()}: consumi� ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
+            mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
           }
         } else {
           const resultado = await modificarStockAtomico(code, -cantidad, 0);
@@ -2988,7 +2740,7 @@ body { padding-top: 80px; }
             operacionExitosa = false;
             alert(`No hay suficiente stock para ${destino}`);
           } else {
-            mensaje = `✅ M�quina ${destino.toUpperCase()}: consumi� ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
+            mensaje = `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
           }
         }
       }
@@ -3051,7 +2803,7 @@ body { padding-top: 80px; }
     const destino = document.getElementById('movimientoDestino').value;
     
     if (cantidad <= 0) { 
-      alert('Cantidad inv�lida'); 
+      alert('Cantidad inválida'); 
       window.quitarUnidadesLock = false;
       return; 
     }
@@ -3089,17 +2841,17 @@ body { padding-top: 80px; }
           const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
           if (!resultado.success) {
             operacionExitosa = false;
-            alert('❌ Error en la transacci�n');
+            alert('❌ Error en la transacción');
           } else {
-            mensaje = `✅ M�quina ${destino.toUpperCase()}: devolvi� ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
+            mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
           }
         } else {
           const resultado = await modificarStockAtomico(code, cantidad, 0);
           if (!resultado.success) {
             operacionExitosa = false;
-            alert('❌ Error en la transacci�n');
+            alert('❌ Error en la transacción');
           } else {
-            mensaje = `✅ M�quina ${destino.toUpperCase()}: devolvi� ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
+            mensaje = `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
           }
         }
       }
@@ -3274,7 +3026,7 @@ body { padding-top: 80px; }
       document.getElementById('fechaDesde').value = hace30Dias.toISOString().split('T')[0];
       document.getElementById('fechaHasta').value = hoy.toISOString().split('T')[0];
       filtrarHistorial();
-    } else alert('Contrase�a incorrecta');
+    } else alert('Contraseña incorrecta');
   };
 
   function renderMovimientosPorMaquina(movimientos) {
@@ -3284,7 +3036,7 @@ body { padding-top: 80px; }
     
     let html = '<div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">';
     for (const [maquina, datos] of Object.entries(movimientos)) {
-      const nombreMaquina = maquina.toUpperCase().replace('MAQ', 'M�q. ');
+      const nombreMaquina = maquina.toUpperCase().replace('MAQ', 'Máq. ');
       html += `<span style="background:#e3f2fd; padding:3px 8px; border-radius:12px; font-size:0.7rem;">
         ${nombreMaquina}: +${datos.agregar || 0}/-${datos.quitar || 0}
       </span>`;
@@ -3311,7 +3063,7 @@ body { padding-top: 80px; }
     const totalVentas = filtrados.reduce((s, h) => s + (h.totalVentas || 0), 0);
     
     document.getElementById('historialStats').innerHTML = `
-      <strong>📊 Resumen del per�odo:</strong><br>
+      <strong>📊 Resumen del período:</strong><br>
       💰 Dinero total: Gs. ${totalDinero.toLocaleString()} | 
       🎯 Puntos: ${totalPuntos.toLocaleString()} | 
       🎴 Fichas Consumidas: ${totalFichas.toLocaleString()} | 
@@ -3328,7 +3080,7 @@ body { padding-top: 80px; }
           <th>🎯 Puntos</th>
           <th>🎴 Fichas</th>
           <th>🎁 Fichas Reg.</th>
-          <th>🖥️ M�quinas</th>
+          <th>🖥️ Máquinas</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -3358,7 +3110,7 @@ body { padding-top: 80px; }
     
     html += `</tbody>`;
 
-    if (filtrados.length === 0) html = '<p>No hay registros en este per�odo</p>';
+    if (filtrados.length === 0) html = '<p>No hay registros en este período</p>';
     document.getElementById('historialTabla').innerHTML = html;
   };
 
@@ -3370,7 +3122,7 @@ body { padding-top: 80px; }
     const hastaTime = new Date(hasta).setHours(23,59,59,999);
     const filtrados = historialVentas.filter(h => h.timestamp >= desdeTime && h.timestamp <= hastaTime);
     
-    const data = [['Fecha', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas', 'Movimientos por M�quina']];
+    const data = [['Fecha', 'Total Ventas', 'Dinero Total (Gs.)', 'Puntos Totales', 'Fichas Consumidas', 'Fichas Regaladas', 'Movimientos por Máquina']];
     filtrados.forEach(h => {
       const fechaMostrar = h.fechaEliminacion || new Date(h.timestamp).toLocaleDateString('es-PY');
       let maquinasStr = '';
@@ -3449,12 +3201,12 @@ body { padding-top: 80px; }
           let mensajeExtra = '';
           if (registros && registros.length > 0) {
             const registro = registros[0];
-            mensajeExtra = `\n📌 REGISTRO ACTUALIZADO (ya exist�a con esa fecha)\n📦 Total ventas acumuladas: ${registro.totalVentas}\n💰 Total dinero acumulado: Gs. ${(registro.totalDinero || 0).toLocaleString()}`;
+            mensajeExtra = `\n📌 REGISTRO ACTUALIZADO (ya existía con esa fecha)\n📦 Total ventas acumuladas: ${registro.totalVentas}\n💰 Total dinero acumulado: Gs. ${(registro.totalDinero || 0).toLocaleString()}`;
           } else {
             mensajeExtra = `\n📌 NUEVO REGISTRO creado para la fecha: ${fechaInput.split('-').reverse().join('/')}`;
           }
           
-          alert(`✅ �XITO! Se guardaron ${itemsSeleccionados.length} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total de esta operaci�n: Gs. ${itemsSeleccionados.reduce((s, v) => s + (v.money || 0), 0).toLocaleString()}${mensajeExtra}\n\n📌 Los items NO seleccionados permanecen en el carrito.`);
+          alert(`✅ ÉXITO! Se guardaron ${itemsSeleccionados.length} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total de esta operación: Gs. ${itemsSeleccionados.reduce((s, v) => s + (v.money || 0), 0).toLocaleString()}${mensajeExtra}\n\n📌 Los items NO seleccionados permanecen en el carrito.`);
           
           await loadInitialCart();
           await loadHistorial();
@@ -3472,7 +3224,7 @@ body { padding-top: 80px; }
         
       } else if (modoEdicionFecha === 'vaciar') {
         if (cart.length === 0) {
-          alert('⚠️ El carrito est� vac�o');
+          alert('⚠️ El carrito está vacío');
           closeFechaModal();
           return;
         }
@@ -3500,12 +3252,12 @@ body { padding-top: 80px; }
           let mensajeExtra = '';
           if (registros && registros.length > 0) {
             const registro = registros[0];
-            mensajeExtra = `\n📌 REGISTRO ACTUALIZADO (ya exist�a con esa fecha)\n📦 Total ventas acumuladas: ${registro.totalVentas}\n💰 Total dinero acumulado: Gs. ${(registro.totalDinero || 0).toLocaleString()}`;
+            mensajeExtra = `\n📌 REGISTRO ACTUALIZADO (ya existía con esa fecha)\n📦 Total ventas acumuladas: ${registro.totalVentas}\n💰 Total dinero acumulado: Gs. ${(registro.totalDinero || 0).toLocaleString()}`;
           } else {
             mensajeExtra = `\n📌 NUEVO REGISTRO creado para la fecha: ${fechaInput.split('-').reverse().join('/')}`;
           }
           
-          alert(`✅ �XITO! Se guardaron ${backupLocal.totalVentas} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${backupLocal.totalDinero.toLocaleString()}${mensajeExtra}`);
+          alert(`✅ ÉXITO! Se guardaron ${backupLocal.totalVentas} ventas en el historial con fecha: ${fechaInput.split('-').reverse().join('/')}\n💰 Total: Gs. ${backupLocal.totalDinero.toLocaleString()}${mensajeExtra}`);
           
           await loadInitialCart();
           await loadHistorial();
@@ -3516,7 +3268,7 @@ body { padding-top: 80px; }
             filtrarHistorial();
           }
         } else {
-          alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y est�n respaldadas localmente.');
+          alert('❌ Error al guardar en historial. Las ventas NO se eliminaron y están respaldadas localmente.');
         }
         
         modoEdicionFecha = null;
@@ -3551,11 +3303,11 @@ body { padding-top: 80px; }
   };
 
   window.eliminarRegistroHistorial = async function(firebaseKey) {
-    if (!confirm('�Est�s seguro de eliminar este registro del historial? Esta acci�n no se puede deshacer.')) return;
+    if (!confirm('¿Estás seguro de eliminar este registro del historial? Esta acción no se puede deshacer.')) return;
     
-    const pwd = prompt('🔐 Contrase�a para eliminar:');
+    const pwd = prompt('🔐 Contraseña para eliminar:');
     if (pwd !== PASSWORD_GENERAL) {
-      alert('Contrase�a incorrecta');
+      alert('Contraseña incorrecta');
       return;
     }
     
@@ -3582,13 +3334,13 @@ body { padding-top: 80px; }
       return;
     }
     
-    const confirmar = confirm(`📋 RESTAURAR VENTAS\n\n📅 Fecha a restaurar: ${registro.fechaEliminacion}\n📦 Items a restaurar: ${registro.totalVentas || 0}\n💰 Dinero: Gs. ${(registro.totalDinero || 0).toLocaleString()}\n🎯 Puntos: ${(registro.totalPuntos || 0).toLocaleString()}\n\n⚠️ NOTA:\n• Las ventas se AGREGAR�N al carrito actual\n• NO se modificar� el stock\n• Los items actuales NO se perder�n\n\n�Continuar?`);
+    const confirmar = confirm(`📋 RESTAURAR VENTAS\n\n📅 Fecha a restaurar: ${registro.fechaEliminacion}\n📦 Items a restaurar: ${registro.totalVentas || 0}\n💰 Dinero: Gs. ${(registro.totalDinero || 0).toLocaleString()}\n🎯 Puntos: ${(registro.totalPuntos || 0).toLocaleString()}\n\n⚠️ NOTA:\n• Las ventas se AGREGARÁN al carrito actual\n• NO se modificará el stock\n• Los items actuales NO se perderán\n\n¿Continuar?`);
     
     if (!confirmar) return;
     
-    const pwd = prompt('🔐 Contrase�a para restaurar:');
+    const pwd = prompt('🔐 Contraseña para restaurar:');
     if (pwd !== PASSWORD_GENERAL) {
-      alert('Contrase�a incorrecta');
+      alert('Contraseña incorrecta');
       return;
     }
     
@@ -3652,11 +3404,11 @@ body { padding-top: 80px; }
       }
       
       ocultarMensajeEnProceso();
-      alert(`✅ RESTAURACI�N COMPLETADA!\n\n📅 Fecha original: ${registro.fechaEliminacion}\n✅ Restaurados: ${restaurados} items\n❌ Errores: ${errores}\n💰 Dinero: Gs. ${dineroTotalRestaurado.toLocaleString()}\n🎯 Puntos: ${puntosTotalesRestaurados}\n\n🛒 Los items se agregaron al carrito actual.`);
+      alert(`✅ RESTAURACIÓN COMPLETADA!\n\n📅 Fecha original: ${registro.fechaEliminacion}\n✅ Restaurados: ${restaurados} items\n❌ Errores: ${errores}\n💰 Dinero: Gs. ${dineroTotalRestaurado.toLocaleString()}\n🎯 Puntos: ${puntosTotalesRestaurados}\n\n🛒 Los items se agregaron al carrito actual.`);
       
     } catch(error) {
       ocultarMensajeEnProceso();
-      console.error('Error en restauraci�n:', error);
+      console.error('Error en restauración:', error);
       alert('❌ Error al restaurar las ventas');
     } finally {
       btnOriginal.textContent = textoOriginal;
@@ -3667,11 +3419,11 @@ body { padding-top: 80px; }
   window.verifyClearPasswordAndShowDate = function() {
     const pwd = document.getElementById('clearPassword').value;
     if (pwd !== PASSWORD_GENERAL) { 
-      alert('Contrase�a incorrecta'); 
+      alert('Contraseña incorrecta'); 
       return; 
     }
     if (cart.length === 0) {
-      alert('El carrito est� vac�o');
+      alert('El carrito está vacío');
       return;
     }
     
@@ -3686,20 +3438,20 @@ body { padding-top: 80px; }
     ayer.setDate(hoy.getDate() - 1);
     
     document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para historial';
-    document.getElementById('fechaModalDescripcion').textContent = '¿Qu� fecha quieres asignar a este registro? Si ya existe un cierre con esa fecha, se agregar�n a �l.';
+    document.getElementById('fechaModalDescripcion').textContent = '¿Qué fecha quieres asignar a este registro? Si ya existe un cierre con esa fecha, se agregarán a él.';
     document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
     document.getElementById('fechaModal').style.display = 'block';
   };
 
   window.abrirVaciarSeleccion = function() {
     if (cart.length === 0) {
-      alert('El carrito est� vac�o');
+      alert('El carrito está vacío');
       return;
     }
     
-    const pwd = prompt('🔐 Ingrese la contrase�a para vaciar seleccionados:');
+    const pwd = prompt('🔐 Ingrese la contraseña para vaciar seleccionados:');
     if (pwd !== PASSWORD_GENERAL) { 
-      alert('Contrase�a incorrecta'); 
+      alert('Contraseña incorrecta'); 
       return; 
     }
     
@@ -3766,7 +3518,7 @@ body { padding-top: 80px; }
 
   window.confirmarVaciarSeleccionados = async function() {
     if (vaciarSeleccionados.length === 0) {
-      alert('❌ No has seleccionado ning�n item para vaciar');
+      alert('❌ No has seleccionado ningún item para vaciar');
       return;
     }
     
@@ -3780,7 +3532,7 @@ body { padding-top: 80px; }
     const totalDinero = itemsSeleccionados.reduce((s, v) => s + (v.money || 0), 0);
     const totalPuntos = itemsSeleccionados.reduce((s, v) => s + (v.points || 0), 0);
     
-    const confirmar = confirm(`🗑️ CONFIRMAR VACIADO\n\n📦 Items a vaciar: ${itemsSeleccionados.length}\n💰 Dinero: Gs. ${totalDinero.toLocaleString()}\n🎯 Puntos: ${totalPuntos}\n\n⚠️ Estos items se guardar�n en el historial y se eliminar�n del carrito.\nLos items NO seleccionados permanecer�n en el carrito.\n\n�Continuar?`);
+    const confirmar = confirm(`🗑️ CONFIRMAR VACIADO\n\n📦 Items a vaciar: ${itemsSeleccionados.length}\n💰 Dinero: Gs. ${totalDinero.toLocaleString()}\n🎯 Puntos: ${totalPuntos}\n\n⚠️ Estos items se guardarán en el historial y se eliminarán del carrito.\nLos items NO seleccionados permanecerán en el carrito.\n\n¿Continuar?`);
     
     if (!confirmar) return;
     
@@ -3797,7 +3549,7 @@ body { padding-top: 80px; }
     
     document.getElementById('fechaModalTitulo').textContent = '📅 Seleccionar fecha para el historial';
     document.getElementById('fechaModalDescripcion').textContent = 
-      `�Qu� fecha quieres asignar a estos ${itemsSeleccionados.length} items? Si ya existe un cierre con esa fecha, se agregar�n a �l.`;
+      `¿Qué fecha quieres asignar a estos ${itemsSeleccionados.length} items? Si ya existe un cierre con esa fecha, se agregarán a él.`;
     document.getElementById('fechaHistorialInput').value = ayer.toISOString().split('T')[0];
     document.getElementById('fechaModal').style.display = 'block';
   };
@@ -3889,7 +3641,7 @@ body { padding-top: 80px; }
     blockBodyScroll();
   }
 
-  // ========== FUNCIONES DE GENERACI�N DE PRODUCTOS ==========
+  // ========== FUNCIONES DE GENERACIÓN DE PRODUCTOS ==========
 
   function generarOpcionesMaquinas() {
     const select = document.getElementById('movimientoDestino');
@@ -3975,8 +3727,6 @@ body { padding-top: 80px; }
         const img = new Image();
         img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; };
         img.src = `../imagenes/${codigo}.jpg`;
-        // Inicializar mapeo de im�genes
-        imagenMap[codigo] = codigo + '.jpg';
         return item;
       };
       
@@ -4033,7 +3783,7 @@ body { padding-top: 80px; }
     });
   });
 
-  // ========== INICIALIZACI�N ==========
+  // ========== INICIALIZACIÓN ==========
 
   generarTodosLosProductos();
   generarOpcionesMaquinas();
@@ -4047,8 +3797,8 @@ body { padding-top: 80px; }
     setTimeout(asignarEventosProductos, 100);
   });
 
-  window.addEventListener('online', () => mostrarMensajeTemporal('✅ Conexi�n restablecida'));
-  window.addEventListener('offline', () => mostrarMensajeTemporal('❌ Sin conexi�n a internet', true));
+  window.addEventListener('online', () => mostrarMensajeTemporal('✅ Conexión restablecida'));
+  window.addEventListener('offline', () => mostrarMensajeTemporal('❌ Sin conexión a internet', true));
 
   Promise.all([loadInitialCart(), loadInitialStock(), loadContadores()]).then(() => {
     onValue(cartRef, snap => { const d = snap.val(); cart = d ? Object.entries(d).map(([k, v])=>({...v,firebaseKey:k})) : []; updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
@@ -4084,8 +3834,8 @@ body { padding-top: 80px; }
   }
 
   window.exportarFiltradoExcel = function() {
-    const pwd = prompt('🔐 Contrase�a para exportar filtrado:');
-    if (pwd !== PASSWORD_GENERAL) { alert('Contrase�a incorrecta'); return; }
+    const pwd = prompt('🔐 Contraseña para exportar filtrado:');
+    if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
     
     let itemsFiltrados = cart.filter(item => {
       if (filtroCarrito.texto) {
@@ -4140,7 +3890,7 @@ body { padding-top: 80px; }
       ['ASTROLAND - Los Laureles (FILTRADO)'], 
       [`Filtros aplicados: ${tipoTexto} | Buscar: ${filtroCarrito.texto || 'ninguno'} | Fechas: ${filtroCarrito.fechaDesde || 'inicio'} - ${filtroCarrito.fechaHasta || 'hoy'}`], 
       [],
-      ['Producto', 'Puntos', 'Dinero (Gs.)', 'M�todo de Pago', 'Movimientos', 'Fichas Consumidas', 'Fichas Regaladas', 'Fichas Vendidas', 'Fecha', 'Hora', 'Cantidad'],
+      ['Producto', 'Puntos', 'Dinero (Gs.)', 'Método de Pago', 'Movimientos', 'Fichas Consumidas', 'Fichas Regaladas', 'Fichas Vendidas', 'Fecha', 'Hora', 'Cantidad'],
       ...itemsFiltrados.map(i => {
         let metodoPago = '-';
         if (i.metodoPago === 'efectivo') metodoPago = 'EFECTIVO';
