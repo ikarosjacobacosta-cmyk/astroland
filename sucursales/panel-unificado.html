@@ -9,10 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ============================================================
-           CSS COMPLETO - (igual que antes, no lo repito por espacio)
-           ============================================================ */
-        /* ... el mismo CSS que ya tenías ... */
         :root {
             --primary: #0d1b4a;
             --primary-light: #1a2d6e;
@@ -595,17 +591,33 @@
         }
 
         .calendar-day.has-data {
-            background: var(--gold-light) !important;
-            border-color: var(--gold);
-            color: var(--primary-dark);
+            background: #FFD700 !important;
+            border-color: #FF8C00 !important;
+            color: #1a1a2e !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+            font-weight: 800 !important;
+            transform: scale(1.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .calendar-day.has-data:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.9) !important;
         }
 
         .calendar-day.has-data::after {
             content: '●';
             font-size: 6px;
-            color: var(--gold-dark);
+            color: #FF6B00;
             position: absolute;
             bottom: 1px;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.7); }
         }
 
         .calendar-day.weekend {
@@ -832,9 +844,6 @@
             transform: none;
         }
 
-        /* ============================================================
-           CATÁLOGO UNIFICADO
-           ============================================================ */
         .catalogo-grid {
             display: grid;
             gap: 16px;
@@ -983,42 +992,6 @@
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(13, 27, 74, 0.1);
-        }
-
-        @media (max-width: 992px) {
-            .header-premium { padding: 16px 20px; }
-            .header-title h1 { font-size: 1.3rem; }
-            .stats-grid-premium { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        @media (max-width: 768px) {
-            body { padding: 12px; }
-            .header-premium { flex-direction: column; align-items: stretch; text-align: center; }
-            .header-left { justify-content: center; }
-            .header-right { justify-content: center; }
-            .card-premium { padding: 16px; }
-            .nav-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            .nav-tab { padding: 8px 14px; font-size: 0.75rem; }
-            .stats-grid-premium { grid-template-columns: repeat(2, 1fr); }
-            .filter-grid-premium { flex-direction: column; }
-            .filter-group { flex: 1 1 100%; min-width: 100%; }
-            .filter-group .rango-inputs input { width: 100%; }
-            .table-premium { font-size: 0.75rem; }
-            .table-premium thead th { font-size: 0.6rem; padding: 8px 4px; }
-            .table-premium tbody td { padding: 8px 4px; }
-            .calendar-day { width: 30px; height: 30px; font-size: 0.7rem; }
-            .catalogo-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 480px) {
-            .stats-grid-premium { grid-template-columns: 1fr 1fr; gap: 8px; }
-            .stat-card { padding: 10px; }
-            .stat-card .number { font-size: 1.2rem; }
-            .header-logo { width: 36px; height: 36px; font-size: 18px; }
-            .header-title h1 { font-size: 1.1rem; }
-            .header-badge { font-size: 0.7rem; padding: 4px 10px; }
-            .catalogo-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-            .catalogo-item { padding: 8px; }
         }
 
         .toast-container {
@@ -1471,6 +1444,68 @@
         }
         .btn-guardar-contadores { background: #4CAF50; color: white; }
         .btn-ver-contadores { background: #2196F3; color: white; }
+
+        /* Estilos para la diferencia */
+        #diferenciaControles {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid var(--gold);
+            margin: 8px 0;
+        }
+
+        /* Indicador de filtro activo */
+        #filtroActivoContadores {
+            margin: 8px 0 16px 0;
+            padding: 8px 16px;
+            background: #e3f2fd;
+            border-radius: var(--radius-sm);
+            border-left: 4px solid #2196F3;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 992px) {
+            .header-premium { padding: 16px 20px; }
+            .header-title h1 { font-size: 1.3rem; }
+            .stats-grid-premium { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .header-premium { flex-direction: column; align-items: stretch; text-align: center; }
+            .header-left { justify-content: center; }
+            .header-right { justify-content: center; }
+            .card-premium { padding: 16px; }
+            .nav-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .nav-tab { padding: 8px 14px; font-size: 0.75rem; }
+            .stats-grid-premium { grid-template-columns: repeat(2, 1fr); }
+            .filter-grid-premium { flex-direction: column; }
+            .filter-group { flex: 1 1 100%; min-width: 100%; }
+            .filter-group .rango-inputs input { width: 100%; }
+            .table-premium { font-size: 0.75rem; }
+            .table-premium thead th { font-size: 0.6rem; padding: 8px 4px; }
+            .table-premium tbody td { padding: 8px 4px; }
+            .calendar-day { width: 30px; height: 30px; font-size: 0.7rem; }
+            .catalogo-grid { grid-template-columns: repeat(2, 1fr); }
+            #diferenciaControles {
+                flex-direction: column;
+                align-items: stretch !important;
+            }
+            #diferenciaControles .filter-group {
+                min-width: 100% !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid-premium { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stat-card { padding: 10px; }
+            .stat-card .number { font-size: 1.2rem; }
+            .header-logo { width: 36px; height: 36px; font-size: 18px; }
+            .header-title h1 { font-size: 1.1rem; }
+            .header-badge { font-size: 0.7rem; padding: 4px 10px; }
+            .catalogo-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .catalogo-item { padding: 8px; }
+        }
     </style>
 </head>
 <body>
@@ -1697,7 +1732,7 @@
         </div>
     </section>
 
-    <!-- TAB 4: CONTADORES -->
+    <!-- TAB 4: CONTADORES MEJORADO -->
     <section id="tab-contadores" class="tab-content" style="display:none;">
         <div class="card-premium">
             <div class="card-header">
@@ -1713,11 +1748,12 @@
                 </div>
             </div>
 
-            <div class="filter-grid-premium">
+            <!-- FILTROS MEJORADOS -->
+            <div class="filter-grid-premium" style="background:var(--gray-50); padding:16px; border-radius:var(--radius-md); border:1px solid var(--gray-200);">
                 <div class="filter-group">
                     <label><i class="fas fa-store"></i> Sucursal</label>
-                    <select id="contadorSucursal">
-                        <option value="todas">📊 Todas</option>
+                    <select id="contadorSucursal" onchange="onSucursalChange()">
+                        <option value="todas">📊 Todas las sucursales</option>
                         <option value="Villa Morra">🏢 Villa Morra</option>
                         <option value="Los Laureles">🏢 Los Laureles</option>
                         <option value="Lambaré">🏢 Lambaré</option>
@@ -1725,26 +1761,63 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label><i class="fas fa-calendar-alt"></i> Desde</label>
-                    <input type="date" id="contadorFechaDesde">
+                    <label><i class="fas fa-calendar-alt"></i> Rango de Fechas</label>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <input type="date" id="contadorFechaDesde" style="flex:1;">
+                        <span style="color:var(--gray-400); font-weight:bold;">→</span>
+                        <input type="date" id="contadorFechaHasta" style="flex:1;">
+                    </div>
                 </div>
-                <div class="filter-group">
-                    <label><i class="fas fa-calendar-alt"></i> Hasta</label>
-                    <input type="date" id="contadorFechaHasta">
-                </div>
-                <div class="filter-actions">
-                    <button class="btn-premium info" onclick="cargarContadores(event)">
-                        <i class="fas fa-chart-bar"></i> Cargar Contadores
+                <div class="filter-actions" style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+                    <button class="btn-premium gold" onclick="cargarCalendarioContadores(event)">
+                        <i class="fas fa-calendar-alt"></i> Calendario
+                    </button>
+                    <button class="btn-premium info" onclick="cargarDatosFechaContadores(event)">
+                        <i class="fas fa-database"></i> Cargar datos de fecha
+                    </button>
+                    <button class="btn-premium primary" onclick="aplicarFiltroContadores()">
+                        <i class="fas fa-filter"></i> Aplicar filtro
                     </button>
                 </div>
             </div>
 
+            <!-- INDICADOR DE FILTRO ACTIVO -->
+            <div id="filtroActivoContadores" style="display:none; margin:8px 0 16px 0; padding:8px 16px; background:#e3f2fd; border-radius:var(--radius-sm); border-left:4px solid #2196F3; font-size:0.85rem;">
+                <i class="fas fa-info-circle" style="color:#2196F3;"></i>
+                <span id="filtroActivoTexto">Mostrando: Todas las sucursales</span>
+            </div>
+
+            <!-- CALENDARIO -->
             <div id="calendarioContainer" class="calendar-premium">
                 <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
-                    <i class="fas fa-calendar-day"></i> Selecciona fechas y presiona "Cargar Contadores"
+                    <i class="fas fa-calendar-day"></i> Selecciona un rango de fechas y presiona "Calendario"
                 </p>
             </div>
 
+            <!-- BOTÓN DE DIFERENCIA -->
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin:16px 0; align-items:center; background:var(--gray-50); padding:12px 16px; border-radius:var(--radius-sm); border:1px solid var(--gray-200);">
+                <button class="btn-premium warning" onclick="toggleDiferenciaContadores()">
+                    <i class="fas fa-calculator"></i> Diferencia
+                </button>
+                <div id="diferenciaControles" style="display:none; gap:12px; flex-wrap:wrap; align-items:center;">
+                    <div class="filter-group" style="flex:0 1 auto; min-width:120px;">
+                        <label>📅 Fecha Inicio</label>
+                        <input type="date" id="diferenciaFechaInicio">
+                    </div>
+                    <div class="filter-group" style="flex:0 1 auto; min-width:120px;">
+                        <label>📅 Fecha Fin</label>
+                        <input type="date" id="diferenciaFechaFin">
+                    </div>
+                    <button class="btn-premium success" onclick="calcularDiferenciaContadores()">
+                        <i class="fas fa-arrow-right"></i> Calcular Diferencia
+                    </button>
+                    <button class="btn-premium outline" onclick="cerrarDiferenciaContadores()">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+
+            <!-- RESULTADOS -->
             <div id="contadoresResultados" style="display:none; margin-top:16px;">
                 <div class="filter-summary-premium" id="contadoresSummary"></div>
                 <div class="table-responsive">
@@ -1764,6 +1837,30 @@
                             </tr>
                         </thead>
                         <tbody id="contadoresBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RESULTADOS DE DIFERENCIA -->
+            <div id="diferenciaResultados" style="display:none; margin-top:16px;">
+                <div class="filter-summary-premium" id="diferenciaSummary"></div>
+                <div class="table-responsive">
+                    <table class="table-premium" id="diferenciaTable">
+                        <thead>
+                            <tr class="contadores-header">
+                                <th rowspan="2" style="min-width:80px;">Sucursal</th>
+                                <th rowspan="2" style="min-width:60px;">Máquina</th>
+                                <th colspan="4" style="min-width:200px;">Fecha Inicio</th>
+                                <th colspan="4" style="min-width:200px;">Fecha Fin</th>
+                                <th colspan="2" style="min-width:120px;">Diferencia</th>
+                            </tr>
+                            <tr class="contadores-subheader">
+                                <th>Fichas</th><th>Premios</th><th>Fichas Prueba</th><th>Premios Prueba</th>
+                                <th>Fichas</th><th>Premios</th><th>Fichas Prueba</th><th>Premios Prueba</th>
+                                <th>Fichas</th><th>Premios</th>
+                            </tr>
+                        </thead>
+                        <tbody id="diferenciaBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1924,7 +2021,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getDatabase, ref, get, child, remove, update, set, push, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-    // ✅ SUCURSALES ACTIVAS EN EL CATÁLOGO (excluyendo Lambaré)
     const sucursalesCatalogo = [
         { nombre: "Villa Morra", id: "villa-morra", config: {
             apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
@@ -1955,7 +2051,6 @@
         }}
     ];
 
-    // ✅ SUCURSALES COMPLETAS (incluyendo Lambaré para filtros y contadores)
     const sucursalesCompletas = [
         ...sucursalesCatalogo,
         { nombre: "Lambaré", id: "lambare", config: {
@@ -2012,6 +2107,7 @@
     const STOCK_INICIAL = 100;
 
     let pendingDelete = null;
+    let datosContadoresCache = {};
 
     // ============================================================
     // 3. NAVEGACIÓN POR TABS
@@ -2403,7 +2499,7 @@
     }
 
     // ============================================================
-    // 9. CATÁLOGO UNIFICADO - SOLO 3 SUCURSALES
+    // 9. CATÁLOGO UNIFICADO
     // ============================================================
     async function cargarCatalogoUnificado() {
         const container = document.getElementById('catalogoContainer');
@@ -2529,7 +2625,7 @@
     }
 
     // ============================================================
-    // 10. RENDERIZAR CATÁLOGO CON IMÁGENES (RUTA CORREGIDA)
+    // 10. RENDERIZAR CATÁLOGO CON IMÁGENES
     // ============================================================
     function renderCatalogo(productos) {
         const container = document.getElementById('catalogoContainer');
@@ -2549,7 +2645,6 @@
 
         filtrados.sort((a, b) => a.code.localeCompare(b.code));
 
-        // Actualizar contadores
         const todasCount = productos.length;
         const counts = {};
         productos.forEach(p => {
@@ -2599,14 +2694,9 @@
         });
 
         container.innerHTML = html;
-
-        // ✅ CARGAR IMÁGENES CON RUTA CORRECTA: ../imagenes/
         cargarImagenesCatalogo(container);
     }
 
-    // ============================================================
-    // 11. FUNCIÓN PARA CARGAR IMÁGENES (RUTA ../imagenes/)
-    // ============================================================
     function cargarImagenesCatalogo(container) {
         const items = container.querySelectorAll('.catalogo-item');
 
@@ -2622,17 +2712,13 @@
                     placeholder.outerHTML = `<img src="../imagenes/${code}.jpg" alt="${code}" loading="lazy">`;
                 }
             };
-            img.onerror = function() {
-                // Mantener placeholder si la imagen no existe
-                // console.log(`ℹ️ Imagen no encontrada: ../imagenes/${code}.jpg`);
-            };
-            // ✅ RUTA CORRECTA: ../imagenes/ (asumiendo que el panel está dentro de la carpeta sucursales)
+            img.onerror = function() {};
             img.src = `../imagenes/${code}.jpg`;
         });
     }
 
     // ============================================================
-    // 12. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
+    // 11. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
     // ============================================================
     window.handleCatalogoClick = function(element) {
         const code = element.dataset.code;
@@ -2783,7 +2869,7 @@
     }
 
     // ============================================================
-    // 13. FUNCIONES DE UTILIDAD PARA EL MODAL
+    // 12. FUNCIONES DE UTILIDAD PARA EL MODAL
     // ============================================================
     function shouldShowQuantity(code) {
         return code === '005-13' || code === '000-00';
@@ -2829,7 +2915,7 @@
     };
 
     // ============================================================
-    // 14. FUNCIONES DEL MODAL DE COMPRA
+    // 13. FUNCIONES DEL MODAL DE COMPRA
     // ============================================================
     window.closeModal = function() {
         document.getElementById('purchaseModal').style.display = 'none';
@@ -2968,7 +3054,7 @@
     };
 
     // ============================================================
-    // 15. MOVIMIENTOS DE UNIDADES
+    // 14. MOVIMIENTOS DE UNIDADES
     // ============================================================
     window.agregarUnidades = async function() {
         if (window.agregarUnidadesLock) return;
@@ -3275,7 +3361,7 @@
     };
 
     // ============================================================
-    // 16. FICHAS GRATIS
+    // 15. FICHAS GRATIS
     // ============================================================
     async function procesarFichaGratis(code, fichasAConsumir) {
         const catalogoItem = document.querySelector('.catalogo-item[data-code="' + code + '"]');
@@ -3349,7 +3435,7 @@
     }
 
     // ============================================================
-    // 17. CIERRES DE CAJA
+    // 16. CIERRES DE CAJA
     // ============================================================
     function abrirModalCierre(tipo, descripcion) {
         document.getElementById('cierreTitulo').innerHTML = `💰 Cierre de Caja - ${tipo}`;
@@ -3421,7 +3507,7 @@
     }
 
     // ============================================================
-    // 18. CONTADORES DE MÁQUINAS
+    // 17. CONTADORES DE MÁQUINAS (MODAL)
     // ============================================================
     window.openContadoresModal = async function() {
         const catalogoItem = document.querySelector('.catalogo-item[data-code="000-11"]');
@@ -3542,7 +3628,7 @@
     };
 
     // ============================================================
-    // 19. FILTROS DEL CATÁLOGO
+    // 18. FILTROS DEL CATÁLOGO
     // ============================================================
     document.getElementById('catalogoFiltros').addEventListener('click', function(e) {
         const btn = e.target.closest('button');
@@ -3561,7 +3647,7 @@
     });
 
     // ============================================================
-    // 20. FILTROS AVANZADOS
+    // 19. FILTROS AVANZADOS
     // ============================================================
     async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -3865,7 +3951,7 @@
     };
 
     // ============================================================
-    // 21. CONTADORES DE MÁQUINAS (Panel)
+    // 20. CONTADORES DE MÁQUINAS (Panel) - NUEVAS FUNCIONES
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -3901,8 +3987,62 @@
         }
     }
 
-    window.cargarContadores = async function(event) {
-        const btn = document.querySelector('.btn-premium.info');
+    // --- FUNCIONES DEL FILTRO POR SUCURSAL ---
+    let filtroContadoresActual = {
+        sucursal: 'todas',
+        fechaDesde: '',
+        fechaHasta: ''
+    };
+
+    window.onSucursalChange = function() {
+        const sucursal = document.getElementById('contadorSucursal').value;
+        actualizarIndicadorFiltro(sucursal);
+    };
+
+    function actualizarIndicadorFiltro(sucursal) {
+        const container = document.getElementById('filtroActivoContadores');
+        const texto = document.getElementById('filtroActivoTexto');
+        
+        if (sucursal === 'todas') {
+            container.style.display = 'block';
+            texto.innerHTML = '📊 Mostrando: <strong>Todas las sucursales</strong>';
+            container.style.borderLeftColor = '#4CAF50';
+        } else {
+            container.style.display = 'block';
+            texto.innerHTML = `🏢 Mostrando: <strong>${sucursal}</strong>`;
+            container.style.borderLeftColor = '#2196F3';
+        }
+    }
+
+    window.aplicarFiltroContadores = async function() {
+        const btn = document.querySelector('.btn-premium.primary');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando...';
+        }
+
+        const sucursal = document.getElementById('contadorSucursal').value;
+        const fechaDesde = document.getElementById('contadorFechaDesde').value;
+        const fechaHasta = document.getElementById('contadorFechaHasta').value;
+
+        filtroContadoresActual = { sucursal, fechaDesde, fechaHasta };
+        actualizarIndicadorFiltro(sucursal);
+
+        if (fechaDesde && fechaHasta) {
+            await cargarCalendarioContadores(null);
+        } else {
+            showToast('⚠️ Selecciona un rango de fechas para ver resultados', 'warning');
+        }
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-filter"></i> Aplicar filtro';
+        }
+    };
+
+    // --- CALENDARIO ---
+    window.cargarCalendarioContadores = async function(event) {
+        const btn = event?.target?.closest?.('button') || document.querySelector('.btn-premium.gold');
         if (btn) btn.disabled = true;
 
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
@@ -3910,7 +4050,7 @@
         const fechaHasta = document.getElementById('contadorFechaHasta').value;
 
         if (!fechaDesde || !fechaHasta) {
-            alert('⚠️ Debes seleccionar un rango de fechas');
+            showToast('⚠️ Debes seleccionar un rango de fechas', 'warning');
             if (btn) btn.disabled = false;
             return;
         }
@@ -3918,60 +4058,63 @@
         let sucursalesACargar = [];
         if (sucursalFiltro === 'todas') {
             sucursalesACargar = sucursalesCompletas;
+            showToast(`📊 Cargando datos de TODAS las sucursales...`, 'info');
         } else {
             const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
-            if (encontrada) sucursalesACargar = [encontrada];
+            if (encontrada) {
+                sucursalesACargar = [encontrada];
+                showToast(`🏢 Cargando datos de ${sucursalFiltro}...`, 'info');
+            } else {
+                showToast('❌ Sucursal no encontrada', 'error');
+                if (btn) btn.disabled = false;
+                return;
+            }
         }
 
-        let todosContadores = {};
         let fechasConDatos = new Set();
+        datosContadoresCache = {};
 
         for (const suc of sucursalesACargar) {
-            const contadores = await cargarContadoresMaquina(suc);
-            todosContadores[suc.nombre] = contadores;
+            try {
+                const contadores = await cargarContadoresMaquina(suc);
+                datosContadoresCache[suc.nombre] = contadores;
 
-            Object.values(contadores).forEach(maquina => {
-                Object.keys(maquina).forEach(fecha => {
-                    let fechaFormateada = fecha;
-                    if (fecha.includes('-')) {
-                        const partes = fecha.split('-');
-                        if (partes.length === 3) {
-                            fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                Object.values(contadores).forEach(maquina => {
+                    Object.keys(maquina).forEach(fecha => {
+                        let fechaNormalizada = fecha;
+                        if (fecha.includes('/')) {
+                            const partes = fecha.split('/');
+                            if (partes.length === 3) {
+                                fechaNormalizada = `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
+                            }
                         }
-                    }
-                    fechasConDatos.add(fechaFormateada);
+                        if (fechaNormalizada >= fechaDesde && fechaNormalizada <= fechaHasta) {
+                            fechasConDatos.add(fechaNormalizada);
+                        }
+                    });
                 });
-            });
+            } catch (error) {
+                console.error(`Error cargando contadores de ${suc.nombre}:`, error);
+            }
         }
 
-        estado.contadoresFiltrados = todosContadores;
-        estado.fechasConDatos = Array.from(fechasConDatos).sort();
+        renderCalendarioContadores(fechasConDatos, fechaDesde, fechaHasta);
 
-        if (Object.keys(todosContadores).length === 0) {
-            const container = document.getElementById('contadoresResultados');
-            const summary = document.getElementById('contadoresSummary');
-            container.style.display = 'block';
-            summary.innerHTML = 'No se encontraron contadores en el rango seleccionado.';
-            document.getElementById('contadoresBody').innerHTML = '';
-            document.getElementById('calendarioContainer').innerHTML = `
-                <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
-                    <i class="fas fa-calendar-day"></i> No hay datos de contadores en el rango seleccionado
-                </p>
-            `;
-            if (btn) btn.disabled = false;
-            return;
-        }
-
-        renderCalendario(estado.fechasConDatos, fechaDesde, fechaHasta);
-        renderTablaContadores(todosContadores, fechaDesde, fechaHasta, sucursalFiltro);
+        const sucursalesCargadas = sucursalesACargar.map(s => s.nombre).join(', ');
+        document.getElementById('contadoresSummary').innerHTML = `
+            <span><i class="fas fa-check-circle" style="color:#4CAF50;"></i> Sucursales cargadas: <strong>${sucursalesCargadas}</strong></span>
+            <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${fechaDesde} → ${fechaHasta}</span>
+            <span class="filter-tag-premium"><i class="fas fa-database"></i> ${fechasConDatos.size} fechas con datos</span>
+        `;
+        document.getElementById('contadoresResultados').style.display = 'block';
 
         if (btn) btn.disabled = false;
     };
 
-    function renderCalendario(fechasConDatos, fechaDesde, fechaHasta) {
+    function renderCalendarioContadores(fechasConDatos, fechaDesde, fechaHasta) {
         const container = document.getElementById('calendarioContainer');
 
-        if (!fechasConDatos || fechasConDatos.length === 0) {
+        if (!fechasConDatos || fechasConDatos.size === 0) {
             container.innerHTML = `
                 <p style="color:var(--gray-400); width:100%; text-align:center; padding:10px;">
                     <i class="fas fa-calendar-day"></i> No hay datos de contadores en el rango seleccionado
@@ -3980,7 +4123,6 @@
             return;
         }
 
-        const fechasSet = new Set(fechasConDatos);
         const desde = new Date(fechaDesde);
         const hasta = new Date(fechaHasta);
 
@@ -3992,10 +4134,9 @@
             const year = currentDate.getFullYear();
             const month = String(currentDate.getMonth() + 1).padStart(2, '0');
             const day = String(currentDate.getDate()).padStart(2, '0');
-            const fechaStr = `${day}/${month}/${year}`;
             const fechaISO = `${year}-${month}-${day}`;
 
-            const tieneDatos = fechasSet.has(fechaStr) || fechasSet.has(fechaISO);
+            const tieneDatos = fechasConDatos.has(fechaISO);
 
             const nombreMes = currentDate.toLocaleString('es', { month: 'long' });
             const claveMes = `${year}-${month}`;
@@ -4014,7 +4155,9 @@
             if (esFinDeSemana) clases += ' weekend';
             if (esHoy) clases += ' selected';
 
-            html += `<div class="${clases}" title="${fechaStr}${tieneDatos ? ' ✅ Tiene datos' : ' ❌ Sin datos'}">
+            const tooltip = tieneDatos ? `✅ ${fechaISO} - Tiene datos` : `❌ ${fechaISO} - Sin datos`;
+
+            html += `<div class="${clases}" title="${tooltip}">
                 ${currentDate.getDate()}
             </div>`;
 
@@ -4023,113 +4166,391 @@
 
         html += '</div>';
         container.innerHTML = html;
+
+        const style = document.createElement('style');
+        style.id = 'calendario-contadores-style';
+        style.textContent = `
+            .calendar-day.has-data {
+                background: #FFD700 !important;
+                border-color: #FF8C00 !important;
+                color: #1a1a2e !important;
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+                font-weight: 800 !important;
+                transform: scale(1.05);
+                transition: all 0.2s ease;
+                cursor: pointer;
+            }
+            .calendar-day.has-data:hover {
+                transform: scale(1.15);
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.9) !important;
+            }
+            .calendar-day.has-data::after {
+                content: '●';
+                font-size: 6px;
+                color: #FF6B00;
+                position: absolute;
+                bottom: 1px;
+                animation: pulse-dot 1.5s infinite;
+            }
+        `;
+        const oldStyle = document.getElementById('calendario-contadores-style');
+        if (oldStyle) oldStyle.remove();
+        document.head.appendChild(style);
     }
 
-    function renderTablaContadores(contadores, fechaDesde, fechaHasta, sucursalFiltro) {
+    // --- CARGAR DATOS DE FECHA ---
+    window.cargarDatosFechaContadores = async function(event) {
+        const btn = event?.target?.closest?.('button') || document.querySelector('.btn-premium.info');
+        if (btn) btn.disabled = true;
+
+        const sucursalFiltro = document.getElementById('contadorSucursal').value;
+        const fechaDesde = document.getElementById('contadorFechaDesde').value;
+        const fechaHasta = document.getElementById('contadorFechaHasta').value;
+
+        let fechaTarget = fechaDesde;
+        if (!fechaTarget && fechaHasta) fechaTarget = fechaHasta;
+        if (!fechaTarget) {
+            showToast('⚠️ Debes seleccionar al menos una fecha', 'warning');
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        if (fechaDesde && fechaHasta && fechaDesde !== fechaHasta) {
+            fechaTarget = fechaDesde;
+        }
+
+        let sucursalesACargar = [];
+        if (sucursalFiltro === 'todas') {
+            sucursalesACargar = sucursalesCompletas;
+        } else {
+            const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
+            if (encontrada) sucursalesACargar = [encontrada];
+        }
+
+        const resultados = [];
+
+        for (const suc of sucursalesACargar) {
+            try {
+                const contadores = await cargarContadoresMaquina(suc);
+                const todasLasMaquinas = Object.keys(contadores);
+                
+                if (todasLasMaquinas.length === 0) {
+                    resultados.push({
+                        sucursal: suc.nombre,
+                        maquina: 'Sin registros',
+                        fecha: fechaTarget,
+                        fichas: 0,
+                        premios: 0,
+                        fichasPrueba: 0,
+                        premiosPrueba: 0,
+                        tieneDatos: false,
+                        mensaje: 'No hay máquinas configuradas'
+                    });
+                    continue;
+                }
+
+                for (const maquina of todasLasMaquinas) {
+                    const fechas = contadores[maquina];
+                    let datos = null;
+                    let fechaEncontrada = null;
+                    
+                    if (fechas[fechaTarget]) {
+                        datos = fechas[fechaTarget];
+                        fechaEncontrada = fechaTarget;
+                    } else {
+                        const partes = fechaTarget.split('-');
+                        if (partes.length === 3) {
+                            const fechaDDMMYYYY = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                            if (fechas[fechaDDMMYYYY]) {
+                                datos = fechas[fechaDDMMYYYY];
+                                fechaEncontrada = fechaDDMMYYYY;
+                            }
+                        }
+                    }
+
+                    resultados.push({
+                        sucursal: suc.nombre,
+                        maquina: maquina,
+                        fecha: fechaEncontrada || fechaTarget,
+                        fichas: datos?.fichas ?? 0,
+                        premios: datos?.premios ?? 0,
+                        fichasPrueba: datos?.fichasPrueba ?? 0,
+                        premiosPrueba: datos?.premiosPrueba ?? 0,
+                        tieneDatos: datos !== null
+                    });
+                }
+            } catch (error) {
+                console.error(`Error cargando contadores de ${suc.nombre}:`, error);
+                resultados.push({
+                    sucursal: suc.nombre,
+                    maquina: 'Error',
+                    fecha: fechaTarget,
+                    fichas: 0,
+                    premios: 0,
+                    fichasPrueba: 0,
+                    premiosPrueba: 0,
+                    tieneDatos: false,
+                    mensaje: 'Error al cargar datos'
+                });
+            }
+        }
+
+        if (resultados.length === 0) {
+            showToast(`❌ No se encontraron máquinas para la fecha ${fechaTarget}`, 'error');
+            document.getElementById('contadoresResultados').style.display = 'none';
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        renderDatosFechaContadores(resultados, fechaTarget);
+        const conDatos = resultados.filter(r => r.tieneDatos).length;
+        const sinDatos = resultados.filter(r => !r.tieneDatos).length;
+        showToast(`✅ ${resultados.length} máquinas (${conDatos} con datos, ${sinDatos} sin datos)`, 'success');
+        if (btn) btn.disabled = false;
+    };
+
+    function renderDatosFechaContadores(datos, fecha) {
         const container = document.getElementById('contadoresResultados');
         const tbody = document.getElementById('contadoresBody');
         const summary = document.getElementById('contadoresSummary');
 
-        const maquinasData = [];
+        container.style.display = 'block';
 
-        for (const [sucursal, maquinas] of Object.entries(contadores)) {
-            for (const [maquina, fechas] of Object.entries(maquinas)) {
-                const fechasFiltradas = Object.entries(fechas).filter(([fecha]) => {
-                    let fechaComparable = fecha;
-                    if (fecha.includes('/')) {
-                        const partes = fecha.split('/');
+        const conDatos = datos.filter(r => r.tieneDatos).length;
+        const sinDatos = datos.filter(r => !r.tieneDatos).length;
+
+        summary.innerHTML = `
+            <span><i class="fas fa-calendar-check"></i> <strong>${fecha}</strong></span>
+            <span class="filter-tag-premium"><i class="fas fa-database"></i> ${datos.length} máquinas</span>
+            <span class="filter-tag-premium" style="background:#e8f5e9; border-color:#4CAF50;">
+                <i class="fas fa-check-circle" style="color:#4CAF50;"></i> ${conDatos} con datos
+            </span>
+            ${sinDatos > 0 ? `<span class="filter-tag-premium" style="background:#fff3e0; border-color:#FF9800;">
+                <i class="fas fa-clock" style="color:#FF9800;"></i> ${sinDatos} sin datos (0)
+            </span>` : ''}
+        `;
+
+        let html = '';
+        let totalFichas = 0, totalPremios = 0, totalFichasPrueba = 0, totalPremiosPrueba = 0;
+
+        const datosOrdenados = [...datos].sort((a, b) => {
+            if (a.tieneDatos && !b.tieneDatos) return -1;
+            if (!a.tieneDatos && b.tieneDatos) return 1;
+            return a.sucursal.localeCompare(b.sucursal) || a.maquina.localeCompare(b.maquina);
+        });
+
+        datosOrdenados.forEach((d, index) => {
+            totalFichas += d.fichas;
+            totalPremios += d.premios;
+            totalFichasPrueba += d.fichasPrueba;
+            totalPremiosPrueba += d.premiosPrueba;
+
+            const claseFila = index % 2 === 0 ? '' : 'style="background:var(--gray-50);"';
+            const estiloSinDatos = !d.tieneDatos ? 'style="opacity:0.6; color:var(--gray-400);"' : '';
+            const badgeSinDatos = !d.tieneDatos ? `<span style="font-size:0.6rem; background:#FF9800; color:white; padding:1px 8px; border-radius:10px; margin-left:4px;">sin datos</span>` : '';
+            
+            html += `<tr ${claseFila} ${estiloSinDatos}>
+                <td><strong>${d.sucursal}</strong></td>
+                <td><strong>${d.maquina.toUpperCase()} ${badgeSinDatos}</strong></td>
+                <td ${!d.tieneDatos ? 'style="color:#999;"' : ''}>${d.fichas}</td>
+                <td ${!d.tieneDatos ? 'style="color:#999;"' : ''}>${d.premios}</td>
+                <td ${!d.tieneDatos ? 'style="color:#999;"' : ''}>${d.fichasPrueba}</td>
+                <td ${!d.tieneDatos ? 'style="color:#999;"' : ''}>${d.premiosPrueba}</td>
+                <td colspan="4" style="color:var(--gray-400);">-</td>
+                <td colspan="2" style="color:var(--gray-400);">-</td>
+            </tr>`;
+        });
+
+        html += `<tr class="contadores-total-row">
+            <td colspan="2"><strong>TOTAL</strong></td>
+            <td><strong>${totalFichas}</strong></td>
+            <td><strong>${totalPremios}</strong></td>
+            <td><strong>${totalFichasPrueba}</strong></td>
+            <td><strong>${totalPremiosPrueba}</strong></td>
+            <td colspan="6"></td>
+        </tr>`;
+
+        tbody.innerHTML = html;
+    }
+
+    // --- DIFERENCIA ---
+    window.toggleDiferenciaContadores = function() {
+        const panel = document.getElementById('diferenciaControles');
+        if (panel.style.display === 'none') {
+            panel.style.display = 'flex';
+            const desde = document.getElementById('contadorFechaDesde').value;
+            const hasta = document.getElementById('contadorFechaHasta').value;
+            if (desde) document.getElementById('diferenciaFechaInicio').value = desde;
+            if (hasta) document.getElementById('diferenciaFechaFin').value = hasta;
+        } else {
+            panel.style.display = 'none';
+            document.getElementById('diferenciaResultados').style.display = 'none';
+        }
+    };
+
+    window.cerrarDiferenciaContadores = function() {
+        document.getElementById('diferenciaControles').style.display = 'none';
+        document.getElementById('diferenciaResultados').style.display = 'none';
+    };
+
+    window.calcularDiferenciaContadores = async function() {
+        const btn = document.querySelector('.btn-premium.success');
+        if (btn) btn.disabled = true;
+
+        const fechaInicio = document.getElementById('diferenciaFechaInicio').value;
+        const fechaFin = document.getElementById('diferenciaFechaFin').value;
+
+        if (!fechaInicio || !fechaFin) {
+            showToast('⚠️ Debes seleccionar ambas fechas', 'warning');
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        if (fechaInicio > fechaFin) {
+            showToast('⚠️ La fecha de inicio debe ser anterior a la fecha fin', 'warning');
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        const sucursalFiltro = document.getElementById('contadorSucursal').value;
+
+        let sucursalesACargar = [];
+        if (sucursalFiltro === 'todas') {
+            sucursalesACargar = sucursalesCompletas;
+        } else {
+            const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
+            if (encontrada) sucursalesACargar = [encontrada];
+        }
+
+        const resultados = [];
+
+        for (const suc of sucursalesACargar) {
+            try {
+                const contadores = await cargarContadoresMaquina(suc);
+                
+                for (const [maquina, fechas] of Object.entries(contadores)) {
+                    let datosInicio = null;
+                    let fechaInicioEncontrada = null;
+                    let datosFin = null;
+                    let fechaFinEncontrada = null;
+
+                    const buscarFecha = (fechaStr, fechasObj) => {
+                        if (fechasObj[fechaStr]) {
+                            return { datos: fechasObj[fechaStr], fecha: fechaStr };
+                        }
+                        const partes = fechaStr.split('-');
                         if (partes.length === 3) {
-                            fechaComparable = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                            const fechaDDMMYYYY = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                            if (fechasObj[fechaDDMMYYYY]) {
+                                return { datos: fechasObj[fechaDDMMYYYY], fecha: fechaDDMMYYYY };
+                            }
                         }
+                        return null;
+                    };
+
+                    const inicioResult = buscarFecha(fechaInicio, fechas);
+                    if (inicioResult) {
+                        datosInicio = inicioResult.datos;
+                        fechaInicioEncontrada = inicioResult.fecha;
                     }
-                    return fechaComparable >= fechaDesde && fechaComparable <= fechaHasta;
-                });
 
-                if (fechasFiltradas.length >= 2) {
-                    fechasFiltradas.sort((a, b) => {
-                        let aDate = a[0], bDate = b[0];
-                        if (aDate.includes('/')) {
-                            const partes = aDate.split('/');
-                            aDate = `${partes[2]}-${partes[1]}-${partes[0]}`;
-                        }
-                        if (bDate.includes('/')) {
-                            const partes = bDate.split('/');
-                            bDate = `${partes[2]}-${partes[1]}-${partes[0]}`;
-                        }
-                        return aDate.localeCompare(bDate);
-                    });
+                    const finResult = buscarFecha(fechaFin, fechas);
+                    if (finResult) {
+                        datosFin = finResult.datos;
+                        fechaFinEncontrada = finResult.fecha;
+                    }
 
-                    maquinasData.push({
-                        sucursal,
-                        maquina,
-                        fechaInicio: fechasFiltradas[0][0],
-                        fechaFin: fechasFiltradas[fechasFiltradas.length - 1][0],
-                        inicio: fechasFiltradas[0][1],
-                        fin: fechasFiltradas[fechasFiltradas.length - 1][1]
+                    resultados.push({
+                        sucursal: suc.nombre,
+                        maquina: maquina,
+                        fechaInicio: fechaInicioEncontrada || fechaInicio,
+                        fechaFin: fechaFinEncontrada || fechaFin,
+                        fichasInicio: datosInicio?.fichas ?? 0,
+                        premiosInicio: datosInicio?.premios ?? 0,
+                        fichasPruebaInicio: datosInicio?.fichasPrueba ?? 0,
+                        premiosPruebaInicio: datosInicio?.premiosPrueba ?? 0,
+                        fichasFin: datosFin?.fichas ?? 0,
+                        premiosFin: datosFin?.premios ?? 0,
+                        fichasPruebaFin: datosFin?.fichasPrueba ?? 0,
+                        premiosPruebaFin: datosFin?.premiosPrueba ?? 0,
+                        tieneInicio: datosInicio !== null,
+                        tieneFin: datosFin !== null
                     });
                 }
+            } catch (error) {
+                console.error(`Error cargando contadores de ${suc.nombre}:`, error);
             }
         }
 
-        if (maquinasData.length === 0) {
-            container.style.display = 'none';
-            summary.innerHTML = 'No se encontraron máquinas con al menos 2 fechas en el rango seleccionado.';
+        if (resultados.length === 0) {
+            showToast(`❌ No se encontraron máquinas para el rango ${fechaInicio} → ${fechaFin}`, 'error');
+            document.getElementById('diferenciaResultados').style.display = 'none';
+            if (btn) btn.disabled = false;
             return;
         }
+
+        renderDiferenciaContadores(resultados, fechaInicio, fechaFin);
+        showToast(`✅ Diferencia calculada - ${resultados.length} máquinas`, 'success');
+        if (btn) btn.disabled = false;
+    };
+
+    function renderDiferenciaContadores(datos, fechaInicio, fechaFin) {
+        const container = document.getElementById('diferenciaResultados');
+        const tbody = document.getElementById('diferenciaBody');
+        const summary = document.getElementById('diferenciaSummary');
 
         container.style.display = 'block';
 
         summary.innerHTML = `
-            <span><i class="fas fa-server"></i> <strong>${maquinasData.length}</strong> máquinas</span>
-            <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${fechaDesde} → ${fechaHasta}</span>
-            <span class="filter-tag-premium"><i class="fas fa-store"></i> ${sucursalFiltro === 'todas' ? 'Todas' : sucursalFiltro}</span>
+            <span><i class="fas fa-calculator"></i> <strong>Diferencia</strong></span>
+            <span class="filter-tag-premium"><i class="fas fa-calendar-start"></i> ${fechaInicio}</span>
+            <span class="filter-tag-premium"><i class="fas fa-arrow-right"></i></span>
+            <span class="filter-tag-premium"><i class="fas fa-calendar-end"></i> ${fechaFin}</span>
+            <span class="filter-tag-premium"><i class="fas fa-server"></i> ${datos.length} máquinas</span>
         `;
 
         let html = '';
         let totalFichas = 0, totalPremios = 0;
 
-        maquinasData.forEach((data, index) => {
-            const fichasInicio = data.inicio.fichas || 0;
-            const fichasFin = data.fin.fichas || 0;
-            const premiosInicio = data.inicio.premios || 0;
-            const premiosFin = data.fin.premios || 0;
-            const fichasPruebaInicio = data.inicio.fichasPrueba || 0;
-            const fichasPruebaFin = data.fin.fichasPrueba || 0;
-            const premiosPruebaInicio = data.inicio.premiosPrueba || 0;
-            const premiosPruebaFin = data.fin.premiosPrueba || 0;
+        datos.forEach((d, index) => {
+            const diffFichas = Math.abs((d.fichasFin || 0) - (d.fichasInicio || 0));
+            const diffPremios = Math.abs((d.premiosFin || 0) - (d.premiosInicio || 0));
+            const diffFichasPrueba = Math.abs((d.fichasPruebaFin || 0) - (d.fichasPruebaInicio || 0));
+            const diffPremiosPrueba = Math.abs((d.premiosPruebaFin || 0) - (d.premiosPruebaInicio || 0));
 
-            const diffFichas = Math.max(fichasInicio, fichasFin) - Math.min(fichasInicio, fichasFin);
-            const diffFichasPrueba = Math.max(fichasPruebaInicio, fichasPruebaFin) - Math.min(fichasPruebaInicio, fichasPruebaFin);
             const fichasVendidas = diffFichas - diffFichasPrueba;
-
-            const diffPremios = Math.max(premiosInicio, premiosFin) - Math.min(premiosInicio, premiosFin);
-            const diffPremiosPrueba = Math.max(premiosPruebaInicio, premiosPruebaFin) - Math.min(premiosPruebaInicio, premiosPruebaFin);
             const premiosEntregados = diffPremios - diffPremiosPrueba;
 
             totalFichas += fichasVendidas;
             totalPremios += premiosEntregados;
 
             const claseFila = index % 2 === 0 ? '' : 'style="background:var(--gray-50);"';
-            html += `<tr ${claseFila}>
-                <td><strong>${data.sucursal}</strong></td>
-                <td><strong>${data.maquina.toUpperCase()}</strong></td>
-                <td>${fichasInicio}</td>
-                <td>${premiosInicio}</td>
-                <td>${fichasPruebaInicio}</td>
-                <td>${premiosPruebaInicio}</td>
-                <td>${fichasFin}</td>
-                <td>${premiosFin}</td>
-                <td>${fichasPruebaFin}</td>
-                <td>${premiosPruebaFin}</td>
-                <td class="contadores-diff">${fichasVendidas}</td>
-                <td class="contadores-diff">${premiosEntregados}</td>
+            const tieneInicio = d.tieneInicio;
+            const tieneFin = d.tieneFin;
+            const estiloFaltante = (!tieneInicio || !tieneFin) ? 'style="opacity:0.7; color:var(--gray-500);"' : '';
+
+            html += `<tr ${claseFila} ${estiloFaltante}>
+                <td><strong>${d.sucursal}</strong></td>
+                <td><strong>${d.maquina.toUpperCase()}</strong>
+                    ${!tieneInicio ? ' <span style="font-size:0.6rem; background:#FF9800; color:white; padding:1px 8px; border-radius:10px;">sin inicio</span>' : ''}
+                    ${!tieneFin ? ' <span style="font-size:0.6rem; background:#FF9800; color:white; padding:1px 8px; border-radius:10px;">sin fin</span>' : ''}
+                </td>
+                <td ${!tieneInicio ? 'style="color:#999;"' : ''}>${d.fichasInicio ?? 0}</td>
+                <td ${!tieneInicio ? 'style="color:#999;"' : ''}>${d.premiosInicio ?? 0}</td>
+                <td ${!tieneInicio ? 'style="color:#999;"' : ''}>${d.fichasPruebaInicio ?? 0}</td>
+                <td ${!tieneInicio ? 'style="color:#999;"' : ''}>${d.premiosPruebaInicio ?? 0}</td>
+                <td ${!tieneFin ? 'style="color:#999;"' : ''}>${d.fichasFin ?? 0}</td>
+                <td ${!tieneFin ? 'style="color:#999;"' : ''}>${d.premiosFin ?? 0}</td>
+                <td ${!tieneFin ? 'style="color:#999;"' : ''}>${d.fichasPruebaFin ?? 0}</td>
+                <td ${!tieneFin ? 'style="color:#999;"' : ''}>${d.premiosPruebaFin ?? 0}</td>
+                <td class="contadores-diff"><strong>${fichasVendidas}</strong></td>
+                <td class="contadores-diff"><strong>${premiosEntregados}</strong></td>
             </tr>`;
         });
 
         html += `<tr class="contadores-total-row">
             <td colspan="2"><strong>TOTAL</strong></td>
-            <td colspan="4"></td>
-            <td colspan="4"></td>
+            <td colspan="8"></td>
             <td><strong>${totalFichas}</strong></td>
             <td><strong>${totalPremios}</strong></td>
         </tr>`;
@@ -4138,7 +4559,7 @@
     }
 
     // ============================================================
-    // 22. PDF
+    // 21. PDF
     // ============================================================
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
@@ -4312,7 +4733,7 @@
     }
 
     // ============================================================
-    // 23. INICIALIZACIÓN
+    // 22. INICIALIZACIÓN
     // ============================================================
     cargarCarritos();
     cargarCatalogoUnificado();
@@ -4333,7 +4754,6 @@
     console.log('📁 Ruta de imágenes: ../imagenes/ (panel dentro de carpeta sucursales)');
     console.log('📦 Catálogo combinado de Villa Morra, Los Laureles y Villa Elisa');
 
-    // Listener para cambios en tiempo real del stock
     for (const suc of sucursalesCatalogo) {
         try {
             const app = initializeApp(suc.config, suc.id);
@@ -4346,7 +4766,6 @@
         } catch (e) { /* Ignorar */ }
     }
 
-    // Listener para cambios en tiempo real del carrito
     for (const suc of sucursalesCompletas) {
         try {
             const app = initializeApp(suc.config, suc.id);
