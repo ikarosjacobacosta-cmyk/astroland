@@ -55,6 +55,7 @@
             color: var(--gray-700);
             min-height: 100vh;
             padding: 20px;
+            overflow-y: auto !important;
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -569,7 +570,7 @@
             border-radius: var(--radius-sm);
             margin: 10px 0 16px 0;
             border: 1px solid var(--gray-200);
-            max-height: 260px;
+            max-height: 280px;
             overflow-y: auto;
         }
 
@@ -666,6 +667,36 @@
         .contadores-diff {
             color: var(--success);
             font-weight: 700;
+        }
+
+        /* ============================================================
+           SCROLL WRAPPER PARA CONTADORES
+           ============================================================ */
+        .contadores-scroll-wrapper {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .contadores-scroll-wrapper table {
+            margin-bottom: 0;
+        }
+
+        .contadores-scroll-wrapper thead th {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .contadores-scroll-wrapper thead tr.contadores-header th {
+            top: 0;
+            z-index: 22;
+        }
+
+        .contadores-scroll-wrapper thead tr.contadores-subheader th {
+            top: 38px;
+            z-index: 21;
         }
 
         .stats-grid-premium {
@@ -1445,7 +1476,6 @@
         .btn-guardar-contadores { background: #4CAF50; color: white; }
         .btn-ver-contadores { background: #2196F3; color: white; }
 
-        /* Estilos para la diferencia */
         #diferenciaControles {
             background: #f8f9fa;
             padding: 16px;
@@ -1454,7 +1484,6 @@
             margin: 8px 0;
         }
 
-        /* Indicador de filtro activo */
         #filtroActivoContadores {
             margin: 8px 0 16px 0;
             padding: 8px 16px;
@@ -1494,6 +1523,9 @@
             #diferenciaControles .filter-group {
                 min-width: 100% !important;
             }
+            .contadores-scroll-wrapper {
+                max-height: 350px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1505,6 +1537,9 @@
             .header-badge { font-size: 0.7rem; padding: 4px 10px; }
             .catalogo-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
             .catalogo-item { padding: 8px; }
+            .contadores-scroll-wrapper {
+                max-height: 280px;
+            }
         }
     </style>
 </head>
@@ -1817,10 +1852,10 @@
                 </div>
             </div>
 
-            <!-- RESULTADOS -->
+            <!-- RESULTADOS CON SCROLL WRAPPER -->
             <div id="contadoresResultados" style="display:none; margin-top:16px;">
                 <div class="filter-summary-premium" id="contadoresSummary"></div>
-                <div class="table-responsive">
+                <div class="contadores-scroll-wrapper" id="contadoresScrollWrapper">
                     <table class="table-premium" id="contadoresTable">
                         <thead>
                             <tr class="contadores-header">
@@ -1841,10 +1876,10 @@
                 </div>
             </div>
 
-            <!-- RESULTADOS DE DIFERENCIA -->
+            <!-- RESULTADOS DE DIFERENCIA CON SCROLL WRAPPER -->
             <div id="diferenciaResultados" style="display:none; margin-top:16px;">
                 <div class="filter-summary-premium" id="diferenciaSummary"></div>
-                <div class="table-responsive">
+                <div class="contadores-scroll-wrapper" id="diferenciaScrollWrapper">
                     <table class="table-premium" id="diferenciaTable">
                         <thead>
                             <tr class="contadores-header">
@@ -3987,7 +4022,24 @@
         }
     }
 
-    // --- FUNCIONES DEL FILTRO POR SUCURSAL ---
+    // FUNCIÓN PARA ASEGURAR EL SCROLL EN CONTADORES
+    function asegurarScrollContadores() {
+        document.body.style.overflow = 'auto';
+        document.body.style.overflowY = 'auto';
+        
+        const resultados = document.getElementById('contadoresResultados');
+        if (resultados && resultados.style.display !== 'none') {
+            setTimeout(() => {
+                const wrapper = document.getElementById('contadoresScrollWrapper');
+                if (wrapper) {
+                    wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    resultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 300);
+        }
+    }
+
     let filtroContadoresActual = {
         sucursal: 'todas',
         fechaDesde: '',
@@ -4040,7 +4092,6 @@
         }
     };
 
-    // --- CALENDARIO ---
     window.cargarCalendarioContadores = async function(event) {
         const btn = event?.target?.closest?.('button') || document.querySelector('.btn-premium.gold');
         if (btn) btn.disabled = true;
@@ -4109,6 +4160,7 @@
         document.getElementById('contadoresResultados').style.display = 'block';
 
         if (btn) btn.disabled = false;
+        asegurarScrollContadores();
     };
 
     function renderCalendarioContadores(fechasConDatos, fechaDesde, fechaHasta) {
@@ -4198,7 +4250,6 @@
         document.head.appendChild(style);
     }
 
-    // --- CARGAR DATOS DE FECHA ---
     window.cargarDatosFechaContadores = async function(event) {
         const btn = event?.target?.closest?.('button') || document.querySelector('.btn-premium.info');
         if (btn) btn.disabled = true;
@@ -4307,6 +4358,7 @@
         const sinDatos = resultados.filter(r => !r.tieneDatos).length;
         showToast(`✅ ${resultados.length} máquinas (${conDatos} con datos, ${sinDatos} sin datos)`, 'success');
         if (btn) btn.disabled = false;
+        asegurarScrollContadores();
     };
 
     function renderDatosFechaContadores(datos, fecha) {
@@ -4492,6 +4544,7 @@
         renderDiferenciaContadores(resultados, fechaInicio, fechaFin);
         showToast(`✅ Diferencia calculada - ${resultados.length} máquinas`, 'success');
         if (btn) btn.disabled = false;
+        asegurarScrollContadores();
     };
 
     function renderDiferenciaContadores(datos, fechaInicio, fechaFin) {
@@ -4750,8 +4803,8 @@
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 3.2 - Catálogo Unificado con ruta de imágenes corregida');
-    console.log('📁 Ruta de imágenes: ../imagenes/ (panel dentro de carpeta sucursales)');
+    console.log('🏷️ Versión: 3.3 - Contadores con scroll y sticky headers');
+    console.log('📁 Ruta de imágenes: ../imagenes/');
     console.log('📦 Catálogo combinado de Villa Morra, Los Laureles y Villa Elisa');
 
     for (const suc of sucursalesCatalogo) {
