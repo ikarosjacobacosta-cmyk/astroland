@@ -4609,8 +4609,17 @@
     }
 
     // ============================================================
-    // 21. PDF - NUEVA VERSIÓN CON MEJORAS
+    // 21. PDF - NUEVA VERSIÓN CON MEJORAS (CON LAMBARÉ CONDICIONAL)
     // ============================================================
+
+    // Función para determinar si Lambaré debe aparecer
+    function debeMostrarLambare(fechaDesde) {
+        if (!fechaDesde) return true; // Si no hay fecha, mostramos Lambaré por defecto
+        const fechaLimite = new Date('2026-05-31');
+        const fechaComparar = new Date(fechaDesde);
+        // Si la fecha es anterior o igual al 31 de mayo de 2026, mostramos Lambaré
+        return fechaComparar <= fechaLimite;
+    }
 
     // Función auxiliar para formatear fechas
     function formatearFechaParaTitulo(fechaStr) {
@@ -4690,6 +4699,9 @@
         // Determinar si es rango de una semana (7 días o menos)
         const esRangoSemanal = diasRango <= 7 && diasRango > 0;
         
+        // Determinar si Lambaré debe aparecer
+        const mostrarLambare = debeMostrarLambare(fechaDesde);
+        
         // Título del reporte
         const tituloReporte = generarTituloReporte(fechaDesde, fechaHasta);
         
@@ -4727,7 +4739,12 @@
         // ============================================================
         // AGRUPAR DATOS POR SUCURSAL
         // ============================================================
-        const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+        // Definir orden de sucursales (Lambaré condicional)
+        let ordenSucursales = ["Villa Morra", "Los Laureles", "Villa Elisa"];
+        if (mostrarLambare) {
+            ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+        }
+        
         const datosPorSucursal = {};
         
         items.forEach(item => {
@@ -5001,6 +5018,7 @@
         const tituloReporte = generarTituloReporte(fechaDesde, fechaHasta);
         const diasRango = calcularDiferenciaDias(fechaDesde, fechaHasta);
         const esRangoSemanal = diasRango <= 7 && diasRango > 0;
+        const mostrarLambare = debeMostrarLambare(fechaDesde);
 
         const sucursales = {};
         items.forEach(item => {
@@ -5010,7 +5028,12 @@
         });
 
         const filas = [];
-        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
+        const orden = ["Villa Morra", "Los Laureles", "Villa Elisa"];
+        if (mostrarLambare) {
+            orden.splice(2, 0, "Lambaré");
+        }
+        orden.push("Sin Sucursal");
+        
         orden.forEach(nombre => {
             const stats = calcularEstadisticas(sucursales[nombre] || []);
             filas.push({ sucursal: nombre, efectivo: stats.cierreEfectivo, bancard: stats.cierreBancard, total: stats.totalCierre });
@@ -5027,6 +5050,7 @@
                 <span><i class="fas fa-calendar-day"></i> ${dias.size} días</span>
                 <span><i class="fas fa-list"></i> ${items.length} items</span>
                 <span><i class="fas fa-clock"></i> ${esRangoSemanal ? '📊 Modo Semanal (5 columnas: Día, Sucursal, Efectivo, Bancard, Total)' : '📊 Modo Resumen (4 columnas)'}</span>
+                ${!mostrarLambare ? '<span style="color:var(--warning);"><i class="fas fa-store-slash"></i> Lambaré excluido (fecha > 31/05/2026)</span>' : ''}
             </div>
             <table class="table-premium">
                 <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
@@ -5040,6 +5064,7 @@
         html += `<p style="margin-top:8px; font-size:0.7rem; color:var(--gray-400);">
             <i class="fas fa-info-circle"></i> Formato: Times New Roman, Rojo Carmesí en títulos.
             ${esRangoSemanal ? 'Modo semanal: muestra días de la semana con columnas Día, Sucursal, Efectivo, Bancard y Total.' : 'Modo resumen: muestra totales por sucursal.'}
+            ${!mostrarLambare ? ' (Lambaré no se muestra porque la fecha es posterior al 31/05/2026)' : ''}
         </p>`;
         container.innerHTML = html;
     }
@@ -5062,7 +5087,7 @@
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 3.4 - PDF con modo semanal (5 columnas)');
+    console.log('🏷️ Versión: 3.5 - PDF con modo semanal (5 columnas) y Lambaré condicional');
     console.log('📁 Ruta de imágenes: ../imagenes/');
     console.log('📦 Catálogo combinado de Villa Morra, Los Laureles y Villa Elisa');
 
