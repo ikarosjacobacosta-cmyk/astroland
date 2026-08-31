@@ -669,9 +669,6 @@
             font-weight: 700;
         }
 
-        /* ============================================================
-           SCROLL WRAPPER PARA CONTADORES
-           ============================================================ */
         .contadores-scroll-wrapper {
             max-height: 500px;
             overflow-y: auto;
@@ -4612,8 +4609,67 @@
     }
 
     // ============================================================
-    // 21. PDF
+    // 21. PDF - NUEVA VERSIÓN CON MEJORAS
     // ============================================================
+
+    // Función auxiliar para formatear fechas
+    function formatearFechaParaTitulo(fechaStr) {
+        if (!fechaStr) return '';
+        const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const partes = fechaStr.split('-');
+        if (partes.length === 3) {
+            const dia = parseInt(partes[2]);
+            const mes = meses[parseInt(partes[1]) - 1];
+            const anio = partes[0];
+            return `${dia}-${mes}-${anio}`;
+        }
+        return fechaStr;
+    }
+
+    function formatearFechaCortaParaTitulo(fechaStr) {
+        if (!fechaStr) return '';
+        const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const partes = fechaStr.split('-');
+        if (partes.length === 3) {
+            const dia = parseInt(partes[2]);
+            const mes = meses[parseInt(partes[1]) - 1];
+            return `${dia}-${mes}`;
+        }
+        return fechaStr;
+    }
+
+    function generarTituloReporte(fechaDesde, fechaHasta) {
+        if (!fechaDesde && !fechaHasta) return 'Reporte';
+        
+        if (!fechaHasta || fechaDesde === fechaHasta) {
+            return `Reporte ${formatearFechaParaTitulo(fechaDesde)}`;
+        }
+        
+        const desde = new Date(fechaDesde);
+        const hasta = new Date(fechaHasta);
+        
+        if (desde.getMonth() === hasta.getMonth() && desde.getFullYear() === hasta.getFullYear()) {
+            return `Reporte ${parseInt(fechaDesde.split('-')[2])} al ${formatearFechaParaTitulo(fechaHasta)}`;
+        } else {
+            return `Reporte ${formatearFechaCortaParaTitulo(fechaDesde)} al ${formatearFechaParaTitulo(fechaHasta)}`;
+        }
+    }
+
+    function calcularDiferenciaDias(fechaDesde, fechaHasta) {
+        if (!fechaDesde || !fechaHasta) return 0;
+        const desde = new Date(fechaDesde);
+        const hasta = new Date(fechaHasta);
+        const diffTime = Math.abs(hasta - desde);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays + 1;
+    }
+
+    function getNombreDia(fechaStr) {
+        const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const fecha = new Date(fechaStr + 'T00:00:00');
+        return dias[fecha.getDay()];
+    }
+
     window.generarPDFconFiltros = function() {
         const items = estado.datosFiltrados || [];
         if (items.length === 0) {
@@ -4625,112 +4681,309 @@
 
     function generarPDFconDatos(items) {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-
+        const doc = new jsPDF('p', 'mm', 'a4', 'legal');
+        
+        const fechaDesde = document.getElementById('filtroDiaDesde').value;
+        const fechaHasta = document.getElementById('filtroDiaHasta').value;
+        const diasRango = calcularDiferenciaDias(fechaDesde, fechaHasta);
+        
+        // Determinar si es rango de una semana (7 días o menos)
+        const esRangoSemanal = diasRango <= 7 && diasRango > 0;
+        
+        // Título del reporte
+        const tituloReporte = generarTituloReporte(fechaDesde, fechaHasta);
+        
+        // ============================================================
+        // CONFIGURACIÓN DEL PDF
+        // ============================================================
         doc.setFont("Times", "Roman");
-        doc.setFontSize(22);
-        doc.setTextColor(0, 0, 139);
+        
+        // Título ASTROLAND en ROJO CARMESÍ
+        doc.setFontSize(24);
+        doc.setTextColor(139, 0, 0); // Rojo carmesí
         doc.setFont("Times", "bold");
         doc.text("ASTROLAND", 105, 25, { align: 'center' });
+        
         doc.setFontSize(14);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont("Times", "italic");
         doc.text("IN GOD WE TRUST", 105, 35, { align: 'center' });
+        
+        doc.setDrawColor(139, 0, 0);
         doc.line(20, 40, 190, 40);
-
+        
+        // Información del reporte
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("Times", "normal");
+        doc.text(tituloReporte, 20, 50);
+        
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.setFont("Times", "normal");
-
-        const diaDesde = document.getElementById('filtroDiaDesde').value || 'inicio';
-        const diaHasta = document.getElementById('filtroDiaHasta').value || 'hoy';
-        doc.text(`Reporte - Días Laborales: ${diaDesde} → ${diaHasta}`, 20, 50);
         doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 57);
         doc.text(`Items: ${items.length}`, 20, 64);
-
-        const sucursales = {};
+        doc.text(`Rango: ${diasRango} día(s)`, 20, 71);
+        
+        // ============================================================
+        // AGRUPAR DATOS POR SUCURSAL
+        // ============================================================
+        const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
+        const datosPorSucursal = {};
+        
         items.forEach(item => {
             const suc = item.sucursal || 'Sin Sucursal';
-            if (!sucursales[suc]) sucursales[suc] = [];
-            sucursales[suc].push(item);
+            if (!datosPorSucursal[suc]) datosPorSucursal[suc] = [];
+            datosPorSucursal[suc].push(item);
         });
-
-        const filas = [];
-        let totalEfectivo = 0, totalBancard = 0;
-        const orden = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa", "Sin Sucursal"];
-
-        orden.forEach(nombre => {
-            const stats = calcularEstadisticas(sucursales[nombre] || []);
-            filas.push({
-                sucursal: nombre,
-                efectivo: stats.cierreEfectivo,
-                bancard: stats.cierreBancard,
-                total: stats.totalCierre
+        
+        // ============================================================
+        // GENERAR TABLA SEGÚN EL RANGO
+        // ============================================================
+        let startY = 80;
+        
+        if (esRangoSemanal && fechaDesde && fechaHasta) {
+            // ============================================================
+            // MODO SEMANAL: 5 columnas (Día, Sucursal, Efectivo, Bancard, Total)
+            // ============================================================
+            const diasSemana = [];
+            const fechaActual = new Date(fechaDesde);
+            const fechaFin = new Date(fechaHasta);
+            while (fechaActual <= fechaFin) {
+                const fechaStr = fechaActual.toISOString().split('T')[0];
+                diasSemana.push(fechaStr);
+                fechaActual.setDate(fechaActual.getDate() + 1);
+            }
+            
+            // Construir tabla con 5 columnas
+            const tableHead = ['Día', 'Sucursal', 'Efectivo', 'Bancard', 'Total'];
+            const tableBody = [];
+            
+            let totalGeneralEfectivo = 0;
+            let totalGeneralBancard = 0;
+            let totalGeneralTotal = 0;
+            
+            ordenSucursales.forEach(sucursal => {
+                const itemsSucursal = datosPorSucursal[sucursal] || [];
+                
+                // Agrupar items por día para esta sucursal
+                const itemsPorDia = {};
+                diasSemana.forEach(dia => {
+                    itemsPorDia[dia] = [];
+                });
+                
+                itemsSucursal.forEach(item => {
+                    const diaLaboral = item._diaLaboral || obtenerDiaLaboral(item);
+                    if (!diaLaboral) return;
+                    const fechaNormalizada = convertirFechaParaComparar(diaLaboral);
+                    if (!fechaNormalizada) return;
+                    if (itemsPorDia[fechaNormalizada]) {
+                        itemsPorDia[fechaNormalizada].push(item);
+                    }
+                });
+                
+                // Calcular stats por día
+                const statsPorDia = {};
+                diasSemana.forEach(dia => {
+                    const stats = calcularEstadisticas(itemsPorDia[dia] || []);
+                    statsPorDia[dia] = {
+                        efectivo: stats.cierreEfectivo || 0,
+                        bancard: stats.cierreBancard || 0,
+                        total: stats.totalCierre || 0
+                    };
+                });
+                
+                // Agregar filas por día
+                diasSemana.forEach(dia => {
+                    const stats = statsPorDia[dia];
+                    const nombreDia = getNombreDia(dia);
+                    tableBody.push({
+                        content: [nombreDia, sucursal, stats.efectivo.toLocaleString(), stats.bancard.toLocaleString(), stats.total.toLocaleString()],
+                        isDia: true,
+                        sucursal: sucursal,
+                        dia: dia,
+                        efectivo: stats.efectivo,
+                        bancard: stats.bancard,
+                        total: stats.total
+                    });
+                });
+                
+                // Calcular subtotal de la sucursal
+                let subtotalEfectivo = 0;
+                let subtotalBancard = 0;
+                let subtotalTotal = 0;
+                diasSemana.forEach(dia => {
+                    subtotalEfectivo += statsPorDia[dia].efectivo;
+                    subtotalBancard += statsPorDia[dia].bancard;
+                    subtotalTotal += statsPorDia[dia].total;
+                });
+                
+                // Agregar fila de subtotal
+                tableBody.push({
+                    content: ['SUBTOTAL', sucursal, subtotalEfectivo.toLocaleString(), subtotalBancard.toLocaleString(), subtotalTotal.toLocaleString()],
+                    isSubtotal: true,
+                    sucursal: sucursal,
+                    efectivo: subtotalEfectivo,
+                    bancard: subtotalBancard,
+                    total: subtotalTotal
+                });
+                
+                totalGeneralEfectivo += subtotalEfectivo;
+                totalGeneralBancard += subtotalBancard;
+                totalGeneralTotal += subtotalTotal;
             });
-            totalEfectivo += stats.cierreEfectivo;
-            totalBancard += stats.cierreBancard;
-        });
-
-        const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
-        if (tableRows.length === 0) {
-            tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
+            
+            // Agregar fila de total general
+            tableBody.push({
+                content: ['TOTAL GENERAL', '', totalGeneralEfectivo.toLocaleString(), totalGeneralBancard.toLocaleString(), totalGeneralTotal.toLocaleString()],
+                isTotal: true,
+                efectivo: totalGeneralEfectivo,
+                bancard: totalGeneralBancard,
+                total: totalGeneralTotal
+            });
+            
+            // Generar tabla con autoTable
+            doc.autoTable({
+                head: [tableHead],
+                body: tableBody.map(row => row.content),
+                startY: startY,
+                theme: 'plain',
+                styles: {
+                    font: 'Times',
+                    fontSize: 10,
+                    textColor: [0, 0, 139],
+                    lineColor: [0, 0, 0],
+                    lineWidth: 0.5,
+                    cellPadding: 2,
+                },
+                headStyles: {
+                    fillColor: [139, 0, 0],
+                    textColor: [255, 255, 255],
+                    fontSize: 11,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                bodyStyles: {
+                    fontSize: 10,
+                    halign: 'center',
+                    valign: 'middle'
+                },
+                margin: { left: 15, right: 15 },
+                tableWidth: 'auto',
+                didParseCell: function(data) {
+                    const rowData = tableBody[data.row.index];
+                    if (rowData) {
+                        if (rowData.isSubtotal) {
+                            data.cell.styles.fillColor = [255, 255, 200]; // Amarillo claro
+                            data.cell.styles.fontStyle = 'bold';
+                            data.cell.styles.fontSize = 11;
+                            data.cell.styles.textColor = [0, 0, 0];
+                        } else if (rowData.isTotal) {
+                            data.cell.styles.fillColor = [255, 215, 0]; // Amarillo rutilante
+                            data.cell.styles.fontStyle = 'bold';
+                            data.cell.styles.fontSize = 12;
+                            data.cell.styles.textColor = [0, 0, 0];
+                        } else if (rowData.isDia) {
+                            // Si el día tiene datos, resaltar ligeramente
+                            if (rowData.efectivo > 0 || rowData.bancard > 0) {
+                                data.cell.styles.fillColor = [245, 245, 255];
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // ============================================================
+            // MODO NORMAL: Tabla resumida por sucursal (como estaba)
+            // ============================================================
+            const filas = [];
+            let totalEfectivo = 0;
+            let totalBancard = 0;
+            
+            ordenSucursales.forEach(nombre => {
+                const stats = calcularEstadisticas(datosPorSucursal[nombre] || []);
+                filas.push({
+                    sucursal: nombre,
+                    efectivo: stats.cierreEfectivo,
+                    bancard: stats.cierreBancard,
+                    total: stats.totalCierre
+                });
+                totalEfectivo += stats.cierreEfectivo;
+                totalBancard += stats.cierreBancard;
+            });
+            
+            const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
+            if (tableRows.length === 0) {
+                tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
+            }
+            
+            const bodyRows = tableRows.map(f => [f.sucursal, f.efectivo.toLocaleString(), f.bancard.toLocaleString(), f.total.toLocaleString()]);
+            
+            const footRows = [];
+            if (tableRows.length > 1) {
+                footRows.push(['TOTAL', totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), (totalEfectivo + totalBancard).toLocaleString()]);
+            }
+            
+            doc.autoTable({
+                head: [['Sucursal', 'Efectivo', 'Bancard', 'Total']],
+                body: bodyRows,
+                foot: footRows,
+                startY: startY,
+                theme: 'plain',
+                styles: {
+                    font: 'Times',
+                    fontSize: 12,
+                    textColor: [0, 0, 139],
+                    lineColor: [0, 0, 0],
+                    lineWidth: 0.5,
+                },
+                headStyles: {
+                    fillColor: [139, 0, 0],
+                    textColor: [255, 255, 255],
+                    fontSize: 13,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                bodyStyles: {
+                    fontSize: 12,
+                    halign: 'center'
+                },
+                footStyles: {
+                    fillColor: [255, 215, 0],
+                    textColor: [0, 0, 0],
+                    fontSize: 13,
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                margin: { left: 20, right: 20 },
+                tableWidth: 'auto'
+            });
         }
-
-        const bodyRows = tableRows.map(f => [f.sucursal, f.efectivo.toLocaleString(), f.bancard.toLocaleString(), f.total.toLocaleString()]);
-
-        const footRows = [];
-        if (tableRows.length > 1) {
-            footRows.push(['Total', totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), (totalEfectivo + totalBancard).toLocaleString()]);
-        }
-
-        doc.autoTable({
-            head: [['Sucursal', 'Efectivo', 'Bancard', 'Total']],
-            body: bodyRows,
-            foot: footRows,
-            startY: 72,
-            theme: 'plain',
-            styles: {
-                font: 'Times',
-                fontSize: 14,
-                textColor: [0, 0, 139],
-                lineColor: [0, 0, 0],
-                lineWidth: 0.5,
-            },
-            headStyles: {
-                fillColor: [255, 215, 0],
-                textColor: [0, 0, 0],
-                fontSize: 14,
-                fontStyle: 'bold',
-                halign: 'center'
-            },
-            bodyStyles: {
-                fontSize: 14,
-                halign: 'center'
-            },
-            footStyles: {
-                fillColor: [255, 215, 0],
-                textColor: [0, 0, 0],
-                fontSize: 14,
-                fontStyle: 'bold',
-                halign: 'center'
-            },
-            margin: { left: 20, right: 20 },
-            tableWidth: 'auto'
-        });
-
+        
+        // ============================================================
+        // PIE DE PÁGINA
+        // ============================================================
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
-            doc.setFontSize(12);
+            doc.setFontSize(10);
             doc.setTextColor(100);
+            doc.setFont("Times", "italic");
             doc.text("Gracias Dios nuestro", 20, doc.internal.pageSize.height - 15);
             doc.text(`Hoja ${i} / ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 15);
         }
-
+        
+        // ============================================================
+        // GUARDAR PDF
+        // ============================================================
         const fechaStr = new Date().toISOString().split('T')[0];
         const sucursalFiltro = document.getElementById('filtroSucursal').value;
         const sufijo = sucursalFiltro && sucursalFiltro !== 'todas' ? `_${sucursalFiltro.replace(' ', '_')}` : '';
-        doc.save(`ASTROLAND_DiasLaborales${sufijo}_${fechaStr}.pdf`);
+        doc.save(`ASTROLAND_${tituloReporte.replace(/ /g, '_')}${sufijo}_${fechaStr}.pdf`);
     }
 
+    // ============================================================
+    // ACTUALIZAR FUNCIÓN DE PREVIEW
+    // ============================================================
     function actualizarPreviewPDF(items) {
         const container = document.getElementById('previewPDF');
         if (!items || items.length === 0) {
@@ -4742,6 +4995,12 @@
             `;
             return;
         }
+
+        const fechaDesde = document.getElementById('filtroDiaDesde').value;
+        const fechaHasta = document.getElementById('filtroDiaHasta').value;
+        const tituloReporte = generarTituloReporte(fechaDesde, fechaHasta);
+        const diasRango = calcularDiferenciaDias(fechaDesde, fechaHasta);
+        const esRangoSemanal = diasRango <= 7 && diasRango > 0;
 
         const sucursales = {};
         items.forEach(item => {
@@ -4760,15 +5019,14 @@
         const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
         if (tableRows.length === 0) tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
 
-        const diaDesde = document.getElementById('filtroDiaDesde').value || 'inicio';
-        const diaHasta = document.getElementById('filtroDiaHasta').value || 'hoy';
         const dias = new Set(items.map(i => i._diaLaboral).filter(Boolean));
 
         let html = `
             <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px; font-size:0.8rem; color:var(--gray-500);">
-                <span><i class="fas fa-calendar"></i> ${diaDesde} → ${diaHasta}</span>
+                <span><i class="fas fa-calendar"></i> <strong>${tituloReporte}</strong></span>
                 <span><i class="fas fa-calendar-day"></i> ${dias.size} días</span>
                 <span><i class="fas fa-list"></i> ${items.length} items</span>
+                <span><i class="fas fa-clock"></i> ${esRangoSemanal ? '📊 Modo Semanal (5 columnas: Día, Sucursal, Efectivo, Bancard, Total)' : '📊 Modo Resumen (4 columnas)'}</span>
             </div>
             <table class="table-premium">
                 <thead><tr><th>Sucursal</th><th>Efectivo</th><th>Bancard</th><th>Total</th></tr></thead>
@@ -4780,7 +5038,8 @@
 
         html += `</tbody></table>`;
         html += `<p style="margin-top:8px; font-size:0.7rem; color:var(--gray-400);">
-            <i class="fas fa-info-circle"></i> Formato: Times New Roman, Azul Francia, fondo amarillo en títulos.
+            <i class="fas fa-info-circle"></i> Formato: Times New Roman, Rojo Carmesí en títulos.
+            ${esRangoSemanal ? 'Modo semanal: muestra días de la semana con columnas Día, Sucursal, Efectivo, Bancard y Total.' : 'Modo resumen: muestra totales por sucursal.'}
         </p>`;
         container.innerHTML = html;
     }
@@ -4803,7 +5062,7 @@
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 3.3 - Contadores con scroll y sticky headers');
+    console.log('🏷️ Versión: 3.4 - PDF con modo semanal (5 columnas)');
     console.log('📁 Ruta de imágenes: ../imagenes/');
     console.log('📦 Catálogo combinado de Villa Morra, Los Laureles y Villa Elisa');
 
