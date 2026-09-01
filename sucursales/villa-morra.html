@@ -181,7 +181,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   border: 1px solid #e0e0e0;
 }
 
-.modal, .maquina-modal, .cierre-modal, .cart-modal, .contadores-modal {
+.modal, .maquina-modal, .cierre-modal, .cart-modal, .contadores-modal, .precio-modal {
   display: none;
   position: fixed;
   z-index: 2000;
@@ -193,7 +193,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-.modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content, .cart-content, .contadores-modal .modal-content {
+.modal-content, .maquina-modal .modal-content, .cierre-modal .modal-content, .cart-content, .contadores-modal .modal-content, .precio-modal .modal-content {
   background-color: #fff;
   margin: 0;
   padding: 20px;
@@ -229,7 +229,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   background: rgba(244, 67, 54, 0.1);
   transform: scale(1.1);
 }
-.modal h3, .maquina-modal h3, .cierre-modal h3, .cart-content h3, .contadores-modal h3 { 
+.modal h3, .maquina-modal h3, .cierre-modal h3, .cart-content h3, .contadores-modal h3, .precio-modal h3 { 
   margin-top: 0; 
   border-bottom: 2px solid #eee; 
   padding-bottom: 10px;
@@ -237,6 +237,67 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   text-align: center;
 }
 
+/* ===== ESTILOS PARA EL MODAL DE PRECIOS ===== */
+.precio-form {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 15px 0;
+}
+.precio-field {
+  margin-bottom: 20px;
+}
+.precio-field label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+.precio-field select,
+.precio-field input {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: white;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.precio-field select:focus,
+.precio-field input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76,175,80,0.2);
+}
+.precio-info {
+  background: #e3f2fd;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 10px 0;
+  text-align: center;
+  font-weight: bold;
+  color: #1976D2;
+}
+.precio-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+.precio-buttons button {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1rem;
+  touch-action: manipulation;
+}
+.btn-guardar-precio { background: #4CAF50; color: white; }
+.btn-cancelar-precio { background: #f44336; color: white; }
+
+/* ===== RESTO DE ESTILOS EXISTENTES ===== */
 .tabs-compras {
   display: flex;
   gap: 5px;
@@ -584,7 +645,7 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
   }
 }
 
-.cart-button, .stock-button, .historial-btn {
+.cart-button, .stock-button, .historial-btn, .precio-btn {
   position: fixed;
   bottom: 20px;
   padding: 14px 22px;
@@ -603,6 +664,13 @@ h1 { margin:10px 0 20px; font-size:1.8rem; }
 .cart-button { right: 20px; background: #2196F3; color: white; }
 .stock-button { left: 20px; background: #FF9800; color: white; }
 .historial-btn { left: 180px; background: #9C27B0; color: white; }
+.precio-btn { left: 330px; background: #E91E63; color: white; }
+
+@media (max-width: 800px) {
+  .precio-btn { left: 20px; bottom: 80px; }
+  .historial-btn { left: 20px; bottom: 140px; }
+  .stock-button { left: 20px; bottom: 200px; }
+}
 
 .stock-fullscreen {
   background-color: #fff;
@@ -863,6 +931,7 @@ body { padding-top: 80px; }
 <button class="cart-button" onclick="openCartModal()">🛒 Carrito (<span id="cartCount">0</span>)</button>
 <button class="stock-button" onclick="showStockManagement()">📦 Gestionar Stock</button>
 <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
+<button class="precio-btn" onclick="abrirModalPrecios()">💰 Cambiar Precios</button>
 
 <!-- Modal de selección para vaciar carrito -->
 <div id="vaciarSeleccionModal" class="vaciar-seleccion-modal">
@@ -982,6 +1051,55 @@ body { padding-top: 80px; }
       <div id="stockItemsContainer"></div>
       <div class="modal-buttons" style="margin-top:20px;">
         <button onclick="saveAllStock()" style="background:#4CAF50; color:white;">💾 Guardar Todos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NUEVO MODAL PARA CAMBIAR PRECIOS ===== -->
+<div id="precioModal" class="precio-modal">
+  <div class="modal-content">
+    <button class="close" onclick="closePrecioModal()">&times;</button>
+    <h3>💰 Cambiar Precio de Producto</h3>
+    
+    <div style="background:#fff3cd; padding:15px; border-radius:10px; margin:10px 0; border-left:4px solid #ffc107;">
+      <p style="margin:0; color:#856404; font-weight:bold;">🔐 Se requiere contraseña GENERAL para cambiar precios</p>
+    </div>
+    
+    <!-- Prompt de contraseña -->
+    <div id="precioPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
+      <input type="password" id="precioPassword" placeholder="Contraseña general">
+      <button onclick="verifyPrecioPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
+      <button onclick="closePrecioModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
+    </div>
+    
+    <div id="precioManagementContent" style="display:none;">
+      <div class="precio-form">
+        <div class="precio-field">
+          <label>📦 Seleccionar Producto:</label>
+          <select id="productoPrecioSelect" onchange="mostrarPrecioActual()">
+            <option value="">-- Seleccionar --</option>
+          </select>
+        </div>
+        
+        <div id="precioActualInfo" class="precio-info" style="display:none;">
+          💰 Precio actual: Gs. <span id="precioActualDisplay">0</span>
+        </div>
+        
+        <div class="precio-field">
+          <label>💰 Nuevo Precio (Gs.):</label>
+          <input type="number" id="nuevoPrecioInput" min="0" step="100" placeholder="Ej: 15000" inputmode="numeric">
+        </div>
+        
+        <div class="precio-field">
+          <label>📝 Confirmar:</label>
+          <input type="text" id="confirmarPrecioText" placeholder="Escribe 'CONFIRMAR' para guardar" style="text-transform:uppercase; text-align:center; font-weight:bold;">
+        </div>
+        
+        <div class="precio-buttons">
+          <button class="btn-guardar-precio" onclick="guardarNuevoPrecio()">💾 Guardar Precio</button>
+          <button class="btn-cancelar-precio" onclick="closePrecioModal()">❌ Cancelar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1149,15 +1267,17 @@ body { padding-top: 80px; }
   const stockRef = ref(database, 'stock');
   const historialRef = ref(database, 'historial_ventas');
   const contadoresRef = ref(database, 'contadores_maquinas');
+  const preciosRef = ref(database, 'precios_personalizados');
 
   let currentProduct = null;
   let currentMovimientosProduct = null;
   let cart = [];
   let stock = {};
   let historialVentas = [];
-  let modoEdicionFecha = null;
+  let preciosPersonalizados = {};
   let contadoresMaquinas = {};
   let vaciarSeleccionados = [];
+  let modoEdicionFecha = null;
   
   const PASSWORD_STOCK = "marcia";
   const PASSWORD_GENERAL = "majo";
@@ -1246,7 +1366,7 @@ body { padding-top: 80px; }
         return; 
       }
       
-      const price = parseFloat(target.getAttribute('data-price'));
+      const price = getProductPrice(code, parseFloat(target.getAttribute('data-price')));
       const consumo = FICHA_CONSUMPTION[code] || 0;
       const name = target.querySelector('p')?.textContent || code;
       
@@ -1362,6 +1482,243 @@ body { padding-top: 80px; }
       item.addEventListener('click', handleProductClick);
     });
   }
+
+  // ========== FUNCIONES DE PRECIOS PERSONALIZADOS ==========
+
+  function getProductPrice(code, precioBase) {
+    return preciosPersonalizados[code] ?? precioBase;
+  }
+
+  async function loadPrecios() {
+    try {
+      const snap = await get(preciosRef);
+      preciosPersonalizados = snap.val() || {};
+    } catch {
+      preciosPersonalizados = {};
+    }
+  }
+
+  window.abrirModalPrecios = function() {
+    document.getElementById('precioModal').style.display = 'block';
+    document.getElementById('precioPasswordPrompt').style.display = 'block';
+    document.getElementById('precioManagementContent').style.display = 'none';
+    document.getElementById('precioPassword').value = '';
+    document.getElementById('nuevoPrecioInput').value = '';
+    document.getElementById('confirmarPrecioText').value = '';
+    document.getElementById('precioActualInfo').style.display = 'none';
+    cargarProductosEnSelect();
+    blockBodyScroll();
+  };
+
+  window.closePrecioModal = function() {
+    document.getElementById('precioModal').style.display = 'none';
+    document.getElementById('precioPasswordPrompt').style.display = 'block';
+    document.getElementById('precioManagementContent').style.display = 'none';
+    unblockBodyScroll();
+  };
+
+  window.verifyPrecioPassword = function() {
+    const passwordInput = document.getElementById('precioPassword').value;
+    if (passwordInput === PASSWORD_GENERAL) {
+      document.getElementById('precioPasswordPrompt').style.display = 'none';
+      document.getElementById('precioManagementContent').style.display = 'block';
+      cargarProductosEnSelect();
+    } else {
+      alert('❌ Contraseña incorrecta');
+      document.getElementById('precioPassword').value = '';
+    }
+  };
+
+  function cargarProductosEnSelect() {
+    const select = document.getElementById('productoPrecioSelect');
+    select.innerHTML = '<option value="">-- Seleccionar --</option>';
+    
+    const categorias = [
+      '000', '005', '020', '035', '050', '075', '100', '150', '180', '200', '220', '250', '350', '420', '500', '600', '800'
+    ];
+    
+    const rangos = {
+      '000': ['00','01','02','05','06','07','08','09','10','11'],
+      '005': { desde: 0, hasta: 18 },
+      '020': { desde: 0, hasta: 86 },
+      '035': { desde: 0, hasta: 78 },
+      '050': { desde: 0, hasta: 60 },
+      '075': { desde: 0, hasta: 73 },
+      '100': { desde: 0, hasta: 37 },
+      '150': { desde: 0, hasta: 57 },
+      '180': { desde: 0, hasta: 10 },
+      '200': { desde: 0, hasta: 41 },
+      '220': { desde: 0, hasta: 8 },
+      '250': { desde: 0, hasta: 6 },
+      '350': { desde: 0, hasta: 5 },
+      '420': ['00','01','02','03','04','05','06'],
+      '500': ['00'],
+      '600': ['00'],
+      '800': ['00','01']
+    };
+    
+    const preciosBase = {
+      '000': { '00': 5000, '01': 50000, '02': 100000, '05': 0, '06': 0, '07': 15000, '08': 15000, '09': 0, '10': 0, '11': 0 },
+      '005': 5000,
+      '020': 15000,
+      '035': 25000,
+      '050': 35000,
+      '075': 40000,
+      '100': 50000,
+      '150': 60000,
+      '180': 85000,
+      '200': 96000,
+      '220': 120000,
+      '250': 150000,
+      '350': 170000,
+      '420': { '00': 180000, '01': 180000, '02': 180000, '03': 110000, '04': 180000, '05': 180000, '06': 180000 },
+      '500': 125000,
+      '600': 135000,
+      '800': 250000
+    };
+    
+    categorias.forEach(cat => {
+      const productos = rangos[cat];
+      let grupo = [];
+      
+      if (Array.isArray(productos)) {
+        productos.forEach(sufijo => {
+          const code = `${cat}-${sufijo}`;
+          let precioBase = 0;
+          if (typeof preciosBase[cat] === 'object') {
+            precioBase = preciosBase[cat][sufijo] || 0;
+          } else {
+            precioBase = preciosBase[cat] || 0;
+          }
+          const precioActual = preciosPersonalizados[code] ?? precioBase;
+          grupo.push({ code, precioBase, precioActual });
+        });
+      } else {
+        for (let i = productos.desde; i <= productos.hasta; i++) {
+          const sufijo = i.toString().padStart(2, '0');
+          const code = `${cat}-${sufijo}`;
+          let precioBase = 0;
+          if (typeof preciosBase[cat] === 'object') {
+            precioBase = preciosBase[cat][sufijo] || 0;
+          } else {
+            precioBase = preciosBase[cat] || 0;
+          }
+          const precioActual = preciosPersonalizados[code] ?? precioBase;
+          grupo.push({ code, precioBase, precioActual });
+        }
+      }
+      
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = `${cat} puntos (${grupo.length} productos)`;
+      
+      grupo.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.code;
+        const personalizado = preciosPersonalizados[p.code] ? '⭐' : '';
+        option.textContent = `${p.code} ${personalizado} - Gs. ${p.precioActual.toLocaleString()}`;
+        optgroup.appendChild(option);
+      });
+      
+      select.appendChild(optgroup);
+    });
+  }
+
+  window.mostrarPrecioActual = function() {
+    const select = document.getElementById('productoPrecioSelect');
+    const code = select.value;
+    const infoDiv = document.getElementById('precioActualInfo');
+    const display = document.getElementById('precioActualDisplay');
+    
+    if (code) {
+      const precio = preciosPersonalizados[code] ?? obtenerPrecioBase(code);
+      display.textContent = precio.toLocaleString();
+      infoDiv.style.display = 'block';
+      document.getElementById('nuevoPrecioInput').value = precio;
+    } else {
+      infoDiv.style.display = 'none';
+    }
+  };
+
+  function obtenerPrecioBase(code) {
+    const partes = code.split('-');
+    const cat = partes[0];
+    const sufijo = partes[1];
+    
+    const preciosBase = {
+      '000': { '00': 5000, '01': 50000, '02': 100000, '05': 0, '06': 0, '07': 15000, '08': 15000, '09': 0, '10': 0, '11': 0 },
+      '005': 5000,
+      '020': 15000,
+      '035': 25000,
+      '050': 35000,
+      '075': 40000,
+      '100': 50000,
+      '150': 60000,
+      '180': 85000,
+      '200': 96000,
+      '220': 120000,
+      '250': 150000,
+      '350': 170000,
+      '420': { '00': 180000, '01': 180000, '02': 180000, '03': 110000, '04': 180000, '05': 180000, '06': 180000 },
+      '500': 125000,
+      '600': 135000,
+      '800': 250000
+    };
+    
+    if (typeof preciosBase[cat] === 'object') {
+      return preciosBase[cat][sufijo] || 0;
+    }
+    return preciosBase[cat] || 0;
+  }
+
+  window.guardarNuevoPrecio = async function() {
+    const select = document.getElementById('productoPrecioSelect');
+    const code = select.value;
+    const nuevoPrecio = parseInt(document.getElementById('nuevoPrecioInput').value);
+    const confirmar = document.getElementById('confirmarPrecioText').value;
+    
+    if (!code) {
+      alert('❌ Selecciona un producto');
+      return;
+    }
+    
+    if (isNaN(nuevoPrecio) || nuevoPrecio < 0) {
+      alert('❌ Ingresa un precio válido');
+      return;
+    }
+    
+    if (confirmar.toUpperCase() !== 'CONFIRMAR') {
+      alert('❌ Escribe "CONFIRMAR" para guardar el cambio');
+      return;
+    }
+    
+    if (!confirm(`💰 ¿Estás seguro de cambiar el precio de ${code} a Gs. ${nuevoPrecio.toLocaleString()}?`)) {
+      return;
+    }
+    
+    mostrarMensajeEnProceso('🔄 Guardando nuevo precio...');
+    
+    try {
+      await set(ref(database, `precios_personalizados/${code}`), nuevoPrecio);
+      preciosPersonalizados[code] = nuevoPrecio;
+      
+      ocultarMensajeEnProceso();
+      alert(`✅ Precio actualizado!\n\n📦 ${code}\n💰 Nuevo precio: Gs. ${nuevoPrecio.toLocaleString()}`);
+      
+      cargarProductosEnSelect();
+      document.getElementById('precioActualInfo').style.display = 'none';
+      document.getElementById('nuevoPrecioInput').value = '';
+      document.getElementById('confirmarPrecioText').value = '';
+      select.value = '';
+      
+      generarTodosLosProductos();
+      updateAllStockIndicators();
+      
+    } catch (error) {
+      ocultarMensajeEnProceso();
+      alert('❌ Error al guardar el precio');
+      console.error(error);
+    }
+  };
 
   // ========== FUNCIONES DEL CARRITO ==========
   
@@ -2469,7 +2826,7 @@ body { padding-top: 80px; }
   };
 
   function getCategoryName(code) {
-    const names = { '000':'000 puntos','005':'005 puntos','020':'20 puntos','035':'35 puntos','050':'50 puntos','075':'75 puntos','100':'100 puntos','150':'150 puntos','180':'180 puntos','200':'200 puntos','220':'220 puntos','250':'250 puntos','350':'350 puntos','420':'420 puntos','800':'800 puntos' };
+    const names = { '000':'000 puntos','005':'005 puntos','020':'20 puntos','035':'35 puntos','050':'50 puntos','075':'75 puntos','100':'100 puntos','150':'150 puntos','180':'180 puntos','200':'200 puntos','220':'220 puntos','250':'250 puntos','350':'350 puntos','420':'420 puntos','500':'500 puntos','600':'600 puntos','800':'800 puntos' };
     return names[code] || code + ' puntos';
   }
 
@@ -3673,20 +4030,27 @@ body { padding-top: 80px; }
         { codigo: "000-11", precio: 0 }
       ]},
       { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 18 } },
-      { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 74 } },
-      { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 75 } },
-      { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 59 } },
-      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 63 } },
-      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 38 } },
-      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 53 } },
+      { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 86 } },
+      { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 78 } },
+      { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 60 } },
+      { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 73 } },
+      { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 37 } },
+      { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 57 } },
       { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 10 } },
-      { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 39 } },
+      { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 41 } },
       { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
-      { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 5 } },
-      { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 3 } },
+      { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 6 } },
+      { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 5 } },
       { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
-        { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 },
-        { sufijo: "03", precio: 60000 }
+        { sufijo: "00", precio: 180000 }, { sufijo: "01", precio: 180000 }, { sufijo: "02", precio: 180000 },
+        { sufijo: "03", precio: 110000 }, { sufijo: "04", precio: 180000 }, { sufijo: "05", precio: 180000 },
+        { sufijo: "06", precio: 180000 }
+      ]},
+      { nombre: "500 puntos", categoria: "500", puntos: 500, productos: [
+        { codigo: "500-00", precio: 125000 }
+      ]},
+      { nombre: "600 puntos", categoria: "600", puntos: 600, productos: [
+        { codigo: "600-00", precio: 135000 }
       ]},
       { nombre: "800 puntos", categoria: "800", puntos: 800, productos: [
         { codigo: "800-00", precio: 250000 }, { codigo: "800-01", precio: 250000 }
@@ -3710,18 +4074,40 @@ body { padding-top: 80px; }
       galeria.className = 'galeria';
       
       const crearItem = (codigo, precio) => {
-        if (codigo === '100-38') precio = 10000;
+        const precioFinal = preciosPersonalizados[codigo] ?? precio;
+        if (codigo === '100-38') {
+          const precio10038 = preciosPersonalizados['100-38'] ?? 10000;
+          const item = document.createElement('div');
+          item.className = 'imagen-item';
+          item.setAttribute('data-code', codigo);
+          item.setAttribute('data-price', precio10038);
+          item.setAttribute('data-points', cat.puntos);
+          item.setAttribute('data-category', cat.categoria);
+          const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
+          const index = codigo.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
+          let textoPrecio = precio10038 > 0 ? `- G.${precio10038.toLocaleString('es-PY')}` : '';
+          item.innerHTML = `<div class="img-placeholder" style="background: ${colores[index]};">${codigo.replace('-', ' ')}</div>
+            <p>${codigo} ${textoPrecio}</p>
+            <div class="stock-indicator">${STOCK_INICIAL}</div>`;
+          
+          const img = new Image();
+          img.onload = () => { const p = item.querySelector('.img-placeholder'); if(p) p.outerHTML = `<img src="../imagenes/${codigo}.jpg" alt="${codigo}" loading="lazy">`; };
+          img.src = `../imagenes/${codigo}.jpg`;
+          return item;
+        }
+        
         const item = document.createElement('div');
         item.className = 'imagen-item';
         item.setAttribute('data-code', codigo);
-        item.setAttribute('data-price', precio);
+        item.setAttribute('data-price', precioFinal);
         item.setAttribute('data-points', cat.puntos);
         item.setAttribute('data-category', cat.categoria);
         const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
         const index = codigo.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
-        let textoPrecio = precio > 0 ? `- G.${precio.toLocaleString('es-PY')}` : '';
+        let textoPrecio = precioFinal > 0 ? `- G.${precioFinal.toLocaleString('es-PY')}` : '';
+        const indicador = preciosPersonalizados[codigo] ? '⭐' : '';
         item.innerHTML = `<div class="img-placeholder" style="background: ${colores[index]};">${codigo.replace('-', ' ')}</div>
-          <p>${codigo} ${textoPrecio}</p>
+          <p>${codigo} ${textoPrecio} ${indicador}</p>
           <div class="stock-indicator">${STOCK_INICIAL}</div>`;
         
         const img = new Image();
@@ -3732,13 +4118,22 @@ body { padding-top: 80px; }
       
       if (cat.rango) {
         for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
-          const precio = cat.precioBase;
-          galeria.appendChild(crearItem(`${cat.categoria}-${i.toString().padStart(2,'0')}`, precio));
+          const precioBase = cat.precioBase;
+          const codigo = `${cat.categoria}-${i.toString().padStart(2,'0')}`;
+          const precioFinal = preciosPersonalizados[codigo] ?? precioBase;
+          galeria.appendChild(crearItem(codigo, precioFinal));
         }
       } else if (cat.productosEspeciales) {
-        cat.productosEspeciales.forEach(p => galeria.appendChild(crearItem(`${cat.categoria}-${p.sufijo}`, p.precio)));
+        cat.productosEspeciales.forEach(p => {
+          const codigo = `${cat.categoria}-${p.sufijo}`;
+          const precioFinal = preciosPersonalizados[codigo] ?? p.precio;
+          galeria.appendChild(crearItem(codigo, precioFinal));
+        });
       } else if (cat.productos) {
-        cat.productos.forEach(p => galeria.appendChild(crearItem(p.codigo, p.precio)));
+        cat.productos.forEach(p => {
+          const precioFinal = preciosPersonalizados[p.codigo] ?? p.precio;
+          galeria.appendChild(crearItem(p.codigo, precioFinal));
+        });
       }
       section.appendChild(galeria);
       container.appendChild(section);
@@ -3785,6 +4180,8 @@ body { padding-top: 80px; }
 
   // ========== INICIALIZACIÓN ==========
 
+  await loadPrecios();
+  
   generarTodosLosProductos();
   generarOpcionesMaquinas();
   configurarBusqueda();
