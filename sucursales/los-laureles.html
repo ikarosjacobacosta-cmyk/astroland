@@ -1171,6 +1171,95 @@
     opacity: 0.7;
   }
 
+  /* ===== ESTILOS PARA REGISTRO DE STOCK EN MÁQUINAS ===== */
+  .registro-maquinas-box {
+    background: #fff8e1;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    border-left: 4px solid #FF9800;
+  }
+  .registro-maquinas-box h4 {
+    margin: 0 0 10px 0;
+    color: #E65100;
+  }
+  .registro-maquinas-box .reg-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .registro-maquinas-box .reg-row .reg-field {
+    flex: 1;
+    min-width: 120px;
+  }
+  .registro-maquinas-box .reg-row .reg-field label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 4px;
+  }
+  .registro-maquinas-box .reg-row .reg-field input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 0.95rem;
+    background: white;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .registro-maquinas-box .reg-row .reg-field input:focus {
+    outline: none;
+    border-color: #FF9800;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.15);
+  }
+  .registro-maquinas-box .btn-registrar-maquinas {
+    background: #FF9800;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    margin-top: 4px;
+    flex: 0 0 auto;
+  }
+  .registro-maquinas-box .btn-registrar-maquinas:hover {
+    background: #e68900;
+    transform: scale(1.02);
+  }
+  .registro-maquinas-box .btn-registrar-maquinas:active {
+    transform: scale(0.98);
+  }
+  .registro-maquinas-box .reg-helper {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 8px;
+  }
+  .registro-maquinas-box .reg-helper i {
+    color: #FF9800;
+  }
+
+  @media (max-width:600px) {
+    .registro-maquinas-box .reg-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .registro-maquinas-box .reg-row .reg-field {
+      min-width: 100%;
+    }
+    .registro-maquinas-box .btn-registrar-maquinas {
+      width: 100%;
+      text-align: center;
+      padding: 14px;
+    }
+  }
+
   @media (min-width: 1200px) {
     .galeria {
       grid-template-columns: repeat(5, 1fr);
@@ -1316,19 +1405,47 @@
 
       <div id="tabMovimientos" class="tab-pane-compras">
         <div id="movimientosProductInfo" class="product-info"></div>
+
+        <!-- SELECT SIMPLIFICADO: solo Stock y Máquinas -->
         <select id="movimientoDestino" class="maquina-input" style="padding:12px;">
           <option value="stock">📦 Stock</option>
+          <option value="maquinas">🖥️ Máquinas</option>
         </select>
+
         <input type="number" id="unidadesInput" class="maquina-input" min="1" step="1" value="1" placeholder="Cantidad de unidades" onfocus="this.select()">
+
         <div class="maquina-buttons">
           <button class="btn-agregar" onclick="agregarUnidades()">➕ Agregar</button>
           <button class="btn-quitar" onclick="quitarUnidades()">➖ Quitar</button>
           <button class="btn-cancelar" onclick="closeModal()">❌ Cancelar</button>
         </div>
+
         <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
           📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
-          🖥️ <strong>Máquina:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
+          🖥️ <strong>Máquinas:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
         </p>
+
+        <!-- ===== NUEVO: REGISTRO DE STOCK EN MÁQUINAS ===== -->
+        <div class="registro-maquinas-box">
+          <h4>📊 Registrar stock en máquinas</h4>
+          <div class="reg-row">
+            <div class="reg-field">
+              <label>📅 Fecha</label>
+              <input type="date" id="fechaStockMaquinas">
+            </div>
+            <div class="reg-field">
+              <label>📦 Cantidad en máquinas</label>
+              <input type="number" id="cantidadStockMaquinas" min="0" step="1" value="" placeholder="Ej: 10" inputmode="numeric">
+            </div>
+            <button class="btn-registrar-maquinas" onclick="registrarStockMaquinas()">
+              💾 Registrar
+            </button>
+          </div>
+          <div class="reg-helper">
+            <i>ℹ️</i> Registra cuántas unidades de este producto hay en TODAS las máquinas en una fecha específica.
+            Se guarda en el historial de stock en máquinas.
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1367,7 +1484,7 @@
     </div>
   </div>
 
-  <!-- ===== NUEVO MODAL PARA CAMBIAR PRECIOS ===== -->
+  <!-- ===== MODAL PARA CAMBIAR PRECIOS ===== -->
   <div id="precioModal" class="precio-modal">
     <div class="modal-content">
       <button class="close" onclick="closePrecioModal()">&times;</button>
@@ -1577,6 +1694,7 @@
     const historialRef = ref(database, 'historial_ventas');
     const contadoresRef = ref(database, 'contadores_maquinas');
     const preciosRef = ref(database, 'precios_personalizados');
+    const stockMaquinasRef = ref(database, 'stock_maquinas');
 
     let currentProduct = null;
     let currentMovimientosProduct = null;
@@ -1622,7 +1740,7 @@
     let touchEndX = 0;
     let touchEndY = 0;
 
-    // ========== FUNCIÓN PARA ASIGNAR EVENTOS A LOS PRODUCTOS (CORREGIDA PARA iOS) ==========
+    // ========== FUNCIÓN PARA ASIGNAR EVENTOS A LOS PRODUCTOS ==========
 
     function handleProductClick(e) {
       if (e) e.preventDefault();
@@ -1726,8 +1844,19 @@
         const movimientosProductInfo = document.getElementById('movimientosProductInfo');
         if (movimientosProductInfo) {
           movimientosProductInfo.innerHTML =
-            `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (si es Máquina, resta) | ➖ Quitar: resta del stock (si es Máquina, suma)</small>`;
+            `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (Máquinas: resta) | ➖ Quitar: resta del stock (Máquinas: suma)</small>`;
         }
+
+        // Establecer fecha actual en el campo de registro de stock en máquinas
+        const fechaInput = document.getElementById('fechaStockMaquinas');
+        if (fechaInput) {
+          const hoy = new Date();
+          fechaInput.value = hoy.toISOString().split('T')[0];
+        }
+
+        // Limpiar campo de cantidad
+        const cantidadInput = document.getElementById('cantidadStockMaquinas');
+        if (cantidadInput) cantidadInput.value = '';
 
         const unidadesInput = document.getElementById('unidadesInput');
         if (unidadesInput) unidadesInput.value = 1;
@@ -1817,7 +1946,6 @@
       document.getElementById('nuevoPrecioInput').value = '';
       document.getElementById('confirmarPrecioText').value = '';
       document.getElementById('precioActualInfo').style.display = 'none';
-      // Cargar productos en el select
       cargarProductosEnSelect();
       blockBodyScroll();
     };
@@ -1845,12 +1973,10 @@
       const select = document.getElementById('productoPrecioSelect');
       select.innerHTML = '<option value="">-- Seleccionar --</option>';
 
-      // Recorrer todas las categorías y productos
       const categorias = [
         '000', '005', '020', '035', '050', '075', '100', '150', '180', '200', '220', '250', '350', '420', '500', '600', '800'
       ];
 
-      // Rangos de cada categoría
       const rangos = {
         '000': ['00', '01', '02', '05', '06', '07', '08', '09', '10', '11'],
         '005': { desde: 0, hasta: 18 },
@@ -1871,10 +1997,8 @@
         '800': ['00', '01']
       };
 
-      // Precios base
       const preciosBase = {
-        '000': { '00': 5000, '01': 50000, '02': 100000, '05': 0, '06': 0, '07': 15000, '08': 15000, '09': 0, '10': 0,
-        '11': 0 },
+        '000': { '00': 5000, '01': 50000, '02': 100000, '05': 0, '06': 0, '07': 15000, '08': 15000, '09': 0, '10': 0, '11': 0 },
         '005': 5000,
         '020': 15000,
         '035': 25000,
@@ -1924,7 +2048,6 @@
           }
         }
 
-        // Agregar opciones al select agrupadas por categoría
         const optgroup = document.createElement('optgroup');
         optgroup.label = `${cat} puntos (${grupo.length} productos)`;
 
@@ -1957,14 +2080,12 @@
     };
 
     function obtenerPrecioBase(code) {
-      // Buscar el precio base según la categoría
       const partes = code.split('-');
       const cat = partes[0];
       const sufijo = partes[1];
 
       const preciosBase = {
-        '000': { '00': 5000, '01': 50000, '02': 100000, '05': 0, '06': 0, '07': 15000, '08': 15000, '09': 0, '10': 0,
-        '11': 0 },
+        '000': { '00': 5000, '01': 50000, '02': 100000, '05': 0, '06': 0, '07': 15000, '08': 15000, '09': 0, '10': 0, '11': 0 },
         '005': 5000,
         '020': 15000,
         '035': 25000,
@@ -2023,14 +2144,12 @@
         ocultarMensajeEnProceso();
         alert(`✅ Precio actualizado!\n\n📦 ${code}\n💰 Nuevo precio: Gs. ${nuevoPrecio.toLocaleString()}`);
 
-        // Actualizar la lista de productos
         cargarProductosEnSelect();
         document.getElementById('precioActualInfo').style.display = 'none';
         document.getElementById('nuevoPrecioInput').value = '';
         document.getElementById('confirmarPrecioText').value = '';
         select.value = '';
 
-        // Recargar los productos para mostrar los nuevos precios
         generarTodosLosProductos();
         updateAllStockIndicators();
 
@@ -3172,19 +3291,16 @@
     function loadAllStockItems() {
       const container = document.getElementById('stockItemsContainer');
       const categories = {};
-      
-      // Usamos el mismo método que el catálogo principal para obtener los productos
+
       const productosStock = [];
       document.querySelectorAll('.imagen-item').forEach(item => {
         const cat = item.getAttribute('data-category');
         if (!categories[cat]) categories[cat] = [];
         const code = item.getAttribute('data-code');
         const name = item.querySelector('p')?.textContent || code;
-        // Extraemos la imagen del catálogo principal
         const imgElement = item.querySelector('img');
         const imgSrc = imgElement ? imgElement.getAttribute('src') : null;
         const placeholderHtml = item.querySelector('.img-placeholder')?.outerHTML || '';
-        // Usamos la imagen si existe, sino el placeholder
         let imgHtml = '';
         if (imgSrc) {
           imgHtml = `<img src="${imgSrc}" alt="${code}" loading="lazy" decoding="async">`;
@@ -3197,7 +3313,7 @@
         const isIndependent = NON_FICHA_CODES.includes(code);
         categories[cat].push({ code, name, imgHtml, currentStock: display, isFichaBase, isFichaProduct, isIndependent });
       });
-      
+
       const sortedCats = Object.keys(categories).sort((a, b) => parseInt(a) - parseInt(b));
       let html = '';
       for (let cat of sortedCats) {
@@ -3384,7 +3500,60 @@
       }
     };
 
-    // ========== FUNCIONES DE MOVIMIENTOS ==========
+    // ========== NUEVA FUNCIÓN: REGISTRAR STOCK EN MÁQUINAS ==========
+
+    window.registrarStockMaquinas = async function() {
+      if (!isOnline()) {
+        mostrarMensajeTemporal('❌ Sin internet - No se puede registrar', true);
+        return;
+      }
+
+      if (!currentMovimientosProduct) {
+        alert('❌ Primero selecciona un producto');
+        return;
+      }
+
+      const fecha = document.getElementById('fechaStockMaquinas').value;
+      const cantidad = parseInt(document.getElementById('cantidadStockMaquinas').value) || 0;
+
+      if (!fecha) {
+        alert('❌ Debes seleccionar una fecha');
+        return;
+      }
+
+      if (cantidad < 0) {
+        alert('❌ La cantidad no puede ser negativa');
+        return;
+      }
+
+      const code = currentMovimientosProduct.code;
+      const name = currentMovimientosProduct.name;
+      const sucursal = 'Los Laureles';
+
+      mostrarMensajeEnProceso('🔄 Guardando registro de máquinas...');
+
+      try {
+        await set(ref(database, `stock_maquinas/${sucursal}/${code}/${fecha}`), {
+          cantidad: cantidad,
+          code: code,
+          name: name,
+          fechaRegistro: new Date().toISOString(),
+          registradoPor: 'sucursal'
+        });
+
+        ocultarMensajeEnProceso();
+        alert(`✅ Registro guardado!\n\n📦 ${code}\n📅 Fecha: ${fecha}\n🖥️ Stock en máquinas: ${cantidad} unidades`);
+
+        document.getElementById('cantidadStockMaquinas').value = '';
+
+      } catch (error) {
+        ocultarMensajeEnProceso();
+        alert('❌ Error al guardar el registro');
+        console.error(error);
+      }
+    };
+
+    // ========== FUNCIONES DE MOVIMIENTOS MODIFICADAS ==========
 
     window.agregarUnidades = async function() {
       if (window.agregarUnidadesLock) return;
@@ -3421,6 +3590,7 @@
         let operacionExitosa = true;
 
         if (destino === 'stock') {
+          // Agregar a STOCK = + en el stock
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
             if (!resultado.success) {
@@ -3438,24 +3608,23 @@
               mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
             }
           }
-        } else {
+        } else if (destino === 'maquinas') {
+          // Agregar a MÁQUINAS = RESTA del stock
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', -(consumo * cantidad), 0);
             if (!resultado.success) {
               operacionExitosa = false;
-              alert(`No hay suficientes fichas en stock para ${destino}`);
+              alert(`No hay suficientes fichas en stock para Máquinas`);
             } else {
-              mensaje =
-                `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
+              mensaje = `✅ Máquinas: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
             }
           } else {
             const resultado = await modificarStockAtomico(code, -cantidad, 0);
             if (!resultado.success) {
               operacionExitosa = false;
-              alert(`No hay suficiente stock para ${destino}`);
+              alert(`No hay suficiente stock para Máquinas`);
             } else {
-              mensaje =
-                `✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Máquinas: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
             }
           }
         }
@@ -3463,8 +3632,7 @@
         if (operacionExitosa) {
           const ahora = new Date();
           const fecha = ahora.toLocaleDateString('es-PY');
-          const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false });
+          const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
           await push(cartRef, {
             code,
@@ -3535,6 +3703,7 @@
         let operacionExitosa = true;
 
         if (destino === 'stock') {
+          // Quitar de STOCK = RESTA del stock
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', -(consumo * cantidad), 0);
             if (!resultado.success) {
@@ -3552,15 +3721,15 @@
               mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${currentMovimientosProduct.name}`;
             }
           }
-        } else {
+        } else if (destino === 'maquinas') {
+          // Quitar de MÁQUINAS = SUMA al stock (devolver)
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
             if (!resultado.success) {
               operacionExitosa = false;
               alert('❌ Error en la transacción');
             } else {
-              mensaje =
-                `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
+              mensaje = `✅ Máquinas: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
             }
           } else {
             const resultado = await modificarStockAtomico(code, cantidad, 0);
@@ -3568,8 +3737,7 @@
               operacionExitosa = false;
               alert('❌ Error en la transacción');
             } else {
-              mensaje =
-                `✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Máquinas: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
             }
           }
         }
@@ -3577,8 +3745,7 @@
         if (operacionExitosa) {
           const ahora = new Date();
           const fecha = ahora.toLocaleDateString('es-PY');
-          const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false });
+          const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
           await push(cartRef, {
             code,
@@ -3646,8 +3813,7 @@
       try {
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-PY');
-        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit',
-          hour12: false });
+        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         const code = tipo === 'Efectivo' ? '000-09' : '000-10';
         const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
 
@@ -3708,8 +3874,7 @@
 
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-PY');
-        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit',
-          hour12: false });
+        const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
 
         await push(cartRef, {
@@ -4116,8 +4281,7 @@
         for (const venta of registro.ventas) {
           const ahora = new Date();
           const fecha = ahora.toLocaleDateString('es-PY');
-          const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false });
+          const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
           const itemRestaurado = {
             code: venta.code,
@@ -4408,9 +4572,8 @@
     function generarOpcionesMaquinas() {
       const select = document.getElementById('movimientoDestino');
       if (select) {
-        for (let i = 1; i <= 20; i++) {
-          select.innerHTML += `<option value="maq${i}">⚙️ Maq ${i}</option>`;
-        }
+        // Ya tenemos las opciones fijas en HTML: stock y maquinas
+        // No hacemos nada más
       }
     }
 
@@ -4447,10 +4610,8 @@
         { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 6 } },
         { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 5 } },
         { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
-            { sufijo: "00", precio: 180000 }, { sufijo: "01", precio: 180000 }, { sufijo: "02",
-              precio: 180000 },
-            { sufijo: "03", precio: 110000 }, { sufijo: "04", precio: 180000 }, { sufijo: "05",
-              precio: 180000 },
+            { sufijo: "00", precio: 180000 }, { sufijo: "01", precio: 180000 }, { sufijo: "02", precio: 180000 },
+            { sufijo: "03", precio: 110000 }, { sufijo: "04", precio: 180000 }, { sufijo: "05", precio: 180000 },
             { sufijo: "06", precio: 180000 }
           ] },
         { nombre: "500 puntos", categoria: "500", puntos: 500, productos: [
@@ -4482,10 +4643,8 @@
         galeria.className = 'galeria';
 
         const crearItem = (codigo, precio) => {
-          // Verificar si hay un precio personalizado
           const precioFinal = preciosPersonalizados[codigo] ?? precio;
           if (codigo === '100-38') {
-            // 100-38 tiene precio especial solo si no está personalizado
             const precio10038 = preciosPersonalizados['100-38'] ?? 10000;
             const item = document.createElement('div');
             item.className = 'imagen-item';
@@ -4527,7 +4686,6 @@
           ];
           const index = codigo.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
           let textoPrecio = precioFinal > 0 ? `- G.${precioFinal.toLocaleString('es-PY')}` : '';
-          // Si el precio está personalizado, agregar un indicador
           const indicador = preciosPersonalizados[codigo] ? '⭐' : '';
           item.innerHTML =
             `<div class="img-placeholder" style="background: ${colores[index]};">${codigo.replace('-', ' ')}</div>
@@ -4614,7 +4772,6 @@
 
     // ========== INICIALIZACIÓN ==========
 
-    // Cargar precios personalizados primero
     await loadPrecios();
 
     generarTodosLosProductos();
