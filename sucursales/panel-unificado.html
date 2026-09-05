@@ -1510,6 +1510,50 @@
             margin-right: 4px;
         }
 
+        /* ===== AVISO DE FALTA DE LECTURA ===== */
+        .aviso-lectura {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            background: #fff3cd;
+            border-radius: var(--radius-md);
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        .aviso-lectura i {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 12px;
+            color: #ffc107;
+        }
+        .aviso-lectura h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: #856404;
+        }
+        .aviso-lectura p {
+            font-size: 0.95rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .aviso-lectura .btn-sugerencia {
+            margin-top: 16px;
+            display: inline-block;
+            padding: 10px 24px;
+            background: #ffc107;
+            color: #333;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .aviso-lectura .btn-sugerencia:hover {
+            background: #e6a800;
+            transform: scale(1.03);
+        }
+
         @media (max-width: 992px) {
             .header-premium { padding: 16px 20px; }
             .header-title h1 { font-size: 1.3rem; }
@@ -1543,6 +1587,18 @@
             .contadores-scroll-wrapper {
                 max-height: 350px;
             }
+            .aviso-lectura {
+                padding: 24px 16px;
+            }
+            .aviso-lectura i {
+                font-size: 2rem;
+            }
+            .aviso-lectura h3 {
+                font-size: 1rem;
+            }
+            .aviso-lectura p {
+                font-size: 0.85rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1556,6 +1612,9 @@
             .catalogo-item { padding: 8px; }
             .contadores-scroll-wrapper {
                 max-height: 280px;
+            }
+            .aviso-lectura {
+                padding: 16px 12px;
             }
         }
     </style>
@@ -1696,7 +1755,7 @@
         </div>
     </section>
 
-    <!-- TAB 3: MÁQUINAS (como catálogo) -->
+    <!-- TAB 3: MÁQUINAS -->
     <section id="tab-maquinas" class="tab-content" style="display:none;">
         <div class="card-premium">
             <div class="card-header">
@@ -1712,9 +1771,9 @@
                 <i class="fas fa-lightbulb"></i>
                 <div>
                     <strong>¿Cómo funciona?</strong> 
-                    • <strong>Sin filtro de fecha:</strong> Muestra el stock ACTUAL de cada producto en máquinas<br>
-                    • <strong>Con filtro de fecha:</strong> Muestra cuántas unidades SALIERON (consumieron) en ese período<br>
-                    • Solo se muestran productos con <strong>cantidad > 0</strong>
+                    • <strong>Sin filtro de fecha:</strong> Muestra el stock ACTUAL de cada producto en máquinas (registrado por las chicas)<br>
+                    • <strong>Con filtro de fecha:</strong> Calcula el consumo real: <strong>Stock Inicial + Reposiciones - Stock Final</strong><br>
+                    • Solo se muestran productos con <strong>consumo > 0</strong>
                 </div>
             </div>
 
@@ -1730,11 +1789,11 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label><i class="fas fa-calendar-alt"></i> Desde</label>
+                    <label><i class="fas fa-calendar-alt"></i> Desde (Fecha Inicial)</label>
                     <input type="date" id="maquinasFiltroDesde" onchange="aplicarFiltroMaquinas()">
                 </div>
                 <div class="filter-group">
-                    <label><i class="fas fa-calendar-alt"></i> Hasta</label>
+                    <label><i class="fas fa-calendar-alt"></i> Hasta (Fecha Final)</label>
                     <input type="date" id="maquinasFiltroHasta" onchange="aplicarFiltroMaquinas()">
                 </div>
                 <div class="filter-actions">
@@ -2297,7 +2356,7 @@
     });
 
     // ============================================================
-    // 5. FUNCIONES DE ELIMINACIÓN (EXISTENTES)
+    // 5. FUNCIONES DE ELIMINACIÓN
     // ============================================================
     async function eliminarDelCarrito(sucursal, firebaseKey) {
         const config = sucursalToConfig[sucursal];
@@ -2432,7 +2491,7 @@
     };
 
     // ============================================================
-    // 7. CARGAR CARRITOS (EXISTENTE)
+    // 7. CARGAR CARRITOS
     // ============================================================
     async function cargarCarritos() {
         const tbody = document.getElementById('carritosBody');
@@ -2598,7 +2657,7 @@
     }
 
     // ============================================================
-    // 9. CATÁLOGO UNIFICADO (EXISTENTE)
+    // 9. CATÁLOGO UNIFICADO
     // ============================================================
     async function cargarCatalogoUnificado() {
         const container = document.getElementById('catalogoContainer');
@@ -3608,7 +3667,7 @@
     });
 
     // ============================================================
-    // 18. FILTROS AVANZADOS (EXISTENTE)
+    // 18. FILTROS AVANZADOS
     // ============================================================
     async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -4796,7 +4855,7 @@
     }
 
     // ============================================================
-    // 21. SECCIÓN MÁQUINAS - VERSIÓN COMO CATÁLOGO (un item por sucursal)
+    // 21. SECCIÓN MÁQUINAS - VERSIÓN FINAL
     // ============================================================
     let maquinasFiltroActual = {
         sucursal: 'todas',
@@ -4826,7 +4885,6 @@
         const fechaHasta = document.getElementById('maquinasFiltroHasta').value;
         const esFiltroFecha = fechaDesde && fechaHasta;
 
-        // Array de items (uno por sucursal por producto)
         const items = [];
         let totalProductos = 0;
 
@@ -4835,11 +4893,8 @@
                 const app = initializeApp(suc.config, suc.id);
                 const db = getDatabase(app);
 
-                const contSnap = await get(ref(db, 'contadores_maquinas'));
-                const contadores = contSnap.val() || {};
-
-                const stockSnap = await get(ref(db, 'stock'));
-                const stockData = stockSnap.val() || {};
+                const stockMaquinasSnap = await get(ref(db, 'stock_maquinas'));
+                const stockMaquinasData = stockMaquinasSnap.val() || {};
 
                 const cartSnap = await get(ref(db, 'carrito'));
                 const carrito = cartSnap.val() || {};
@@ -4850,73 +4905,195 @@
                 const productosPorSucursal = {};
 
                 if (esFiltroFecha) {
-                    // MODO CON FILTRO: calcular consumido en período por producto
-                    const desde = new Date(fechaDesde);
-                    const hasta = new Date(fechaHasta);
-                    desde.setHours(0, 0, 0, 0);
-                    hasta.setHours(23, 59, 59, 999);
+                    // ============================================================
+                    // MODO CON FILTRO: Consumo Real = Stock_Inicial + Reposiciones - Stock_Final
+                    // ============================================================
+                    const stockMaquinasSucursal = stockMaquinasData[suc.nombre] || {};
 
-                    const consumos = {};
+                    // Verificar si hay stock para la fecha inicial
+                    let hayStockInicial = false;
+                    let hayStockFinal = false;
+                    let fechasDisponibles = [];
 
-                    // 1. Buscar en historial de ventas
-                    Object.entries(historial).forEach(([key, registro]) => {
-                        const fechaEliminacion = registro.fechaEliminacion || '';
-                        if (!fechaEliminacion) return;
-                        const fechaReg = new Date(fechaEliminacion.split('/').reverse().join('-'));
-                        if (fechaReg >= desde && fechaReg <= hasta) {
-                            if (registro.ventas) {
-                                registro.ventas.forEach(venta => {
-                                    if (venta.esMovimiento && venta.destinoMovimiento && (venta.destinoMovimiento.startsWith('maq') || venta.destinoMovimiento === 'maquinas')) {
-                                        const code = venta.code || '';
-                                        const cantidad = venta.unidades || 1;
-                                        if (!consumos[code]) consumos[code] = 0;
-                                        if (venta.tipoMovimiento === 'agregar') {
-                                            consumos[code] += cantidad;
-                                        } else if (venta.tipoMovimiento === 'quitar') {
-                                            consumos[code] -= cantidad;
-                                        }
-                                    }
-                                });
-                            }
-                        }
+                    Object.entries(stockMaquinasSucursal).forEach(([code, fechas]) => {
+                        fechasDisponibles = fechasDisponibles.concat(Object.keys(fechas));
                     });
 
-                    // 2. Buscar en carrito actual
-                    Object.entries(carrito).forEach(([key, item]) => {
-                        if (item.esMovimiento && item.destinoMovimiento && (item.destinoMovimiento.startsWith('maq') || item.destinoMovimiento === 'maquinas')) {
-                            const fechaItem = item.fecha || '';
-                            if (!fechaItem) return;
-                            const partes = fechaItem.split('/');
-                            if (partes.length === 3) {
-                                const fechaItemISO = `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
-                                const fechaItemDate = new Date(fechaItemISO);
-                                if (fechaItemDate >= desde && fechaItemDate <= hasta) {
-                                    const code = item.code || '';
-                                    const cantidad = item.unidades || 1;
-                                    if (!consumos[code]) consumos[code] = 0;
-                                    if (item.tipoMovimiento === 'agregar') {
-                                        consumos[code] += cantidad;
-                                    } else if (item.tipoMovimiento === 'quitar') {
-                                        consumos[code] -= cantidad;
-                                    }
+                    // Verificar si existe stock para la fecha inicial
+                    const tieneStockInicial = fechasDisponibles.some(f => f === fechaDesde);
+                    const tieneStockFinal = fechasDisponibles.some(f => f === fechaHasta);
+
+                    if (!tieneStockInicial) {
+                        // Mostrar aviso de falta de stock inicial
+                        container.innerHTML = `
+                            <div class="aviso-lectura">
+                                <i class="fas fa-calendar-times"></i>
+                                <h3>⚠️ No hay registro de stock en máquinas para la fecha inicial</h3>
+                                <p>
+                                    <strong>Fecha seleccionada:</strong> ${fechaDesde}<br>
+                                    <strong>Sucursal:</strong> ${suc.nombre}
+                                </p>
+                                <p style="margin-top:8px;">
+                                    📌 Las chicas deben registrar el stock en máquinas usando la opción<br>
+                                    <strong>"Registrar stock en máquinas"</strong> en la pestaña Movimientos de cada producto.
+                                </p>
+                                <p style="margin-top:4px; font-size:0.85rem;">
+                                    💡 Selecciona una fecha que tenga lectura de stock en máquinas.
+                                </p>
+                                <button class="btn-sugerencia" onclick="cargarDatosMaquinas()">
+                                    🔄 Intentar de nuevo
+                                </button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    if (!tieneStockFinal) {
+                        // Mostrar aviso de falta de stock final
+                        container.innerHTML = `
+                            <div class="aviso-lectura">
+                                <i class="fas fa-calendar-times"></i>
+                                <h3>⚠️ No hay registro de stock en máquinas para la fecha final</h3>
+                                <p>
+                                    <strong>Fecha seleccionada:</strong> ${fechaHasta}<br>
+                                    <strong>Sucursal:</strong> ${suc.nombre}
+                                </p>
+                                <p style="margin-top:8px;">
+                                    📌 Las chicas deben registrar el stock en máquinas usando la opción<br>
+                                    <strong>"Registrar stock en máquinas"</strong> en la pestaña Movimientos de cada producto.
+                                </p>
+                                <p style="margin-top:4px; font-size:0.85rem;">
+                                    💡 Selecciona una fecha que tenga lectura de stock en máquinas.
+                                </p>
+                                <button class="btn-sugerencia" onclick="cargarDatosMaquinas()">
+                                    🔄 Intentar de nuevo
+                                </button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    // Si hay stock para ambas fechas, calcular consumo
+                    Object.entries(stockMaquinasSucursal).forEach(([code, fechas]) => {
+                        const fechasOrdenadas = Object.keys(fechas).sort();
+                        if (fechasOrdenadas.length === 0) return;
+
+                        // Obtener stock inicial (fechaDesde)
+                        let stockInicial = 0;
+                        let fechaInicialEncontrada = null;
+                        for (let i = 0; i < fechasOrdenadas.length; i++) {
+                            const fecha = fechasOrdenadas[i];
+                            if (fecha === fechaDesde) {
+                                stockInicial = fechas[fecha].cantidad || 0;
+                                fechaInicialEncontrada = fecha;
+                                break;
+                            }
+                        }
+
+                        // Obtener stock final (fechaHasta)
+                        let stockFinal = 0;
+                        let fechaFinalEncontrada = null;
+                        for (let i = 0; i < fechasOrdenadas.length; i++) {
+                            const fecha = fechasOrdenadas[i];
+                            if (fecha === fechaHasta) {
+                                stockFinal = fechas[fecha].cantidad || 0;
+                                fechaFinalEncontrada = fecha;
+                                break;
+                            }
+                        }
+
+                        // Si no se encontraron las fechas exactas, buscar las más cercanas
+                        if (fechaInicialEncontrada === null) {
+                            for (let i = fechasOrdenadas.length - 1; i >= 0; i--) {
+                                const fecha = fechasOrdenadas[i];
+                                if (fecha <= fechaDesde) {
+                                    stockInicial = fechas[fecha].cantidad || 0;
+                                    fechaInicialEncontrada = fecha;
+                                    break;
                                 }
                             }
                         }
-                    });
 
-                    // Guardar consumos > 0 por producto en esta sucursal
-                    Object.entries(consumos).forEach(([code, cantidad]) => {
-                        if (cantidad > 0) {
-                            productosPorSucursal[code] = cantidad;
+                        if (fechaFinalEncontrada === null) {
+                            for (let i = 0; i < fechasOrdenadas.length; i++) {
+                                const fecha = fechasOrdenadas[i];
+                                if (fecha >= fechaHasta) {
+                                    stockFinal = fechas[fecha].cantidad || 0;
+                                    fechaFinalEncontrada = fecha;
+                                    break;
+                                }
+                            }
+                            if (fechaFinalEncontrada === null && fechasOrdenadas.length > 0) {
+                                stockFinal = fechas[fechasOrdenadas[fechasOrdenadas.length - 1]].cantidad || 0;
+                            }
+                        }
+
+                        // Calcular reposiciones (movimientos "Agregar a Máquinas" en el período)
+                        let reposiciones = 0;
+
+                        // Buscar en carrito
+                        Object.entries(carrito).forEach(([key, item]) => {
+                            if (item.esMovimiento && 
+                                item.code === code &&
+                                item.destinoMovimiento && 
+                                (item.destinoMovimiento.startsWith('maq') || item.destinoMovimiento === 'maquinas') &&
+                                item.tipoMovimiento === 'agregar') {
+                                const fechaItem = item.fecha || '';
+                                if (!fechaItem) return;
+                                const partes = fechaItem.split('/');
+                                if (partes.length === 3) {
+                                    const fechaItemISO = `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
+                                    if (fechaItemISO >= fechaDesde && fechaItemISO <= fechaHasta) {
+                                        reposiciones += item.unidades || 1;
+                                    }
+                                }
+                            }
+                        });
+
+                        // Buscar en historial
+                        const desde = new Date(fechaDesde);
+                        const hasta = new Date(fechaHasta);
+                        desde.setHours(0, 0, 0, 0);
+                        hasta.setHours(23, 59, 59, 999);
+
+                        Object.entries(historial).forEach(([key, registro]) => {
+                            const fechaEliminacion = registro.fechaEliminacion || '';
+                            if (!fechaEliminacion) return;
+                            const fechaReg = new Date(fechaEliminacion.split('/').reverse().join('-'));
+                            if (fechaReg >= desde && fechaReg <= hasta) {
+                                if (registro.ventas) {
+                                    registro.ventas.forEach(venta => {
+                                        if (venta.esMovimiento && 
+                                            venta.code === code &&
+                                            venta.destinoMovimiento && 
+                                            (venta.destinoMovimiento.startsWith('maq') || venta.destinoMovimiento === 'maquinas') &&
+                                            venta.tipoMovimiento === 'agregar') {
+                                            reposiciones += venta.unidades || 1;
+                                        }
+                                    });
+                                }
+                            }
+                        });
+
+                        // Consumo Real = Stock_Inicial + Reposiciones - Stock_Final
+                        const consumoReal = stockInicial + reposiciones - stockFinal;
+
+                        if (consumoReal > 0) {
+                            productosPorSucursal[code] = consumoReal;
                         }
                     });
 
                 } else {
-                    // MODO SIN FILTRO: stock actual en máquinas por producto
-                    Object.keys(stockData).forEach(code => {
-                        const prefix = parseInt(code.substring(0, 3));
-                        if (!isNaN(prefix) && prefix >= 5 && !CIERRE_CODES.includes(code) && code !== '000-11') {
-                            const cantidad = stockData[code] || 0;
+                    // ============================================================
+                    // MODO SIN FILTRO: Stock actual en máquinas
+                    // ============================================================
+                    const stockMaquinasSucursal = stockMaquinasData[suc.nombre] || {};
+                    
+                    Object.entries(stockMaquinasSucursal).forEach(([code, fechas]) => {
+                        const fechasOrdenadas = Object.keys(fechas).sort();
+                        if (fechasOrdenadas.length > 0) {
+                            const fechaMasReciente = fechasOrdenadas[fechasOrdenadas.length - 1];
+                            const cantidad = fechas[fechaMasReciente].cantidad || 0;
                             if (cantidad > 0) {
                                 productosPorSucursal[code] = cantidad;
                             }
@@ -4940,6 +5117,18 @@
 
             } catch (error) {
                 console.error(`Error cargando máquinas de ${suc.nombre}:`, error);
+                // Mostrar error en el container
+                container.innerHTML = `
+                    <div class="aviso-lectura" style="background:#f8d7da; border-color:#dc3545; color:#721c24;">
+                        <i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>
+                        <h3>❌ Error al cargar datos</h3>
+                        <p>${error.message || 'Error desconocido al cargar los datos de máquinas.'}</p>
+                        <button class="btn-sugerencia" onclick="cargarDatosMaquinas()" style="background:#dc3545; color:white;">
+                            🔄 Reintentar
+                        </button>
+                    </div>
+                `;
+                return;
             }
         }
 
@@ -4962,7 +5151,7 @@
             container.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align:center; padding:40px; color:var(--gray-400);">
                     <i class="fas fa-microchip" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
-                    ${esFiltroFecha ? 'No hubo consumo en el rango seleccionado' : 'No hay productos en máquinas con stock > 0'}
+                    ${esFiltroFecha ? 'No hubo consumo en el rango seleccionado' : 'No hay productos registrados en máquinas con stock > 0'}
                 </div>
             `;
             return;
@@ -4978,25 +5167,25 @@
         items.forEach((p, idx) => {
             const colorIndex = p.code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
             const cantidad = p.cantidad || 0;
-            const labelTitulo = esFiltroFecha ? '🎯 Consumido' : '📦 En máquinas';
+            
+            // Badge diferente según modo
+            const badgeIcon = esFiltroFecha ? '🎯' : '📦';
+            const badgeTitle = esFiltroFecha ? 'Ganado por clientes' : 'Stock en máquinas';
+            const badgeColor = esFiltroFecha ? 'background:var(--gold);' : 'background:var(--success);';
 
-            // Icono de sucursal según nombre
+            // Icono de sucursal
             let iconoSucursal = '🏢';
-            if (p.sucursal === 'Villa Morra') iconoSucursal = '🏢';
-            else if (p.sucursal === 'Los Laureles') iconoSucursal = '🏢';
-            else if (p.sucursal === 'Lambaré') iconoSucursal = '🏢';
-            else if (p.sucursal === 'Villa Elisa') iconoSucursal = '🏢';
 
             html += `
                 <div class="catalogo-item" style="position:relative;">
                     <span class="sucursal-badge">${iconoSucursal} ${p.sucursal}</span>
-                    <span class="stock-indicator" style="background:var(--success);">
-                        ${cantidad}
+                    <span class="stock-indicator" style="${badgeColor} color:white; font-size:0.8rem; padding:3px 10px;" title="${badgeTitle}">
+                        ${badgeIcon} ${cantidad}
                     </span>
                     <div class="img-placeholder" style="background: ${colores[colorIndex]};">${p.code.replace('-', ' ')}</div>
                     <p>
                         <strong>${p.code}</strong><br>
-                        <span style="font-size:0.7rem; color:var(--gray-500);">${labelTitulo}: ${cantidad}</span>
+                        <span style="font-size:0.7rem; color:var(--gray-500);">${esFiltroFecha ? '🎯 Consumido: ' + cantidad : '📦 En máquinas: ' + cantidad}</span>
                     </p>
                 </div>
             `;
@@ -5037,12 +5226,12 @@
 
         if (desde && hasta) {
             filtroActivo.style.display = 'block';
-            filtroTexto.innerHTML = `📅 ${desde} → ${hasta} · ${nombreSucursal} · <strong>Mostrando CONSUMIDO en máquinas</strong>`;
-            leyenda.textContent = `Mostrando consumido en máquinas del ${desde} al ${hasta}`;
+            filtroTexto.innerHTML = `📅 ${desde} → ${hasta} · ${nombreSucursal} · <strong>Mostrando CONSUMO REAL (Stock Inicial + Reposiciones - Stock Final)</strong>`;
+            leyenda.textContent = `🎯 Mostrando lo que los clientes ganaron en máquinas del ${desde} al ${hasta}`;
         } else {
             filtroActivo.style.display = 'block';
-            filtroTexto.innerHTML = `📊 ${nombreSucursal} · <strong>Mostrando STOCK ACTUAL en máquinas (solo > 0)</strong>`;
-            leyenda.textContent = 'Mostrando stock actual en máquinas (solo productos con stock > 0)';
+            filtroTexto.innerHTML = `📊 ${nombreSucursal} · <strong>Mostrando STOCK ACTUAL en máquinas</strong>`;
+            leyenda.textContent = '📦 Mostrando stock actual en máquinas (solo productos con stock > 0)';
         }
 
         cargarDatosMaquinas();
@@ -5053,7 +5242,7 @@
         document.getElementById('maquinasFiltroDesde').value = '';
         document.getElementById('maquinasFiltroHasta').value = '';
         document.getElementById('maquinasFiltroActivo').style.display = 'none';
-        document.getElementById('maquinasLeyenda').textContent = 'Mostrando stock actual en máquinas (solo productos con stock > 0)';
+        document.getElementById('maquinasLeyenda').textContent = '📦 Mostrando stock actual en máquinas (solo productos con stock > 0)';
         cargarDatosMaquinas();
     };
 
@@ -5101,8 +5290,8 @@
     document.getElementById('contadorFechaDesde').value = hace30Dias.toISOString().split('T')[0];
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
-    // Set fecha por defecto en máquinas (últimos 7 días)
-    document.getElementById('maquinasFiltroDesde').value = hace7Dias.toISOString().split('T')[0];
+    // Set fecha por defecto en máquinas (hoy)
+    document.getElementById('maquinasFiltroDesde').value = hoy.toISOString().split('T')[0];
     document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
