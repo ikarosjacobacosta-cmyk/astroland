@@ -9,7 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ... (mantener todos los estilos existentes) ... */
         :root {
             --primary: #0d1b4a;
             --primary-light: #1a2d6e;
@@ -1491,7 +1490,6 @@
             font-size: 0.85rem;
         }
 
-        /* ===== ESTILOS PARA LA PESTAÑA MÁQUINAS ===== */
         #tab-maquinas .catalogo-item .stock-indicator {
             background: var(--success);
             color: white;
@@ -1511,7 +1509,6 @@
             margin-right: 4px;
         }
 
-        /* ===== AVISO DE FALTA DE LECTURA ===== */
         .aviso-lectura {
             grid-column: 1 / -1;
             text-align: center;
@@ -4567,7 +4564,8 @@
         const esRangoSemanal = diasRango <= 7 && diasRango > 0;
         const mostrarLambare = debeMostrarLambare(fechaDesde);
         const tituloReporte = generarTituloReporte(fechaDesde, fechaHasta);
-        
+
+        // Encabezado del documento
         doc.setFont("Times", "Roman");
         doc.setFontSize(24);
         doc.setTextColor(139, 0, 0);
@@ -4603,10 +4601,11 @@
 
         let startY = 80;
 
+        // --------------------------------------------
+        // MODO SEMANAL (7 días o menos)
+        // --------------------------------------------
         if (esRangoSemanal && fechaDesde && fechaHasta) {
-            // ============================================================
-            // MODO SEMANAL - con títulos de columna bien definidos
-            // ============================================================
+            // Generar lista de días del rango
             const diasSemana = [];
             const fechaActual = new Date(fechaDesde);
             const fechaFin = new Date(fechaHasta);
@@ -4616,8 +4615,7 @@
                 fechaActual.setDate(fechaActual.getDate() + 1);
             }
 
-            // Definir los encabezados de columna correctamente
-            const tableHead = ['Día', 'Sucursal', 'Efectivo', 'Bancard', 'Total'];
+            // Construir cuerpo de tabla: cada fila = día + sucursal + efectivo + bancard + total
             const tableBody = [];
             let totalGeneralEfectivo = 0;
             let totalGeneralBancard = 0;
@@ -4625,9 +4623,11 @@
 
             ordenSucursales.forEach(sucursal => {
                 const itemsSucursal = datosPorSucursal[sucursal] || [];
+
+                // Agrupar items por día
                 const itemsPorDia = {};
                 diasSemana.forEach(dia => { itemsPorDia[dia] = []; });
-                
+
                 itemsSucursal.forEach(item => {
                     const diaLaboral = item._diaLaboral || obtenerDiaLaboral(item);
                     if (!diaLaboral) return;
@@ -4638,6 +4638,7 @@
                     }
                 });
 
+                // Calcular estadísticas por día
                 const statsPorDia = {};
                 diasSemana.forEach(dia => {
                     const stats = calcularEstadisticas(itemsPorDia[dia] || []);
@@ -4648,6 +4649,7 @@
                     };
                 });
 
+                // Filas para cada día
                 diasSemana.forEach(dia => {
                     const stats = statsPorDia[dia];
                     const nombreDia = getNombreDia(dia);
@@ -4662,6 +4664,7 @@
                     });
                 });
 
+                // Subtotal por sucursal
                 let subtotalEfectivo = 0;
                 let subtotalBancard = 0;
                 let subtotalTotal = 0;
@@ -4683,6 +4686,7 @@
                 totalGeneralTotal += subtotalTotal;
             });
 
+            // Total general
             tableBody.push({
                 content: ['TOTAL GENERAL', '', totalGeneralEfectivo.toLocaleString(), totalGeneralBancard.toLocaleString(), totalGeneralTotal.toLocaleString()],
                 isTotal: true,
@@ -4691,9 +4695,11 @@
                 total: totalGeneralTotal
             });
 
-            // Generar tabla con los encabezados correctos
+            // ============================================================
+            // GENERAR TABLA CON ENCABEZADOS EXPLÍCITOS
+            // ============================================================
             doc.autoTable({
-                head: [tableHead],
+                head: [['Día', 'Sucursal', 'Efectivo', 'Bancard', 'Total']],
                 body: tableBody.map(row => row.content),
                 startY: startY,
                 theme: 'plain',
@@ -4740,14 +4746,15 @@
                     }
                 }
             });
-        } else {
-            // ============================================================
-            // MODO RESUMEN - con títulos de columna bien definidos
-            // ============================================================
+        } 
+        // --------------------------------------------
+        // MODO RESUMEN (más de 7 días o sin rango semanal)
+        // --------------------------------------------
+        else {
             const filas = [];
             let totalEfectivo = 0;
             let totalBancard = 0;
-            
+
             ordenSucursales.forEach(nombre => {
                 const stats = calcularEstadisticas(datosPorSucursal[nombre] || []);
                 filas.push({
@@ -4765,16 +4772,17 @@
                 tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
             }
 
-            // Definir encabezados de columna para modo resumen
-            const headColumns = ['Sucursal', 'Efectivo', 'Bancard', 'Total'];
             const bodyRows = tableRows.map(f => [f.sucursal, f.efectivo.toLocaleString(), f.bancard.toLocaleString(), f.total.toLocaleString()]);
             const footRows = [];
             if (tableRows.length > 1) {
                 footRows.push(['TOTAL', totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), (totalEfectivo + totalBancard).toLocaleString()]);
             }
 
+            // ============================================================
+            // GENERAR TABLA CON ENCABEZADOS EXPLÍCITOS
+            // ============================================================
             doc.autoTable({
-                head: [headColumns],
+                head: [['Sucursal', 'Efectivo', 'Bancard', 'Total']],
                 body: bodyRows,
                 foot: footRows,
                 startY: startY,
@@ -4809,6 +4817,7 @@
             });
         }
 
+        // Número de página
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -5303,7 +5312,7 @@
     document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 4.1 - Títulos de columnas en PDF corregidos');
+    console.log('🏷️ Versión: 4.2 - Títulos de columnas en PDF corregidos definitivamente');
     console.log('📁 Ruta de imágenes: ../imagenes/');
     console.log('📦 Catálogo combinado de Villa Morra, Los Laureles y Villa Elisa');
 
