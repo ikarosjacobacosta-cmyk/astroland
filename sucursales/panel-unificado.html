@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* ... (mantener todos los estilos existentes) ... */
         :root {
             --primary: #0d1b4a;
             --primary-light: #1a2d6e;
@@ -4485,7 +4486,7 @@
     }
 
     // ============================================================
-    // 20. PDF
+    // 20. PDF - CORREGIDO PARA MOSTRAR TÍTULOS DE COLUMNAS
     // ============================================================
     function debeMostrarLambare(fechaDesde) {
         if (!fechaDesde) return true;
@@ -4566,6 +4567,7 @@
         const esRangoSemanal = diasRango <= 7 && diasRango > 0;
         const mostrarLambare = debeMostrarLambare(fechaDesde);
         const tituloReporte = generarTituloReporte(fechaDesde, fechaHasta);
+        
         doc.setFont("Times", "Roman");
         doc.setFontSize(24);
         doc.setTextColor(139, 0, 0);
@@ -4586,18 +4588,25 @@
         doc.text(`Generado: ${new Date().toLocaleString()}`, 20, 57);
         doc.text(`Items: ${items.length}`, 20, 64);
         doc.text(`Rango: ${diasRango} día(s)`, 20, 71);
+
         let ordenSucursales = ["Villa Morra", "Los Laureles", "Villa Elisa"];
         if (mostrarLambare) {
             ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
         }
+
         const datosPorSucursal = {};
         items.forEach(item => {
             const suc = item.sucursal || 'Sin Sucursal';
             if (!datosPorSucursal[suc]) datosPorSucursal[suc] = [];
             datosPorSucursal[suc].push(item);
         });
+
         let startY = 80;
+
         if (esRangoSemanal && fechaDesde && fechaHasta) {
+            // ============================================================
+            // MODO SEMANAL - con títulos de columna bien definidos
+            // ============================================================
             const diasSemana = [];
             const fechaActual = new Date(fechaDesde);
             const fechaFin = new Date(fechaHasta);
@@ -4606,15 +4615,19 @@
                 diasSemana.push(fechaStr);
                 fechaActual.setDate(fechaActual.getDate() + 1);
             }
+
+            // Definir los encabezados de columna correctamente
             const tableHead = ['Día', 'Sucursal', 'Efectivo', 'Bancard', 'Total'];
             const tableBody = [];
             let totalGeneralEfectivo = 0;
             let totalGeneralBancard = 0;
             let totalGeneralTotal = 0;
+
             ordenSucursales.forEach(sucursal => {
                 const itemsSucursal = datosPorSucursal[sucursal] || [];
                 const itemsPorDia = {};
                 diasSemana.forEach(dia => { itemsPorDia[dia] = []; });
+                
                 itemsSucursal.forEach(item => {
                     const diaLaboral = item._diaLaboral || obtenerDiaLaboral(item);
                     if (!diaLaboral) return;
@@ -4624,6 +4637,7 @@
                         itemsPorDia[fechaNormalizada].push(item);
                     }
                 });
+
                 const statsPorDia = {};
                 diasSemana.forEach(dia => {
                     const stats = calcularEstadisticas(itemsPorDia[dia] || []);
@@ -4633,6 +4647,7 @@
                         total: stats.totalCierre || 0
                     };
                 });
+
                 diasSemana.forEach(dia => {
                     const stats = statsPorDia[dia];
                     const nombreDia = getNombreDia(dia);
@@ -4646,6 +4661,7 @@
                         total: stats.total
                     });
                 });
+
                 let subtotalEfectivo = 0;
                 let subtotalBancard = 0;
                 let subtotalTotal = 0;
@@ -4666,6 +4682,7 @@
                 totalGeneralBancard += subtotalBancard;
                 totalGeneralTotal += subtotalTotal;
             });
+
             tableBody.push({
                 content: ['TOTAL GENERAL', '', totalGeneralEfectivo.toLocaleString(), totalGeneralBancard.toLocaleString(), totalGeneralTotal.toLocaleString()],
                 isTotal: true,
@@ -4673,6 +4690,8 @@
                 bancard: totalGeneralBancard,
                 total: totalGeneralTotal
             });
+
+            // Generar tabla con los encabezados correctos
             doc.autoTable({
                 head: [tableHead],
                 body: tableBody.map(row => row.content),
@@ -4722,9 +4741,13 @@
                 }
             });
         } else {
+            // ============================================================
+            // MODO RESUMEN - con títulos de columna bien definidos
+            // ============================================================
             const filas = [];
             let totalEfectivo = 0;
             let totalBancard = 0;
+            
             ordenSucursales.forEach(nombre => {
                 const stats = calcularEstadisticas(datosPorSucursal[nombre] || []);
                 filas.push({
@@ -4736,17 +4759,22 @@
                 totalEfectivo += stats.cierreEfectivo;
                 totalBancard += stats.cierreBancard;
             });
+
             const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
             if (tableRows.length === 0) {
                 tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
             }
+
+            // Definir encabezados de columna para modo resumen
+            const headColumns = ['Sucursal', 'Efectivo', 'Bancard', 'Total'];
             const bodyRows = tableRows.map(f => [f.sucursal, f.efectivo.toLocaleString(), f.bancard.toLocaleString(), f.total.toLocaleString()]);
             const footRows = [];
             if (tableRows.length > 1) {
                 footRows.push(['TOTAL', totalEfectivo.toLocaleString(), totalBancard.toLocaleString(), (totalEfectivo + totalBancard).toLocaleString()]);
             }
+
             doc.autoTable({
-                head: [['Sucursal', 'Efectivo', 'Bancard', 'Total']],
+                head: [headColumns],
                 body: bodyRows,
                 foot: footRows,
                 startY: startY,
@@ -4780,6 +4808,7 @@
                 tableWidth: 'auto'
             });
         }
+
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -4789,6 +4818,7 @@
             doc.text("Gracias Dios nuestro", 20, doc.internal.pageSize.height - 15);
             doc.text(`Hoja ${i} / ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 15);
         }
+
         const fechaStr = new Date().toISOString().split('T')[0];
         const sucursalFiltro = document.getElementById('filtroSucursal').value;
         const sufijo = sucursalFiltro && sucursalFiltro !== 'todas' ? `_${sucursalFiltro.replace(' ', '_')}` : '';
@@ -4836,7 +4866,7 @@
                 <span><i class="fas fa-calendar"></i> <strong>${tituloReporte}</strong></span>
                 <span><i class="fas fa-calendar-day"></i> ${dias.size} días</span>
                 <span><i class="fas fa-list"></i> ${items.length} items</span>
-                <span><i class="fas fa-clock"></i> ${esRangoSemanal ? '📊 Modo Semanal (5 columnas: Día, Sucursal, Efectivo, Bancard, Total)' : '📊 Modo Resumen (4 columnas)'}</span>
+                <span><i class="fas fa-clock"></i> ${esRangoSemanal ? '📊 Modo Semanal (5 columnas: Día, Sucursal, Efectivo, Bancard, Total)' : '📊 Modo Resumen (4 columnas: Sucursal, Efectivo, Bancard, Total)'}</span>
                 ${!mostrarLambare ? '<span style="color:var(--warning);"><i class="fas fa-store-slash"></i> Lambaré excluido (fecha > 31/05/2026)</span>' : ''}
             </div>
             <table class="table-premium">
@@ -4905,12 +4935,9 @@
                 const productosPorSucursal = {};
 
                 if (esFiltroFecha) {
-                    // ============================================================
-                    // MODO CON FILTRO: Consumo Real = Stock_Inicial + Reposiciones - Stock_Final
-                    // ============================================================
+                    // MODO CON FILTRO: Consumo Real
                     const stockMaquinasSucursal = stockMaquinasData[suc.nombre] || {};
 
-                    // Verificar si hay stock para la fecha inicial
                     let hayStockInicial = false;
                     let hayStockFinal = false;
                     let fechasDisponibles = [];
@@ -4919,12 +4946,10 @@
                         fechasDisponibles = fechasDisponibles.concat(Object.keys(fechas));
                     });
 
-                    // Verificar si existe stock para la fecha inicial
-                    const tieneStockInicial = fechasDisponibles.some(f => f === fechaDesde);
-                    const tieneStockFinal = fechasDisponibles.some(f => f === fechaHasta);
+                    hayStockInicial = fechasDisponibles.some(f => f === fechaDesde);
+                    hayStockFinal = fechasDisponibles.some(f => f === fechaHasta);
 
-                    if (!tieneStockInicial) {
-                        // Mostrar aviso de falta de stock inicial
+                    if (!hayStockInicial) {
                         container.innerHTML = `
                             <div class="aviso-lectura">
                                 <i class="fas fa-calendar-times"></i>
@@ -4948,8 +4973,7 @@
                         return;
                     }
 
-                    if (!tieneStockFinal) {
-                        // Mostrar aviso de falta de stock final
+                    if (!hayStockFinal) {
                         container.innerHTML = `
                             <div class="aviso-lectura">
                                 <i class="fas fa-calendar-times"></i>
@@ -4973,12 +4997,10 @@
                         return;
                     }
 
-                    // Si hay stock para ambas fechas, calcular consumo
                     Object.entries(stockMaquinasSucursal).forEach(([code, fechas]) => {
                         const fechasOrdenadas = Object.keys(fechas).sort();
                         if (fechasOrdenadas.length === 0) return;
 
-                        // Obtener stock inicial (fechaDesde)
                         let stockInicial = 0;
                         let fechaInicialEncontrada = null;
                         for (let i = 0; i < fechasOrdenadas.length; i++) {
@@ -4990,7 +5012,6 @@
                             }
                         }
 
-                        // Obtener stock final (fechaHasta)
                         let stockFinal = 0;
                         let fechaFinalEncontrada = null;
                         for (let i = 0; i < fechasOrdenadas.length; i++) {
@@ -5002,7 +5023,6 @@
                             }
                         }
 
-                        // Si no se encontraron las fechas exactas, buscar las más cercanas
                         if (fechaInicialEncontrada === null) {
                             for (let i = fechasOrdenadas.length - 1; i >= 0; i--) {
                                 const fecha = fechasOrdenadas[i];
@@ -5028,10 +5048,8 @@
                             }
                         }
 
-                        // Calcular reposiciones (movimientos "Agregar a Máquinas" en el período)
                         let reposiciones = 0;
 
-                        // Buscar en carrito
                         Object.entries(carrito).forEach(([key, item]) => {
                             if (item.esMovimiento && 
                                 item.code === code &&
@@ -5050,7 +5068,6 @@
                             }
                         });
 
-                        // Buscar en historial
                         const desde = new Date(fechaDesde);
                         const hasta = new Date(fechaHasta);
                         desde.setHours(0, 0, 0, 0);
@@ -5075,7 +5092,6 @@
                             }
                         });
 
-                        // Consumo Real = Stock_Inicial + Reposiciones - Stock_Final
                         const consumoReal = stockInicial + reposiciones - stockFinal;
 
                         if (consumoReal > 0) {
@@ -5084,9 +5100,7 @@
                     });
 
                 } else {
-                    // ============================================================
                     // MODO SIN FILTRO: Stock actual en máquinas
-                    // ============================================================
                     const stockMaquinasSucursal = stockMaquinasData[suc.nombre] || {};
                     
                     Object.entries(stockMaquinasSucursal).forEach(([code, fechas]) => {
@@ -5101,7 +5115,6 @@
                     });
                 }
 
-                // Agregar items para esta sucursal
                 Object.entries(productosPorSucursal).forEach(([code, cantidad]) => {
                     if (cantidad > 0) {
                         items.push({
@@ -5117,7 +5130,6 @@
 
             } catch (error) {
                 console.error(`Error cargando máquinas de ${suc.nombre}:`, error);
-                // Mostrar error en el container
                 container.innerHTML = `
                     <div class="aviso-lectura" style="background:#f8d7da; border-color:#dc3545; color:#721c24;">
                         <i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>
@@ -5132,7 +5144,6 @@
             }
         }
 
-        // Ordenar por código y sucursal
         items.sort((a, b) => {
             if (a.code !== b.code) return a.code.localeCompare(b.code);
             return a.sucursal.localeCompare(b.sucursal);
@@ -5168,12 +5179,10 @@
             const colorIndex = p.code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
             const cantidad = p.cantidad || 0;
             
-            // Badge diferente según modo
             const badgeIcon = esFiltroFecha ? '🎯' : '📦';
             const badgeTitle = esFiltroFecha ? 'Ganado por clientes' : 'Stock en máquinas';
             const badgeColor = esFiltroFecha ? 'background:var(--gold);' : 'background:var(--success);';
 
-            // Icono de sucursal
             let iconoSucursal = '🏢';
 
             html += `
@@ -5290,12 +5299,11 @@
     document.getElementById('contadorFechaDesde').value = hace30Dias.toISOString().split('T')[0];
     document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
 
-    // Set fecha por defecto en máquinas (hoy)
     document.getElementById('maquinasFiltroDesde').value = hoy.toISOString().split('T')[0];
     document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 4.0 - Nueva pestaña MÁQUINAS (como catálogo)');
+    console.log('🏷️ Versión: 4.1 - Títulos de columnas en PDF corregidos');
     console.log('📁 Ruta de imágenes: ../imagenes/');
     console.log('📦 Catálogo combinado de Villa Morra, Los Laureles y Villa Elisa');
 
