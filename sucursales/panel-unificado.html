@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* ===== ESTILOS COMPLETOS (los mismos que antes) ===== */
         :root {
             --primary: #0d1b4a;
             --primary-light: #1a2d6e;
@@ -42,7 +43,6 @@
             --radius-xl: 28px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        /* ... resto de estilos ... */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: var(--gray-100); color: var(--gray-700); min-height: 100vh; padding: 20px; overflow-y: auto !important; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -846,6 +846,9 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script type="module">
+    // ============================================================
+    // 1. IMPORTACIONES Y CONFIGURACIÓN
+    // ============================================================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getDatabase, ref, get, child, remove, update, set, push, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
@@ -895,6 +898,9 @@
     const sucursalToConfig = {};
     sucursalesCompletas.forEach(s => { sucursalToConfig[s.nombre] = s; });
 
+    // ============================================================
+    // 2. ESTADO
+    // ============================================================
     const estado = {
         carritos: {},
         historialCache: {},
@@ -934,20 +940,30 @@
     let pendingDelete = null;
     let datosContadoresCache = {};
 
-    // NAVEGACIÓN
+    // ============================================================
+    // 3. NAVEGACIÓN POR TABS
+    // ============================================================
     document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.addEventListener('click', function() {
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+
             this.classList.add('active');
             const target = document.getElementById(this.dataset.tab);
             if (target) target.style.display = 'block';
-            if (this.dataset.tab === 'tab-catalogo') cargarCatalogoUnificado();
-            if (this.dataset.tab === 'tab-maquinas') cargarDatosMaquinas();
+
+            if (this.dataset.tab === 'tab-catalogo') {
+                cargarCatalogoUnificado();
+            }
+            if (this.dataset.tab === 'tab-maquinas') {
+                cargarDatosMaquinas();
+            }
         });
     });
 
-    // TOAST
+    // ============================================================
+    // 4. TOAST Y MODALES
+    // ============================================================
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
@@ -983,7 +999,9 @@
         if (e.key === 'Escape') closeConfirmModal();
     });
 
-    // FUNCIONES DE ELIMINACIÓN
+    // ============================================================
+    // 5. FUNCIONES DE ELIMINACIÓN
+    // ============================================================
     async function eliminarDelCarrito(sucursal, firebaseKey) {
         const config = sucursalToConfig[sucursal];
         if (!config) return { success: false, error: 'Sucursal no encontrada' };
@@ -1005,7 +1023,9 @@
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
             const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
-            if (!snapshot.exists()) return { success: false, error: 'Registro no encontrado en ' + sucursal };
+            if (!snapshot.exists()) {
+                return { success: false, error: 'Registro no encontrado en ' + sucursal };
+            }
             const registro = snapshot.val();
             const ventas = registro.ventas || [];
             if (indexVenta === null || indexVenta === undefined || indexVenta < 0 || indexVenta >= ventas.length) {
@@ -1095,6 +1115,9 @@
         });
     };
 
+    // ============================================================
+    // 6. FUNCIONES GLOBALES
+    // ============================================================
     window.recargarDatos = function() {
         cargarCarritos();
         cargarCatalogoUnificado();
@@ -1111,7 +1134,9 @@
         }
     };
 
-    // CARRITOS
+    // ============================================================
+    // 7. CARGAR CARRITOS
+    // ============================================================
     async function cargarCarritos() {
         const tbody = document.getElementById('carritosBody');
         tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px;">
@@ -1223,7 +1248,9 @@
             if (fuente === 'carrito') items = estado.carritos[nombre] || [];
             else if (fuente === 'historial') items = estado.historial[nombre] || [];
             else items = [...(estado.carritos[nombre] || []), ...(estado.historial[nombre] || [])];
-            if (soloVentas) items = items.filter(item => !item.esMovimiento && !item.esCierre);
+            if (soloVentas) {
+                items = items.filter(item => !item.esMovimiento && !item.esCierre);
+            }
             const stats = calcularEstadisticas(items);
             total.totalMonto += stats.totalMonto;
             total.cierreEfectivo += stats.cierreEfectivo;
@@ -1253,7 +1280,9 @@
         `;
     }
 
-    // FUNCIONES DE FECHA
+    // ============================================================
+    // 8. FUNCIONES DE FECHA
+    // ============================================================
     function obtenerDiaLaboral(item) {
         if (item.fechaEliminacion) return item.fechaEliminacion;
         if (item.fecha) return item.fecha;
@@ -1271,7 +1300,9 @@
         } catch(e) { return fechaStr; }
     }
 
-    // CATÁLOGO UNIFICADO
+    // ============================================================
+    // 9. CATÁLOGO UNIFICADO
+    // ============================================================
     async function cargarCatalogoUnificado() {
         const container = document.getElementById('catalogoContainer');
         container.innerHTML = `
@@ -1393,7 +1424,9 @@
         const filtro = estado.catalogoFiltro;
         const search = estado.catalogoSearch.toLowerCase();
         let filtrados = productos;
-        if (filtro !== 'todas') filtrados = filtrados.filter(p => p.sucursal === filtro);
+        if (filtro !== 'todas') {
+            filtrados = filtrados.filter(p => p.sucursal === filtro);
+        }
         if (search) {
             const codigoBusqueda = search.padStart(3, '0').substring(0, 3);
             filtrados = filtrados.filter(p => p.code.startsWith(codigoBusqueda));
@@ -1461,6 +1494,9 @@
         });
     }
 
+    // ============================================================
+    // 10. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
+    // ============================================================
     window.handleCatalogoClick = function(element) {
         const code = element.dataset.code;
         const price = parseFloat(element.dataset.price);
@@ -1516,10 +1552,22 @@
                 return;
             }
             estado.currentProduct = {
-                code, price, points, name: name, stock: stockValActual, fichaConsumption: consumo, sucursal: sucursal
+                code,
+                price,
+                points,
+                name: name,
+                stock: stockValActual,
+                fichaConsumption: consumo,
+                sucursal: sucursal
             };
             estado.currentMovimientosProduct = {
-                code, price, points, name: name, stock: stockValActual, fichaConsumption: consumo, sucursal: sucursal
+                code,
+                price,
+                points,
+                name: name,
+                stock: stockValActual,
+                fichaConsumption: consumo,
+                sucursal: sucursal
             };
             const movimientosTab = document.querySelector('#purchaseModal .tab-btn-compras[data-tab="movimientos"]');
             if (shouldShowMovimientosTab(code)) {
@@ -1580,6 +1628,9 @@
         }
     }
 
+    // ============================================================
+    // 11. FUNCIONES DE UTILIDAD PARA EL MODAL
+    // ============================================================
     function shouldShowQuantity(code) {
         return code === '005-13' || code === '000-00';
     }
@@ -1621,6 +1672,9 @@
         updateModalTotalsBasedOnQuantity();
     };
 
+    // ============================================================
+    // 12. FUNCIONES DEL MODAL DE COMPRA
+    // ============================================================
     window.closeModal = function() {
         document.getElementById('purchaseModal').style.display = 'none';
         unblockBodyScroll();
@@ -1735,6 +1789,9 @@
         procesar();
     };
 
+    // ============================================================
+    // 13. MOVIMIENTOS DE UNIDADES
+    // ============================================================
     window.agregarUnidades = async function() {
         if (window.agregarUnidadesLock) return;
         window.agregarUnidadesLock = true;
@@ -2003,6 +2060,9 @@
         }
     };
 
+    // ============================================================
+    // 14. FICHAS GRATIS
+    // ============================================================
     async function procesarFichaGratis(code, fichasAConsumir) {
         const catalogoItem = document.querySelector('.catalogo-item[data-code="' + code + '"]');
         if (!catalogoItem) {
@@ -2063,6 +2123,9 @@
         }
     }
 
+    // ============================================================
+    // 15. CIERRES DE CAJA
+    // ============================================================
     function abrirModalCierre(tipo, descripcion) {
         document.getElementById('cierreTitulo').innerHTML = `💰 Cierre de Caja - ${tipo}`;
         document.getElementById('cierreDescripcion').innerHTML = descripcion;
@@ -2124,6 +2187,9 @@
         }
     }
 
+    // ============================================================
+    // 16. CONTADORES DE MÁQUINAS (MODAL)
+    // ============================================================
     window.openContadoresModal = async function() {
         const catalogoItem = document.querySelector('.catalogo-item[data-code="000-11"]');
         const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
@@ -2227,6 +2293,9 @@
         }
     };
 
+    // ============================================================
+    // 17. FILTROS DEL CATÁLOGO
+    // ============================================================
     document.getElementById('catalogoFiltros').addEventListener('click', function(e) {
         const btn = e.target.closest('button');
         if (!btn) return;
@@ -2241,7 +2310,9 @@
         renderCatalogo(estado.catalogoProductos);
     });
 
-    // FILTROS AVANZADOS
+    // ============================================================
+    // 18. FILTROS AVANZADOS
+    // ============================================================
     async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
         if (estado.historialCache[key]) return estado.historialCache[key];
@@ -2511,7 +2582,9 @@
         estado.datosFiltrados = [];
     };
 
-    // CONTADORES
+    // ============================================================
+    // 19. CONTADORES DE MÁQUINAS (Panel)
+    // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
         if (estado.contadoresCache[key]) return estado.contadoresCache[key];
@@ -2893,6 +2966,7 @@
         tbody.innerHTML = html;
     }
 
+    // --- DIFERENCIA ---
     window.toggleDiferenciaContadores = function() {
         const panel = document.getElementById('diferenciaControles');
         if (panel.style.display === 'none') {
@@ -3055,7 +3129,7 @@
     }
 
     // ============================================================
-    // 20. PDF - CORREGIDO CON MÉTODO MANUAL PARA GARANTIZAR TÍTULOS
+    // 20. PDF - SOLUCIÓN DEFINITIVA CON ENCABEZADOS MANUALES
     // ============================================================
     function debeMostrarLambare(fechaDesde) {
         if (!fechaDesde) return true;
@@ -3137,7 +3211,9 @@
         const mostrarLambare = debeMostrarLambare(fechaDesde);
         const tituloReporte = generarTituloReporte(fechaDesde, fechaHasta);
 
-        // Encabezado del documento
+        // ============================================================
+        // ENCABEZADO DEL DOCUMENTO
+        // ============================================================
         doc.setFont("Times", "Roman");
         doc.setFontSize(24);
         doc.setTextColor(139, 0, 0);
@@ -3159,6 +3235,9 @@
         doc.text(`Items: ${items.length}`, 20, 64);
         doc.text(`Rango: ${diasRango} día(s)`, 20, 71);
 
+        // ============================================================
+        // PREPARAR DATOS
+        // ============================================================
         let ordenSucursales = ["Villa Morra", "Los Laureles", "Villa Elisa"];
         if (mostrarLambare) {
             ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
@@ -3174,9 +3253,10 @@
         let startY = 80;
 
         // ============================================================
-        // MODO SEMANAL (7 días o menos)
+        // CONSTRUIR TABLA
         // ============================================================
         if (esRangoSemanal && fechaDesde && fechaHasta) {
+            // ---- MODO SEMANAL ----
             const diasSemana = [];
             const fechaActual = new Date(fechaDesde);
             const fechaFin = new Date(fechaHasta);
@@ -3263,7 +3343,7 @@
             // ============================================================
             // GENERAR TABLA CON ENCABEZADOS EXPLÍCITOS
             // ============================================================
-            // Los encabezados deben estar en un array de arrays
+            // Definir encabezados como un array de arrays
             const headers = [['Día', 'Sucursal', 'Efectivo', 'Bancard', 'Total']];
             const body = tableData.map(item => item.row);
 
@@ -3315,11 +3395,8 @@
                     }
                 }
             });
-        } 
-        // ============================================================
-        // MODO RESUMEN (más de 7 días)
-        // ============================================================
-        else {
+        } else {
+            // ---- MODO RESUMEN ----
             const filas = [];
             let totalEfectivo = 0;
             let totalBancard = 0;
@@ -3388,7 +3465,9 @@
             });
         }
 
-        // Número de página
+        // ============================================================
+        // NÚMEROS DE PÁGINA
+        // ============================================================
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -3881,7 +3960,7 @@
     document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('🏷️ Versión: 4.3 - PDF con títulos de columnas FIJOS');
+    console.log('🏷️ Versión: 4.4 - PDF con encabezados de columna CORREGIDOS');
 
     for (const suc of sucursalesCatalogo) {
         try {
