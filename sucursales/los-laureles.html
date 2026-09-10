@@ -143,6 +143,43 @@
     font-weight: normal;
   }
 
+  /* ===== BOTÓN MOSTRAR/OCULTAR POR CATEGORÍA ===== */
+  .btn-toggle-categoria {
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .btn-toggle-categoria:hover {
+    background: #1976D2;
+    transform: scale(1.03);
+  }
+  .btn-toggle-categoria.mostrando {
+    background: #FF9800;
+  }
+  .btn-toggle-categoria.mostrando:hover {
+    background: #e68900;
+  }
+  .imagen-item.mostrado-cero {
+    display: flex !important;
+    opacity: 0.55;
+    border: 2px dashed #FF9800;
+    background: #fff8e1;
+  }
+  .imagen-item.mostrado-cero .stock-indicator {
+    background: #FF9800;
+  }
+
   .galeria {
     display: grid;
     gap: 12px;
@@ -376,6 +413,10 @@
     background: #2196F3;
     color: white;
   }
+  .tab-btn-compras:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
   .tab-pane-compras {
     display: none;
   }
@@ -444,6 +485,10 @@
     font-weight: bold;
     font-size: 1.1rem;
     touch-action: manipulation;
+  }
+  .modal-buttons button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 
   .modal-qty-row {
@@ -1787,11 +1832,7 @@
         }
 
         let stockVal = getProductStock(code);
-        if (stockVal <= 0) {
-          alert('Sin stock');
-          target._clickTimeout = null;
-          return;
-        }
+        // Ya NO bloqueamos si stockVal <= 0. El modal se abre y se restringe la pestaña Compra más abajo.
 
         const price = getProductPrice(code, parseFloat(target.getAttribute('data-price')));
         const consumo = FICHA_CONSUMPTION[code] || 0;
@@ -1800,17 +1841,38 @@
         currentProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
         currentMovimientosProduct = { code, price, points, name, stock: stockVal, fichaConsumption: consumo };
 
+        const compraTab = document.querySelector('.tab-btn-compras[data-tab="compra"]');
         const movimientosTab = document.querySelector('.tab-btn-compras[data-tab="movimientos"]');
-        if (shouldShowMovimientosTab(code)) {
-          movimientosTab.style.display = 'block';
-        } else {
-          movimientosTab.style.display = 'none';
-          if (document.querySelector('.tab-btn-compras.active')?.getAttribute('data-tab') === 'movimientos') {
-            document.querySelector('.tab-btn-compras[data-tab="compra"]')?.click();
-          }
-        }
 
-        document.querySelector('.tab-btn-compras[data-tab="compra"]')?.click();
+        // Si stock es 0, forzar la pestaña Movimientos y bloquear la pestaña Compra
+        if (stockVal <= 0 && !CIERRE_CODES.includes(code)) {
+          compraTab.disabled = true;
+          compraTab.style.opacity = '0.4';
+          compraTab.style.cursor = 'not-allowed';
+          compraTab.textContent = '🚫 Compra (sin stock)';
+
+          movimientosTab.style.display = 'block';
+
+          // Activar pestaña Movimientos automáticamente
+          movimientosTab.click();
+        } else {
+          // Stock disponible: restaurar botón Compra
+          compraTab.disabled = false;
+          compraTab.style.opacity = '';
+          compraTab.style.cursor = '';
+          compraTab.textContent = '🛒 Compra';
+
+          if (shouldShowMovimientosTab(code)) {
+            movimientosTab.style.display = 'block';
+          } else {
+            movimientosTab.style.display = 'none';
+            if (document.querySelector('.tab-btn-compras.active')?.getAttribute('data-tab') === 'movimientos') {
+              compraTab.click();
+            }
+          }
+
+          compraTab.click();
+        }
 
         const quantityRow = document.getElementById('quantityRow');
         if (shouldShowQuantity(code)) {
@@ -1830,7 +1892,18 @@
 
         const modalStockInfo = document.getElementById('modalStockInfo');
         if (modalStockInfo) {
-          modalStockInfo.innerHTML = `📦 Stock disponible: <strong>${stockVal} unidades</strong>`;
+          if (stockVal <= 0 && !CIERRE_CODES.includes(code)) {
+            modalStockInfo.innerHTML = `
+              <span style="color:#f44336; font-weight:bold;">🚫 SIN STOCK</span><br>
+              <small style="color:#666;">Usá la pestaña 🔄 Movimientos para registrar unidades primero</small>
+            `;
+            modalStockInfo.style.background = '#ffebee';
+            modalStockInfo.style.color = '#c62828';
+          } else {
+            modalStockInfo.innerHTML = `📦 Stock disponible: <strong>${stockVal} unidades</strong>`;
+            modalStockInfo.style.background = '';
+            modalStockInfo.style.color = '';
+          }
         }
 
         const pointsInput = document.getElementById('pointsInput');
@@ -1860,6 +1933,29 @@
 
         const unidadesInput = document.getElementById('unidadesInput');
         if (unidadesInput) unidadesInput.value = 1;
+
+        // Si stock es 0, deshabilitar botones de pago
+        const btnEfectivo = document.getElementById('btnEfectivo');
+        const btnPOS = document.getElementById('btnPOS');
+        const btnMixto = document.getElementById('btnMixto');
+
+        if (stockVal <= 0 && !CIERRE_CODES.includes(code)) {
+          [btnEfectivo, btnPOS, btnMixto].forEach(btn => {
+            if (btn) {
+              btn.disabled = true;
+              btn.style.opacity = '0.4';
+              btn.style.cursor = 'not-allowed';
+            }
+          });
+        } else {
+          [btnEfectivo, btnPOS, btnMixto].forEach(btn => {
+            if (btn) {
+              btn.disabled = false;
+              btn.style.opacity = '';
+              btn.style.cursor = '';
+            }
+          });
+        }
 
         const purchaseModal = document.getElementById('purchaseModal');
         if (purchaseModal) {
@@ -2407,6 +2503,14 @@
 
       if (!moneyInput || !btnEfectivo || !btnPOS) return;
 
+      // Si el producto NO tiene stock, no tocar los botones (ya están deshabilitados)
+      if (currentProduct) {
+        const stockVal = getProductStock(currentProduct.code);
+        if (stockVal <= 0 && !CIERRE_CODES.includes(currentProduct.code)) {
+          return;
+        }
+      }
+
       const dinero = parseFloat(moneyInput.value) || 0;
       const puntosIngresados = parseInt(pointsInput.value) || 0;
       const tienePuntos = currentProduct && currentProduct.points > 0;
@@ -2464,6 +2568,12 @@
     function pagarConEfectivo() {
       if (!currentProduct) return;
 
+      const stockVal = getProductStock(currentProduct.code);
+      if (stockVal <= 0 && !CIERRE_CODES.includes(currentProduct.code)) {
+        alert('🚫 No se puede vender este producto. No tiene stock.\n\nPrimero registrá unidades en la pestaña "🔄 Movimientos".');
+        return;
+      }
+
       const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
       const money = parseFloat(document.getElementById('moneyInput').value) || 0;
       const points = parseInt(document.getElementById('pointsInput').value) || 0;
@@ -2479,6 +2589,12 @@
 
     function pagarConPOS() {
       if (!currentProduct) return;
+
+      const stockVal = getProductStock(currentProduct.code);
+      if (stockVal <= 0 && !CIERRE_CODES.includes(currentProduct.code)) {
+        alert('🚫 No se puede vender este producto. No tiene stock.\n\nPrimero registrá unidades en la pestaña "🔄 Movimientos".');
+        return;
+      }
 
       const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
       const money = parseFloat(document.getElementById('moneyInput').value) || 0;
@@ -2496,6 +2612,12 @@
     function canjearProducto() {
       if (!currentProduct) return;
 
+      const stockVal = getProductStock(currentProduct.code);
+      if (stockVal <= 0 && !CIERRE_CODES.includes(currentProduct.code)) {
+        alert('🚫 No se puede canjear este producto. No tiene stock.\n\nPrimero registrá unidades en la pestaña "🔄 Movimientos".');
+        return;
+      }
+
       const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
       const points = parseInt(document.getElementById('pointsInput').value) || 0;
       const totalPrice = currentProduct.price * qty;
@@ -2512,6 +2634,12 @@
 
     function pagarMixto() {
       if (!currentProduct) return;
+
+      const stockVal = getProductStock(currentProduct.code);
+      if (stockVal <= 0 && !CIERRE_CODES.includes(currentProduct.code)) {
+        alert('🚫 No se puede vender este producto. No tiene stock.\n\nPrimero registrá unidades en la pestaña "🔄 Movimientos".');
+        return;
+      }
 
       const qty = parseInt(document.getElementById('productQuantity')?.value) || 1;
       const totalPrice = currentProduct.price * qty;
@@ -2564,6 +2692,13 @@
 
     function procesarVentaMixto(product, qty, points, money, efectivoNum, posNum) {
       const code = product.code;
+
+      const stockVal = getProductStock(code);
+      if (stockVal <= 0 && !CIERRE_CODES.includes(code)) {
+        alert('🚫 No se puede vender un producto sin stock.');
+        return;
+      }
+
       const consumo = product.fichaConsumption || 0;
       const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
       const totalPrice = product.price * qty;
@@ -2629,6 +2764,13 @@
 
     function procesarVenta(product, qty, points, money, metodo) {
       const code = product.code;
+
+      const stockVal = getProductStock(code);
+      if (stockVal <= 0 && !CIERRE_CODES.includes(code)) {
+        alert('🚫 No se puede vender un producto sin stock.');
+        return;
+      }
+
       const consumo = product.fichaConsumption || 0;
       const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
       const totalPrice = product.price * qty;
@@ -3184,13 +3326,31 @@
 
     function filterProducts(q) {
       document.querySelectorAll('.categoria').forEach(cat => {
+        const boton = cat.querySelector('.btn-toggle-categoria');
+        const estaMostrando = boton && boton.classList.contains('mostrando');
         let any = false;
         cat.querySelectorAll('.imagen-item').forEach(item => {
           const code = item.getAttribute('data-code') || '';
-          if (item.classList.contains('out-of-stock') && !CIERRE_CODES.includes(code)) { item.style
-              .display = 'none'; } else {
-            if (q === '' || code.startsWith(q)) { item.style.display = 'flex';
-              any = true; } else { item.style.display = 'none'; }
+          const coincide = (q === '' || code.startsWith(q));
+
+          if (!coincide) {
+            item.style.display = 'none';
+            return;
+          }
+
+          // Si la categoría está en modo "mostrando", mostrar todos los que coincidan
+          if (estaMostrando) {
+            item.style.display = 'flex';
+            any = true;
+            return;
+          }
+
+          // Modo normal: ocultar los de stock 0
+          if (item.classList.contains('out-of-stock') && !CIERRE_CODES.includes(code)) {
+            item.style.display = 'none';
+          } else {
+            item.style.display = 'flex';
+            any = true;
           }
         });
         cat.style.display = any ? 'block' : 'none';
@@ -3217,6 +3377,28 @@
         if (val <= 0 && !CIERRE_CODES.includes(code)) item.classList.add('out-of-stock');
         else item.classList.remove('out-of-stock');
       });
+
+      // Re-aplicar visibilidad según modo mostrando/oculto
+      document.querySelectorAll('.categoria').forEach(cat => {
+        const boton = cat.querySelector('.btn-toggle-categoria');
+        const estaMostrando = boton && boton.classList.contains('mostrando');
+        cat.querySelectorAll('.imagen-item').forEach(item => {
+          const code = item.getAttribute('data-code');
+          const val = getProductStock(code);
+          if (estaMostrando) {
+            item.classList.add('mostrado-cero');
+            item.style.display = 'flex';
+          } else {
+            item.classList.remove('mostrado-cero');
+            if (val <= 0 && !CIERRE_CODES.includes(code)) {
+              item.style.display = 'none';
+            } else {
+              item.style.display = 'flex';
+            }
+          }
+        });
+      });
+
       updateCategoryStockCounters();
       const searchValue = document.getElementById('busqueda')?.value || '';
       const match = searchValue.match(/\d{3}/);
@@ -3500,7 +3682,7 @@
       }
     };
 
-    // ========== NUEVA FUNCIÓN: REGISTRAR STOCK EN MÁQUINAS ==========
+    // ========== FUNCIÓN PARA REGISTRAR STOCK EN MÁQUINAS ==========
 
     window.registrarStockMaquinas = async function() {
       if (!isOnline()) {
@@ -3546,6 +3728,9 @@
 
         document.getElementById('cantidadStockMaquinas').value = '';
 
+        // Cerrar el modal automáticamente
+        closeModal();
+
       } catch (error) {
         ocultarMensajeEnProceso();
         alert('❌ Error al guardar el registro');
@@ -3553,7 +3738,41 @@
       }
     };
 
-    // ========== FUNCIONES DE MOVIMIENTOS MODIFICADAS ==========
+    // ========== FUNCIÓN PARA MOSTRAR/OCULTAR CATEGORÍA ==========
+
+    window.toggleCategoria = function(categoria, boton) {
+      const section = boton.closest('.categoria');
+      if (!section) return;
+
+      const items = section.querySelectorAll('.imagen-item');
+      const mostrando = boton.classList.contains('mostrando');
+
+      if (!mostrando) {
+        // MOSTRAR TODOS (incluyendo stock 0)
+        items.forEach(item => {
+          item.classList.add('mostrado-cero');
+          item.style.display = 'flex';
+        });
+        boton.classList.add('mostrando');
+        boton.innerHTML = '🙈 Ocultar';
+      } else {
+        // OCULTAR SOLO LOS QUE TIENEN STOCK 0
+        items.forEach(item => {
+          item.classList.remove('mostrado-cero');
+          const code = item.getAttribute('data-code');
+          const stockVal = getProductStock(code);
+          if (stockVal <= 0 && !CIERRE_CODES.includes(code)) {
+            item.style.display = 'none';
+          } else {
+            item.style.display = 'flex';
+          }
+        });
+        boton.classList.remove('mostrando');
+        boton.innerHTML = '👁️ Mostrar';
+      }
+    };
+
+    // ========== FUNCIONES DE MOVIMIENTOS ==========
 
     window.agregarUnidades = async function() {
       if (window.agregarUnidadesLock) return;
@@ -4636,7 +4855,10 @@
 
         const titulo = document.createElement('h2');
         titulo.innerHTML =
-          `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">📦 <span>${cantidadProductos * STOCK_INICIAL}</span></span>`;
+          `${cat.nombre} <span class="stock-badge" id="stock-${cat.categoria}">📦 <span>${cantidadProductos * STOCK_INICIAL}</span></span>
+           <button class="btn-toggle-categoria" data-categoria="${cat.categoria}" onclick="toggleCategoria('${cat.categoria}', this)">
+             👁️ Mostrar
+           </button>`;
         section.appendChild(titulo);
 
         const galeria = document.createElement('div');
@@ -4758,6 +4980,7 @@
 
     document.querySelectorAll('.tab-btn-compras').forEach(btn => {
       btn.addEventListener('click', function() {
+        if (this.disabled) return;
         const tabId = this.getAttribute('data-tab');
         document.querySelectorAll('.tab-btn-compras').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
