@@ -2657,7 +2657,7 @@
     }
 
     // ============================================================
-    // 9. CATÁLOGO UNIFICADO
+    // 9. CATÁLOGO UNIFICADO - CORREGIDO
     // ============================================================
     async function cargarCatalogoUnificado() {
         const container = document.getElementById('catalogoContainer');
@@ -2667,154 +2667,220 @@
                 <span>Cargando catálogo...</span>
             </div>
         `;
+
         const productos = [];
+
         for (const suc of sucursalesCatalogo) {
             try {
+                console.log(`📦 Cargando catálogo de ${suc.nombre}...`);
+
                 const app = initializeApp(suc.config, suc.id);
                 const db = getDatabase(app);
+
+                // LEER EL CATÁLOGO REAL desde Firebase
+                const catalogoSnap = await get(ref(db, 'catalogo'));
+                const catalogoData = catalogoSnap.val() || {};
+
+                // LEER EL STOCK REAL
                 const stockSnap = await get(ref(db, 'stock'));
                 const stockData = stockSnap.val() || {};
-                const categorias = [
-                    { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
-                        { codigo: "000-00", precio: 5000 },
-                        { codigo: "000-01", precio: 50000 },
-                        { codigo: "000-02", precio: 100000 },
-                        { codigo: "000-05", precio: 0 },
-                        { codigo: "000-06", precio: 0 },
-                        { codigo: "000-07", precio: 15000 },
-                        { codigo: "000-08", precio: 15000 },
-                        { codigo: "000-09", precio: 0 },
-                        { codigo: "000-10", precio: 0 },
-                        { codigo: "000-11", precio: 0 }
-                    ]},
-                    { nombre: "005 puntos", categoria: "005", puntos: 5, precioBase: 5000, rango: { desde: 0, hasta: 18 } },
-                    { nombre: "020 puntos", categoria: "020", puntos: 20, precioBase: 15000, rango: { desde: 0, hasta: 74 } },
-                    { nombre: "035 puntos", categoria: "035", puntos: 35, precioBase: 25000, rango: { desde: 0, hasta: 75 } },
-                    { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 59 } },
-                    { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 63 } },
-                    { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 38 } },
-                    { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 53 } },
-                    { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 10 } },
-                    { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 39 } },
-                    { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
-                    { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 5 } },
-                    { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 3 } },
-                    { nombre: "420 puntos", categoria: "420", puntos: 420, productosEspeciales: [
-                        { sufijo: "00", precio: 200000 }, { sufijo: "01", precio: 2000 }, { sufijo: "02", precio: 2000 },
-                        { sufijo: "03", precio: 60000 }
-                    ]},
-                    { nombre: "800 puntos", categoria: "800", puntos: 800, productos: [
-                        { codigo: "800-00", precio: 250000 }, { codigo: "800-01", precio: 250000 }
-                    ]}
-                ];
-                for (const cat of categorias) {
-                    if (cat.rango) {
-                        for (let i = cat.rango.desde; i <= cat.rango.hasta; i++) {
-                            const codigo = `${cat.categoria}-${i.toString().padStart(2,'0')}`;
-                            const precio = codigo === '100-38' ? 10000 : cat.precioBase;
-                            const stockVal = getProductStockForSucursal(codigo, stockData);
-                            productos.push({
-                                code: codigo,
-                                price: precio,
-                                points: cat.puntos,
-                                sucursal: suc.nombre,
-                                stock: stockVal,
-                                fichaConsumption: FICHA_CONSUMPTION[codigo] || 0,
-                                category: cat.categoria,
-                                nombre: codigo + (precio > 0 ? ` - G.${precio.toLocaleString('es-PY')}` : '')
-                            });
-                        }
-                    } else if (cat.productosEspeciales) {
-                        for (const p of cat.productosEspeciales) {
-                            const codigo = `${cat.categoria}-${p.sufijo}`;
-                            const stockVal = getProductStockForSucursal(codigo, stockData);
-                            productos.push({
-                                code: codigo,
-                                price: p.precio,
-                                points: cat.puntos,
-                                sucursal: suc.nombre,
-                                stock: stockVal,
-                                fichaConsumption: FICHA_CONSUMPTION[codigo] || 0,
-                                category: cat.categoria,
-                                nombre: codigo + (p.precio > 0 ? ` - G.${p.precio.toLocaleString('es-PY')}` : '')
-                            });
-                        }
-                    } else if (cat.productos) {
-                        for (const p of cat.productos) {
-                            const stockVal = getProductStockForSucursal(p.codigo, stockData);
-                            productos.push({
-                                code: p.codigo,
-                                price: p.precio,
-                                points: cat.puntos,
-                                sucursal: suc.nombre,
-                                stock: stockVal,
-                                fichaConsumption: FICHA_CONSUMPTION[p.codigo] || 0,
-                                category: cat.categoria,
-                                nombre: p.codigo + (p.precio > 0 ? ` - G.${p.precio.toLocaleString('es-PY')}` : '')
-                            });
+
+                // Función para obtener info del producto por código
+                const getInfo = (code) => {
+                    // Precios por código
+                    const precios = {
+                        '000-00': 5000, '000-01': 50000, '000-02': 100000,
+                        '000-03': 10000, '000-04': 10000,
+                        '000-05': 0, '000-06': 0,
+                        '000-07': 15000, '000-08': 15000,
+                        '000-09': 0, '000-10': 0, '000-11': 0,
+                        '420-00': 200000, '420-01': 2000, '420-02': 2000, '420-03': 60000,
+                        '100-38': 10000, '800-01': 250000
+                    };
+
+                    // Puntos por categoría
+                    const puntosMap = {
+                        '005': 5, '020': 20, '035': 35, '050': 50, '075': 75,
+                        '100': 100, '150': 150, '180': 180, '200': 200, '220': 220,
+                        '250': 250, '350': 350, '420': 420, '500': 500, '600': 600,
+                        '800': 800, '000': 0
+                    };
+
+                    const cat = code.split('-')[0];
+                    const price = precios[code] || 0;
+                    const points = puntosMap[cat] || 0;
+                    return { price, points };
+                };
+
+                // OBTENER LA LISTA DE PRODUCTOS DEL CATÁLOGO
+                let listaProductos = [];
+
+                // Si el catálogo tiene estructura con productos
+                if (catalogoData.productos && Array.isArray(catalogoData.productos)) {
+                    listaProductos = catalogoData.productos;
+                    console.log(`📋 ${suc.nombre}: ${listaProductos.length} productos en catálogo`);
+                } 
+                // Si el catálogo está en otro formato (objeto con categorías)
+                else if (typeof catalogoData === 'object' && catalogoData !== null) {
+                    for (const key in catalogoData) {
+                        const value = catalogoData[key];
+                        if (Array.isArray(value)) {
+                            listaProductos = listaProductos.concat(value);
+                        } else if (value && typeof value === 'object' && value.productos && Array.isArray(value.productos)) {
+                            listaProductos = listaProductos.concat(value.productos);
                         }
                     }
                 }
+
+                // Si no hay catálogo, usar los códigos que tienen stock > 0
+                if (listaProductos.length === 0) {
+                    console.log(`⚠️ ${suc.nombre}: No se encontró catálogo, usando productos con stock > 0`);
+                    for (const code in stockData) {
+                        if (stockData[code] > 0) {
+                            const info = getInfo(code);
+                            listaProductos.push({
+                                code: code,
+                                price: info.price,
+                                points: info.points,
+                                stock: stockData[code]
+                            });
+                        }
+                    }
+                    console.log(`📦 ${suc.nombre}: ${listaProductos.length} productos con stock > 0`);
+                } else {
+                    // Filtrar solo productos con stock > 0
+                    listaProductos = listaProductos.filter(p => {
+                        const code = p.code || p.codigo || '';
+                        const stock = stockData[code] ?? 0;
+                        return stock > 0;
+                    });
+                    console.log(`✅ ${suc.nombre}: ${listaProductos.length} productos con stock > 0`);
+                }
+
+                // Agregar productos a la lista global
+                for (const p of listaProductos) {
+                    const code = p.code || p.codigo || '';
+                    if (!code || !code.includes('-')) continue;
+
+                    const stockVal = p.stock !== undefined ? p.stock : (stockData[code] ?? 0);
+                    const price = p.price || p.precio || 0;
+                    const points = p.points || p.puntos || 0;
+                    const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
+                    const category = code.split('-')[0] || '000';
+
+                    // Solo agregar si tiene stock > 0
+                    if (stockVal > 0) {
+                        productos.push({
+                            code: code,
+                            price: price,
+                            points: points,
+                            sucursal: suc.nombre,
+                            stock: stockVal,
+                            fichaConsumption: fichaConsumption,
+                            category: category,
+                            nombre: code + (price > 0 ? ` - G.${price.toLocaleString('es-PY')}` : '')
+                        });
+                    }
+                }
+
                 estado.catalogoStock[suc.nombre] = stockData;
+
             } catch (error) {
-                console.error(`Error generando catálogo para ${suc.nombre}:`, error);
+                console.error(`❌ Error cargando catálogo de ${suc.nombre}:`, error);
             }
         }
-        estado.catalogoProductos = productos;
-        renderCatalogo(productos);
-    }
 
-    function getProductStockForSucursal(code, stockData) {
-        if (NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code)) {
-            return stockData[code] ?? STOCK_INICIAL;
+        // Eliminar duplicados (mismo código en misma sucursal)
+        const uniqueMap = new Map();
+        productos.forEach(p => {
+            const key = `${p.sucursal}-${p.code}`;
+            if (!uniqueMap.has(key) || uniqueMap.get(key).stock < p.stock) {
+                uniqueMap.set(key, p);
+            }
+        });
+        const productosUnicos = Array.from(uniqueMap.values());
+
+        // Ordenar por código
+        productosUnicos.sort((a, b) => a.code.localeCompare(b.code));
+
+        console.log(`📊 Total productos únicos con stock > 0: ${productosUnicos.length}`);
+        console.log('📊 Detalle por sucursal:');
+        const porSucursal = {};
+        productosUnicos.forEach(p => {
+            porSucursal[p.sucursal] = (porSucursal[p.sucursal] || 0) + 1;
+        });
+        for (const [suc, count] of Object.entries(porSucursal)) {
+            console.log(`   ${suc}: ${count} productos`);
         }
-        if (FICHA_CONSUMPTION[code]) {
-            const fichaStock = stockData['000-00'] ?? STOCK_INICIAL;
-            return Math.floor(fichaStock / FICHA_CONSUMPTION[code]);
-        }
-        return stockData[code] ?? STOCK_INICIAL;
+
+        estado.catalogoProductos = productosUnicos;
+        renderCatalogo(productosUnicos);
     }
 
     function renderCatalogo(productos) {
         const container = document.getElementById('catalogoContainer');
         const filtro = estado.catalogoFiltro;
         const search = estado.catalogoSearch.toLowerCase();
+
         let filtrados = productos;
+
+        // Filtrar por sucursal
         if (filtro !== 'todas') {
             filtrados = filtrados.filter(p => p.sucursal === filtro);
         }
+
+        // Filtrar por búsqueda
         if (search) {
-            const codigoBusqueda = search.padStart(3, '0').substring(0, 3);
-            filtrados = filtrados.filter(p => p.code.startsWith(codigoBusqueda));
+            filtrados = filtrados.filter(p => p.code.startsWith(search.padStart(3, '0')));
         }
+
+        // SOLO productos con stock > 0
+        filtrados = filtrados.filter(p => p.stock > 0);
+
+        // Ordenar por código
         filtrados.sort((a, b) => a.code.localeCompare(b.code));
-        const todasCount = productos.length;
+
+        // Actualizar contadores
+        const todasCount = productos.filter(p => p.stock > 0).length;
         const counts = {};
-        productos.forEach(p => { counts[p.sucursal] = (counts[p.sucursal] || 0) + 1; });
+        productos.filter(p => p.stock > 0).forEach(p => {
+            counts[p.sucursal] = (counts[p.sucursal] || 0) + 1;
+        });
+
         document.getElementById('countTodas').textContent = todasCount;
         document.getElementById('countVilla Morra').textContent = counts['Villa Morra'] || 0;
         document.getElementById('countLos Laureles').textContent = counts['Los Laureles'] || 0;
         document.getElementById('countVilla Elisa').textContent = counts['Villa Elisa'] || 0;
         document.getElementById('catalogoTotalCount').textContent = filtrados.length;
         document.getElementById('tabCatalogoBadge').textContent = filtrados.length;
+
         if (filtrados.length === 0) {
             container.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align:center; padding:40px; color:var(--gray-400);">
                     <i class="fas fa-box-open" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
-                    No se encontraron productos con los filtros seleccionados
+                    No hay productos con stock disponible
+                    ${filtro !== 'todas' ? `<br><small>en ${filtro}</small>` : ''}
+                    ${search ? `<br><small>Búsqueda: ${search}</small>` : ''}
                 </div>
             `;
             return;
         }
-        const colores = ['linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'];
+
+        const colores = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+        ];
+
         let html = '';
         filtrados.forEach((p, idx) => {
             const colorIndex = p.code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
-            const stockClass = p.stock <= 0 ? 'sin-stock' : '';
-            const outOfStock = p.stock <= 0 && !CIERRE_CODES.includes(p.code);
             const isSpecial = CIERRE_CODES.includes(p.code) || p.code === '000-11';
+
             html += `
-                <div class="catalogo-item ${outOfStock && !isSpecial ? 'out-of-stock' : ''}"
+                <div class="catalogo-item"
                      data-sucursal="${p.sucursal}"
                      data-code="${p.code}"
                      data-price="${p.price}"
@@ -2823,12 +2889,13 @@
                      data-fichaconsumption="${p.fichaConsumption}"
                      onclick="handleCatalogoClick(this)">
                     <span class="sucursal-badge">${p.sucursal}</span>
-                    <span class="stock-indicator ${stockClass}">${p.stock}</span>
+                    <span class="stock-indicator">${p.stock}</span>
                     <div class="img-placeholder" style="background: ${colores[colorIndex]};">${p.code.replace('-', ' ')}</div>
                     <p>${p.nombre}</p>
                 </div>
             `;
         });
+
         container.innerHTML = html;
         cargarImagenesCatalogo(container);
     }
@@ -4611,7 +4678,6 @@
         // ============================================================
         // CONSTRUIR TABLA - MODO MANUAL CON ENCABEZADOS
         // ============================================================
-        // Función auxiliar para dibujar una celda con borde y texto
         function dibujarCelda(doc, x, y, ancho, alto, texto, esHeader = false, align = 'center', colorFondo = null, bold = false) {
             if (colorFondo) {
                 doc.setFillColor(colorFondo[0], colorFondo[1], colorFondo[2]);
@@ -4644,7 +4710,6 @@
                 fechaActual.setDate(fechaActual.getDate() + 1);
             }
 
-            // Construir filas de datos
             const filasDatos = [];
             let totalGeneralEfectivo = 0, totalGeneralBancard = 0, totalGeneralTotal = 0;
 
@@ -4709,12 +4774,10 @@
                 total: totalGeneralTotal
             });
 
-            // Calcular anchos (5 columnas)
             const anchoCol = (ANCHO_PAGINA - (MARGEN * 2)) / 5;
             const altoFila = 9;
             const altoHeader = 11;
 
-            // Dibujar ENCABEZADOS
             const headers = ['Día', 'Sucursal', 'Efectivo', 'Bancard', 'Total'];
             headers.forEach((header, i) => {
                 const x = X_INICIO + (i * anchoCol);
@@ -4722,7 +4785,6 @@
             });
             Y_ACTUAL += altoHeader;
 
-            // Dibujar filas de datos
             filasDatos.forEach(fila => {
                 fila.columnas.forEach((valor, i) => {
                     const x = X_INICIO + (i * anchoCol);
@@ -4740,7 +4802,6 @@
                 if (Y_ACTUAL > doc.internal.pageSize.height - 30) {
                     doc.addPage();
                     Y_ACTUAL = 20;
-                    // Re-dibujar encabezados en nueva página
                     headers.forEach((header, i) => {
                         const x = X_INICIO + (i * anchoCol);
                         dibujarCelda(doc, x, Y_ACTUAL, anchoCol, altoHeader, header, true, 'center', [139, 0, 0], true);
@@ -4769,12 +4830,10 @@
             const tableRows = filas.filter(f => f.efectivo > 0 || f.bancard > 0 || f.total > 0);
             if (tableRows.length === 0) tableRows.push({ sucursal: 'Sin datos', efectivo: 0, bancard: 0, total: 0 });
 
-            // Calcular anchos (4 columnas)
             const anchoCol = (ANCHO_PAGINA - (MARGEN * 2)) / 4;
             const altoFila = 10;
             const altoHeader = 12;
 
-            // Dibujar ENCABEZADOS
             const headers = ['Sucursal', 'Efectivo', 'Bancard', 'Total'];
             headers.forEach((header, i) => {
                 const x = X_INICIO + (i * anchoCol);
@@ -4782,7 +4841,6 @@
             });
             Y_ACTUAL += altoHeader;
 
-            // Dibujar filas de datos
             tableRows.forEach((fila, index) => {
                 const valores = [fila.sucursal, fila.efectivo, fila.bancard, fila.total];
                 const esTotal = index === tableRows.length - 1 && tableRows.length > 1;
@@ -4807,7 +4865,6 @@
                 }
             });
 
-            // Total general
             if (tableRows.length > 1) {
                 const totalValores = ['TOTAL', totalEfectivo, totalBancard, totalEfectivo + totalBancard];
                 totalValores.forEach((valor, i) => {
@@ -5294,13 +5351,9 @@
     }
 
     // ============================================================
-    // 22. INICIALIZACIÓN - VERSIÓN RÁPIDA (SOLO CARRITOS)
+    // 22. INICIALIZACIÓN
     // ============================================================
-    // SOLO cargar carritos al inicio (como en la versión original)
     cargarCarritos();
-
-    // El catálogo y máquinas se cargan SOLO cuando se abren las pestañas
-    // (ya está implementado en los event listeners de navegación)
 
     const hoy = new Date();
     const hace7Dias = new Date();
@@ -5316,23 +5369,18 @@
     document.getElementById('maquinasFiltroDesde').value = hoy.toISOString().split('T')[0];
     document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
 
-    console.log('✅ Panel ASTROLAND Premium cargado correctamente (carga rápida)');
+    console.log('✅ Panel ASTROLAND Premium cargado correctamente');
 
-    // ===== SUSCRIPCIONES EN TIEMPO REAL (SOLO PARA CARRITOS Y STOCK) =====
-    // Solo mantener las suscripciones necesarias
+    // ===== SUSCRIPCIONES EN TIEMPO REAL =====
     for (const suc of sucursalesCompletas) {
         try {
             const app = initializeApp(suc.config, suc.id);
             const db = getDatabase(app);
-            // Solo escuchar cambios en carrito (para actualizar en tiempo real)
             onValue(ref(db, 'carrito'), () => {
                 cargarCarritos();
             });
         } catch (e) { /* Ignorar */ }
     }
-
-    // Las suscripciones a stock solo cuando la pestaña está activa
-    // (ya se maneja en los event listeners)
 </script>
 
 </body>
