@@ -43,11 +43,7 @@
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -63,10 +59,7 @@
         ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
-        .app-container {
-            max-width: 1440px;
-            margin: 0 auto;
-        }
+        .app-container { max-width: 1440px; margin: 0 auto; }
 
         .header-premium {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
@@ -86,10 +79,8 @@
         .header-premium::before {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 60%;
-            height: 200%;
+            top: -50%; right: -20%;
+            width: 60%; height: 200%;
             background: radial-gradient(ellipse, rgba(201, 168, 76, 0.08) 0%, transparent 70%);
             pointer-events: none;
         }
@@ -97,66 +88,32 @@
         .header-premium::after {
             content: '✦';
             position: absolute;
-            bottom: 10px;
-            right: 30px;
+            bottom: 10px; right: 30px;
             font-size: 80px;
             color: rgba(201, 168, 76, 0.06);
             pointer-events: none;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            z-index: 1;
-        }
+        .header-left { display: flex; align-items: center; gap: 16px; z-index: 1; }
 
         .header-logo {
-            width: 48px;
-            height: 48px;
+            width: 48px; height: 48px;
             background: var(--gold);
             border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: 900;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: 900;
             color: var(--primary-dark);
             box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
         }
 
-        .header-title h1 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: white;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
-        }
+        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: white; letter-spacing: -0.5px; line-height: 1.2; }
+        .header-title h1 span { color: var(--gold); }
+        .header-title small { font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 400; display: block; margin-top: 2px; }
 
-        .header-title h1 span {
-            color: var(--gold);
-        }
-
-        .header-title small {
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.6);
-            font-weight: 400;
-            display: block;
-            margin-top: 2px;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            z-index: 1;
-            flex-wrap: wrap;
-        }
+        .header-right { display: flex; align-items: center; gap: 14px; z-index: 1; flex-wrap: wrap; }
 
         .header-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
             padding: 8px 16px;
             background: rgba(255,255,255,0.1);
             border-radius: 50px;
@@ -166,58 +123,33 @@
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .header-badge .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            animation: pulse-dot 2s infinite;
-        }
-
-        .header-badge .status-dot.online {
-            background: #4CAF50;
-        }
+        .header-badge .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; animation: pulse-dot 2s infinite; }
+        .header-badge .status-dot.online { background: #4CAF50; }
 
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.5; transform: scale(0.8); }
         }
 
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
+        .header-actions { display: flex; gap: 8px; }
 
         .btn-icon {
-            width: 40px;
-            height: 40px;
-            border: none;
-            border-radius: 50%;
+            width: 40px; height: 40px;
+            border: none; border-radius: 50%;
             background: rgba(255,255,255,0.1);
-            color: white;
-            cursor: pointer;
+            color: white; cursor: pointer;
             transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             font-size: 1rem;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .btn-icon:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.05);
-        }
-
-        .btn-icon.active {
-            background: var(--gold);
-            color: var(--primary-dark);
-        }
+        .btn-icon:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+        .btn-icon.active { background: var(--gold); color: var(--primary-dark); }
 
         .nav-tabs {
-            display: flex;
-            gap: 4px;
+            display: flex; gap: 4px;
             background: white;
             padding: 6px;
             border-radius: var(--radius-md);
@@ -238,33 +170,13 @@
             cursor: pointer;
             transition: var(--transition);
             white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
         }
 
-        .nav-tab:hover {
-            background: var(--gray-100);
-            color: var(--primary);
-        }
-
-        .nav-tab.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(13, 27, 74, 0.3);
-        }
-
-        .nav-tab .tab-badge {
-            background: rgba(255,255,255,0.2);
-            padding: 1px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-
-        .nav-tab.active .tab-badge {
-            background: rgba(255,255,255,0.25);
-        }
+        .nav-tab:hover { background: var(--gray-100); color: var(--primary); }
+        .nav-tab.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(13, 27, 74, 0.3); }
+        .nav-tab .tab-badge { background: rgba(255,255,255,0.2); padding: 1px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
+        .nav-tab.active .tab-badge { background: rgba(255,255,255,0.25); }
 
         .card-premium {
             background: white;
@@ -276,50 +188,19 @@
             border: 1px solid rgba(0,0,0,0.02);
         }
 
-        .card-premium:hover {
-            box-shadow: var(--shadow-md);
-        }
+        .card-premium:hover { box-shadow: var(--shadow-md); }
 
         .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-            gap: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
         }
 
-        .card-header h2 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .card-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .card-header h2 .icon { font-size: 1.4rem; }
+        .card-header .badge-count { background: var(--gray-100); padding: 4px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; color: var(--gray-600); }
+        .card-header .badge-count strong { color: var(--primary); }
 
-        .card-header h2 .icon {
-            font-size: 1.4rem;
-        }
-
-        .card-header .badge-count {
-            background: var(--gray-100);
-            padding: 4px 14px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--gray-600);
-        }
-
-        .card-header .badge-count strong {
-            color: var(--primary);
-        }
-
-        .card-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+        .card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
         .btn-premium {
             padding: 8px 18px;
@@ -329,92 +210,29 @@
             font-size: 0.85rem;
             cursor: pointer;
             transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            display: inline-flex; align-items: center; gap: 8px;
             text-decoration: none;
         }
 
-        .btn-premium:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
+        .btn-premium:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .btn-premium:active { transform: translateY(0); }
+        .btn-premium.primary { background: var(--primary); color: white; }
+        .btn-premium.primary:hover { background: var(--primary-light); }
+        .btn-premium.success { background: var(--success); color: white; }
+        .btn-premium.success:hover { background: #1b5e20; }
+        .btn-premium.warning { background: var(--warning); color: white; }
+        .btn-premium.warning:hover { background: #bf360c; }
+        .btn-premium.info { background: var(--info); color: white; }
+        .btn-premium.info:hover { background: #0a3060; }
+        .btn-premium.gold { background: var(--gold); color: var(--primary-dark); }
+        .btn-premium.gold:hover { background: var(--gold-dark); color: white; }
+        .btn-premium.outline { background: transparent; color: var(--gray-600); border: 2px solid var(--gray-200); }
+        .btn-premium.outline:hover { border-color: var(--primary); color: var(--primary); background: rgba(13, 27, 74, 0.04); }
+        .btn-premium.danger { background: var(--danger); color: white; }
+        .btn-premium.danger:hover { background: #b71c1c; }
+        .btn-premium:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
 
-        .btn-premium:active {
-            transform: translateY(0);
-        }
-
-        .btn-premium.primary {
-            background: var(--primary);
-            color: white;
-        }
-        .btn-premium.primary:hover {
-            background: var(--primary-light);
-        }
-
-        .btn-premium.success {
-            background: var(--success);
-            color: white;
-        }
-        .btn-premium.success:hover {
-            background: #1b5e20;
-        }
-
-        .btn-premium.warning {
-            background: var(--warning);
-            color: white;
-        }
-        .btn-premium.warning:hover {
-            background: #bf360c;
-        }
-
-        .btn-premium.info {
-            background: var(--info);
-            color: white;
-        }
-        .btn-premium.info:hover {
-            background: #0a3060;
-        }
-
-        .btn-premium.gold {
-            background: var(--gold);
-            color: var(--primary-dark);
-        }
-        .btn-premium.gold:hover {
-            background: var(--gold-dark);
-            color: white;
-        }
-
-        .btn-premium.outline {
-            background: transparent;
-            color: var(--gray-600);
-            border: 2px solid var(--gray-200);
-        }
-        .btn-premium.outline:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: rgba(13, 27, 74, 0.04);
-        }
-
-        .btn-premium.danger {
-            background: var(--danger);
-            color: white;
-        }
-        .btn-premium.danger:hover {
-            background: #b71c1c;
-        }
-
-        .btn-premium:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .table-premium {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-        }
+        .table-premium { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 
         .table-premium thead th {
             background: var(--gray-50);
@@ -426,9 +244,7 @@
             padding: 12px 10px;
             text-align: center;
             border-bottom: 2px solid var(--gray-200);
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            position: sticky; top: 0; z-index: 10;
         }
 
         .table-premium tbody td {
@@ -439,17 +255,9 @@
             vertical-align: middle;
         }
 
-        .table-premium tbody tr {
-            transition: var(--transition);
-        }
-
-        .table-premium tbody tr:hover td {
-            background: var(--gray-50);
-        }
-
-        .table-premium tbody tr:last-child td {
-            border-bottom: none;
-        }
+        .table-premium tbody tr { transition: var(--transition); }
+        .table-premium tbody tr:hover td { background: var(--gray-50); }
+        .table-premium tbody tr:last-child td { border-bottom: none; }
 
         .table-premium .total-row td {
             background: var(--warning-light) !important;
@@ -458,17 +266,9 @@
             border-bottom: 2px solid var(--gold);
         }
 
-        .table-premium .total-row:hover td {
-            background: #fff3e0 !important;
-        }
-
-        .table-premium .cierre-row td {
-            background: var(--gold-light) !important;
-        }
-
-        .table-premium .cierre-row:hover td {
-            background: #f5e6b0 !important;
-        }
+        .table-premium .total-row:hover td { background: #fff3e0 !important; }
+        .table-premium .cierre-row td { background: var(--gold-light) !important; }
+        .table-premium .cierre-row:hover td { background: #f5e6b0 !important; }
 
         .table-premium .dia-separator td {
             background: var(--gray-100) !important;
@@ -479,36 +279,20 @@
             font-size: 0.8rem;
         }
 
-        .table-premium .dia-separator td i {
-            margin-right: 8px;
-            color: var(--gold);
-        }
+        .table-premium .dia-separator td i { margin-right: 8px; color: var(--gold); }
 
-        .unidades-maquina {
-            font-weight: bold;
-        }
-        .unidades-positivo {
-            color: #4CAF50;
-        }
-        .unidades-negativo {
-            color: #f44336;
-        }
+        .unidades-maquina { font-weight: bold; }
+        .unidades-positivo { color: #4CAF50; }
+        .unidades-negativo { color: #f44336; }
 
         .filter-grid-premium {
-            display: flex;
-            flex-wrap: wrap;
+            display: flex; flex-wrap: wrap;
             gap: 14px 20px;
             align-items: flex-end;
             padding: 16px 0;
         }
 
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex: 1 1 150px;
-            min-width: 130px;
-        }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1 1 150px; min-width: 130px; }
 
         .filter-group label {
             font-size: 0.7rem;
@@ -537,34 +321,14 @@
             box-shadow: 0 0 0 3px rgba(13, 27, 74, 0.1);
         }
 
-        .filter-group .rango-inputs {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
+        .filter-group .rango-inputs { display: flex; gap: 6px; align-items: center; }
+        .filter-group .rango-inputs input { width: 90px; min-width: 70px; text-align: center; }
+        .filter-group .rango-inputs span { color: var(--gray-400); font-weight: 700; }
 
-        .filter-group .rango-inputs input {
-            width: 90px;
-            min-width: 70px;
-            text-align: center;
-        }
-
-        .filter-group .rango-inputs span {
-            color: var(--gray-400);
-            font-weight: 700;
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+        .filter-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
         .calendar-premium {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
+            display: flex; flex-wrap: wrap; gap: 4px;
             padding: 12px;
             background: var(--gray-50);
             border-radius: var(--radius-sm);
@@ -575,11 +339,8 @@
         }
 
         .calendar-day {
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 34px; height: 34px;
+            display: flex; align-items: center; justify-content: center;
             border-radius: 6px;
             font-size: 0.75rem;
             font-weight: 600;
@@ -616,20 +377,8 @@
             animation: pulse-dot 1.5s infinite;
         }
 
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(0.7); }
-        }
-
-        .calendar-day.weekend {
-            color: var(--danger);
-        }
-
-        .calendar-day.selected {
-            background: var(--primary) !important;
-            color: white !important;
-            border-color: var(--primary);
-        }
+        .calendar-day.weekend { color: var(--danger); }
+        .calendar-day.selected { background: var(--primary) !important; color: white !important; border-color: var(--primary); }
 
         .calendar-month {
             font-weight: 700;
@@ -637,37 +386,15 @@
             width: 100%;
             margin: 4px 0 6px 0;
             font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
         }
 
-        .calendar-month i {
-            color: var(--gold);
-        }
+        .calendar-month i { color: var(--gold); }
 
-        .contadores-header th {
-            background: var(--primary) !important;
-            color: white !important;
-        }
-
-        .contadores-subheader th {
-            background: var(--primary-light) !important;
-            color: rgba(255,255,255,0.85) !important;
-            font-size: 0.7rem !important;
-            font-weight: 600 !important;
-        }
-
-        .contadores-total-row td {
-            background: var(--warning-light) !important;
-            font-weight: 700 !important;
-            border-top: 2px solid var(--gold) !important;
-        }
-
-        .contadores-diff {
-            color: var(--success);
-            font-weight: 700;
-        }
+        .contadores-header th { background: var(--primary) !important; color: white !important; }
+        .contadores-subheader th { background: var(--primary-light) !important; color: rgba(255,255,255,0.85) !important; font-size: 0.7rem !important; font-weight: 600 !important; }
+        .contadores-total-row td { background: var(--warning-light) !important; font-weight: 700 !important; border-top: 2px solid var(--gold) !important; }
+        .contadores-diff { color: var(--success); font-weight: 700; }
 
         .contadores-scroll-wrapper {
             max-height: 500px;
@@ -676,25 +403,10 @@
             border: 1px solid var(--gray-200);
         }
 
-        .contadores-scroll-wrapper table {
-            margin-bottom: 0;
-        }
-
-        .contadores-scroll-wrapper thead th {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-
-        .contadores-scroll-wrapper thead tr.contadores-header th {
-            top: 0;
-            z-index: 22;
-        }
-
-        .contadores-scroll-wrapper thead tr.contadores-subheader th {
-            top: 38px;
-            z-index: 21;
-        }
+        .contadores-scroll-wrapper table { margin-bottom: 0; }
+        .contadores-scroll-wrapper thead th { position: sticky; top: 0; z-index: 20; }
+        .contadores-scroll-wrapper thead tr.contadores-header th { top: 0; z-index: 22; }
+        .contadores-scroll-wrapper thead tr.contadores-subheader th { top: 38px; z-index: 21; }
 
         .stats-grid-premium {
             display: grid;
@@ -712,46 +424,14 @@
             transition: var(--transition);
         }
 
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .stat-card .number {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            line-height: 1.2;
-        }
-
-        .stat-card .number.gold {
-            color: var(--gold-dark);
-        }
-
-        .stat-card .number.green {
-            color: var(--success);
-        }
-
-        .stat-card .number.red {
-            color: var(--danger);
-        }
-
-        .stat-card .label {
-            font-size: 0.7rem;
-            color: var(--gray-500);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            margin-top: 4px;
-        }
-
-        .stat-card.cierres {
-            border-left-color: var(--gold);
-        }
-
-        .stat-card.dias {
-            border-left-color: var(--success);
-        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+        .stat-card .number { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        .stat-card .number.gold { color: var(--gold-dark); }
+        .stat-card .number.green { color: var(--success); }
+        .stat-card .number.red { color: var(--danger); }
+        .stat-card .label { font-size: 0.7rem; color: var(--gray-500); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 4px; }
+        .stat-card.cierres { border-left-color: var(--gold); }
+        .stat-card.dias { border-left-color: var(--success); }
 
         .info-box-premium {
             background: var(--info-light);
@@ -761,29 +441,18 @@
             font-size: 0.85rem;
             color: var(--info);
             border-left: 4px solid var(--info);
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
+            display: flex; align-items: flex-start; gap: 10px;
         }
 
-        .info-box-premium i {
-            font-size: 1.2rem;
-            margin-top: 2px;
-            color: var(--info);
-        }
-
-        .info-box-premium strong {
-            color: var(--primary-dark);
-        }
+        .info-box-premium i { font-size: 1.2rem; margin-top: 2px; color: var(--info); }
+        .info-box-premium strong { color: var(--primary-dark); }
 
         .filter-summary-premium {
             background: var(--gray-50);
             padding: 10px 16px;
             border-radius: var(--radius-sm);
             margin-bottom: 14px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px 16px;
+            display: flex; flex-wrap: wrap; gap: 10px 16px;
             align-items: center;
             border: 1px solid var(--gray-200);
         }
@@ -794,15 +463,11 @@
             border-radius: 50px;
             font-size: 0.75rem;
             border: 1px solid var(--gray-200);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            display: inline-flex; align-items: center; gap: 6px;
             color: var(--gray-600);
         }
 
-        .filter-tag-premium i {
-            color: var(--primary);
-        }
+        .filter-tag-premium i { color: var(--primary); }
 
         .preview-pdf {
             background: var(--gray-50);
@@ -813,32 +478,14 @@
             min-height: 60px;
         }
 
-        .preview-pdf table {
-            font-size: 0.8rem;
-        }
+        .preview-pdf table { font-size: 0.8rem; }
+        .preview-pdf table th { background: var(--primary); color: white; padding: 6px 10px; }
+        .preview-pdf table td { padding: 6px 10px; border-bottom: 1px solid var(--gray-200); }
 
-        .preview-pdf table th {
-            background: var(--primary);
-            color: white;
-            padding: 6px 10px;
-        }
-
-        .preview-pdf table td {
-            padding: 6px 10px;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .loader-premium {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 30px;
-        }
+        .loader-premium { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 30px; }
 
         .loader-premium .spinner {
-            width: 30px;
-            height: 30px;
+            width: 30px; height: 30px;
             border: 3px solid var(--gray-200);
             border-top-color: var(--primary);
             border-radius: 50%;
@@ -856,21 +503,11 @@
             cursor: pointer;
             font-size: 0.7rem;
             transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+            display: inline-flex; align-items: center; gap: 4px;
         }
 
-        .btn-delete:hover {
-            background: #b71c1c;
-            transform: scale(1.05);
-        }
-
-        .btn-delete:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn-delete:hover { background: #b71c1c; transform: scale(1.05); }
+        .btn-delete:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         .catalogo-grid {
             display: grid;
@@ -879,9 +516,7 @@
         }
 
         .catalogo-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: flex; flex-direction: column; align-items: center;
             padding: 12px;
             background: #fff;
             border-radius: var(--radius-sm);
@@ -892,16 +527,11 @@
             border: 1px solid var(--gray-200);
         }
 
-        .catalogo-item:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--gold);
-        }
+        .catalogo-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--gold); }
 
         .catalogo-item .sucursal-badge {
             position: absolute;
-            top: 6px;
-            left: 6px;
+            top: 6px; left: 6px;
             background: var(--primary);
             color: white;
             font-size: 0.55rem;
@@ -914,8 +544,7 @@
 
         .catalogo-item .stock-indicator {
             position: absolute;
-            top: 6px;
-            right: 6px;
+            top: 6px; right: 6px;
             background: rgba(33, 150, 243, 0.9);
             color: white;
             padding: 2px 8px;
@@ -924,9 +553,7 @@
             font-weight: bold;
         }
 
-        .catalogo-item .stock-indicator.sin-stock {
-            background: var(--danger);
-        }
+        .catalogo-item .stock-indicator.sin-stock { background: var(--danger); }
 
         .catalogo-item img {
             width: 100%;
@@ -940,9 +567,7 @@
         .catalogo-item .img-placeholder {
             width: 100%;
             aspect-ratio: 1/1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             font-size: 0.9rem;
@@ -960,16 +585,9 @@
             word-break: break-word;
         }
 
-        .catalogo-item.out-of-stock {
-            display: none;
-        }
+        .catalogo-item.out-of-stock { display: none; }
 
-        .catalogo-filtro-sucursal {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-        }
+        .catalogo-filtro-sucursal { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 
         .catalogo-filtro-sucursal button {
             padding: 6px 16px;
@@ -983,27 +601,10 @@
             color: var(--gray-600);
         }
 
-        .catalogo-filtro-sucursal button:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .catalogo-filtro-sucursal button.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .catalogo-filtro-sucursal button .count {
-            background: rgba(255,255,255,0.2);
-            padding: 0 6px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-        }
-
-        .catalogo-filtro-sucursal button.active .count {
-            background: rgba(255,255,255,0.25);
-        }
+        .catalogo-filtro-sucursal button:hover { border-color: var(--primary); color: var(--primary); }
+        .catalogo-filtro-sucursal button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .catalogo-filtro-sucursal button .count { background: rgba(255,255,255,0.2); padding: 0 6px; border-radius: 10px; font-size: 0.7rem; }
+        .catalogo-filtro-sucursal button.active .count { background: rgba(255,255,255,0.25); }
 
         .catalogo-search {
             width: 100%;
@@ -1016,20 +617,13 @@
             margin-bottom: 16px;
         }
 
-        .catalogo-search:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(13, 27, 74, 0.1);
-        }
+        .catalogo-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13, 27, 74, 0.1); }
 
         .toast-container {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 20px; right: 20px;
             z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            display: flex; flex-direction: column; gap: 8px;
             max-width: 400px;
         }
 
@@ -1040,9 +634,7 @@
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow-lg);
             animation: slideIn 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 10px;
             border-left: 4px solid var(--gold);
         }
 
@@ -1059,19 +651,14 @@
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
             z-index: 9998;
-            align-items: center;
-            justify-content: center;
+            align-items: center; justify-content: center;
         }
 
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
 
         .modal-box {
             background: white;
@@ -1088,22 +675,9 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        .modal-box h3 {
-            margin-bottom: 10px;
-            color: var(--primary);
-        }
-
-        .modal-box p {
-            margin-bottom: 16px;
-            color: var(--gray-600);
-            font-size: 0.9rem;
-        }
-
-        .modal-box .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
+        .modal-box h3 { margin-bottom: 10px; color: var(--primary); }
+        .modal-box p { margin-bottom: 16px; color: var(--gray-600); font-size: 0.9rem; }
+        .modal-box .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
         .modal-box .modal-actions button {
             padding: 8px 20px;
@@ -1115,32 +689,17 @@
             transition: var(--transition);
         }
 
-        .modal-box .modal-actions .btn-confirm {
-            background: var(--danger);
-            color: white;
-        }
-
-        .modal-box .modal-actions .btn-confirm:hover {
-            background: #b71c1c;
-        }
-
-        .modal-box .modal-actions .btn-cancel {
-            background: var(--gray-200);
-            color: var(--gray-600);
-        }
-
-        .modal-box .modal-actions .btn-cancel:hover {
-            background: var(--gray-300);
-        }
+        .modal-box .modal-actions .btn-confirm { background: var(--danger); color: white; }
+        .modal-box .modal-actions .btn-confirm:hover { background: #b71c1c; }
+        .modal-box .modal-actions .btn-cancel { background: var(--gray-200); color: var(--gray-600); }
+        .modal-box .modal-actions .btn-cancel:hover { background: var(--gray-300); }
 
         .modal-compra {
             display: none;
             position: fixed;
             z-index: 9997;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.95);
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
@@ -1154,8 +713,7 @@
             width: 100%;
             min-height: 100%;
             position: relative;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
         .modal-compra .close {
@@ -1165,17 +723,13 @@
             font-weight: bold;
             cursor: pointer;
             position: absolute;
-            right: 20px;
-            top: 15px;
+            right: 20px; top: 15px;
             z-index: 10;
             background: none;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
         }
 
         .modal-compra .close:hover { color: #000; background: #eee; }
@@ -1189,8 +743,7 @@
         }
 
         .modal-compra .tabs-compras {
-            display: flex;
-            gap: 5px;
+            display: flex; gap: 5px;
             margin-bottom: 20px;
             border-bottom: 2px solid #ddd;
         }
@@ -1208,18 +761,9 @@
             touch-action: manipulation;
         }
 
-        .modal-compra .tab-btn-compras.active {
-            background: #2196F3;
-            color: white;
-        }
-
-        .modal-compra .tab-pane-compras {
-            display: none;
-        }
-
-        .modal-compra .tab-pane-compras.active {
-            display: block;
-        }
+        .modal-compra .tab-btn-compras.active { background: #2196F3; color: white; }
+        .modal-compra .tab-pane-compras { display: none; }
+        .modal-compra .tab-pane-compras.active { display: block; }
 
         .modal-compra .product-info,
         .modal-compra .stock-info {
@@ -1230,31 +774,10 @@
             font-size: 1.2rem;
         }
 
-        .modal-compra .stock-info {
-            background: #e3f2fd;
-            text-align: center;
-            font-weight: bold;
-            color: #1976D2;
-        }
-
-        .modal-compra .payment-options {
-            margin: 20px 0;
-        }
-
-        .modal-compra .payment-option {
-            margin: 15px 0;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            background: #fafafa;
-        }
-
-        .modal-compra .payment-option label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-        }
+        .modal-compra .stock-info { background: #e3f2fd; text-align: center; font-weight: bold; color: #1976D2; }
+        .modal-compra .payment-options { margin: 20px 0; }
+        .modal-compra .payment-option { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 10px; background: #fafafa; }
+        .modal-compra .payment-option label { font-weight: bold; display: block; margin-bottom: 10px; font-size: 1.1rem; }
 
         .modal-compra .payment-option input {
             width: 100%;
@@ -1267,17 +790,8 @@
             appearance: none;
         }
 
-        .modal-compra .auto-calc {
-            font-size: 1rem;
-            margin-top: 8px;
-            color: #666;
-        }
-
-        .modal-compra .modal-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
+        .modal-compra .auto-calc { font-size: 1rem; margin-top: 8px; color: #666; }
+        .modal-compra .modal-buttons { display: flex; gap: 15px; margin-top: 20px; }
 
         .modal-compra .modal-buttons button {
             flex: 1;
@@ -1294,9 +808,7 @@
         .modal-compra #cancelModal { background: #f44336; color: white; }
 
         .modal-compra .modal-qty-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            display: flex; align-items: center; gap: 15px;
             background: #f0f7ff;
             padding: 10px 15px;
             border-radius: 10px;
@@ -1304,11 +816,7 @@
             border: 1px solid #cce5ff;
         }
 
-        .modal-compra .modal-qty-row label {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #004085;
-        }
+        .modal-compra .modal-qty-row label { font-weight: bold; font-size: 1.1rem; color: #004085; }
 
         .modal-compra #productQuantity {
             width: 100px;
@@ -1334,12 +842,7 @@
             appearance: none;
         }
 
-        .modal-compra .maquina-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 15px 0;
-        }
+        .modal-compra .maquina-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
 
         .modal-compra .maquina-buttons button {
             flex: 1;
@@ -1364,8 +867,7 @@
             width: 100%;
             min-height: 100%;
             position: relative;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
         .cierre-modal input {
@@ -1393,8 +895,7 @@
 
         .overlay-mensaje {
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.85);
             color: white;
@@ -1420,27 +921,12 @@
             width: 100%;
             min-height: 100%;
             position: relative;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
-        .contadores-modal .contadores-form {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 12px;
-            margin: 15px 0;
-        }
-
-        .contadores-modal .contadores-field {
-            margin-bottom: 20px;
-        }
-
-        .contadores-modal .contadores-field label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
-        }
+        .contadores-modal .contadores-form { background: #f5f5f5; padding: 20px; border-radius: 12px; margin: 15px 0; }
+        .contadores-modal .contadores-field { margin-bottom: 20px; }
+        .contadores-modal .contadores-field label { display: block; font-weight: bold; margin-bottom: 8px; color: #333; }
 
         .contadores-modal .contadores-field select,
         .contadores-modal .contadores-field input {
@@ -1454,11 +940,7 @@
             appearance: none;
         }
 
-        .contadores-modal .contadores-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
-        }
+        .contadores-modal .contadores-buttons { display: flex; gap: 15px; margin-top: 25px; }
 
         .contadores-modal .contadores-buttons button {
             flex: 1;
@@ -1470,6 +952,7 @@
             font-size: 1.1rem;
             touch-action: manipulation;
         }
+
         .btn-guardar-contadores { background: #4CAF50; color: white; }
         .btn-ver-contadores { background: #2196F3; color: white; }
 
@@ -1490,27 +973,11 @@
             font-size: 0.85rem;
         }
 
-        /* ===== ESTILOS PARA LA PESTAÑA MÁQUINAS ===== */
-        #tab-maquinas .catalogo-item .stock-indicator {
-            background: var(--success);
-            color: white;
-        }
-        #tab-maquinas .catalogo-item .stock-indicator.sin-stock {
-            background: var(--danger);
-        }
-        .maquinas-leyenda {
-            margin-top: 16px;
-            font-size: 0.75rem;
-            color: var(--gray-400);
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .maquinas-leyenda span i {
-            margin-right: 4px;
-        }
+        #tab-maquinas .catalogo-item .stock-indicator { background: var(--success); color: white; }
+        #tab-maquinas .catalogo-item .stock-indicator.sin-stock { background: var(--danger); }
+        .maquinas-leyenda { margin-top: 16px; font-size: 0.75rem; color: var(--gray-400); display: flex; gap: 16px; flex-wrap: wrap; }
+        .maquinas-leyenda span i { margin-right: 4px; }
 
-        /* ===== AVISO DE FALTA DE LECTURA ===== */
         .aviso-lectura {
             grid-column: 1 / -1;
             text-align: center;
@@ -1520,22 +987,11 @@
             border: 2px solid #ffc107;
             color: #856404;
         }
-        .aviso-lectura i {
-            font-size: 2.5rem;
-            display: block;
-            margin-bottom: 12px;
-            color: #ffc107;
-        }
-        .aviso-lectura h3 {
-            font-size: 1.2rem;
-            margin-bottom: 8px;
-            color: #856404;
-        }
-        .aviso-lectura p {
-            font-size: 0.95rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
+
+        .aviso-lectura i { font-size: 2.5rem; display: block; margin-bottom: 12px; color: #ffc107; }
+        .aviso-lectura h3 { font-size: 1.2rem; margin-bottom: 8px; color: #856404; }
+        .aviso-lectura p { font-size: 0.95rem; max-width: 600px; margin: 0 auto; }
+
         .aviso-lectura .btn-sugerencia {
             margin-top: 16px;
             display: inline-block;
@@ -1549,10 +1005,8 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .aviso-lectura .btn-sugerencia:hover {
-            background: #e6a800;
-            transform: scale(1.03);
-        }
+
+        .aviso-lectura .btn-sugerencia:hover { background: #e6a800; transform: scale(1.03); }
 
         @media (max-width: 992px) {
             .header-premium { padding: 16px 20px; }
@@ -1577,28 +1031,13 @@
             .table-premium tbody td { padding: 8px 4px; }
             .calendar-day { width: 30px; height: 30px; font-size: 0.7rem; }
             .catalogo-grid { grid-template-columns: repeat(2, 1fr); }
-            #diferenciaControles {
-                flex-direction: column;
-                align-items: stretch !important;
-            }
-            #diferenciaControles .filter-group {
-                min-width: 100% !important;
-            }
-            .contadores-scroll-wrapper {
-                max-height: 350px;
-            }
-            .aviso-lectura {
-                padding: 24px 16px;
-            }
-            .aviso-lectura i {
-                font-size: 2rem;
-            }
-            .aviso-lectura h3 {
-                font-size: 1rem;
-            }
-            .aviso-lectura p {
-                font-size: 0.85rem;
-            }
+            #diferenciaControles { flex-direction: column; align-items: stretch !important; }
+            #diferenciaControles .filter-group { min-width: 100% !important; }
+            .contadores-scroll-wrapper { max-height: 350px; }
+            .aviso-lectura { padding: 24px 16px; }
+            .aviso-lectura i { font-size: 2rem; }
+            .aviso-lectura h3 { font-size: 1rem; }
+            .aviso-lectura p { font-size: 0.85rem; }
         }
 
         @media (max-width: 480px) {
@@ -1610,19 +1049,14 @@
             .header-badge { font-size: 0.7rem; padding: 4px 10px; }
             .catalogo-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
             .catalogo-item { padding: 8px; }
-            .contadores-scroll-wrapper {
-                max-height: 280px;
-            }
-            .aviso-lectura {
-                padding: 16px 12px;
-            }
+            .contadores-scroll-wrapper { max-height: 280px; }
+            .aviso-lectura { padding: 16px 12px; }
         }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <!-- HEADER PREMIUM -->
     <header class="header-premium">
         <div class="header-left">
             <div class="header-logo">A</div>
@@ -1654,7 +1088,6 @@
         </div>
     </header>
 
-    <!-- NAVEGACIÓN -->
     <nav class="nav-tabs" id="mainNav">
         <button class="nav-tab active" data-tab="tab-carritos">
             <i class="fas fa-shopping-cart"></i> Carritos
@@ -1679,7 +1112,6 @@
         </button>
     </nav>
 
-    <!-- TAB 1: CARRITOS -->
     <section id="tab-carritos" class="tab-content active">
         <div class="card-premium">
             <div class="card-header">
@@ -1719,7 +1151,6 @@
         </div>
     </section>
 
-    <!-- TAB 2: CATÁLOGO UNIFICADO -->
     <section id="tab-catalogo" class="tab-content" style="display:none;">
         <div class="card-premium">
             <div class="card-header">
@@ -1755,7 +1186,6 @@
         </div>
     </section>
 
-    <!-- TAB 3: MÁQUINAS -->
     <section id="tab-maquinas" class="tab-content" style="display:none;">
         <div class="card-premium">
             <div class="card-header">
@@ -1833,7 +1263,6 @@
         </div>
     </section>
 
-    <!-- TAB 4: FILTROS -->
     <section id="tab-filtros" class="tab-content" style="display:none;">
         <div class="card-premium">
             <div class="card-header">
@@ -1925,7 +1354,6 @@
         </div>
     </section>
 
-    <!-- TAB 5: CONTADORES -->
     <section id="tab-contadores" class="tab-content" style="display:none;">
         <div class="card-premium">
             <div class="card-header">
@@ -2054,7 +1482,6 @@
         </div>
     </section>
 
-    <!-- TAB 6: PDF -->
     <section id="tab-pdf" class="tab-content" style="display:none;">
         <div class="card-premium">
             <div class="card-header">
@@ -2082,8 +1509,6 @@
     </section>
 </div>
 
-<!-- MODALES -->
-<!-- Modal de compra -->
 <div id="purchaseModal" class="modal-compra">
     <div class="modal-content">
         <button class="close" onclick="closeModal()">&times;</button>
@@ -2134,7 +1559,6 @@
     </div>
 </div>
 
-<!-- Modal de Cierre -->
 <div id="cierreModal" class="cierre-modal" style="display:none; position:fixed; z-index:9997; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.95); overflow-y:auto; -webkit-overflow-scrolling:touch;">
     <div class="modal-content">
         <button class="close" onclick="closeCierreModal()">&times;</button>
@@ -2148,7 +1572,6 @@
     </div>
 </div>
 
-<!-- Modal de Contadores -->
 <div id="contadoresModal" class="contadores-modal" style="display:none; position:fixed; z-index:9997; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.95); overflow-y:auto; -webkit-overflow-scrolling:touch;">
     <div class="modal-content">
         <button class="close" onclick="closeContadoresModal()">&times;</button>
@@ -2186,7 +1609,6 @@
     </div>
 </div>
 
-<!-- Modal de confirmación -->
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
         <h3><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> Confirmar Eliminación</h3>
@@ -2198,9 +1620,7 @@
     </div>
 </div>
 
-<!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
-
 <script type="module">
     // ============================================================
     // 1. IMPORTACIONES Y CONFIGURACIÓN
@@ -2356,8 +1776,137 @@
     });
 
     // ============================================================
-    // 5. FUNCIONES DE ELIMINACIÓN
+    // 5. FUNCIONES DE ELIMINACIÓN CON REVERSIÓN DE STOCK
     // ============================================================
+
+    // --- Función auxiliar: revertir stock de máquina ---
+    async function revertirStockMaquina(db, sucursal, code, maquina, cantidadDelta, fechaMovimiento) {
+        if (!maquina || !maquina.startsWith('maq')) return;
+        try {
+            const fecha = fechaMovimiento || new Date().toISOString().split('T')[0];
+            const path = `stock_maquinas/${sucursal}/${code}/${fecha}`;
+            const snap = await get(ref(db, path));
+            const actual = snap.exists() ? (snap.val().cantidad || 0) : 0;
+            let nueva = actual + cantidadDelta;
+            if (nueva < 0) nueva = 0;
+            await set(ref(db, path), {
+                cantidad: nueva,
+                maquina: maquina,
+                actualizado: new Date().toISOString()
+            });
+            console.log(`✅ Stock máquina ${maquina} en ${fecha} ajustado: ${actual} → ${nueva}`);
+        } catch (error) {
+            console.error('Error revirtiendo stock de máquina:', error);
+        }
+    }
+
+    // --- Función auxiliar: revertir stock de una venta ---
+    async function revertirStockDeVenta(db, venta, sucursal) {
+        if (!venta) return;
+        const code = venta.code || '';
+        if (!code) return;
+
+        const unidades = venta.unidades || venta.qty || 1;
+        const fichaConsumption = Math.abs(venta.fichaConsumption || 0);
+        const esIndependiente = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+        // Obtener la fecha original del movimiento en formato ISO
+        let fechaMovimiento = null;
+        const fechaFuente = venta.fechaEliminacion || venta.fecha || '';
+        if (fechaFuente) {
+            if (fechaFuente.includes('/')) {
+                const partes = fechaFuente.split('/');
+                if (partes.length === 3) {
+                    fechaMovimiento = `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
+                }
+            } else if (fechaFuente.includes('-')) {
+                fechaMovimiento = fechaFuente;
+            }
+        }
+        if (!fechaMovimiento) {
+            fechaMovimiento = new Date().toISOString().split('T')[0];
+        }
+
+        try {
+            // CASO 1: CIERRES → no tocan stock
+            if (CIERRE_CODES.includes(code) || venta.esCierre) {
+                return;
+            }
+
+            // CASO 2: FICHAS GRATIS → devolver fichas a 000-00
+            if (venta.esFichaGratis || code === '000-05' || code === '000-06') {
+                const fichasADevolver = fichaConsumption || (code === '000-06' ? 7 : 1);
+                await runTransaction(ref(db, 'stock/000-00'), (current) => {
+                    if (current === null) current = STOCK_INICIAL;
+                    return current + fichasADevolver;
+                });
+                return;
+            }
+
+            // CASO 3: MOVIMIENTOS (agregar/quitar a stock o máquinas)
+            if (venta.esMovimiento) {
+                const tipoMov = venta.tipoMovimiento;
+                const destino = venta.destinoMovimiento || 'stock';
+
+                let stockKey;
+                let cantidadMovida;
+                if (fichaConsumption > 0 && !esIndependiente) {
+                    stockKey = '000-00';
+                    cantidadMovida = fichaConsumption * unidades;
+                } else {
+                    stockKey = code;
+                    cantidadMovida = unidades;
+                }
+
+                if (destino === 'stock') {
+                    if (tipoMov === 'agregar') {
+                        await runTransaction(ref(db, `stock/${stockKey}`), (current) => {
+                            if (current === null) current = STOCK_INICIAL;
+                            const nuevo = current - cantidadMovida;
+                            return nuevo < 0 ? 0 : nuevo;
+                        });
+                    } else if (tipoMov === 'quitar') {
+                        await runTransaction(ref(db, `stock/${stockKey}`), (current) => {
+                            if (current === null) current = STOCK_INICIAL;
+                            return current + cantidadMovida;
+                        });
+                    }
+                } else {
+                    if (tipoMov === 'agregar') {
+                        await runTransaction(ref(db, `stock/${stockKey}`), (current) => {
+                            if (current === null) current = STOCK_INICIAL;
+                            return current + cantidadMovida;
+                        });
+                        await revertirStockMaquina(db, sucursal, code, destino, -unidades, fechaMovimiento);
+                    } else if (tipoMov === 'quitar') {
+                        await runTransaction(ref(db, `stock/${stockKey}`), (current) => {
+                            if (current === null) current = STOCK_INICIAL;
+                            const nuevo = current - cantidadMovida;
+                            return nuevo < 0 ? 0 : nuevo;
+                        });
+                        await revertirStockMaquina(db, sucursal, code, destino, unidades, fechaMovimiento);
+                    }
+                }
+                return;
+            }
+
+            // CASO 4: VENTA NORMAL
+            if (fichaConsumption > 0 && !esIndependiente) {
+                await runTransaction(ref(db, 'stock/000-00'), (current) => {
+                    if (current === null) current = STOCK_INICIAL;
+                    return current + fichaConsumption;
+                });
+            } else if (!esIndependiente) {
+                await runTransaction(ref(db, `stock/${code}`), (current) => {
+                    if (current === null) current = STOCK_INICIAL;
+                    return current + unidades;
+                });
+            }
+        } catch (error) {
+            console.error('Error revirtiendo stock de venta:', error, venta);
+        }
+    }
+
     async function eliminarDelCarrito(sucursal, firebaseKey) {
         const config = sucursalToConfig[sucursal];
         if (!config) return { success: false, error: 'Sucursal no encontrada' };
@@ -2387,6 +1936,12 @@
             if (indexVenta === null || indexVenta === undefined || indexVenta < 0 || indexVenta >= ventas.length) {
                 return { success: false, error: 'Item no encontrado en el índice ' + indexVenta };
             }
+
+            // REVERTIR STOCK ANTES DE ELIMINAR
+            const venta = ventas[indexVenta];
+            await revertirStockDeVenta(db, venta, sucursal);
+
+            // ELIMINAR ITEM DEL HISTORIAL
             ventas.splice(indexVenta, 1);
             const totalDinero = ventas.reduce((s, v) => s + (v.money || 0), 0);
             const totalPuntos = ventas.reduce((s, v) => s + (v.points || 0), 0);
@@ -2412,6 +1967,18 @@
         try {
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
+
+            // REVERTIR STOCK DE TODAS LAS VENTAS ANTES DE ELIMINAR
+            const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
+            if (snapshot.exists()) {
+                const registro = snapshot.val();
+                const ventas = registro.ventas || [];
+                for (const venta of ventas) {
+                    await revertirStockDeVenta(db, venta, sucursal);
+                }
+            }
+
+            // ELIMINAR REGISTRO COMPLETO
             await remove(ref(db, `historial_ventas/${firebaseKey}`));
             return { success: true };
         } catch (error) {
@@ -2431,7 +1998,7 @@
         }
         const mensaje = fuente === 'carrito'
             ? `¿Estás seguro de eliminar este item del carrito de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`
-            : `¿Estás seguro de eliminar este item del HISTORIAL de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\nEsta acción NO se puede deshacer.`;
+            : `¿Estás seguro de eliminar este item del HISTORIAL de ${sucursal}?\n\nItem: ${nombre || 'Sin nombre'}\n\n⚠️ NOTA: Se devolverán las unidades al stock correspondiente.\nEsta acción NO se puede deshacer.`;
         pendingDelete = { sucursal, firebaseKey, fuente, ventaIndex };
         openConfirmModal(mensaje, async () => {
             estado.eliminando = true;
@@ -2456,7 +2023,7 @@
                     return;
                 }
                 if (resultado.success) {
-                    showToast(`✅ Item eliminado correctamente de ${pendingDelete.sucursal}`, 'success');
+                    showToast(`✅ Item eliminado y stock revertido en ${pendingDelete.sucursal}`, 'success');
                     await aplicarFiltros();
                     await cargarCarritos();
                 } else {
@@ -2657,7 +2224,7 @@
     }
 
     // ============================================================
-    // 9. CATÁLOGO UNIFICADO - CORREGIDO
+    // 9. CATÁLOGO UNIFICADO
     // ============================================================
     async function cargarCatalogoUnificado() {
         const container = document.getElementById('catalogoContainer');
@@ -2677,17 +2244,13 @@
                 const app = initializeApp(suc.config, suc.id);
                 const db = getDatabase(app);
 
-                // LEER EL CATÁLOGO REAL desde Firebase
                 const catalogoSnap = await get(ref(db, 'catalogo'));
                 const catalogoData = catalogoSnap.val() || {};
 
-                // LEER EL STOCK REAL
                 const stockSnap = await get(ref(db, 'stock'));
                 const stockData = stockSnap.val() || {};
 
-                // Función para obtener info del producto por código
                 const getInfo = (code) => {
-                    // Precios por código
                     const precios = {
                         '000-00': 5000, '000-01': 50000, '000-02': 100000,
                         '000-03': 10000, '000-04': 10000,
@@ -2698,7 +2261,6 @@
                         '100-38': 10000, '800-01': 250000
                     };
 
-                    // Puntos por categoría
                     const puntosMap = {
                         '005': 5, '020': 20, '035': 35, '050': 50, '075': 75,
                         '100': 100, '150': 150, '180': 180, '200': 200, '220': 220,
@@ -2712,15 +2274,12 @@
                     return { price, points };
                 };
 
-                // OBTENER LA LISTA DE PRODUCTOS DEL CATÁLOGO
                 let listaProductos = [];
 
-                // Si el catálogo tiene estructura con productos
                 if (catalogoData.productos && Array.isArray(catalogoData.productos)) {
                     listaProductos = catalogoData.productos;
                     console.log(`📋 ${suc.nombre}: ${listaProductos.length} productos en catálogo`);
                 } 
-                // Si el catálogo está en otro formato (objeto con categorías)
                 else if (typeof catalogoData === 'object' && catalogoData !== null) {
                     for (const key in catalogoData) {
                         const value = catalogoData[key];
@@ -2732,7 +2291,6 @@
                     }
                 }
 
-                // Si no hay catálogo, usar los códigos que tienen stock > 0
                 if (listaProductos.length === 0) {
                     console.log(`⚠️ ${suc.nombre}: No se encontró catálogo, usando productos con stock > 0`);
                     for (const code in stockData) {
@@ -2748,7 +2306,6 @@
                     }
                     console.log(`📦 ${suc.nombre}: ${listaProductos.length} productos con stock > 0`);
                 } else {
-                    // Filtrar solo productos con stock > 0
                     listaProductos = listaProductos.filter(p => {
                         const code = p.code || p.codigo || '';
                         const stock = stockData[code] ?? 0;
@@ -2757,7 +2314,6 @@
                     console.log(`✅ ${suc.nombre}: ${listaProductos.length} productos con stock > 0`);
                 }
 
-                // Agregar productos a la lista global
                 for (const p of listaProductos) {
                     const code = p.code || p.codigo || '';
                     if (!code || !code.includes('-')) continue;
@@ -2768,7 +2324,6 @@
                     const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
                     const category = code.split('-')[0] || '000';
 
-                    // Solo agregar si tiene stock > 0
                     if (stockVal > 0) {
                         productos.push({
                             code: code,
@@ -2790,7 +2345,6 @@
             }
         }
 
-        // Eliminar duplicados (mismo código en misma sucursal)
         const uniqueMap = new Map();
         productos.forEach(p => {
             const key = `${p.sucursal}-${p.code}`;
@@ -2800,18 +2354,7 @@
         });
         const productosUnicos = Array.from(uniqueMap.values());
 
-        // Ordenar por código
         productosUnicos.sort((a, b) => a.code.localeCompare(b.code));
-
-        console.log(`📊 Total productos únicos con stock > 0: ${productosUnicos.length}`);
-        console.log('📊 Detalle por sucursal:');
-        const porSucursal = {};
-        productosUnicos.forEach(p => {
-            porSucursal[p.sucursal] = (porSucursal[p.sucursal] || 0) + 1;
-        });
-        for (const [suc, count] of Object.entries(porSucursal)) {
-            console.log(`   ${suc}: ${count} productos`);
-        }
 
         estado.catalogoProductos = productosUnicos;
         renderCatalogo(productosUnicos);
@@ -2824,23 +2367,18 @@
 
         let filtrados = productos;
 
-        // Filtrar por sucursal
         if (filtro !== 'todas') {
             filtrados = filtrados.filter(p => p.sucursal === filtro);
         }
 
-        // Filtrar por búsqueda
         if (search) {
             filtrados = filtrados.filter(p => p.code.startsWith(search.padStart(3, '0')));
         }
 
-        // SOLO productos con stock > 0
         filtrados = filtrados.filter(p => p.stock > 0);
 
-        // Ordenar por código
         filtrados.sort((a, b) => a.code.localeCompare(b.code));
 
-        // Actualizar contadores
         const todasCount = productos.filter(p => p.stock > 0).length;
         const counts = {};
         productos.filter(p => p.stock > 0).forEach(p => {
@@ -2975,22 +2513,12 @@
                 return;
             }
             estado.currentProduct = {
-                code,
-                price,
-                points,
-                name: name,
-                stock: stockValActual,
-                fichaConsumption: consumo,
-                sucursal: sucursal
+                code, price, points, name: name, stock: stockValActual,
+                fichaConsumption: consumo, sucursal: sucursal
             };
             estado.currentMovimientosProduct = {
-                code,
-                price,
-                points,
-                name: name,
-                stock: stockValActual,
-                fichaConsumption: consumo,
-                sucursal: sucursal
+                code, price, points, name: name, stock: stockValActual,
+                fichaConsumption: consumo, sucursal: sucursal
             };
             const movimientosTab = document.querySelector('#purchaseModal .tab-btn-compras[data-tab="movimientos"]');
             if (shouldShowMovimientosTab(code)) {
@@ -3052,7 +2580,7 @@
     }
 
     // ============================================================
-    // 11. FUNCIONES DE UTILIDAD PARA EL MODAL
+    // 11. UTILIDADES DEL MODAL
     // ============================================================
     function shouldShowQuantity(code) {
         return code === '005-13' || code === '000-00';
@@ -3096,7 +2624,7 @@
     };
 
     // ============================================================
-    // 12. FUNCIONES DEL MODAL DE COMPRA
+    // 12. MODAL DE COMPRA
     // ============================================================
     window.closeModal = function() {
         document.getElementById('purchaseModal').style.display = 'none';
@@ -3169,20 +2697,10 @@
                 const fecha = ahora.toLocaleDateString('es-PY');
                 const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                 const cartData = {
-                    code,
-                    name: estado.currentProduct.name,
-                    points: points,
-                    money: money,
-                    totalPrice: totalPriceValue,
-                    unitPrice: unitPrice,
-                    qty: qty,
-                    fecha,
-                    hora,
-                    timestamp: fecha + ' ' + hora,
-                    timestampCompleto: ahora.getTime(),
-                    fichaConsumption: consumo * qty,
-                    unidades: qty,
-                    sucursalOrigen: sucursal
+                    code, name: estado.currentProduct.name,
+                    points, money, totalPrice: totalPriceValue, unitPrice, qty,
+                    fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(),
+                    fichaConsumption: consumo * qty, unidades: qty, sucursalOrigen: sucursal
                 };
                 const resultadoStock = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
                     if (currentValue === null) currentValue = STOCK_INICIAL;
@@ -3213,7 +2731,7 @@
     };
 
     // ============================================================
-    // 13. MOVIMIENTOS DE UNIDADES
+    // 13. MOVIMIENTOS
     // ============================================================
     window.agregarUnidades = async function() {
         if (window.agregarUnidadesLock) return;
@@ -3228,35 +2746,18 @@
         const consumo = estado.currentMovimientosProduct.fichaConsumption || 0;
         const sucursal = estado.currentMovimientosProduct.sucursal;
         const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
-        if (cantidad <= 0) {
-            alert('Cantidad inválida');
-            window.agregarUnidadesLock = false;
-            return;
-        }
+        if (cantidad <= 0) { alert('Cantidad inválida'); window.agregarUnidadesLock = false; return; }
         const config = sucursalToConfig[sucursal];
-        if (!config) {
-            alert('❌ Sucursal no encontrada');
-            window.agregarUnidadesLock = false;
-            return;
-        }
+        if (!config) { alert('❌ Sucursal no encontrada'); window.agregarUnidadesLock = false; return; }
         try {
             let db;
-            if (estado.currentDB) {
-                db = estado.currentDB;
-            } else {
-                const app = initializeApp(config.config, config.id);
-                db = getDatabase(app);
-            }
+            if (estado.currentDB) { db = estado.currentDB; }
+            else { const app = initializeApp(config.config, config.id); db = getDatabase(app); }
             let stockKey;
             let cantidadMovimiento;
             if (destino === 'stock') {
-                if (consumo > 0 && !isIndependentCode) {
-                    stockKey = '000-00';
-                    cantidadMovimiento = consumo * cantidad;
-                } else {
-                    stockKey = code;
-                    cantidadMovimiento = cantidad;
-                }
+                if (consumo > 0 && !isIndependentCode) { stockKey = '000-00'; cantidadMovimiento = consumo * cantidad; }
+                else { stockKey = code; cantidadMovimiento = cantidad; }
                 const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
                     if (currentValue === null) currentValue = STOCK_INICIAL;
                     return currentValue + cantidadMovimiento;
@@ -3268,36 +2769,19 @@
                     const fecha = ahora.toLocaleDateString('es-PY');
                     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                     await push(ref(db, 'carrito'), {
-                        code,
-                        name: estado.currentMovimientosProduct.name,
-                        points: 0,
-                        money: 0,
-                        unidades: cantidad,
-                        esMovimiento: true,
-                        tipoMovimiento: 'agregar',
-                        destinoMovimiento: destino,
-                        totalPrice: 0,
-                        fecha,
-                        hora,
-                        timestamp: fecha + ' ' + hora,
-                        timestampCompleto: ahora.getTime(),
-                        fichaConsumption: 0,
-                        sucursalOrigen: sucursal
+                        code, name: estado.currentMovimientosProduct.name,
+                        points: 0, money: 0, unidades: cantidad,
+                        esMovimiento: true, tipoMovimiento: 'agregar', destinoMovimiento: destino,
+                        totalPrice: 0, fecha, hora, timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(), fichaConsumption: 0, sucursalOrigen: sucursal
                     });
                     await cargarCatalogoUnificado();
                     closeModal();
                     showToast(`✅ Agregado +${cantidad} unidad(es) a STOCK de ${sucursal}`, 'success');
-                } else {
-                    alert('❌ Error en la transacción de stock');
-                }
+                } else { alert('❌ Error en la transacción de stock'); }
             } else {
-                if (consumo > 0 && !isIndependentCode) {
-                    stockKey = '000-00';
-                    cantidadMovimiento = consumo * cantidad;
-                } else {
-                    stockKey = code;
-                    cantidadMovimiento = cantidad;
-                }
+                if (consumo > 0 && !isIndependentCode) { stockKey = '000-00'; cantidadMovimiento = consumo * cantidad; }
+                else { stockKey = code; cantidadMovimiento = cantidad; }
                 const stockSnap = await get(ref(db, `stock/${stockKey}`));
                 let stockActual = stockSnap.val() ?? STOCK_INICIAL;
                 if (stockActual < cantidadMovimiento) {
@@ -3318,35 +2802,19 @@
                     const fecha = ahora.toLocaleDateString('es-PY');
                     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                     await push(ref(db, 'carrito'), {
-                        code,
-                        name: estado.currentMovimientosProduct.name,
-                        points: 0,
-                        money: 0,
-                        unidades: cantidad,
-                        esMovimiento: true,
-                        tipoMovimiento: 'agregar',
-                        destinoMovimiento: destino,
-                        totalPrice: 0,
-                        fecha,
-                        hora,
-                        timestamp: fecha + ' ' + hora,
-                        timestampCompleto: ahora.getTime(),
-                        fichaConsumption: 0,
-                        sucursalOrigen: sucursal
+                        code, name: estado.currentMovimientosProduct.name,
+                        points: 0, money: 0, unidades: cantidad,
+                        esMovimiento: true, tipoMovimiento: 'agregar', destinoMovimiento: destino,
+                        totalPrice: 0, fecha, hora, timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(), fichaConsumption: 0, sucursalOrigen: sucursal
                     });
                     await cargarCatalogoUnificado();
                     closeModal();
                     showToast(`✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) de ${sucursal}`, 'success');
-                } else {
-                    alert('❌ Error en la transacción de stock');
-                }
+                } else { alert('❌ Error en la transacción de stock'); }
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('❌ Error al procesar el movimiento');
-        } finally {
-            window.agregarUnidadesLock = false;
-        }
+        } catch (error) { console.error('Error:', error); alert('❌ Error al procesar el movimiento'); }
+        finally { window.agregarUnidadesLock = false; }
     };
 
     window.quitarUnidades = async function() {
@@ -3362,35 +2830,18 @@
         const consumo = estado.currentMovimientosProduct.fichaConsumption || 0;
         const sucursal = estado.currentMovimientosProduct.sucursal;
         const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
-        if (cantidad <= 0) {
-            alert('Cantidad inválida');
-            window.quitarUnidadesLock = false;
-            return;
-        }
+        if (cantidad <= 0) { alert('Cantidad inválida'); window.quitarUnidadesLock = false; return; }
         const config = sucursalToConfig[sucursal];
-        if (!config) {
-            alert('❌ Sucursal no encontrada');
-            window.quitarUnidadesLock = false;
-            return;
-        }
+        if (!config) { alert('❌ Sucursal no encontrada'); window.quitarUnidadesLock = false; return; }
         try {
             let db;
-            if (estado.currentDB) {
-                db = estado.currentDB;
-            } else {
-                const app = initializeApp(config.config, config.id);
-                db = getDatabase(app);
-            }
+            if (estado.currentDB) { db = estado.currentDB; }
+            else { const app = initializeApp(config.config, config.id); db = getDatabase(app); }
             let stockKey;
             let cantidadMovimiento;
             if (destino === 'stock') {
-                if (consumo > 0 && !isIndependentCode) {
-                    stockKey = '000-00';
-                    cantidadMovimiento = consumo * cantidad;
-                } else {
-                    stockKey = code;
-                    cantidadMovimiento = cantidad;
-                }
+                if (consumo > 0 && !isIndependentCode) { stockKey = '000-00'; cantidadMovimiento = consumo * cantidad; }
+                else { stockKey = code; cantidadMovimiento = cantidad; }
                 const stockSnap = await get(ref(db, `stock/${stockKey}`));
                 let stockActual = stockSnap.val() ?? STOCK_INICIAL;
                 if (stockActual < cantidadMovimiento) {
@@ -3411,36 +2862,19 @@
                     const fecha = ahora.toLocaleDateString('es-PY');
                     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                     await push(ref(db, 'carrito'), {
-                        code,
-                        name: estado.currentMovimientosProduct.name,
-                        points: 0,
-                        money: 0,
-                        unidades: cantidad,
-                        esMovimiento: true,
-                        tipoMovimiento: 'quitar',
-                        destinoMovimiento: destino,
-                        totalPrice: 0,
-                        fecha,
-                        hora,
-                        timestamp: fecha + ' ' + hora,
-                        timestampCompleto: ahora.getTime(),
-                        fichaConsumption: 0,
-                        sucursalOrigen: sucursal
+                        code, name: estado.currentMovimientosProduct.name,
+                        points: 0, money: 0, unidades: cantidad,
+                        esMovimiento: true, tipoMovimiento: 'quitar', destinoMovimiento: destino,
+                        totalPrice: 0, fecha, hora, timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(), fichaConsumption: 0, sucursalOrigen: sucursal
                     });
                     await cargarCatalogoUnificado();
                     closeModal();
                     showToast(`✅ Quitado -${cantidad} unidad(es) del STOCK de ${sucursal}`, 'success');
-                } else {
-                    alert('❌ Error en la transacción de stock');
-                }
+                } else { alert('❌ Error en la transacción de stock'); }
             } else {
-                if (consumo > 0 && !isIndependentCode) {
-                    stockKey = '000-00';
-                    cantidadMovimiento = consumo * cantidad;
-                } else {
-                    stockKey = code;
-                    cantidadMovimiento = cantidad;
-                }
+                if (consumo > 0 && !isIndependentCode) { stockKey = '000-00'; cantidadMovimiento = consumo * cantidad; }
+                else { stockKey = code; cantidadMovimiento = cantidad; }
                 const resultado = await runTransaction(ref(db, `stock/${stockKey}`), (currentValue) => {
                     if (currentValue === null) currentValue = STOCK_INICIAL;
                     return currentValue + cantidadMovimiento;
@@ -3452,35 +2886,19 @@
                     const fecha = ahora.toLocaleDateString('es-PY');
                     const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                     await push(ref(db, 'carrito'), {
-                        code,
-                        name: estado.currentMovimientosProduct.name,
-                        points: 0,
-                        money: 0,
-                        unidades: cantidad,
-                        esMovimiento: true,
-                        tipoMovimiento: 'quitar',
-                        destinoMovimiento: destino,
-                        totalPrice: 0,
-                        fecha,
-                        hora,
-                        timestamp: fecha + ' ' + hora,
-                        timestampCompleto: ahora.getTime(),
-                        fichaConsumption: 0,
-                        sucursalOrigen: sucursal
+                        code, name: estado.currentMovimientosProduct.name,
+                        points: 0, money: 0, unidades: cantidad,
+                        esMovimiento: true, tipoMovimiento: 'quitar', destinoMovimiento: destino,
+                        totalPrice: 0, fecha, hora, timestamp: fecha + ' ' + hora,
+                        timestampCompleto: ahora.getTime(), fichaConsumption: 0, sucursalOrigen: sucursal
                     });
                     await cargarCatalogoUnificado();
                     closeModal();
                     showToast(`✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) a ${sucursal}`, 'success');
-                } else {
-                    alert('❌ Error en la transacción de stock');
-                }
+                } else { alert('❌ Error en la transacción de stock'); }
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('❌ Error al procesar el movimiento');
-        } finally {
-            window.quitarUnidadesLock = false;
-        }
+        } catch (error) { console.error('Error:', error); alert('❌ Error al procesar el movimiento'); }
+        finally { window.quitarUnidadesLock = false; }
     };
 
     // ============================================================
@@ -3488,16 +2906,10 @@
     // ============================================================
     async function procesarFichaGratis(code, fichasAConsumir) {
         const catalogoItem = document.querySelector('.catalogo-item[data-code="' + code + '"]');
-        if (!catalogoItem) {
-            showToast('❌ Producto no encontrado', 'error');
-            return;
-        }
+        if (!catalogoItem) { showToast('❌ Producto no encontrado', 'error'); return; }
         const sucursal = catalogoItem.dataset.sucursal;
         const config = sucursalToConfig[sucursal];
-        if (!config) {
-            showToast('❌ Sucursal no encontrada', 'error');
-            return;
-        }
+        if (!config) { showToast('❌ Sucursal no encontrada', 'error'); return; }
         try {
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
@@ -3513,28 +2925,17 @@
                 if (nuevoValor < 0) return;
                 return nuevoValor;
             });
-            if (!resultado.committed) {
-                showToast('❌ Error: Stock insuficiente o conflicto', 'error');
-                return;
-            }
+            if (!resultado.committed) { showToast('❌ Error: Stock insuficiente o conflicto', 'error'); return; }
             const ahora = new Date();
             const fecha = ahora.toLocaleDateString('es-PY');
             const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
             const nombreProducto = code === '000-05' ? '🔴 000-05 (Ficha 1)' : '🔴 000-06 (Ficha 7)';
             await push(ref(db, 'carrito'), {
-                code,
-                name: nombreProducto,
-                points: 0,
-                money: 0,
-                totalPrice: 0,
-                fecha,
-                hora,
-                timestamp: fecha + ' ' + hora,
-                timestampCompleto: ahora.getTime(),
-                fichaConsumption: fichasAConsumir,
-                esFichaGratis: true,
-                unidades: 1,
-                sucursalOrigen: sucursal
+                code, name: nombreProducto,
+                points: 0, money: 0, totalPrice: 0,
+                fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(),
+                fichaConsumption: fichasAConsumir, esFichaGratis: true,
+                unidades: 1, sucursalOrigen: sucursal
             });
             if (!estado.stock[sucursal]) estado.stock[sucursal] = {};
             estado.stock[sucursal]['000-00'] = resultado.snapshot.val();
@@ -3547,7 +2948,7 @@
     }
 
     // ============================================================
-    // 15. CIERRES DE CAJA
+    // 15. CIERRES
     // ============================================================
     function abrirModalCierre(tipo, descripcion) {
         document.getElementById('cierreTitulo').innerHTML = `💰 Cierre de Caja - ${tipo}`;
@@ -3574,10 +2975,7 @@
         const catalogoItem = document.querySelector('.catalogo-item[data-code="000-09"]') || document.querySelector('.catalogo-item[data-code="000-10"]');
         const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
         const config = sucursalToConfig[sucursal];
-        if (!config) {
-            showToast('❌ Sucursal no encontrada', 'error');
-            return;
-        }
+        if (!config) { showToast('❌ Sucursal no encontrada', 'error'); return; }
         try {
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
@@ -3587,19 +2985,9 @@
             const code = tipo === 'Efectivo' ? '000-09' : '000-10';
             const name = tipo === 'Efectivo' ? '💰 Cierre Efectivo' : '💳 Cierre Tarjeta';
             await push(ref(db, 'carrito'), {
-                code,
-                name,
-                points: 0,
-                money: montoNum,
-                totalPrice: montoNum,
-                fecha,
-                hora,
-                timestamp: fecha + ' ' + hora,
-                timestampCompleto: ahora.getTime(),
-                fichaConsumption: 0,
-                esCierre: true,
-                unidades: 1,
-                sucursalOrigen: sucursal
+                code, name, points: 0, money: montoNum, totalPrice: montoNum,
+                fecha, hora, timestamp: fecha + ' ' + hora, timestampCompleto: ahora.getTime(),
+                fichaConsumption: 0, esCierre: true, unidades: 1, sucursalOrigen: sucursal
             });
             closeCierreModal();
             showToast(`✅ Cierre de ${tipo} registrado en ${sucursal}: Gs. ${montoNum.toLocaleString()}`, 'success');
@@ -3641,31 +3029,17 @@
 
     window.cargarContadoresMaquina = async function() {
         const maquina = document.getElementById('maquinaSelect').value;
-        if (!maquina) {
-            alert('Seleccione una máquina primero');
-            return;
-        }
+        if (!maquina) { alert('Seleccione una máquina primero'); return; }
         const fecha = document.getElementById('fechaContador').value;
-        if (!fecha) {
-            alert('Seleccione una fecha');
-            return;
-        }
+        if (!fecha) { alert('Seleccione una fecha'); return; }
         const sucursal = estado.currentSucursalContadores || 'Villa Morra';
         const config = sucursalToConfig[sucursal];
-        if (!config) {
-            showToast('❌ Sucursal no encontrada', 'error');
-            return;
-        }
+        if (!config) { showToast('❌ Sucursal no encontrada', 'error'); return; }
         try {
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
             const contSnap = await get(ref(db, `contadores_maquinas/${maquina}/${fecha}`));
-            const datos = contSnap.exists() ? contSnap.val() : {
-                fichas: 0,
-                premios: 0,
-                fichasPrueba: 0,
-                premiosPrueba: 0
-            };
+            const datos = contSnap.exists() ? contSnap.val() : { fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0 };
             document.getElementById('contadorFichas').value = datos.fichas || 0;
             document.getElementById('contadorPremios').value = datos.premios || 0;
             document.getElementById('fichasPrueba').value = datos.fichasPrueba || 0;
@@ -3679,33 +3053,21 @@
 
     window.guardarContadoresMaquina = async function() {
         const maquina = document.getElementById('maquinaSelect').value;
-        if (!maquina) {
-            alert('Seleccione una máquina primero');
-            return;
-        }
+        if (!maquina) { alert('Seleccione una máquina primero'); return; }
         const fecha = document.getElementById('fechaContador').value;
-        if (!fecha) {
-            alert('Seleccione una fecha');
-            return;
-        }
+        if (!fecha) { alert('Seleccione una fecha'); return; }
         const fichas = parseInt(document.getElementById('contadorFichas').value) || 0;
         const premios = parseInt(document.getElementById('contadorPremios').value) || 0;
         const fichasPrueba = parseInt(document.getElementById('fichasPrueba').value) || 0;
         const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
         const sucursal = estado.currentSucursalContadores || 'Villa Morra';
         const config = sucursalToConfig[sucursal];
-        if (!config) {
-            showToast('❌ Sucursal no encontrada', 'error');
-            return;
-        }
+        if (!config) { showToast('❌ Sucursal no encontrada', 'error'); return; }
         try {
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
             await set(ref(db, `contadores_maquinas/${maquina}/${fecha}`), {
-                fichas: fichas,
-                premios: premios,
-                fichasPrueba: fichasPrueba,
-                premiosPrueba: premiosPrueba,
+                fichas, premios, fichasPrueba, premiosPrueba,
                 ultimaActualizacion: new Date().toISOString()
             });
             showToast(`✅ Datos guardados para ${maquina} - ${fecha}`, 'success');
@@ -3790,9 +3152,8 @@
             return;
         }
         let sucursalesACargar = [];
-        if (sucursalFiltro === 'todas') {
-            sucursalesACargar = sucursalesCompletas;
-        } else {
+        if (sucursalFiltro === 'todas') { sucursalesACargar = sucursalesCompletas; }
+        else {
             const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
             if (encontrada) sucursalesACargar = [encontrada];
         }
@@ -3887,7 +3248,7 @@
         let html = `<div class="filter-summary-premium">
             <span><i class="fas fa-list"></i> <strong>${items.length}</strong> items</span>
             <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${new Set(items.map(i => i._diaLaboral)).size} días</span>
-            <span class="filter-tag-premium"><i class="fas fa-trash" style="color:var(--danger);"></i> Puedes eliminar items del historial</span>
+            <span class="filter-tag-premium"><i class="fas fa-trash" style="color:var(--danger);"></i> Puedes eliminar items del historial (devuelve stock)</span>
         </div>`;
         html += `<div class="table-responsive"><table class="table-premium">
             <thead><tr>
@@ -3941,11 +3302,8 @@
                     movimientoTexto = `${cantidad}`;
                 }
                 const destino = item.destinoMovimiento || '';
-                if (destino && destino !== 'stock') {
-                    movimientoTexto += ` → ${destino.toUpperCase()}`;
-                } else if (destino === 'stock') {
-                    movimientoTexto += ` → Stock`;
-                }
+                if (destino && destino !== 'stock') { movimientoTexto += ` → ${destino.toUpperCase()}`; }
+                else if (destino === 'stock') { movimientoTexto += ` → Stock`; }
                 tipo = '🔄 Movimiento';
             } else if (esFichaGratis) {
                 tipo = '🎁 Gratis';
@@ -3977,7 +3335,7 @@
                     ${puedeEliminar ? `
                         <button class="btn-delete"
                                 onclick="eliminarItem('${item.sucursal}', '${firebaseKey}', '${item.fuente}', ${ventaIndex}, '${nombreItem.replace(/'/g, "\\'")}')"
-                                title="Eliminar este item">
+                                title="Eliminar este item (devuelve stock)">
                             <i class="fas fa-trash"></i>
                         </button>
                     ` : '<span style="color:var(--gray-400); font-size:0.7rem;">-</span>'}
@@ -4006,7 +3364,7 @@
     };
 
     // ============================================================
-    // 19. CONTADORES DE MÁQUINAS (Panel)
+    // 19. CONTADORES DE MÁQUINAS (PANEL)
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -4046,20 +3404,13 @@
         if (resultados && resultados.style.display !== 'none') {
             setTimeout(() => {
                 const wrapper = document.getElementById('contadoresScrollWrapper');
-                if (wrapper) {
-                    wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } else {
-                    resultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                if (wrapper) { wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                else { resultados.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
             }, 300);
         }
     }
 
-    let filtroContadoresActual = {
-        sucursal: 'todas',
-        fechaDesde: '',
-        fechaHasta: ''
-    };
+    let filtroContadoresActual = { sucursal: 'todas', fechaDesde: '', fechaHasta: '' };
 
     window.onSucursalChange = function() {
         const sucursal = document.getElementById('contadorSucursal').value;
@@ -4082,24 +3433,15 @@
 
     window.aplicarFiltroContadores = async function() {
         const btn = document.querySelector('.btn-premium.primary');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando...';
-        }
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando...'; }
         const sucursal = document.getElementById('contadorSucursal').value;
         const fechaDesde = document.getElementById('contadorFechaDesde').value;
         const fechaHasta = document.getElementById('contadorFechaHasta').value;
         filtroContadoresActual = { sucursal, fechaDesde, fechaHasta };
         actualizarIndicadorFiltro(sucursal);
-        if (fechaDesde && fechaHasta) {
-            await cargarCalendarioContadores(null);
-        } else {
-            showToast('⚠️ Selecciona un rango de fechas para ver resultados', 'warning');
-        }
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-filter"></i> Aplicar filtro';
-        }
+        if (fechaDesde && fechaHasta) { await cargarCalendarioContadores(null); }
+        else { showToast('⚠️ Selecciona un rango de fechas para ver resultados', 'warning'); }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-filter"></i> Aplicar filtro'; }
     };
 
     window.cargarCalendarioContadores = async function(event) {
@@ -4249,13 +3591,10 @@
             if (btn) btn.disabled = false;
             return;
         }
-        if (fechaDesde && fechaHasta && fechaDesde !== fechaHasta) {
-            fechaTarget = fechaDesde;
-        }
+        if (fechaDesde && fechaHasta && fechaDesde !== fechaHasta) { fechaTarget = fechaDesde; }
         let sucursalesACargar = [];
-        if (sucursalFiltro === 'todas') {
-            sucursalesACargar = sucursalesCompletas;
-        } else {
+        if (sucursalFiltro === 'todas') { sucursalesACargar = sucursalesCompletas; }
+        else {
             const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
             if (encontrada) sucursalesACargar = [encontrada];
         }
@@ -4266,15 +3605,9 @@
                 const todasLasMaquinas = Object.keys(contadores);
                 if (todasLasMaquinas.length === 0) {
                     resultados.push({
-                        sucursal: suc.nombre,
-                        maquina: 'Sin registros',
-                        fecha: fechaTarget,
-                        fichas: 0,
-                        premios: 0,
-                        fichasPrueba: 0,
-                        premiosPrueba: 0,
-                        tieneDatos: false,
-                        mensaje: 'No hay máquinas configuradas'
+                        sucursal: suc.nombre, maquina: 'Sin registros', fecha: fechaTarget,
+                        fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0,
+                        tieneDatos: false, mensaje: 'No hay máquinas configuradas'
                     });
                     continue;
                 }
@@ -4296,28 +3629,18 @@
                         }
                     }
                     resultados.push({
-                        sucursal: suc.nombre,
-                        maquina: maquina,
-                        fecha: fechaEncontrada || fechaTarget,
-                        fichas: datos?.fichas ?? 0,
-                        premios: datos?.premios ?? 0,
-                        fichasPrueba: datos?.fichasPrueba ?? 0,
-                        premiosPrueba: datos?.premiosPrueba ?? 0,
+                        sucursal: suc.nombre, maquina: maquina, fecha: fechaEncontrada || fechaTarget,
+                        fichas: datos?.fichas ?? 0, premios: datos?.premios ?? 0,
+                        fichasPrueba: datos?.fichasPrueba ?? 0, premiosPrueba: datos?.premiosPrueba ?? 0,
                         tieneDatos: datos !== null
                     });
                 }
             } catch (error) {
                 console.error(`Error cargando contadores de ${suc.nombre}:`, error);
                 resultados.push({
-                    sucursal: suc.nombre,
-                    maquina: 'Error',
-                    fecha: fechaTarget,
-                    fichas: 0,
-                    premios: 0,
-                    fichasPrueba: 0,
-                    premiosPrueba: 0,
-                    tieneDatos: false,
-                    mensaje: 'Error al cargar datos'
+                    sucursal: suc.nombre, maquina: 'Error', fecha: fechaTarget,
+                    fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0,
+                    tieneDatos: false, mensaje: 'Error al cargar datos'
                 });
             }
         }
@@ -4389,7 +3712,6 @@
         tbody.innerHTML = html;
     }
 
-    // --- DIFERENCIA ---
     window.toggleDiferenciaContadores = function() {
         const panel = document.getElementById('diferenciaControles');
         if (panel.style.display === 'none') {
@@ -4426,9 +3748,8 @@
         }
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
         let sucursalesACargar = [];
-        if (sucursalFiltro === 'todas') {
-            sucursalesACargar = sucursalesCompletas;
-        } else {
+        if (sucursalFiltro === 'todas') { sucursalesACargar = sucursalesCompletas; }
+        else {
             const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
             if (encontrada) sucursalesACargar = [encontrada];
         }
@@ -4442,31 +3763,20 @@
                     let datosFin = null;
                     let fechaFinEncontrada = null;
                     const buscarFecha = (fechaStr, fechasObj) => {
-                        if (fechasObj[fechaStr]) {
-                            return { datos: fechasObj[fechaStr], fecha: fechaStr };
-                        }
+                        if (fechasObj[fechaStr]) { return { datos: fechasObj[fechaStr], fecha: fechaStr }; }
                         const partes = fechaStr.split('-');
                         if (partes.length === 3) {
                             const fechaDDMMYYYY = `${partes[2]}/${partes[1]}/${partes[0]}`;
-                            if (fechasObj[fechaDDMMYYYY]) {
-                                return { datos: fechasObj[fechaDDMMYYYY], fecha: fechaDDMMYYYY };
-                            }
+                            if (fechasObj[fechaDDMMYYYY]) { return { datos: fechasObj[fechaDDMMYYYY], fecha: fechaDDMMYYYY }; }
                         }
                         return null;
                     };
                     const inicioResult = buscarFecha(fechaInicio, fechas);
-                    if (inicioResult) {
-                        datosInicio = inicioResult.datos;
-                        fechaInicioEncontrada = inicioResult.fecha;
-                    }
+                    if (inicioResult) { datosInicio = inicioResult.datos; fechaInicioEncontrada = inicioResult.fecha; }
                     const finResult = buscarFecha(fechaFin, fechas);
-                    if (finResult) {
-                        datosFin = finResult.datos;
-                        fechaFinEncontrada = finResult.fecha;
-                    }
+                    if (finResult) { datosFin = finResult.datos; fechaFinEncontrada = finResult.fecha; }
                     resultados.push({
-                        sucursal: suc.nombre,
-                        maquina: maquina,
+                        sucursal: suc.nombre, maquina: maquina,
                         fechaInicio: fechaInicioEncontrada || fechaInicio,
                         fechaFin: fechaFinEncontrada || fechaFin,
                         fichasInicio: datosInicio?.fichas ?? 0,
@@ -4550,9 +3860,8 @@
         </tr>`;
         tbody.innerHTML = html;
     }
-
-    // ============================================================
-    // 20. PDF - SOLUCIÓN DEFINITIVA CON ENCABEZADOS MANUALES
+        // ============================================================
+    // 20. PDF - GENERACIÓN DE REPORTES
     // ============================================================
     function debeMostrarLambare(fechaDesde) {
         if (!fechaDesde) return true;
@@ -4634,9 +3943,6 @@
         const mostrarLambare = debeMostrarLambare(fechaDesde);
         const tituloReporte = generarTituloReporte(fechaDesde, fechaHasta);
 
-        // ============================================================
-        // ENCABEZADO DEL DOCUMENTO
-        // ============================================================
         doc.setFont("Times", "Roman");
         doc.setFontSize(24);
         doc.setTextColor(139, 0, 0);
@@ -4658,9 +3964,6 @@
         doc.text(`Items: ${items.length}`, 20, 64);
         doc.text(`Rango: ${diasRango} día(s)`, 20, 71);
 
-        // ============================================================
-        // PREPARAR DATOS
-        // ============================================================
         let ordenSucursales = ["Villa Morra", "Los Laureles", "Villa Elisa"];
         if (mostrarLambare) {
             ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
@@ -4675,9 +3978,6 @@
 
         let startY = 80;
 
-        // ============================================================
-        // CONSTRUIR TABLA - MODO MANUAL CON ENCABEZADOS
-        // ============================================================
         function dibujarCelda(doc, x, y, ancho, alto, texto, esHeader = false, align = 'center', colorFondo = null, bold = false) {
             if (colorFondo) {
                 doc.setFillColor(colorFondo[0], colorFondo[1], colorFondo[2]);
@@ -4701,7 +4001,6 @@
         let Y_ACTUAL = startY;
 
         if (esRangoSemanal && fechaDesde && fechaHasta) {
-            // ---- MODO SEMANAL ----
             const diasSemana = [];
             let fechaActual = new Date(fechaDesde);
             const fechaFin = new Date(fechaHasta);
@@ -4742,10 +4041,7 @@
                     const stats = statsPorDia[dia];
                     filasDatos.push({
                         columnas: [getNombreDia(dia), sucursal, stats.efectivo, stats.bancard, stats.total],
-                        esDia: true,
-                        efectivo: stats.efectivo,
-                        bancard: stats.bancard,
-                        total: stats.total
+                        esDia: true, efectivo: stats.efectivo, bancard: stats.bancard, total: stats.total
                     });
                 });
 
@@ -4757,10 +4053,7 @@
                 });
                 filasDatos.push({
                     columnas: ['SUBTOTAL', sucursal, subtotalEfectivo, subtotalBancard, subtotalTotal],
-                    esSubtotal: true,
-                    efectivo: subtotalEfectivo,
-                    bancard: subtotalBancard,
-                    total: subtotalTotal
+                    esSubtotal: true, efectivo: subtotalEfectivo, bancard: subtotalBancard, total: subtotalTotal
                 });
                 totalGeneralEfectivo += subtotalEfectivo;
                 totalGeneralBancard += subtotalBancard;
@@ -4768,10 +4061,7 @@
             });
             filasDatos.push({
                 columnas: ['TOTAL GENERAL', '', totalGeneralEfectivo, totalGeneralBancard, totalGeneralTotal],
-                esTotal: true,
-                efectivo: totalGeneralEfectivo,
-                bancard: totalGeneralBancard,
-                total: totalGeneralTotal
+                esTotal: true, efectivo: totalGeneralEfectivo, bancard: totalGeneralBancard, total: totalGeneralTotal
             });
 
             const anchoCol = (ANCHO_PAGINA - (MARGEN * 2)) / 5;
@@ -4811,7 +4101,6 @@
             });
 
         } else {
-            // ---- MODO RESUMEN ----
             const filas = [];
             let totalEfectivo = 0, totalBancard = 0;
 
@@ -4877,9 +4166,6 @@
             }
         }
 
-        // ============================================================
-        // NÚMEROS DE PÁGINA
-        // ============================================================
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -4921,9 +4207,7 @@
         });
         const filas = [];
         const orden = ["Villa Morra", "Los Laureles", "Villa Elisa"];
-        if (mostrarLambare) {
-            orden.splice(2, 0, "Lambaré");
-        }
+        if (mostrarLambare) { orden.splice(2, 0, "Lambaré"); }
         orden.push("Sin Sucursal");
         orden.forEach(nombre => {
             const stats = calcularEstadisticas(sucursales[nombre] || []);
@@ -4937,7 +4221,7 @@
                 <span><i class="fas fa-calendar"></i> <strong>${tituloReporte}</strong></span>
                 <span><i class="fas fa-calendar-day"></i> ${dias.size} días</span>
                 <span><i class="fas fa-list"></i> ${items.length} items</span>
-                <span><i class="fas fa-clock"></i> ${esRangoSemanal ? '📊 Modo Semanal (5 columnas: Día, Sucursal, Efectivo, Bancard, Total)' : '📊 Modo Resumen (4 columnas: Sucursal, Efectivo, Bancard, Total)'}</span>
+                <span><i class="fas fa-clock"></i> ${esRangoSemanal ? '📊 Modo Semanal (5 columnas)' : '📊 Modo Resumen (4 columnas)'}</span>
                 ${!mostrarLambare ? '<span style="color:var(--warning);"><i class="fas fa-store-slash"></i> Lambaré excluido (fecha > 31/05/2026)</span>' : ''}
             </div>
             <table class="table-premium">
@@ -4949,7 +4233,7 @@
         html += `</tbody></table>`;
         html += `<p style="margin-top:8px; font-size:0.7rem; color:var(--gray-400);">
             <i class="fas fa-info-circle"></i> Formato: Times New Roman, Rojo Carmesí en títulos.
-            ${esRangoSemanal ? 'Modo semanal: muestra días de la semana con columnas Día, Sucursal, Efectivo, Bancard y Total.' : 'Modo resumen: muestra totales por sucursal.'}
+            ${esRangoSemanal ? 'Modo semanal: muestra días de la semana.' : 'Modo resumen: muestra totales por sucursal.'}
             ${!mostrarLambare ? ' (Lambaré no se muestra porque la fecha es posterior al 31/05/2026)' : ''}
         </p>`;
         container.innerHTML = html;
@@ -4958,11 +4242,7 @@
     // ============================================================
     // 21. SECCIÓN MÁQUINAS
     // ============================================================
-    let maquinasFiltroActual = {
-        sucursal: 'todas',
-        desde: '',
-        hasta: ''
-    };
+    let maquinasFiltroActual = { sucursal: 'todas', desde: '', hasta: '' };
 
     window.cargarDatosMaquinas = async function() {
         const container = document.getElementById('maquinasGridContainer');
@@ -4975,9 +4255,8 @@
 
         const sucursalFiltro = document.getElementById('maquinasFiltroSucursal').value;
         let sucursalesACargar = [];
-        if (sucursalFiltro === 'todas') {
-            sucursalesACargar = sucursalesCompletas;
-        } else {
+        if (sucursalFiltro === 'todas') { sucursalesACargar = sucursalesCompletas; }
+        else {
             const encontrada = sucursalesCompletas.find(s => s.nombre === sucursalFiltro);
             if (encontrada) sucursalesACargar = [encontrada];
         }
@@ -5370,6 +4649,7 @@
     document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
 
     console.log('✅ Panel ASTROLAND Premium cargado correctamente');
+    console.log('✅ Reversión de stock al eliminar historial: ACTIVADA');
 
     // ===== SUSCRIPCIONES EN TIEMPO REAL =====
     for (const suc of sucursalesCompletas) {
