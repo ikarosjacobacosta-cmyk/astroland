@@ -1598,12 +1598,15 @@
           <div style="display: flex; flex-wrap: wrap; gap: 12px;">
             <div style="flex: 1; min-width: 150px;">
               <label style="font-size:0.8rem;">🔎 Buscar producto:</label>
-              <input type="text" id="filtroTexto" placeholder="Código completo (ej: 100-38)" value="" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" inputmode="numeric">
+              <input type="text" id="filtroTexto" placeholder="Código completo (ej: 100-38)" value=""
+                     oninput="aplicarFiltroCarrito('texto', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" inputmode="numeric">
             </div>
 
             <div style="min-width: 130px;">
               <label style="font-size:0.8rem;">📋 Tipo:</label>
-              <select id="filtroTipo" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+              <select id="filtroTipo" onchange="aplicarFiltroCarrito('tipo', this.value)"
+                      style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
                 <option value="todos">📊 Todos</option>
                 <option value="compras">🛒 Solo Compras</option>
                 <option value="movimientos">🔄 Solo Movimientos</option>
@@ -1612,14 +1615,26 @@
               </select>
             </div>
 
-            <div style="min-width: 140px;">
-              <label style="font-size:0.8rem;">📅 Desde:</label>
-              <input type="date" id="filtroFechaDesde" value="" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+            <div style="min-width: 200px;">
+              <label style="font-size:0.8rem;">📅 Desde (fecha):</label>
+              <input type="date" id="filtroFechaDesde" value=""
+                     onchange="aplicarFiltroCarrito('fechaDesde', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+              <label style="font-size:0.8rem; margin-top:6px; display:block;">⏰ Desde (hora):</label>
+              <input type="time" id="filtroHoraDesde" value="" step="1"
+                     onchange="aplicarFiltroCarrito('horaDesde', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
             </div>
 
-            <div style="min-width: 140px;">
-              <label style="font-size:0.8rem;">📅 Hasta:</label>
-              <input type="date" id="filtroFechaHasta" value="" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+            <div style="min-width: 200px;">
+              <label style="font-size:0.8rem;">📅 Hasta (fecha):</label>
+              <input type="date" id="filtroFechaHasta" value=""
+                     onchange="aplicarFiltroCarrito('fechaHasta', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+              <label style="font-size:0.8rem; margin-top:6px; display:block;">⏰ Hasta (hora):</label>
+              <input type="time" id="filtroHoraHasta" value="" step="1"
+                     onchange="aplicarFiltroCarrito('horaHasta', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
             </div>
           </div>
         </div>
@@ -1776,7 +1791,9 @@
       texto: '',
       tipo: 'todos',
       fechaDesde: '',
-      fechaHasta: ''
+      horaDesde: '',
+      fechaHasta: '',
+      horaHasta: ''
     };
 
     // ========== VARIABLES PARA DETECTAR SCROLL EN TÁCTIL ==========
@@ -1832,7 +1849,6 @@
         }
 
         let stockVal = getProductStock(code);
-        // Ya NO bloqueamos si stockVal <= 0. El modal se abre y se restringe la pestaña Compra más abajo.
 
         const price = getProductPrice(code, parseFloat(target.getAttribute('data-price')));
         const consumo = FICHA_CONSUMPTION[code] || 0;
@@ -2261,6 +2277,49 @@
     function renderCart() {
       const div = document.getElementById('cartItems');
 
+      // ---- Helper: convierte un item a timestamp (ms) usando fecha + hora ----
+      function itemToTimestamp(item) {
+        if (item.timestampCompleto) return Number(item.timestampCompleto);
+        try {
+          const partes = (item.fecha || '').split('/');
+          if (partes.length === 3) {
+            const [d, m, y] = partes;
+            const hora = item.hora || '00:00:00';
+            const [hh, mm, ss] = hora.split(':');
+            const dt = new Date(
+              parseInt(y, 10),
+              parseInt(m, 10) - 1,
+              parseInt(d, 10),
+              parseInt(hh || 0, 10),
+              parseInt(mm || 0, 10),
+              parseInt(ss || 0, 10)
+            );
+            if (!isNaN(dt.getTime())) return dt.getTime();
+          }
+        } catch (_) {}
+        return 0;
+      }
+
+      // ---- Helper: combina fecha + hora en timestamp ----
+      function fechaHoraToTimestamp(fecha, hora, esFinDelDia) {
+        if (!fecha) return null;
+        const [y, m, d] = fecha.split('-').map(Number);
+        let hh = 0, mm = 0, ss = 0;
+        if (hora) {
+          const p = hora.split(':');
+          hh = parseInt(p[0] || 0, 10);
+          mm = parseInt(p[1] || 0, 10);
+          ss = parseInt(p[2] || 0, 10);
+        } else if (esFinDelDia) {
+          hh = 23; mm = 59; ss = 59;
+        }
+        const dt = new Date(y, m - 1, d, hh, mm, ss);
+        return isNaN(dt.getTime()) ? null : dt.getTime();
+      }
+
+      const tsDesde = fechaHoraToTimestamp(filtroCarrito.fechaDesde, filtroCarrito.horaDesde, false);
+      const tsHasta = fechaHoraToTimestamp(filtroCarrito.fechaHasta, filtroCarrito.horaHasta, true);
+
       let itemsFiltrados = cart.filter(item => {
         if (filtroCarrito.texto) {
           const nombreCompleto = (item.name || item.code || '').toLowerCase();
@@ -2272,14 +2331,9 @@
           if (filtroCarrito.tipo === 'fichas_gratis' && !item.esFichaGratis) return false;
           if (filtroCarrito.tipo === 'cierres' && !item.esCierre) return false;
         }
-        if (filtroCarrito.fechaDesde) {
-          const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
-          if (fechaItem < filtroCarrito.fechaDesde) return false;
-        }
-        if (filtroCarrito.fechaHasta) {
-          const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
-          if (fechaItem > filtroCarrito.fechaHasta) return false;
-        }
+        const ts = itemToTimestamp(item);
+        if (tsDesde !== null && ts < tsDesde) return false;
+        if (tsHasta !== null && ts > tsHasta) return false;
         return true;
       });
 
@@ -2503,7 +2557,6 @@
 
       if (!moneyInput || !btnEfectivo || !btnPOS) return;
 
-      // Si el producto NO tiene stock, no tocar los botones (ya están deshabilitados)
       if (currentProduct) {
         const stockVal = getProductStock(currentProduct.code);
         if (stockVal <= 0 && !CIERRE_CODES.includes(currentProduct.code)) {
@@ -3222,20 +3275,33 @@
       if (tipo === 'texto') filtroCarrito.texto = valor;
       else if (tipo === 'tipo') filtroCarrito.tipo = valor;
       else if (tipo === 'fechaDesde') filtroCarrito.fechaDesde = valor;
+      else if (tipo === 'horaDesde') filtroCarrito.horaDesde = valor;
       else if (tipo === 'fechaHasta') filtroCarrito.fechaHasta = valor;
+      else if (tipo === 'horaHasta') filtroCarrito.horaHasta = valor;
       renderCart();
     };
 
     window.limpiarFiltrosCarrito = function() {
-      filtroCarrito = { texto: '', tipo: 'todos', fechaDesde: '', fechaHasta: '' };
+      filtroCarrito = {
+        texto: '',
+        tipo: 'todos',
+        fechaDesde: '',
+        horaDesde: '',
+        fechaHasta: '',
+        horaHasta: ''
+      };
       const textoInput = document.getElementById('filtroTexto');
       const tipoSelect = document.getElementById('filtroTipo');
       const fechaDesdeInput = document.getElementById('filtroFechaDesde');
+      const horaDesdeInput = document.getElementById('filtroHoraDesde');
       const fechaHastaInput = document.getElementById('filtroFechaHasta');
+      const horaHastaInput = document.getElementById('filtroHoraHasta');
       if (textoInput) textoInput.value = '';
       if (tipoSelect) tipoSelect.value = 'todos';
       if (fechaDesdeInput) fechaDesdeInput.value = '';
+      if (horaDesdeInput) horaDesdeInput.value = '';
       if (fechaHastaInput) fechaHastaInput.value = '';
+      if (horaHastaInput) horaHastaInput.value = '';
       renderCart();
     };
 
@@ -3338,14 +3404,12 @@
             return;
           }
 
-          // Si la categoría está en modo "mostrando", mostrar todos los que coincidan
           if (estaMostrando) {
             item.style.display = 'flex';
             any = true;
             return;
           }
 
-          // Modo normal: ocultar los de stock 0
           if (item.classList.contains('out-of-stock') && !CIERRE_CODES.includes(code)) {
             item.style.display = 'none';
           } else {
@@ -3378,7 +3442,6 @@
         else item.classList.remove('out-of-stock');
       });
 
-      // Re-aplicar visibilidad según modo mostrando/oculto
       document.querySelectorAll('.categoria').forEach(cat => {
         const boton = cat.querySelector('.btn-toggle-categoria');
         const estaMostrando = boton && boton.classList.contains('mostrando');
@@ -3474,7 +3537,6 @@
       const container = document.getElementById('stockItemsContainer');
       const categories = {};
 
-      const productosStock = [];
       document.querySelectorAll('.imagen-item').forEach(item => {
         const cat = item.getAttribute('data-category');
         if (!categories[cat]) categories[cat] = [];
@@ -3728,7 +3790,6 @@
 
         document.getElementById('cantidadStockMaquinas').value = '';
 
-        // Cerrar el modal automáticamente
         closeModal();
 
       } catch (error) {
@@ -3748,7 +3809,6 @@
       const mostrando = boton.classList.contains('mostrando');
 
       if (!mostrando) {
-        // MOSTRAR TODOS (incluyendo stock 0)
         items.forEach(item => {
           item.classList.add('mostrado-cero');
           item.style.display = 'flex';
@@ -3756,7 +3816,6 @@
         boton.classList.add('mostrando');
         boton.innerHTML = '🙈 Ocultar';
       } else {
-        // OCULTAR SOLO LOS QUE TIENEN STOCK 0
         items.forEach(item => {
           item.classList.remove('mostrado-cero');
           const code = item.getAttribute('data-code');
@@ -3809,7 +3868,6 @@
         let operacionExitosa = true;
 
         if (destino === 'stock') {
-          // Agregar a STOCK = + en el stock
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
             if (!resultado.success) {
@@ -3828,7 +3886,6 @@
             }
           }
         } else if (destino === 'maquinas') {
-          // Agregar a MÁQUINAS = RESTA del stock
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', -(consumo * cantidad), 0);
             if (!resultado.success) {
@@ -3922,7 +3979,6 @@
         let operacionExitosa = true;
 
         if (destino === 'stock') {
-          // Quitar de STOCK = RESTA del stock
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', -(consumo * cantidad), 0);
             if (!resultado.success) {
@@ -3941,7 +3997,6 @@
             }
           }
         } else if (destino === 'maquinas') {
-          // Quitar de MÁQUINAS = SUMA al stock (devolver)
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
             if (!resultado.success) {
@@ -4792,7 +4847,6 @@
       const select = document.getElementById('movimientoDestino');
       if (select) {
         // Ya tenemos las opciones fijas en HTML: stock y maquinas
-        // No hacemos nada más porque ya están en el HTML
       }
     }
 
@@ -5052,6 +5106,35 @@
       const pwd = prompt('🔐 Contraseña para exportar filtrado:');
       if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
 
+      function itemToTimestamp(item) {
+        if (item.timestampCompleto) return Number(item.timestampCompleto);
+        try {
+          const partes = (item.fecha || '').split('/');
+          if (partes.length === 3) {
+            const [d, m, y] = partes;
+            const hora = item.hora || '00:00:00';
+            const [hh, mm, ss] = hora.split(':');
+            const dt = new Date(parseInt(y,10), parseInt(m,10)-1, parseInt(d,10),
+                                parseInt(hh||0,10), parseInt(mm||0,10), parseInt(ss||0,10));
+            if (!isNaN(dt.getTime())) return dt.getTime();
+          }
+        } catch (_) {}
+        return 0;
+      }
+      function fechaHoraToTimestamp(fecha, hora, esFinDelDia) {
+        if (!fecha) return null;
+        const [y, m, d] = fecha.split('-').map(Number);
+        let hh = 0, mm = 0, ss = 0;
+        if (hora) {
+          const p = hora.split(':');
+          hh = parseInt(p[0]||0,10); mm = parseInt(p[1]||0,10); ss = parseInt(p[2]||0,10);
+        } else if (esFinDelDia) { hh = 23; mm = 59; ss = 59; }
+        const dt = new Date(y, m-1, d, hh, mm, ss);
+        return isNaN(dt.getTime()) ? null : dt.getTime();
+      }
+      const tsDesde = fechaHoraToTimestamp(filtroCarrito.fechaDesde, filtroCarrito.horaDesde, false);
+      const tsHasta = fechaHoraToTimestamp(filtroCarrito.fechaHasta, filtroCarrito.horaHasta, true);
+
       let itemsFiltrados = cart.filter(item => {
         if (filtroCarrito.texto) {
           const nombreCompleto = (item.name || item.code || '').toLowerCase();
@@ -5064,14 +5147,9 @@
           if (filtroCarrito.tipo === 'fichas_gratis' && !item.esFichaGratis) return false;
           if (filtroCarrito.tipo === 'cierres' && !item.esCierre) return false;
         }
-        if (filtroCarrito.fechaDesde) {
-          const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
-          if (fechaItem < filtroCarrito.fechaDesde) return false;
-        }
-        if (filtroCarrito.fechaHasta) {
-          const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
-          if (fechaItem > filtroCarrito.fechaHasta) return false;
-        }
+        const ts = itemToTimestamp(item);
+        if (tsDesde !== null && ts < tsDesde) return false;
+        if (tsHasta !== null && ts > tsHasta) return false;
         return true;
       });
 
@@ -5102,11 +5180,12 @@
         filtroCarrito.tipo === 'compras' ? 'Solo Compras' :
         filtroCarrito.tipo === 'movimientos' ? 'Solo Movimientos' :
         filtroCarrito.tipo === 'fichas_gratis' ? 'Fichas Gratis' : 'Cierres de Caja';
+      const rangoTexto = `${filtroCarrito.fechaDesde || 'inicio'} ${filtroCarrito.horaDesde || ''} - ${filtroCarrito.fechaHasta || 'hoy'} ${filtroCarrito.horaHasta || ''}`;
 
       const data = [
         ['ASTROLAND - Villa Morra (FILTRADO)'],
         [
-          `Filtros aplicados: ${tipoTexto} | Buscar: ${filtroCarrito.texto || 'ninguno'} | Fechas: ${filtroCarrito.fechaDesde || 'inicio'} - ${filtroCarrito.fechaHasta || 'hoy'}`
+          `Filtros aplicados: ${tipoTexto} | Buscar: ${filtroCarrito.texto || 'ninguno'} | Rango: ${rangoTexto}`
         ],
         [],
         ['Producto', 'Puntos', 'Dinero (Gs.)', 'Método de Pago', 'Movimientos', 'Fichas Consumidas', 'Fichas Regaladas',
