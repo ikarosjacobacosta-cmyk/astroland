@@ -1598,12 +1598,15 @@
           <div style="display: flex; flex-wrap: wrap; gap: 12px;">
             <div style="flex: 1; min-width: 150px;">
               <label style="font-size:0.8rem;">🔎 Buscar producto:</label>
-              <input type="text" id="filtroTexto" placeholder="Código completo (ej: 100-38)" value="" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" inputmode="numeric">
+              <input type="text" id="filtroTexto" placeholder="Código completo (ej: 100-38)" value=""
+                     oninput="aplicarFiltroCarrito('texto', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" inputmode="numeric">
             </div>
 
             <div style="min-width: 130px;">
               <label style="font-size:0.8rem;">📋 Tipo:</label>
-              <select id="filtroTipo" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+              <select id="filtroTipo" onchange="aplicarFiltroCarrito('tipo', this.value)"
+                      style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
                 <option value="todos">📊 Todos</option>
                 <option value="compras">🛒 Solo Compras</option>
                 <option value="movimientos">🔄 Solo Movimientos</option>
@@ -1612,14 +1615,26 @@
               </select>
             </div>
 
-            <div style="min-width: 140px;">
-              <label style="font-size:0.8rem;">📅 Desde:</label>
-              <input type="date" id="filtroFechaDesde" value="" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+            <div style="min-width: 200px;">
+              <label style="font-size:0.8rem;">📅 Desde (fecha):</label>
+              <input type="date" id="filtroFechaDesde" value=""
+                     onchange="aplicarFiltroCarrito('fechaDesde', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+              <label style="font-size:0.8rem; margin-top:6px; display:block;">⏰ Desde (hora):</label>
+              <input type="time" id="filtroHoraDesde" value="" step="1"
+                     onchange="aplicarFiltroCarrito('horaDesde', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
             </div>
 
-            <div style="min-width: 140px;">
-              <label style="font-size:0.8rem;">📅 Hasta:</label>
-              <input type="date" id="filtroFechaHasta" value="" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+            <div style="min-width: 200px;">
+              <label style="font-size:0.8rem;">📅 Hasta (fecha):</label>
+              <input type="date" id="filtroFechaHasta" value=""
+                     onchange="aplicarFiltroCarrito('fechaHasta', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
+              <label style="font-size:0.8rem; margin-top:6px; display:block;">⏰ Hasta (hora):</label>
+              <input type="time" id="filtroHoraHasta" value="" step="1"
+                     onchange="aplicarFiltroCarrito('horaHasta', this.value)"
+                     style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;">
             </div>
           </div>
         </div>
@@ -1776,7 +1791,9 @@
       texto: '',
       tipo: 'todos',
       fechaDesde: '',
-      fechaHasta: ''
+      horaDesde: '',
+      fechaHasta: '',
+      horaHasta: ''
     };
 
     // ========== VARIABLES PARA DETECTAR SCROLL EN TÁCTIL ==========
@@ -2261,25 +2278,75 @@
     function renderCart() {
       const div = document.getElementById('cartItems');
 
+      // ---- Helper: convierte un item a timestamp (ms) usando fecha + hora ----
+      function itemToTimestamp(item) {
+        // Preferimos timestampCompleto si existe (más preciso)
+        if (item.timestampCompleto) return Number(item.timestampCompleto);
+
+        // Fallback: parsear fecha (dd/mm/yyyy) + hora (hh:mm:ss)
+        try {
+          const partes = (item.fecha || '').split('/');
+          if (partes.length === 3) {
+            const [d, m, y] = partes;
+            const hora = item.hora || '00:00:00';
+            const [hh, mm, ss] = hora.split(':');
+            const dt = new Date(
+              parseInt(y, 10),
+              parseInt(m, 10) - 1,
+              parseInt(d, 10),
+              parseInt(hh || 0, 10),
+              parseInt(mm || 0, 10),
+              parseInt(ss || 0, 10)
+            );
+            if (!isNaN(dt.getTime())) return dt.getTime();
+          }
+        } catch (_) {}
+
+        return 0;
+      }
+
+      // ---- Helper: combina fecha + hora en timestamp ----
+      function fechaHoraToTimestamp(fecha, hora, esFinDelDia) {
+        if (!fecha) return null;
+        const [y, m, d] = fecha.split('-').map(Number);
+        let hh = 0, mm = 0, ss = 0;
+
+        if (hora) {
+          const p = hora.split(':');
+          hh = parseInt(p[0] || 0, 10);
+          mm = parseInt(p[1] || 0, 10);
+          ss = parseInt(p[2] || 0, 10);
+        } else if (esFinDelDia) {
+          hh = 23; mm = 59; ss = 59;
+        }
+
+        const dt = new Date(y, m - 1, d, hh, mm, ss);
+        return isNaN(dt.getTime()) ? null : dt.getTime();
+      }
+
+      const tsDesde = fechaHoraToTimestamp(filtroCarrito.fechaDesde, filtroCarrito.horaDesde, false);
+      const tsHasta = fechaHoraToTimestamp(filtroCarrito.fechaHasta, filtroCarrito.horaHasta, true);
+
       let itemsFiltrados = cart.filter(item => {
+        // --- Filtro por texto (código o nombre) ---
         if (filtroCarrito.texto) {
           const nombreCompleto = (item.name || item.code || '').toLowerCase();
           if (!nombreCompleto.includes(filtroCarrito.texto.toLowerCase())) return false;
         }
+
+        // --- Filtro por tipo ---
         if (filtroCarrito.tipo !== 'todos') {
           if (filtroCarrito.tipo === 'compras' && (item.esMovimiento || item.esCierre || item.esFichaGratis)) return false;
           if (filtroCarrito.tipo === 'movimientos' && !item.esMovimiento) return false;
           if (filtroCarrito.tipo === 'fichas_gratis' && !item.esFichaGratis) return false;
           if (filtroCarrito.tipo === 'cierres' && !item.esCierre) return false;
         }
-        if (filtroCarrito.fechaDesde) {
-          const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
-          if (fechaItem < filtroCarrito.fechaDesde) return false;
-        }
-        if (filtroCarrito.fechaHasta) {
-          const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
-          if (fechaItem > filtroCarrito.fechaHasta) return false;
-        }
+
+        // --- Filtro por fecha/hora exacta ---
+        const ts = itemToTimestamp(item);
+        if (tsDesde !== null && ts < tsDesde) return false;
+        if (tsHasta !== null && ts > tsHasta) return false;
+
         return true;
       });
 
@@ -3222,20 +3289,33 @@
       if (tipo === 'texto') filtroCarrito.texto = valor;
       else if (tipo === 'tipo') filtroCarrito.tipo = valor;
       else if (tipo === 'fechaDesde') filtroCarrito.fechaDesde = valor;
+      else if (tipo === 'horaDesde') filtroCarrito.horaDesde = valor;
       else if (tipo === 'fechaHasta') filtroCarrito.fechaHasta = valor;
+      else if (tipo === 'horaHasta') filtroCarrito.horaHasta = valor;
       renderCart();
     };
 
     window.limpiarFiltrosCarrito = function() {
-      filtroCarrito = { texto: '', tipo: 'todos', fechaDesde: '', fechaHasta: '' };
+      filtroCarrito = {
+        texto: '',
+        tipo: 'todos',
+        fechaDesde: '',
+        horaDesde: '',
+        fechaHasta: '',
+        horaHasta: ''
+      };
       const textoInput = document.getElementById('filtroTexto');
       const tipoSelect = document.getElementById('filtroTipo');
       const fechaDesdeInput = document.getElementById('filtroFechaDesde');
+      const horaDesdeInput = document.getElementById('filtroHoraDesde');
       const fechaHastaInput = document.getElementById('filtroFechaHasta');
+      const horaHastaInput = document.getElementById('filtroHoraHasta');
       if (textoInput) textoInput.value = '';
       if (tipoSelect) tipoSelect.value = 'todos';
       if (fechaDesdeInput) fechaDesdeInput.value = '';
+      if (horaDesdeInput) horaDesdeInput.value = '';
       if (fechaHastaInput) fechaHastaInput.value = '';
+      if (horaHastaInput) horaHastaInput.value = '';
       renderCart();
     };
 
@@ -4822,9 +4902,9 @@
         { nombre: "050 puntos", categoria: "050", puntos: 50, precioBase: 35000, rango: { desde: 0, hasta: 63 } },
         { nombre: "075 puntos", categoria: "075", puntos: 75, precioBase: 40000, rango: { desde: 0, hasta: 76 } },
         { nombre: "100 puntos", categoria: "100", puntos: 100, precioBase: 50000, rango: { desde: 0, hasta: 38 } },
-        { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 56 } },
+        { nombre: "150 puntos", categoria: "150", puntos: 150, precioBase: 60000, rango: { desde: 0, hasta: 57 } },
         { nombre: "180 puntos", categoria: "180", puntos: 180, precioBase: 85000, rango: { desde: 0, hasta: 10 } },
-        { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 49 } },
+        { nombre: "200 puntos", categoria: "200", puntos: 200, precioBase: 96000, rango: { desde: 0, hasta: 48 } },
         { nombre: "220 puntos", categoria: "220", puntos: 220, precioBase: 120000, rango: { desde: 0, hasta: 8 } },
         { nombre: "250 puntos", categoria: "250", puntos: 250, precioBase: 150000, rango: { desde: 0, hasta: 6 } },
         { nombre: "350 puntos", categoria: "350", puntos: 350, precioBase: 170000, rango: { desde: 0, hasta: 5 } },
@@ -5052,6 +5132,35 @@
       const pwd = prompt('🔐 Contraseña para exportar filtrado:');
       if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
 
+      function itemToTimestamp(item) {
+        if (item.timestampCompleto) return Number(item.timestampCompleto);
+        try {
+          const partes = (item.fecha || '').split('/');
+          if (partes.length === 3) {
+            const [d, m, y] = partes;
+            const hora = item.hora || '00:00:00';
+            const [hh, mm, ss] = hora.split(':');
+            const dt = new Date(parseInt(y,10), parseInt(m,10)-1, parseInt(d,10),
+                                parseInt(hh||0,10), parseInt(mm||0,10), parseInt(ss||0,10));
+            if (!isNaN(dt.getTime())) return dt.getTime();
+          }
+        } catch (_) {}
+        return 0;
+      }
+      function fechaHoraToTimestamp(fecha, hora, esFinDelDia) {
+        if (!fecha) return null;
+        const [y, m, d] = fecha.split('-').map(Number);
+        let hh = 0, mm = 0, ss = 0;
+        if (hora) {
+          const p = hora.split(':');
+          hh = parseInt(p[0]||0,10); mm = parseInt(p[1]||0,10); ss = parseInt(p[2]||0,10);
+        } else if (esFinDelDia) { hh = 23; mm = 59; ss = 59; }
+        const dt = new Date(y, m-1, d, hh, mm, ss);
+        return isNaN(dt.getTime()) ? null : dt.getTime();
+      }
+      const tsDesde = fechaHoraToTimestamp(filtroCarrito.fechaDesde, filtroCarrito.horaDesde, false);
+      const tsHasta = fechaHoraToTimestamp(filtroCarrito.fechaHasta, filtroCarrito.horaHasta, true);
+
       let itemsFiltrados = cart.filter(item => {
         if (filtroCarrito.texto) {
           const nombreCompleto = (item.name || item.code || '').toLowerCase();
@@ -5064,14 +5173,9 @@
           if (filtroCarrito.tipo === 'fichas_gratis' && !item.esFichaGratis) return false;
           if (filtroCarrito.tipo === 'cierres' && !item.esCierre) return false;
         }
-        if (filtroCarrito.fechaDesde) {
-          const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
-          if (fechaItem < filtroCarrito.fechaDesde) return false;
-        }
-        if (filtroCarrito.fechaHasta) {
-          const fechaItem = item.fecha?.split('/').reverse().join('-') || '';
-          if (fechaItem > filtroCarrito.fechaHasta) return false;
-        }
+        const ts = itemToTimestamp(item);
+        if (tsDesde !== null && ts < tsDesde) return false;
+        if (tsHasta !== null && ts > tsHasta) return false;
         return true;
       });
 
@@ -5102,11 +5206,12 @@
         filtroCarrito.tipo === 'compras' ? 'Solo Compras' :
         filtroCarrito.tipo === 'movimientos' ? 'Solo Movimientos' :
         filtroCarrito.tipo === 'fichas_gratis' ? 'Fichas Gratis' : 'Cierres de Caja';
+      const rangoTexto = `${filtroCarrito.fechaDesde || 'inicio'} ${filtroCarrito.horaDesde || ''} - ${filtroCarrito.fechaHasta || 'hoy'} ${filtroCarrito.horaHasta || ''}`;
 
       const data = [
         ['ASTROLAND - Los Laureles (FILTRADO)'],
         [
-          `Filtros aplicados: ${tipoTexto} | Buscar: ${filtroCarrito.texto || 'ninguno'} | Fechas: ${filtroCarrito.fechaDesde || 'inicio'} - ${filtroCarrito.fechaHasta || 'hoy'}`
+          `Filtros aplicados: ${tipoTexto} | Buscar: ${filtroCarrito.texto || 'ninguno'} | Rango: ${rangoTexto}`
         ],
         [],
         ['Producto', 'Puntos', 'Dinero (Gs.)', 'Método de Pago', 'Movimientos', 'Fichas Consumidas', 'Fichas Regaladas',
