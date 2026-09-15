@@ -31,21 +31,19 @@
             border: 1px solid #eaeaea;
         }
         
-        /* ASTROLAND en una sola línea */
         h1 {
             text-align: center;
             margin-bottom: 5px;
-            font-size: clamp(2.5rem, 8vw, 4rem); /* Tamaño responsive */
+            font-size: clamp(2.5rem, 8vw, 4rem);
             font-weight: 700;
             font-family: 'Times New Roman', serif;
-            white-space: nowrap; /* Fuerza una sola línea */
-            overflow-x: auto; /* Permite scroll horizontal si es necesario */
+            white-space: nowrap;
+            overflow-x: auto;
             overflow-y: hidden;
             padding-bottom: 5px;
             letter-spacing: 2px;
         }
         
-        /* Para pantallas muy pequeñas, permitir scroll */
         @media (max-width: 500px) {
             h1 {
                 font-size: 2.2rem;
@@ -88,7 +86,6 @@
             white-space: nowrap;
         }
         
-        /* Para móviles muy pequeños, el subtítulo también en una línea */
         @media (max-width: 400px) {
             .subtitle {
                 font-size: 1rem;
@@ -115,7 +112,6 @@
             margin-top: 20px;
         }
         
-        /* Ajuste para móviles */
         @media (max-width: 600px) {
             .sucursales-grid {
                 gap: 15px;
@@ -152,6 +148,10 @@
             margin-bottom: 10px;
             color: #b22222;
             opacity: 0.8;
+        }
+        
+        .sucursal-icon::before {
+            content: "⚜️";
         }
         
         .sucursal-card h3 {
@@ -236,6 +236,7 @@
             border-radius: 8px;
             font-size: clamp(0.9rem, 3vw, 1rem);
             transition: all 0.3s;
+            box-sizing: border-box;
         }
         
         .input-group input:focus {
@@ -288,6 +289,13 @@
             box-shadow: 0 5px 15px rgba(178, 34, 34, 0.3);
         }
         
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
         .btn-secondary {
             background: #f0f0f0;
             color: #333;
@@ -333,9 +341,21 @@
             color: #888;
             font-size: clamp(0.75rem, 2.5vw, 0.85rem);
         }
-        
-        .sucursal-icon::before {
-            content: "⚜️";
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -358,54 +378,59 @@
         </div>
         
         <div class="info-badge">
-            🔐 Selecciona una sucursal e ingresa tu contraseña para acceder
+            🔐 Selecciona tu sucursal e inicia sesión con tu correo y contraseña
         </div>
         
         <div class="sucursales-grid">
             <!-- Villa Morra -->
-            <div class="sucursal-card" data-sucursal="Villa Morra" data-password="marcia" data-url="sucursales/villa-morra.html">
+            <div class="sucursal-card" data-sucursal="Villa Morra" data-url="sucursales/villa-morra.html">
                 <div class="sucursal-icon"></div>
                 <h3>Villa Morra</h3>
                 <p class="direccion">Av. Mariscal López</p>
             </div>
             
             <!-- Los Laureles -->
-            <div class="sucursal-card" data-sucursal="Los Laureles" data-password="deisyll" data-url="sucursales/los-laureles.html">
+            <div class="sucursal-card" data-sucursal="Los Laureles" data-url="sucursales/los-laureles.html">
                 <div class="sucursal-icon"></div>
                 <h3>Los Laureles</h3>
                 <p class="direccion">Av. RI 18 Pitiantuta</p>
             </div>
             
             <!-- Lambare -->
-            <div class="sucursal-card" data-sucursal="Lambare" data-password="pamela" data-url="sucursales/lambare.html">
+            <div class="sucursal-card" data-sucursal="Lambare" data-url="sucursales/lambare.html">
                 <div class="sucursal-icon"></div>
                 <h3>Lambare</h3>
                 <p class="direccion">Av. Juan Domingo Perón</p>
             </div>
             
             <!-- Villa Elisa -->
-            <div class="sucursal-card" data-sucursal="Villa Elisa" data-password="mairave" data-url="sucursales/villa-elisa.html">
+            <div class="sucursal-card" data-sucursal="Villa Elisa" data-url="sucursales/villa-elisa.html">
                 <div class="sucursal-icon"></div>
                 <h3>Villa Elisa</h3>
                 <p class="direccion">Av. Von Poleski</p>
             </div>
         </div>
         
-        <!-- Sección de contraseña -->
+        <!-- Sección de login con Firebase -->
         <div class="password-section" id="passwordSection">
             <h2>Acceso a <span id="selectedSucursalName" class="selected-sucursal"></span></h2>
             
             <div class="input-group">
-                <label for="passwordInput">🔑 Contraseña de acceso:</label>
-                <input type="password" id="passwordInput" placeholder="Ingresa tu contraseña" autocomplete="off">
+                <label for="emailInput">📧 Correo electrónico:</label>
+                <input type="email" id="emailInput" placeholder="tucorreo@ejemplo.com" autocomplete="username">
+            </div>
+
+            <div class="input-group">
+                <label for="passwordInput">🔑 Contraseña:</label>
+                <input type="password" id="passwordInput" placeholder="Ingresa tu contraseña" autocomplete="current-password">
             </div>
             
             <div class="error-message" id="errorMessage">
-                ❌ Contraseña incorrecta. Por favor, intenta de nuevo.
+                ❌ Correo o contraseña incorrectos. Intenta de nuevo.
             </div>
             
             <div class="button-group">
-                <button class="btn btn-primary" id="accessBtn">Acceder al Catálogo</button>
+                <button class="btn btn-primary" id="accessBtn">Acceder</button>
                 <button class="btn btn-secondary" id="cancelBtn">Cancelar</button>
             </div>
             
@@ -420,37 +445,70 @@
         </div>
     </div>
 
-    <script>
-        // Datos de las sucursales
-        const sucursales = {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+        // Configuración de los 4 proyectos de Firebase (uno por sucursal)
+        const sucursalesConfig = {
             'Villa Morra': {
-                password: 'marcia',
                 url: 'sucursales/villa-morra.html',
-                direccion: 'Av. Mariscal López'
+                config: {
+                    apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
+                    authDomain: "villa-morra.firebaseapp.com",
+                    databaseURL: "https://villa-morra-default-rtdb.firebaseio.com",
+                    projectId: "villa-morra",
+                    storageBucket: "villa-morra.firebasestorage.app",
+                    messagingSenderId: "184849063287",
+                    appId: "1:184849063287:web:15f360231ade1b85ab5572"
+                }
             },
             'Los Laureles': {
-                password: 'deisyll',
                 url: 'sucursales/los-laureles.html',
-                direccion: 'Av. RI 18 Pitiantuta'
+                config: {
+                    apiKey: "AIzaSyDFgz8eRrmTbP7tl_89qTe7HSzA8j8hd_w",
+                    authDomain: "los-laureles-49117.firebaseapp.com",
+                    databaseURL: "https://los-laureles-49117-default-rtdb.firebaseio.com",
+                    projectId: "los-laureles-49117",
+                    storageBucket: "los-laureles-49117.firebasestorage.app",
+                    messagingSenderId: "523096933391",
+                    appId: "1:523096933391:web:c2d7f30f8a71e97a1ccf7a"
+                }
             },
             'Lambare': {
-                password: 'pamela',
                 url: 'sucursales/lambare.html',
-                direccion: 'Av. Juan Domingo Perón'
+                config: {
+                    apiKey: "AIzaSyCgN_lNQ6fbBXKFM9757ysBgEqfSfeO_RY",
+                    authDomain: "lambare-85124.firebaseapp.com",
+                    databaseURL: "https://lambare-85124-default-rtdb.firebaseio.com",
+                    projectId: "lambare-85124",
+                    storageBucket: "lambare-85124.firebasestorage.app",
+                    messagingSenderId: "683666735879",
+                    appId: "1:683666735879:web:88a7f147d57165ad60bba2"
+                }
             },
             'Villa Elisa': {
-                password: 'mairave',
                 url: 'sucursales/villa-elisa.html',
-                direccion: 'Av. Von Poleski'
+                config: {
+                    apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ",
+                    authDomain: "villa-elisa-3adbe.firebaseapp.com",
+                    databaseURL: "https://villa-elisa-3adbe-default-rtdb.firebaseio.com",
+                    projectId: "villa-elisa-3adbe",
+                    storageBucket: "villa-elisa-3adbe.firebasestorage.app",
+                    messagingSenderId: "147294403718",
+                    appId: "1:147294403718:web:96d8289e6d3d3c7ce72507"
+                }
             }
         };
 
         let sucursalSeleccionada = null;
+        let currentApp = null;
+        let currentAuth = null;
 
-        // Elementos del DOM
         const cards = document.querySelectorAll('.sucursal-card');
         const passwordSection = document.getElementById('passwordSection');
         const selectedSucursalName = document.getElementById('selectedSucursalName');
+        const emailInput = document.getElementById('emailInput');
         const passwordInput = document.getElementById('passwordInput');
         const errorMessage = document.getElementById('errorMessage');
         const accessBtn = document.getElementById('accessBtn');
@@ -459,87 +517,116 @@
         // Seleccionar sucursal al hacer clic en una tarjeta
         cards.forEach(card => {
             card.addEventListener('click', function() {
-                // Remover selección anterior
                 cards.forEach(c => c.classList.remove('selected'));
-                
-                // Agregar selección a la tarjeta actual
                 this.classList.add('selected');
-                
-                // Obtener datos de la sucursal
+
                 const nombre = this.getAttribute('data-sucursal');
                 sucursalSeleccionada = nombre;
-                
-                // Actualizar el nombre en la sección de contraseña
+
                 selectedSucursalName.textContent = nombre;
-                
-                // Mostrar la sección de contraseña
                 passwordSection.classList.add('active');
-                
-                // Limpiar campos y errores
+
+                emailInput.value = '';
                 passwordInput.value = '';
                 errorMessage.classList.remove('show');
+                emailInput.classList.remove('error');
                 passwordInput.classList.remove('error');
-                
-                // Enfocar el campo de contraseña
-                setTimeout(() => passwordInput.focus(), 300);
+
+                setTimeout(() => emailInput.focus(), 300);
             });
         });
 
-        // Función para verificar contraseña y acceder
-        function verificarAcceso() {
+        // Verificar login contra Firebase
+        async function verificarAcceso() {
             if (!sucursalSeleccionada) {
                 alert('Por favor, selecciona una sucursal primero.');
                 return;
             }
 
-            const passwordIngresada = passwordInput.value.trim().toLowerCase();
-            const sucursal = sucursales[sucursalSeleccionada];
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
 
-            if (passwordIngresada === sucursal.password) {
-                // Contraseña correcta - redirigir
+            if (!email || !password) {
+                errorMessage.textContent = '⚠️ Ingresa correo y contraseña';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            const sucursal = sucursalesConfig[sucursalSeleccionada];
+
+            // Deshabilitar botón mientras verifica
+            accessBtn.disabled = true;
+            accessBtn.innerHTML = '<span class="loading-spinner"></span>Verificando...';
+
+            try {
+                // Inicializar Firebase del proyecto de esa sucursal
+                const appName = 'portal-' + sucursalSeleccionada.replace(/\s+/g, '-').toLowerCase();
+
+                // Si ya había una app creada, eliminarla
+                if (currentApp) {
+                    try { await currentApp.delete(); } catch (e) {}
+                }
+
+                currentApp = initializeApp(sucursal.config, appName);
+                currentAuth = getAuth(currentApp);
+
+                // Iniciar sesión
+                await signInWithEmailAndPassword(currentAuth, email, password);
+
+                // Login exitoso: redirigir
                 window.location.href = sucursal.url;
-            } else {
-                // Contraseña incorrecta - mostrar error
+
+            } catch (error) {
+                console.error('Error de login:', error);
+                let mensaje = '❌ Correo o contraseña incorrectos';
+                if (error.code === 'auth/too-many-requests') {
+                    mensaje = '❌ Demasiados intentos. Espera unos minutos.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    mensaje = '❌ Sin conexión a internet. Verifica tu red.';
+                } else if (error.code === 'auth/invalid-email') {
+                    mensaje = '❌ Correo electrónico inválido';
+                }
+
+                errorMessage.textContent = mensaje;
                 errorMessage.classList.add('show');
                 passwordInput.classList.add('error');
                 passwordInput.value = '';
-                passwordInput.focus();
-                
-                // Quitar la clase de error después de 2 segundos
+
                 setTimeout(() => {
                     passwordInput.classList.remove('error');
                 }, 2000);
+            } finally {
+                accessBtn.disabled = false;
+                accessBtn.textContent = 'Acceder';
             }
         }
 
-        // Evento del botón Acceder
         accessBtn.addEventListener('click', verificarAcceso);
 
-        // Evento del botón Cancelar
-        cancelBtn.addEventListener('click', function() {
-            // Ocultar sección de contraseña
+        cancelBtn.addEventListener('click', async function() {
             passwordSection.classList.remove('active');
-            
-            // Remover selección de tarjetas
             cards.forEach(c => c.classList.remove('selected'));
-            
-            // Limpiar variables
+
+            // Cerrar sesión si había alguna activa
+            if (currentAuth) {
+                try { await signOut(currentAuth); } catch (e) {}
+            }
+
             sucursalSeleccionada = null;
+            emailInput.value = '';
             passwordInput.value = '';
             errorMessage.classList.remove('show');
         });
 
-        // Evento para presionar Enter en el campo de contraseña
+        // Enter en los inputs dispara login
+        emailInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') passwordInput.focus();
+        });
         passwordInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 verificarAcceso();
             }
-        });
-
-        // Cerrar sesión al salir
-        window.addEventListener('load', function() {
-            sessionStorage.clear();
         });
     </script>
 </body>
