@@ -143,7 +143,6 @@
     font-weight: normal;
   }
 
-  /* ===== BOTÓN MOSTRAR/OCULTAR POR CATEGORÍA ===== */
   .btn-toggle-categoria {
     background: #2196F3;
     color: white;
@@ -324,7 +323,6 @@
     text-align: center;
   }
 
-  /* ===== ESTILOS PARA EL MODAL DE PRECIOS ===== */
   .precio-form {
     background: #f5f5f5;
     padding: 20px;
@@ -390,7 +388,6 @@
     color: white;
   }
 
-  /* ===== RESTO DE ESTILOS EXISTENTES ===== */
   .tabs-compras {
     display: flex;
     gap: 5px;
@@ -827,7 +824,6 @@
       font-size: 0.7rem;
     }
   }
-
   .cart-button,
   .stock-button,
   .historial-btn,
@@ -1216,7 +1212,6 @@
     opacity: 0.7;
   }
 
-  /* ===== ESTILOS PARA REGISTRO DE STOCK EN MÁQUINAS ===== */
   .registro-maquinas-box {
     background: #fff8e1;
     padding: 15px;
@@ -1352,15 +1347,100 @@
     }
   }
 </style>
-</head>
-<body>
+</head><body>
+
+<!-- ========== PANTALLA DE LOGIN ========== -->
+<div id="loginScreen" style="
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+">
+  <div style="
+    background: white;
+    border-radius: 20px;
+    padding: 40px 30px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+  ">
+    <h1 style="margin: 0 0 10px; color: #333; font-size: 1.8rem;">ASTROLAND</h1>
+    <p style="margin: 0 0 30px; color: #667eea; font-weight: bold;">Villa Elisa</p>
+
+    <input
+      type="email"
+      id="loginEmail"
+      placeholder="Correo electrónico"
+      autocomplete="username"
+      style="width: 100%; padding: 14px; font-size: 16px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; -webkit-appearance: none;"
+    />
+    <input
+      type="password"
+      id="loginPassword"
+      placeholder="Contraseña"
+      autocomplete="current-password"
+      style="width: 100%; padding: 14px; font-size: 16px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 20px; box-sizing: border-box; -webkit-appearance: none;"
+    />
+
+    <div id="loginError" style="
+      display: none;
+      background: #ffebee;
+      color: #c62828;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    "></div>
+
+    <button
+      id="loginBtn"
+      onclick="window.doLogin()"
+      style="width: 100%; padding: 16px; background: #4CAF50; color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; touch-action: manipulation;"
+    >
+      🔓 Iniciar Sesión
+    </button>
+
+    <p style="margin-top: 20px; color: #999; font-size: 0.8rem;">
+      Solo personal autorizado
+    </p>
+  </div>
+</div>
+
+<!-- ========== BOTÓN CERRAR SESIÓN ========== -->
+<button
+  id="logoutBtn"
+  onclick="window.doLogout()"
+  style="
+    display: none;
+    position: fixed;
+    top: 130px;
+    right: 20px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    touch-action: manipulation;
+  "
+>
+  🚪 Salir
+</button>
+
   <div class="floating-search-container">
     <div class="busqueda-container">
       <input type="text" id="busqueda" placeholder="Ej: 005 (escribe 3 dígitos para buscar)" aria-label="Buscar" inputmode="numeric">
     </div>
   </div>
-
-  <button class="btn-home" onclick="scrollToTop()">🏠 Volver al Inicio</button>
 
   <div class="container">
     <header>
@@ -1378,7 +1458,6 @@
   <button class="historial-btn" onclick="showHistorialModal()">📜 Historial</button>
   <button class="precio-btn" onclick="abrirModalPrecios()">💰 Cambiar Precios</button>
 
-  <!-- Modal de selección para vaciar carrito -->
   <div id="vaciarSeleccionModal" class="vaciar-seleccion-modal">
     <div class="modal-content">
       <button class="close" onclick="closeVaciarSeleccionModal()">&times;</button>
@@ -1451,7 +1530,6 @@
       <div id="tabMovimientos" class="tab-pane-compras">
         <div id="movimientosProductInfo" class="product-info"></div>
 
-        <!-- SELECT: Stock y Máquinas -->
         <select id="movimientoDestino" class="maquina-input" style="padding:12px;">
           <option value="stock">📦 Stock</option>
           <option value="maquinas">🖥️ Máquinas</option>
@@ -1470,7 +1548,6 @@
           🖥️ <strong>Máquinas:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
         </p>
 
-        <!-- ===== REGISTRO DE STOCK EN MÁQUINAS ===== -->
         <div class="registro-maquinas-box">
           <h4>📊 Registrar stock en máquinas</h4>
           <div class="reg-row">
@@ -1512,11 +1589,6 @@
     <div class="stock-fullscreen">
       <button class="close-stock-floating" onclick="closeStockModal()">✕</button>
       <h3>📦 Gestionar Stock - Villa Elisa</h3>
-      <div id="stockPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
-        <input type="password" id="stockPassword" placeholder="Contraseña para gestionar stock">
-        <button onclick="verifyStockPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
-        <button onclick="closeStockModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
-      </div>
       <div id="stockManagementContent" style="display:none;">
         <div class="stock-search-container">
           <input type="text" id="stockSearch" placeholder="🔍 Buscar código..." inputmode="numeric">
@@ -1529,24 +1601,12 @@
     </div>
   </div>
 
-  <!-- ===== MODAL PARA CAMBIAR PRECIOS ===== -->
   <div id="precioModal" class="precio-modal">
     <div class="modal-content">
       <button class="close" onclick="closePrecioModal()">&times;</button>
       <h3>💰 Cambiar Precio de Producto</h3>
 
-      <div style="background:#fff3cd; padding:15px; border-radius:10px; margin:10px 0; border-left:4px solid #ffc107;">
-        <p style="margin:0; color:#856404; font-weight:bold;">🔐 Se requiere contraseña GENERAL para cambiar precios</p>
-      </div>
-
-      <!-- Prompt de contraseña -->
-      <div id="precioPasswordPrompt" class="password-input" style="display:block; margin-bottom:20px;">
-        <input type="password" id="precioPassword" placeholder="Contraseña general">
-        <button onclick="verifyPrecioPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
-        <button onclick="closePrecioModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
-      </div>
-
-      <div id="precioManagementContent" style="display:none;">
+      <div id="precioManagementContent">
         <div class="precio-form">
           <div class="precio-field">
             <label>📦 Seleccionar Producto:</label>
@@ -1715,12 +1775,7 @@
     <div class="modal-content">
       <button class="close" onclick="closeHistorialModal()">&times;</button>
       <h3>📜 Historial de Ventas - Villa Elisa</h3>
-      <div id="historialPasswordPrompt" class="password-input" style="display:block;">
-        <input type="password" id="historialPassword" placeholder="Contraseña">
-        <button onclick="verifyHistorialPassword()" style="background:#2196F3; color:white;">🔓 Acceder</button>
-        <button onclick="closeHistorialModal()" style="background:#f44336; color:white;">❌ Cancelar</button>
-      </div>
-      <div id="historialContent" style="display:none;">
+      <div id="historialContent">
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
           <label>📅 Desde: <input type="date" id="fechaDesde"></label>
           <label>📅 Hasta: <input type="date" id="fechaHasta"></label>
@@ -1732,10 +1787,10 @@
       </div>
     </div>
   </div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getDatabase, ref, set, push, onValue, remove, get, update, runTransaction } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAa50NuQZSpA84MbHeW-anmPOvbMrF3MwQ",
@@ -1749,12 +1804,21 @@
 
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
+    const auth = getAuth(app);
     const cartRef = ref(database, 'carrito');
     const stockRef = ref(database, 'stock');
     const historialRef = ref(database, 'historial_ventas');
     const contadoresRef = ref(database, 'contadores_maquinas');
     const preciosRef = ref(database, 'precios_personalizados');
     const stockMaquinasRef = ref(database, 'stock_maquinas');
+
+    window.userRole = {
+      isAdmin: false,
+      canStock: false,
+      sucursal: null,
+      uid: null,
+      email: null
+    };
 
     let currentProduct = null;
     let currentMovimientosProduct = null;
@@ -1766,9 +1830,6 @@
     let vaciarSeleccionados = [];
     let modoEdicionFecha = null;
 
-    const PASSWORD_STOCK = "maira";
-    const PASSWORD_GENERAL = "majo";
-    const PASSWORD_SPECIAL_CODES = "majo";
     const STOCK_INICIAL = 100;
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
@@ -1796,13 +1857,120 @@
       horaHasta: ''
     };
 
-    // ========== VARIABLES PARA DETECTAR SCROLL EN TÁCTIL ==========
     let touchStartX = 0;
     let touchStartY = 0;
     let touchEndX = 0;
     let touchEndY = 0;
 
-    // ========== FUNCIÓN PARA ASIGNAR EVENTOS A LOS PRODUCTOS ==========
+    // ========== LOGIN / LOGOUT ==========
+
+    window.doLogin = async function() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errorDiv = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+
+      errorDiv.style.display = 'none';
+
+      if (!email || !password) {
+        errorDiv.textContent = '⚠️ Ingresa correo y contraseña';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Verificando...';
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        let mensaje = '❌ Error al iniciar sesión';
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+          mensaje = '❌ Correo o contraseña incorrectos';
+        } else if (error.code === 'auth/user-not-found') {
+          mensaje = '❌ Usuario no encontrado';
+        } else if (error.code === 'auth/too-many-requests') {
+          mensaje = '❌ Demasiados intentos. Espera unos minutos.';
+        } else if (error.code === 'auth/network-request-failed') {
+          mensaje = '❌ Sin conexión a internet';
+        }
+        errorDiv.textContent = mensaje;
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '🔓 Iniciar Sesión';
+      }
+    };
+
+    window.doLogout = async function() {
+      if (!confirm('¿Cerrar sesión?')) return;
+      try {
+        await signOut(auth);
+        location.reload();
+      } catch (error) {
+        alert('Error al cerrar sesión');
+      }
+    };
+
+    document.getElementById('loginEmail').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+    });
+    document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') window.doLogin();
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      const loginScreen = document.getElementById('loginScreen');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      if (user) {
+        try {
+          const tokenResult = await user.getIdTokenResult(true);
+          const claims = tokenResult.claims;
+
+          window.userRole = {
+            isAdmin: claims.admin === true,
+            canStock: claims.stock === true,
+            sucursal: claims.sucursal || null,
+            uid: user.uid,
+            email: user.email
+          };
+
+          console.log('✅ Sesión iniciada:', user.email, window.userRole);
+
+          loginScreen.style.display = 'none';
+          logoutBtn.style.display = 'block';
+
+          aplicarPermisosSegunRol();
+
+        } catch (error) {
+          console.error('Error al obtener claims:', error);
+          alert('❌ Error al verificar permisos. Contacta al administrador.');
+          await signOut(auth);
+        }
+      } else {
+        loginScreen.style.display = 'flex';
+        logoutBtn.style.display = 'none';
+        window.userRole = { isAdmin: false, canStock: false, sucursal: null, uid: null, email: null };
+      }
+    });
+
+    function aplicarPermisosSegunRol() {
+      const { isAdmin, canStock } = window.userRole;
+
+      document.querySelectorAll('.historial-btn, .precio-btn').forEach(btn => {
+        btn.style.display = isAdmin ? 'flex' : 'none';
+      });
+
+      document.querySelectorAll('.stock-button').forEach(btn => {
+        btn.style.display = (isAdmin || canStock) ? 'flex' : 'none';
+      });
+
+      console.log(`👤 Permisos aplicados: admin=${isAdmin}, stock=${canStock}`);
+    }
+
+    window.aplicarPermisosSegunRol = aplicarPermisosSegunRol;
+
+    // ========== PRODUCTOS ==========
 
     function handleProductClick(e) {
       if (e) e.preventDefault();
@@ -1849,7 +2017,6 @@
         }
 
         let stockVal = getProductStock(code);
-        // Ya NO bloqueamos si stockVal <= 0. El modal se abre y se restringe la pestaña Compra más abajo.
 
         const price = getProductPrice(code, parseFloat(target.getAttribute('data-price')));
         const consumo = FICHA_CONSUMPTION[code] || 0;
@@ -1861,7 +2028,6 @@
         const compraTab = document.querySelector('.tab-btn-compras[data-tab="compra"]');
         const movimientosTab = document.querySelector('.tab-btn-compras[data-tab="movimientos"]');
 
-        // Si stock es 0, forzar la pestaña Movimientos y bloquear la pestaña Compra
         if (stockVal <= 0 && !CIERRE_CODES.includes(code)) {
           compraTab.disabled = true;
           compraTab.style.opacity = '0.4';
@@ -1869,11 +2035,8 @@
           compraTab.textContent = '🚫 Compra (sin stock)';
 
           movimientosTab.style.display = 'block';
-
-          // Activar pestaña Movimientos automáticamente
           movimientosTab.click();
         } else {
-          // Stock disponible: restaurar botón Compra
           compraTab.disabled = false;
           compraTab.style.opacity = '';
           compraTab.style.cursor = '';
@@ -1937,21 +2100,18 @@
             `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (Máquinas: resta) | ➖ Quitar: resta del stock (Máquinas: suma)</small>`;
         }
 
-        // Establecer fecha actual en el campo de registro de stock en máquinas
         const fechaInput = document.getElementById('fechaStockMaquinas');
         if (fechaInput) {
           const hoy = new Date();
           fechaInput.value = hoy.toISOString().split('T')[0];
         }
 
-        // Limpiar campo de cantidad
         const cantidadInput = document.getElementById('cantidadStockMaquinas');
         if (cantidadInput) cantidadInput.value = '';
 
         const unidadesInput = document.getElementById('unidadesInput');
         if (unidadesInput) unidadesInput.value = 1;
 
-        // Si stock es 0, deshabilitar botones de pago
         const btnEfectivo = document.getElementById('btnEfectivo');
         const btnPOS = document.getElementById('btnPOS');
         const btnMixto = document.getElementById('btnMixto');
@@ -2036,7 +2196,7 @@
       });
     }
 
-    // ========== FUNCIONES DE PRECIOS PERSONALIZADOS ==========
+    // ========== PRECIOS ==========
 
     function getProductPrice(code, precioBase) {
       return preciosPersonalizados[code] ?? precioBase;
@@ -2052,10 +2212,12 @@
     }
 
     window.abrirModalPrecios = function() {
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede cambiar precios');
+        return;
+      }
       document.getElementById('precioModal').style.display = 'block';
-      document.getElementById('precioPasswordPrompt').style.display = 'block';
-      document.getElementById('precioManagementContent').style.display = 'none';
-      document.getElementById('precioPassword').value = '';
+      document.getElementById('precioManagementContent').style.display = 'block';
       document.getElementById('nuevoPrecioInput').value = '';
       document.getElementById('confirmarPrecioText').value = '';
       document.getElementById('precioActualInfo').style.display = 'none';
@@ -2065,21 +2227,8 @@
 
     window.closePrecioModal = function() {
       document.getElementById('precioModal').style.display = 'none';
-      document.getElementById('precioPasswordPrompt').style.display = 'block';
       document.getElementById('precioManagementContent').style.display = 'none';
       unblockBodyScroll();
-    };
-
-    window.verifyPrecioPassword = function() {
-      const passwordInput = document.getElementById('precioPassword').value;
-      if (passwordInput === PASSWORD_GENERAL) {
-        document.getElementById('precioPasswordPrompt').style.display = 'none';
-        document.getElementById('precioManagementContent').style.display = 'block';
-        cargarProductosEnSelect();
-      } else {
-        alert('❌ Contraseña incorrecta');
-        document.getElementById('precioPassword').value = '';
-      }
     };
 
     function cargarProductosEnSelect() {
@@ -2224,6 +2373,10 @@
     }
 
     window.guardarNuevoPrecio = async function() {
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede cambiar precios');
+        return;
+      }
       const select = document.getElementById('productoPrecioSelect');
       const code = select.value;
       const nuevoPrecio = parseInt(document.getElementById('nuevoPrecioInput').value);
@@ -2272,13 +2425,11 @@
         console.error(error);
       }
     };
-
-    // ========== FUNCIONES DEL CARRITO ==========
+    // ========== CARRITO ==========
 
     function renderCart() {
       const div = document.getElementById('cartItems');
 
-      // ---- Helper: convierte un item a timestamp (ms) usando fecha + hora ----
       function itemToTimestamp(item) {
         if (item.timestampCompleto) return Number(item.timestampCompleto);
         try {
@@ -2301,7 +2452,6 @@
         return 0;
       }
 
-      // ---- Helper: combina fecha + hora en timestamp ----
       function fechaHoraToTimestamp(fecha, hora, esFinDelDia) {
         if (!fecha) return null;
         const [y, m, d] = fecha.split('-').map(Number);
@@ -2547,8 +2697,6 @@
       XLSX.writeFile(wb, `ASTROLAND_VillaElisa_${new Date().toLocaleDateString('es-PY').replace(/\//g, '-')}.xlsx`);
     }
 
-    // ========== FUNCIONES DE PAGO ==========
-
     function actualizarBotonesSegunDinero() {
       const moneyInput = document.getElementById('moneyInput');
       const btnEfectivo = document.getElementById('btnEfectivo');
@@ -2790,7 +2938,9 @@
         fichaConsumption: product.fichaConsumption * qty,
         unidades: qty,
         metodoPago: 'mixto',
-        esMixto: true
+        esMixto: true,
+        registradoPor: window.userRole.uid,
+        registradoPorEmail: window.userRole.email
       };
 
       mostrarMensajeEnProceso('🔄 Procesando pago mixto...');
@@ -2860,7 +3010,9 @@
         fichaConsumption: consumo * qty,
         unidades: qty,
         metodoPago: metodo,
-        esCanje: metodo === 'canje'
+        esCanje: metodo === 'canje',
+        registradoPor: window.userRole.uid,
+        registradoPorEmail: window.userRole.email
       };
 
       mostrarMensajeEnProceso('🔄 Procesando...');
@@ -2888,8 +3040,6 @@
         }
       });
     }
-
-    // ========== FUNCIONES DE ACTUALIZACIÓN ==========
 
     function updateModalTotalsBasedOnQuantity() {
       if (!currentProduct) return;
@@ -2921,8 +3071,6 @@
       updateModalTotalsBasedOnQuantity();
     };
 
-    // ========== EVENTOS ==========
-
     document.getElementById('pointsInput').addEventListener('input', function() {
       updateModalTotalsBasedOnQuantity();
     });
@@ -2933,8 +3081,6 @@
       e.target.value = val;
       updateModalTotalsBasedOnQuantity();
     });
-
-    // ========== FUNCIONES EXISTENTES ==========
 
     async function buscarRegistroHistorialPorFecha(fecha) {
       try {
@@ -3074,7 +3220,6 @@
         return false;
       }
     }
-
     // ========== FUNCIONES DE VENTA ATÓMICA ==========
 
     async function modificarStockAtomico(stockKey, cantidad, minimo = 0) {
@@ -3246,29 +3391,30 @@
       document.getElementById('clearPassword').value = ''; };
 
     window.verifyAndExport = function() {
-      if (document.getElementById('exportPassword').value === PASSWORD_GENERAL) {
-        exportToExcel();
-        hideExportPrompt();
-      } else alert('Contraseña incorrecta');
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede exportar');
+        return;
+      }
+      exportToExcel();
+      hideExportPrompt();
     };
 
     window.mostrarPanelFiltrado = function() {
-      const pwd = prompt('🔐 Ingrese la contraseña para mostrar los filtros y totales:');
-      if (pwd === PASSWORD_GENERAL) {
-        const seccionFiltros = document.getElementById('filtrosCarritoSeccion');
-        const seccionTotales = document.getElementById('totalesCarritoSeccion');
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede ver filtros y totales');
+        return;
+      }
+      const seccionFiltros = document.getElementById('filtrosCarritoSeccion');
+      const seccionTotales = document.getElementById('totalesCarritoSeccion');
 
-        if (seccionFiltros.style.display === 'none') {
-          seccionFiltros.style.display = 'block';
-          seccionTotales.style.display = 'block';
-          renderCart();
-        } else {
-          seccionFiltros.style.display = 'none';
-          seccionTotales.style.display = 'none';
-          limpiarFiltrosCarrito();
-        }
+      if (seccionFiltros.style.display === 'none') {
+        seccionFiltros.style.display = 'block';
+        seccionTotales.style.display = 'block';
+        renderCart();
       } else {
-        alert('Contraseña incorrecta');
+        seccionFiltros.style.display = 'none';
+        seccionTotales.style.display = 'none';
+        limpiarFiltrosCarrito();
       }
     };
 
@@ -3307,8 +3453,11 @@
     };
 
     window.showDeletePrompt = function(firebaseKey) {
-      const pwd = prompt('🔐 Contraseña para eliminar:');
-      if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede eliminar items del carrito');
+        return;
+      }
+      if (!confirm('¿Eliminar este item del carrito?')) return;
       const item = cart.find(i => i.firebaseKey === firebaseKey);
       if (!item) { alert('Item no encontrado'); return; }
       const consumo = item.fichaConsumption || 0;
@@ -3340,8 +3489,6 @@
 
       remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
     };
-
-    // ========== FUNCIONES DE BÚSQUEDA Y FILTRO ==========
 
     let timeoutBusqueda = null;
 
@@ -3497,33 +3644,22 @@
       return false;
     }
 
-    // ========== FUNCIONES DE STOCK ==========
-
     window.showStockManagement = function() {
+      if (!window.userRole.isAdmin && !window.userRole.canStock) {
+        alert('❌ No tienes permiso para gestionar stock');
+        return;
+      }
       document.getElementById('stockModal').style.display = 'block';
-      document.getElementById('stockPasswordPrompt').style.display = 'block';
-      document.getElementById('stockManagementContent').style.display = 'none';
-      document.getElementById('stockPassword').value = '';
+      document.getElementById('stockManagementContent').style.display = 'block';
+      loadAllStockItems();
       blockBodyScroll();
     };
 
     window.closeStockModal = function() {
       document.getElementById('stockModal').style.display = 'none';
-      document.getElementById('stockPasswordPrompt').style.display = 'block';
       document.getElementById('stockManagementContent').style.display = 'none';
       updateAllStockIndicators();
       unblockBodyScroll();
-    };
-
-    window.verifyStockPassword = function() {
-      const passwordInput = document.getElementById('stockPassword').value;
-      if (passwordInput === PASSWORD_STOCK) {
-        document.getElementById('stockPasswordPrompt').style.display = 'none';
-        document.getElementById('stockManagementContent').style.display = 'block';
-        loadAllStockItems();
-      } else {
-        alert('Contraseña incorrecta');
-      }
     };
 
     function getCategoryName(code) {
@@ -3588,16 +3724,9 @@
     }
 
     window.guardarStockIndividual = function(code, valor) {
-      if (code === '000-00' || code === '000-07') {
-        const passwordConfirm = prompt('🔐 Se requiere contraseña para modificar el código ' + code + ':');
-        if (passwordConfirm !== PASSWORD_SPECIAL_CODES) {
-          alert('❌ Contraseña incorrecta. No se puede modificar el stock del código ' + code);
-          const inp = document.getElementById(`stock-${code}`);
-          if (inp) {
-            inp.value = stock[code] ?? STOCK_INICIAL;
-          }
-          return;
-        }
+      if (!window.userRole.isAdmin && !window.userRole.canStock) {
+        alert('❌ No tienes permiso para modificar stock');
+        return;
       }
 
       const inp = document.getElementById(`stock-${code}`);
@@ -3631,9 +3760,11 @@
 
     window.saveAllStock = () => alert('✅ Los cambios se guardan automáticamente al editar cada valor');
 
-    // ========== FUNCIONES DE CONTADORES ==========
-
     window.openContadoresModal = async function() {
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede acceder a los contadores');
+        return;
+      }
       await loadContadores();
       await cargarListaMaquinas();
 
@@ -3701,6 +3832,10 @@
     };
 
     window.guardarContadoresMaquina = async function() {
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede guardar contadores');
+        return;
+      }
       if (!isOnline()) {
         mostrarMensajeTemporal('❌ Sin internet - No se puede guardar', true);
         return;
@@ -3744,8 +3879,6 @@
         alert('❌ Error al guardar contadores');
       }
     };
-
-    // ========== FUNCIÓN PARA REGISTRAR STOCK EN MÁQUINAS ==========
 
     window.registrarStockMaquinas = async function() {
       if (!isOnline()) {
@@ -3800,8 +3933,6 @@
       }
     };
 
-    // ========== FUNCIÓN PARA MOSTRAR/OCULTAR CATEGORÍA ==========
-
     window.toggleCategoria = function(categoria, boton) {
       const section = boton.closest('.categoria');
       if (!section) return;
@@ -3831,8 +3962,6 @@
         boton.innerHTML = '👁️ Mostrar';
       }
     };
-
-    // ========== FUNCIONES DE MOVIMIENTOS ==========
 
     window.agregarUnidades = async function() {
       if (window.agregarUnidadesLock) return;
@@ -3926,7 +4055,9 @@
             timestamp: fecha + ' ' + hora,
             timestampCompleto: ahora.getTime(),
             fichaConsumption: 0,
-            metodoPago: null
+            metodoPago: null,
+            registradoPor: window.userRole.uid,
+            registradoPorEmail: window.userRole.email
           });
 
           ocultarMensajeEnProceso();
@@ -4037,7 +4168,9 @@
             timestamp: fecha + ' ' + hora,
             timestampCompleto: ahora.getTime(),
             fichaConsumption: 0,
-            metodoPago: null
+            metodoPago: null,
+            registradoPor: window.userRole.uid,
+            registradoPorEmail: window.userRole.email
           });
 
           ocultarMensajeEnProceso();
@@ -4055,8 +4188,6 @@
         window.quitarUnidadesLock = false;
       }
     };
-
-    // ========== FUNCIONES DE CIERRE ==========
 
     function abrirModalCierre(tipo, descripcion) {
       document.getElementById('cierreTitulo').innerHTML = `💰 Cierre de Caja - ${tipo}`;
@@ -4105,7 +4236,9 @@
           fichaConsumption: 0,
           esCierre: true,
           unidades: 1,
-          metodoPago: null
+          metodoPago: null,
+          registradoPor: window.userRole.uid,
+          registradoPorEmail: window.userRole.email
         });
 
         ocultarMensajeEnProceso();
@@ -4121,8 +4254,6 @@
       document.getElementById('cierreModal').style.display = 'none';
       unblockBodyScroll();
     };
-
-    // ========== FUNCIONES DE FICHAS GRATIS ==========
 
     async function procesarFichaGratis(code, fichasAConsumir) {
       if (!isOnline()) {
@@ -4165,7 +4296,9 @@
           fichaConsumption: fichasAConsumir,
           esFichaGratis: true,
           unidades: 1,
-          metodoPago: null
+          metodoPago: null,
+          registradoPor: window.userRole.uid,
+          registradoPorEmail: window.userRole.email
         });
 
         ocultarMensajeEnProceso();
@@ -4177,33 +4310,27 @@
       }
     }
 
-    // ========== FUNCIONES DE HISTORIAL ==========
-
     window.showHistorialModal = function() {
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede ver el historial');
+        return;
+      }
       document.getElementById('historialModal').style.display = 'block';
-      document.getElementById('historialPasswordPrompt').style.display = 'block';
-      document.getElementById('historialContent').style.display = 'none';
-      document.getElementById('historialPassword').value = '';
+      document.getElementById('historialContent').style.display = 'block';
       blockBodyScroll();
-    };
-
-    window.closeHistorialModal = function() {
-      document.getElementById('historialModal').style.display = 'none';
-      unblockBodyScroll();
-    };
-
-    window.verifyHistorialPassword = async function() {
-      if (document.getElementById('historialPassword').value === PASSWORD_GENERAL) {
-        document.getElementById('historialPasswordPrompt').style.display = 'none';
-        document.getElementById('historialContent').style.display = 'block';
-        await loadHistorial();
+      loadHistorial().then(() => {
         const hoy = new Date();
         const hace30Dias = new Date();
         hace30Dias.setDate(hoy.getDate() - 30);
         document.getElementById('fechaDesde').value = hace30Dias.toISOString().split('T')[0];
         document.getElementById('fechaHasta').value = hoy.toISOString().split('T')[0];
         filtrarHistorial();
-      } else alert('Contraseña incorrecta');
+      });
+    };
+
+    window.closeHistorialModal = function() {
+      document.getElementById('historialModal').style.display = 'none';
+      unblockBodyScroll();
     };
 
     function renderMovimientosPorMaquina(movimientos) {
@@ -4292,6 +4419,10 @@
     };
 
     window.exportarHistorialExcel = function() {
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede exportar');
+        return;
+      }
       const desde = document.getElementById('fechaDesde').value;
       const hasta = document.getElementById('fechaHasta').value;
       if (!desde || !hasta) return;
@@ -4332,6 +4463,10 @@
     };
 
     window.mostrarModalEditarFecha = function(firebaseKey, fechaActual) {
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede editar fechas');
+        return;
+      }
       modoEdicionFecha = { tipo: 'editar', firebaseKey: firebaseKey };
 
       document.getElementById('fechaModalTitulo').textContent = '✏️ Editar fecha del historial';
@@ -4497,13 +4632,11 @@
     };
 
     window.eliminarRegistroHistorial = async function(firebaseKey) {
-      if (!confirm('¿Estás seguro de eliminar este registro del historial? Esta acción no se puede deshacer.')) return;
-
-      const pwd = prompt('🔐 Contraseña para eliminar:');
-      if (pwd !== PASSWORD_GENERAL) {
-        alert('Contraseña incorrecta');
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede eliminar registros');
         return;
       }
+      if (!confirm('¿Estás seguro de eliminar este registro del historial? Esta acción no se puede deshacer.')) return;
 
       try {
         await remove(ref(database, `historial_ventas/${firebaseKey}`));
@@ -4517,6 +4650,10 @@
     };
 
     window.restaurarVentasAlCarrito = async function(firebaseKey) {
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede restaurar ventas');
+        return;
+      }
       if (!isOnline()) {
         mostrarMensajeTemporal('❌ Sin internet - No se puede restaurar', true);
         return;
@@ -4533,12 +4670,6 @@
         );
 
       if (!confirmar) return;
-
-      const pwd = prompt('🔐 Contraseña para restaurar:');
-      if (pwd !== PASSWORD_GENERAL) {
-        alert('Contraseña incorrecta');
-        return;
-      }
 
       const btnOriginal = event.target;
       const textoOriginal = btnOriginal.textContent;
@@ -4615,9 +4746,8 @@
     };
 
     window.verifyClearPasswordAndShowDate = function() {
-      const pwd = document.getElementById('clearPassword').value;
-      if (pwd !== PASSWORD_GENERAL) {
-        alert('Contraseña incorrecta');
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede vaciar el carrito');
         return;
       }
       if (cart.length === 0) {
@@ -4643,14 +4773,12 @@
     };
 
     window.abrirVaciarSeleccion = function() {
-      if (cart.length === 0) {
-        alert('El carrito está vacío');
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede vaciar seleccionados');
         return;
       }
-
-      const pwd = prompt('🔐 Ingrese la contraseña para vaciar seleccionados:');
-      if (pwd !== PASSWORD_GENERAL) {
-        alert('Contraseña incorrecta');
+      if (cart.length === 0) {
+        alert('El carrito está vacío');
         return;
       }
 
@@ -4755,8 +4883,6 @@
       document.getElementById('fechaModal').style.display = 'block';
     };
 
-    // ========== FUNCIONES DE MOSTRAR IMAGEN ==========
-
     function mostrarImagenProducto(code) {
       const modal = document.createElement('div');
       modal.style.position = 'fixed';
@@ -4842,12 +4968,10 @@
       blockBodyScroll();
     }
 
-    // ========== FUNCIONES DE GENERACIÓN DE PRODUCTOS ==========
-
     function generarOpcionesMaquinas() {
       const select = document.getElementById('movimientoDestino');
       if (select) {
-        // Ya tenemos las opciones fijas en HTML: stock y maquinas
+        // Opciones fijas en HTML
       }
     }
 
@@ -5002,8 +5126,6 @@
       asignarEventosProductos();
     }
 
-    // ========== FUNCIONES DE CARGA INICIAL ==========
-
     function updateCartCount() { document.getElementById('cartCount').textContent = cart.length; }
 
     async function loadInitialCart() {
@@ -5030,8 +5152,6 @@
       try { const snap = await get(contadoresRef);
         contadoresMaquinas = snap.val() || {}; } catch { contadoresMaquinas = {}; }
     }
-
-    // ========== EVENTOS DEL DOM ==========
 
     document.querySelectorAll('.tab-btn-compras').forEach(btn => {
       btn.addEventListener('click', function() {
@@ -5104,8 +5224,10 @@
     }
 
     window.exportarFiltradoExcel = function() {
-      const pwd = prompt('🔐 Contraseña para exportar filtrado:');
-      if (pwd !== PASSWORD_GENERAL) { alert('Contraseña incorrecta'); return; }
+      if (!window.userRole.isAdmin) {
+        alert('❌ Solo el administrador puede exportar');
+        return;
+      }
 
       function itemToTimestamp(item) {
         if (item.timestampCompleto) return Number(item.timestampCompleto);
