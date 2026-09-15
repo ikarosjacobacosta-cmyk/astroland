@@ -236,7 +236,7 @@
             color: white;
         }
 
-        /* ========== RESTO DEL CSS (igual que antes) ========== */
+        /* ========== RESTO DEL CSS ========== */
         .header-premium {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
             padding: 20px 32px;
@@ -301,6 +301,8 @@
 
         .header-badge .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; animation: pulse-dot 2s infinite; }
         .header-badge .status-dot.online { background: #4CAF50; }
+        .header-badge .status-dot.warning { background: #FF9800; }
+        .header-badge .status-dot.error { background: #f44336; }
 
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; transform: scale(1); }
@@ -1231,9 +1233,7 @@
             .aviso-lectura { padding: 16px 12px; }
         }
     </style>
-</head><body>
-
-<!-- ========== PANTALLA DE LOGIN ========== -->
+</head><body><!-- ========== PANTALLA DE LOGIN ========== -->
 <div id="loginScreen">
     <div class="login-card">
         <div class="login-logo">A</div>
@@ -1294,9 +1294,9 @@
             </div>
         </div>
         <div class="header-right">
-            <div class="header-badge">
-                <span class="status-dot online"></span>
-                <span>Conectado</span>
+            <div class="header-badge" id="badgeConexion">
+                <span class="status-dot online" id="badgeConexionDot"></span>
+                <span id="badgeConexionTexto">Conectando...</span>
             </div>
             <div class="header-badge">
                 <i class="fas fa-clock" style="color: var(--gold);"></i>
@@ -1737,7 +1737,7 @@
     </section>
 </div>
 
-<!-- ========== MODALES (igual que antes) ========== -->
+<!-- ========== MODALES ========== -->
 <div id="purchaseModal" class="modal-compra">
     <div class="modal-content">
         <button class="close" onclick="closeModal()">&times;</button>
@@ -1849,14 +1849,13 @@
     </div>
 </div>
 
-<div class="toast-container" id="toastContainer"></div>
-<script type="module">
+<div class="toast-container" id="toastContainer"></div><script type="module">
     // ============================================================
     // 0. IMPORTS
     // ============================================================
-    import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getDatabase, ref, get, child, remove, update, set, push, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
     // ============================================================
     // 0.1 CONFIGURACIÓN DE LOS 4 PROYECTOS
@@ -1908,17 +1907,32 @@
     sucursalesCompletas.forEach(s => { sucursalToConfig[s.nombre] = s; });
 
     // ============================================================
-    // 0.2 VARIABLES GLOBALES DE AUTENTICACIÓN
+    // 0.2 VARIABLES GLOBALES
     // ============================================================
-    window.currentUser = null;      // { uid, email, isAdmin, isViewer }
-    window.currentAuth = null;      // Auth instance de Villa Morra
-
-    const authConfig = sucursalesCatalogo[0].config; // Villa Morra
+    window.currentUser = null;          // { uid, email, isAdmin, isViewer }
+    window.appsSucursales = {};         // { "villa-morra": { app, auth, db }, ... }
+    window.sucursalesConectadas = [];   // nombres de sucursales donde el login fue exitoso
+    window.sucursalesFallidas = [];     // nombres de sucursales donde falló
 
     // ============================================================
-    // 0.3 LOGIN / LOGOUT
+    // 0.3 INICIALIZACIÓN DE APPS (una sola vez)
     // ============================================================
+    function inicializarAppsSucursales() {
+        const appsExistentes = getApps();
+        sucursalesCompletas.forEach(suc => {
+            if (window.appsSucursales[suc.id]) return; // ya inicializada
+            const yaExiste = appsExistentes.find(a => a.name === suc.id);
+            const app = yaExiste || initializeApp(suc.config, suc.id);
+            const auth = getAuth(app);
+            const db = getDatabase(app);
+            window.appsSucursales[suc.id] = { app, auth, db, nombre: suc.nombre };
+            console.log(`✅ App inicializada: ${suc.nombre}`);
+        });
+    }
 
+    // ============================================================
+    // 0.4 LOGIN CON PROPAGACIÓN A LAS 4 APPS
+    // ============================================================
     window.doLogin = async function() {
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
@@ -1938,29 +1952,24 @@
         btn.innerHTML = '⏳ Verificando...';
 
         try {
-            // Inicializar app de Villa Morra (una sola vez)
-            if (!window.currentAuth) {
-                const appVillaMorra = initializeApp(authConfig, 'panel-auth-villamorra');
-                window.currentAuth = getAuth(appVillaMorra);
-            }
+            // 1. Inicializar todas las apps (una sola vez)
+            inicializarAppsSucursales();
 
-            // Login
-            const cred = await signInWithEmailAndPassword(window.currentAuth, email, password);
+            // 2. Login en Villa Morra (la principal, para leer los claims)
+            const villaMorra = window.appsSucursales['villa-morra'];
+            const cred = await signInWithEmailAndPassword(villaMorra.auth, email, password);
             const user = cred.user;
 
-            // Obtener claims
+            // 3. Obtener claims
             const tokenResult = await user.getIdTokenResult(true);
             const claims = tokenResult.claims;
-
             console.log('🔍 Claims del usuario:', claims);
 
-            // Verificar rol
             const isAdmin = claims.admin === true;
             const isViewer = claims.viewer === true;
 
             if (!isAdmin && !isViewer) {
-                // No tiene rol → bloquear
-                await signOut(window.currentAuth);
+                await signOut(villaMorra.auth);
                 errorDiv.innerHTML = '❌ <strong>Acceso denegado</strong><br>No tienes permisos para acceder al panel.';
                 errorDiv.style.display = 'block';
                 btn.disabled = false;
@@ -1968,7 +1977,25 @@
                 return;
             }
 
-            // Guardar usuario
+            // 4. Propagar sesión a las otras 3 apps
+            btn.innerHTML = '⏳ Conectando sucursales...';
+            window.sucursalesConectadas = ['Villa Morra'];
+            window.sucursalesFallidas = [];
+
+            for (const suc of sucursalesCompletas) {
+                if (suc.id === 'villa-morra') continue;
+                try {
+                    const appData = window.appsSucursales[suc.id];
+                    await signInWithEmailAndPassword(appData.auth, email, password);
+                    window.sucursalesConectadas.push(suc.nombre);
+                    console.log(`✅ Sesión propagada a ${suc.nombre}`);
+                } catch (e) {
+                    console.warn(`⚠️ No se pudo propagar a ${suc.nombre}:`, e.code || e.message);
+                    window.sucursalesFallidas.push({ nombre: suc.nombre, error: e.code || e.message });
+                }
+            }
+
+            // 5. Guardar usuario
             window.currentUser = {
                 uid: user.uid,
                 email: user.email,
@@ -1977,8 +2004,12 @@
             };
 
             console.log('✅ Login exitoso:', window.currentUser);
+            console.log(`📊 Sucursales conectadas: ${window.sucursalesConectadas.length}/${sucursalesCompletas.length}`);
+            if (window.sucursalesFallidas.length > 0) {
+                console.warn('⚠️ Sucursales fallidas:', window.sucursalesFallidas);
+            }
 
-            // Mostrar panel
+            // 6. Mostrar panel
             mostrarPanel();
 
         } catch (error) {
@@ -1998,19 +2029,34 @@
         }
     };
 
+    // ============================================================
+    // 0.5 LOGOUT
+    // ============================================================
     window.doLogout = async function() {
         if (!confirm('¿Cerrar sesión?')) return;
         try {
-            if (window.currentAuth) {
-                await signOut(window.currentAuth);
+            for (const suc of sucursalesCompletas) {
+                try {
+                    const appData = window.appsSucursales[suc.id];
+                    if (appData && appData.auth && appData.auth.currentUser) {
+                        await signOut(appData.auth);
+                        console.log(`✅ Sesión cerrada en ${suc.nombre}`);
+                    }
+                } catch (e) { /* Ignorar */ }
             }
         } catch (e) {
             console.error('Error cerrando sesión:', e);
         }
         window.currentUser = null;
+        window.appsSucursales = {};
+        window.sucursalesConectadas = [];
+        window.sucursalesFallidas = [];
         location.reload();
     };
 
+    // ============================================================
+    // 0.6 MOSTRAR PANEL
+    // ============================================================
     function mostrarPanel() {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('panelContent').style.display = 'block';
@@ -2018,7 +2064,6 @@
         document.getElementById('userBadge').style.display = 'flex';
         document.getElementById('userEmail').textContent = window.currentUser.email;
 
-        // Badge del rol
         const roleBadge = document.getElementById('userRoleBadge');
         if (window.currentUser.isAdmin) {
             roleBadge.textContent = 'ADMIN';
@@ -2028,22 +2073,38 @@
             roleBadge.className = 'user-role';
         }
 
-        // Si es viewer, ocultar todos los botones de eliminar
+        // Indicador de sucursales conectadas
+        actualizarBadgeConexion();
+
         if (window.currentUser.isViewer) {
-            // Se aplica después de que se rendericen los datos
             document.body.classList.add('viewer-mode');
         }
 
-        // Iniciar el panel
         iniciarPanel();
     }
 
+    function actualizarBadgeConexion() {
+        const dot = document.getElementById('badgeConexionDot');
+        const texto = document.getElementById('badgeConexionTexto');
+        if (!dot || !texto) return;
+        const total = sucursalesCompletas.length;
+        const ok = window.sucursalesConectadas.length;
+        if (ok === total) {
+            dot.className = 'status-dot online';
+            texto.textContent = `${ok}/${total} sucursales`;
+        } else if (ok > 0) {
+            dot.className = 'status-dot warning';
+            texto.textContent = `${ok}/${total} sucursales`;
+        } else {
+            dot.className = 'status-dot error';
+            texto.textContent = `0/${total} sucursales`;
+        }
+    }
+
     // ============================================================
-    // 0.4 PROTECCIÓN DE ELIMINACIÓN
+    // 0.7 PROTECCIÓN DE ELIMINACIÓN PARA VIEWER
     // ============================================================
-    // Interceptar la función global de eliminar para verificar rol
     function protegerEliminacion() {
-        // Ocultar botones de eliminar si es viewer
         if (window.currentUser && window.currentUser.isViewer) {
             document.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.style.display = 'none';
@@ -2051,18 +2112,16 @@
         }
     }
 
-    // Observar el DOM para ocultar botones de eliminar cuando aparezcan
-    const observer = new MutationObserver(function(mutations) {
+    const observer = new MutationObserver(function() {
         if (window.currentUser && window.currentUser.isViewer) {
             protegerEliminacion();
         }
     });
 
     // ============================================================
-    // 0.5 ARRANQUE
+    // 0.8 ARRANQUE
     // ============================================================
     window.addEventListener('DOMContentLoaded', function() {
-        // Enter en los inputs dispara login
         const emailInput = document.getElementById('loginEmail');
         const passwordInput = document.getElementById('loginPassword');
         if (emailInput && passwordInput) {
@@ -2073,8 +2132,6 @@
                 if (e.key === 'Enter') window.doLogin();
             });
         }
-
-        // Observar cambios en el DOM
         const panelContent = document.getElementById('panelContent');
         if (panelContent) {
             observer.observe(panelContent, { childList: true, subtree: true });
@@ -2082,10 +2139,11 @@
     });
 
     // ============================================================
-    // 1. ESTADO (igual que antes)
+    // 1. ESTADO
     // ============================================================
     const estado = {
         carritos: {},
+        historial: {},
         historialCache: {},
         contadoresCache: {},
         datosFiltrados: [],
@@ -2123,11 +2181,17 @@
     let pendingDelete = null;
     let datosContadoresCache = {};
 
+    // Helper: obtener la appData de una sucursal por nombre
+    function getAppDataByNombre(nombre) {
+        const conf = sucursalToConfig[nombre];
+        if (!conf) return null;
+        return window.appsSucursales[conf.id] || null;
+    }
+
     // ============================================================
-    // 2. FUNCIÓN INICIAR PANEL (reemplaza la llamada directa)
+    // 2. INICIAR PANEL
     // ============================================================
     async function iniciarPanel() {
-        // ===== INICIALIZACIÓN (antes estaba al final) =====
         cargarCarritos();
 
         const hoy = new Date();
@@ -2178,14 +2242,15 @@
             renderCatalogo(estado.catalogoProductos);
         });
 
-        // Suscripciones en tiempo real
+        // Suscripciones en tiempo real a las 4 apps
         for (const suc of sucursalesCompletas) {
             try {
-                const app = initializeApp(suc.config, suc.id);
-                const db = getDatabase(app);
-                onValue(ref(db, 'carrito'), () => {
-                    cargarCarritos();
-                });
+                const appData = window.appsSucursales[suc.id];
+                if (appData && appData.db) {
+                    onValue(ref(appData.db, 'carrito'), () => {
+                        cargarCarritos();
+                    });
+                }
             } catch (e) { /* Ignorar */ }
         }
 
@@ -2193,6 +2258,7 @@
         console.log('✅ Usuario:', window.currentUser.email, '| Admin:', window.currentUser.isAdmin, '| Viewer:', window.currentUser.isViewer);
         console.log('✅ Reversión de stock al eliminar historial: ACTIVADA');
     }
+
     // ============================================================
     // 3. TOAST Y MODALES
     // ============================================================
@@ -2212,7 +2278,6 @@
     }
 
     function openConfirmModal(message, onConfirm) {
-        // Bloqueo de seguridad extra: si es viewer, no permitir
         if (window.currentUser && window.currentUser.isViewer) {
             showToast('❌ No tienes permiso para eliminar', 'error');
             return;
@@ -2239,7 +2304,6 @@
     // ============================================================
     // 4. FUNCIONES DE ELIMINACIÓN CON REVERSIÓN DE STOCK
     // ============================================================
-
     async function revertirStockMaquina(db, sucursal, code, maquina, cantidadDelta, fechaMovimiento) {
         if (!maquina || !maquina.startsWith('maq')) return;
         try {
@@ -2254,7 +2318,6 @@
                 maquina: maquina,
                 actualizado: new Date().toISOString()
             });
-            console.log(`✅ Stock máquina ${maquina} en ${fecha} ajustado: ${actual} → ${nueva}`);
         } catch (error) {
             console.error('Error revirtiendo stock de máquina:', error);
         }
@@ -2286,9 +2349,7 @@
         }
 
         try {
-            if (CIERRE_CODES.includes(code) || venta.esCierre) {
-                return;
-            }
+            if (CIERRE_CODES.includes(code) || venta.esCierre) return;
 
             if (venta.esFichaGratis || code === '000-05' || code === '000-06') {
                 const fichasADevolver = fichaConsumption || (code === '000-06' ? 7 : 1);
@@ -2362,12 +2423,10 @@
     }
 
     async function eliminarDelCarrito(sucursal, firebaseKey) {
-        const config = sucursalToConfig[sucursal];
-        if (!config) return { success: false, error: 'Sucursal no encontrada' };
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) return { success: false, error: 'App no inicializada' };
         try {
-            const app = initializeApp(config.config, config.id);
-            const db = getDatabase(app);
-            await remove(ref(db, `carrito/${firebaseKey}`));
+            await remove(ref(appData.db, `carrito/${firebaseKey}`));
             return { success: true };
         } catch (error) {
             console.error('Error eliminando del carrito:', error);
@@ -2376,11 +2435,10 @@
     }
 
     async function eliminarItemHistorial(sucursal, firebaseKey, indexVenta) {
-        const config = sucursalToConfig[sucursal];
-        if (!config) return { success: false, error: 'Sucursal no encontrada: ' + sucursal };
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) return { success: false, error: 'App no inicializada' };
         try {
-            const app = initializeApp(config.config, config.id);
-            const db = getDatabase(app);
+            const db = appData.db;
             const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
             if (!snapshot.exists()) {
                 return { success: false, error: 'Registro no encontrado en ' + sucursal };
@@ -2414,11 +2472,10 @@
     }
 
     async function eliminarRegistroHistorial(sucursal, firebaseKey) {
-        const config = sucursalToConfig[sucursal];
-        if (!config) return { success: false, error: 'Sucursal no encontrada: ' + sucursal };
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) return { success: false, error: 'App no inicializada' };
         try {
-            const app = initializeApp(config.config, config.id);
-            const db = getDatabase(app);
+            const db = appData.db;
 
             const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
             if (snapshot.exists()) {
@@ -2438,7 +2495,6 @@
     }
 
     window.eliminarItem = function(sucursal, firebaseKey, fuente, ventaIndex = null, nombre = '') {
-        // Bloqueo para viewers
         if (window.currentUser && window.currentUser.isViewer) {
             showToast('❌ No tienes permiso para eliminar', 'error');
             return;
@@ -2524,12 +2580,17 @@
         </td></tr>`;
         const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
         let totalItems = 0;
+
         for (const suc of sucursalesCompletas) {
             try {
-                const app = initializeApp(suc.config, suc.id);
-                const db = getDatabase(app);
-                const dbRef = ref(db);
-                const cartSnap = await get(child(dbRef, 'carrito'));
+                const appData = window.appsSucursales[suc.id];
+                if (!appData || !appData.db) {
+                    console.warn(`⚠️ ${suc.nombre}: app no inicializada`);
+                    estado.carritos[suc.nombre] = [];
+                    continue;
+                }
+
+                const cartSnap = await get(ref(appData.db, 'carrito'));
                 let items = [];
                 if (cartSnap.exists()) {
                     const data = cartSnap.val();
@@ -2701,10 +2762,12 @@
 
         for (const suc of sucursalesCatalogo) {
             try {
-                console.log(`📦 Cargando catálogo de ${suc.nombre}...`);
-
-                const app = initializeApp(suc.config, suc.id);
-                const db = getDatabase(app);
+                const appData = window.appsSucursales[suc.id];
+                if (!appData || !appData.db) {
+                    console.warn(`⚠️ ${suc.nombre}: app no inicializada`);
+                    continue;
+                }
+                const db = appData.db;
 
                 const catalogoSnap = await get(ref(db, 'catalogo'));
                 const catalogoData = catalogoSnap.val() || {};
@@ -2722,14 +2785,12 @@
                         '420-00': 200000, '420-01': 2000, '420-02': 2000, '420-03': 60000,
                         '100-38': 10000, '800-01': 250000
                     };
-
                     const puntosMap = {
                         '005': 5, '020': 20, '035': 35, '050': 50, '075': 75,
                         '100': 100, '150': 150, '180': 180, '200': 200, '220': 220,
                         '250': 250, '350': 350, '420': 420, '500': 500, '600': 600,
                         '800': 800, '000': 0
                     };
-
                     const cat = code.split('-')[0];
                     const price = precios[code] || 0;
                     const points = puntosMap[cat] || 0;
@@ -2835,7 +2896,6 @@
         }
 
         filtrados = filtrados.filter(p => p.stock > 0);
-
         filtrados.sort((a, b) => a.code.localeCompare(b.code));
 
         const todasCount = productos.filter(p => p.stock > 0).length;
@@ -2923,7 +2983,6 @@
     // 9. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
     // ============================================================
     window.handleCatalogoClick = function(element) {
-        // Bloqueo para viewers
         if (window.currentUser && window.currentUser.isViewer) {
             showToast('❌ No tienes permiso para modificar', 'error');
             return;
@@ -2936,17 +2995,15 @@
         const consumo = parseInt(element.dataset.fichaconsumption) || 0;
         const sucursal = element.dataset.sucursal;
         const name = element.querySelector('p')?.textContent || code;
-        const config = sucursalToConfig[sucursal];
-        if (!config) {
-            showToast('❌ Sucursal no encontrada', 'error');
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) {
+            showToast('❌ Sucursal no inicializada', 'error');
             return;
         }
         estado.currentSucursal = sucursal;
-        estado.currentApp = null;
-        estado.currentDB = null;
-        const app = initializeApp(config.config, config.id);
-        estado.currentApp = app;
-        estado.currentDB = getDatabase(app);
+        estado.currentApp = appData.app;
+        estado.currentDB = appData.db;
+
         cargarStockSucursal(sucursal).then(() => {
             const stockActual = estado.stock[sucursal] || {};
             let stockValActual;
@@ -3036,12 +3093,10 @@
     };
 
     async function cargarStockSucursal(sucursal) {
-        const config = sucursalToConfig[sucursal];
-        if (!config) return;
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) return;
         try {
-            const app = initializeApp(config.config, config.id);
-            const db = getDatabase(app);
-            const stockSnap = await get(ref(db, 'stock'));
+            const stockSnap = await get(ref(appData.db, 'stock'));
             estado.stock[sucursal] = stockSnap.val() || {};
         } catch (error) {
             console.error('Error cargando stock de', sucursal, error);
@@ -3092,6 +3147,7 @@
     window.calculateRemainingMoney = function() {
         updateModalTotalsBasedOnQuantity();
     };
+
     // ============================================================
     // 11. MODAL DE COMPRA
     // ============================================================
@@ -3137,19 +3193,13 @@
                     window.addToCartLock = false;
                     return;
                 }
-                const config = sucursalToConfig[sucursal];
-                if (!config) {
+                const appData = getAppDataByNombre(sucursal);
+                if (!appData) {
                     alert('❌ Sucursal no encontrada');
                     window.addToCartLock = false;
                     return;
                 }
-                let db;
-                if (estado.currentDB) {
-                    db = estado.currentDB;
-                } else {
-                    const app = initializeApp(config.config, config.id);
-                    db = getDatabase(app);
-                }
+                const db = appData.db;
                 let stockKey;
                 let cantidadRestar;
                 if (consumo > 0 && !isIndependentCode) {
@@ -3224,12 +3274,10 @@
         const sucursal = estado.currentMovimientosProduct.sucursal;
         const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
         if (cantidad <= 0) { alert('Cantidad inválida'); window.agregarUnidadesLock = false; return; }
-        const config = sucursalToConfig[sucursal];
-        if (!config) { alert('❌ Sucursal no encontrada'); window.agregarUnidadesLock = false; return; }
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) { alert('❌ Sucursal no encontrada'); window.agregarUnidadesLock = false; return; }
         try {
-            let db;
-            if (estado.currentDB) { db = estado.currentDB; }
-            else { const app = initializeApp(config.config, config.id); db = getDatabase(app); }
+            const db = appData.db;
             let stockKey;
             let cantidadMovimiento;
             if (destino === 'stock') {
@@ -3312,12 +3360,10 @@
         const sucursal = estado.currentMovimientosProduct.sucursal;
         const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
         if (cantidad <= 0) { alert('Cantidad inválida'); window.quitarUnidadesLock = false; return; }
-        const config = sucursalToConfig[sucursal];
-        if (!config) { alert('❌ Sucursal no encontrada'); window.quitarUnidadesLock = false; return; }
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) { alert('❌ Sucursal no encontrada'); window.quitarUnidadesLock = false; return; }
         try {
-            let db;
-            if (estado.currentDB) { db = estado.currentDB; }
-            else { const app = initializeApp(config.config, config.id); db = getDatabase(app); }
+            const db = appData.db;
             let stockKey;
             let cantidadMovimiento;
             if (destino === 'stock') {
@@ -3381,7 +3427,6 @@
         } catch (error) { console.error('Error:', error); alert('❌ Error al procesar el movimiento'); }
         finally { window.quitarUnidadesLock = false; }
     };
-
     // ============================================================
     // 13. FICHAS GRATIS
     // ============================================================
@@ -3393,11 +3438,10 @@
         const catalogoItem = document.querySelector('.catalogo-item[data-code="' + code + '"]');
         if (!catalogoItem) { showToast('❌ Producto no encontrado', 'error'); return; }
         const sucursal = catalogoItem.dataset.sucursal;
-        const config = sucursalToConfig[sucursal];
-        if (!config) { showToast('❌ Sucursal no encontrada', 'error'); return; }
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) { showToast('❌ Sucursal no encontrada', 'error'); return; }
         try {
-            const app = initializeApp(config.config, config.id);
-            const db = getDatabase(app);
+            const db = appData.db;
             const stockSnap = await get(ref(db, 'stock/000-00'));
             let stockActual = stockSnap.val() ?? STOCK_INICIAL;
             if (stockActual < fichasAConsumir) {
@@ -3465,13 +3509,16 @@
         monto = monto.replace(/\./g, '');
         let montoNum = parseFloat(monto);
         if (isNaN(montoNum)) montoNum = 0;
-        const catalogoItem = document.querySelector('.catalogo-item[data-code="000-09"]') || document.querySelector('.catalogo-item[data-code="000-10"]');
-        const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
-        const config = sucursalToConfig[sucursal];
-        if (!config) { showToast('❌ Sucursal no encontrada', 'error'); return; }
+        // Determinar sucursal: usar el estado actual o la primera del catálogo
+        let sucursal = estado.currentSucursal;
+        if (!sucursal) {
+            const catalogoItem = document.querySelector('.catalogo-item[data-code="000-09"]') || document.querySelector('.catalogo-item[data-code="000-10"]');
+            sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
+        }
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) { showToast('❌ Sucursal no encontrada', 'error'); return; }
         try {
-            const app = initializeApp(config.config, config.id);
-            const db = getDatabase(app);
+            const db = appData.db;
             const ahora = new Date();
             const fecha = ahora.toLocaleDateString('es-PY');
             const hora = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -3500,7 +3547,7 @@
             return;
         }
         const catalogoItem = document.querySelector('.catalogo-item[data-code="000-11"]');
-        const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
+        const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : (estado.currentSucursal || 'Villa Morra');
         estado.currentSucursalContadores = sucursal;
         await cargarListaMaquinas(sucursal);
         const hoy = new Date();
@@ -3530,11 +3577,10 @@
         const fecha = document.getElementById('fechaContador').value;
         if (!fecha) { alert('Seleccione una fecha'); return; }
         const sucursal = estado.currentSucursalContadores || 'Villa Morra';
-        const config = sucursalToConfig[sucursal];
-        if (!config) { showToast('❌ Sucursal no encontrada', 'error'); return; }
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) { showToast('❌ Sucursal no encontrada', 'error'); return; }
         try {
-            const app = initializeApp(config.config, config.id);
-            const db = getDatabase(app);
+            const db = appData.db;
             const contSnap = await get(ref(db, `contadores_maquinas/${maquina}/${fecha}`));
             const datos = contSnap.exists() ? contSnap.val() : { fichas: 0, premios: 0, fichasPrueba: 0, premiosPrueba: 0 };
             document.getElementById('contadorFichas').value = datos.fichas || 0;
@@ -3562,11 +3608,10 @@
         const fichasPrueba = parseInt(document.getElementById('fichasPrueba').value) || 0;
         const premiosPrueba = parseInt(document.getElementById('premiosPrueba').value) || 0;
         const sucursal = estado.currentSucursalContadores || 'Villa Morra';
-        const config = sucursalToConfig[sucursal];
-        if (!config) { showToast('❌ Sucursal no encontrada', 'error'); return; }
+        const appData = getAppDataByNombre(sucursal);
+        if (!appData) { showToast('❌ Sucursal no encontrada', 'error'); return; }
         try {
-            const app = initializeApp(config.config, config.id);
-            const db = getDatabase(app);
+            const db = appData.db;
             await set(ref(db, `contadores_maquinas/${maquina}/${fecha}`), {
                 fichas, premios, fichasPrueba, premiosPrueba,
                 ultimaActualizacion: new Date().toISOString()
@@ -3578,6 +3623,7 @@
             showToast('❌ Error al guardar contadores', 'error');
         }
     };
+
     // ============================================================
     // 16. FILTROS AVANZADOS
     // ============================================================
@@ -3585,10 +3631,10 @@
         const key = sucursalConfig.nombre;
         if (estado.historialCache[key]) return estado.historialCache[key];
         try {
-            const app = initializeApp(sucursalConfig.config, sucursalConfig.id);
-            const db = getDatabase(app);
-            const dbRef = ref(db);
-            const histSnap = await get(child(dbRef, 'historial_ventas'));
+            const appData = window.appsSucursales[sucursalConfig.id];
+            if (!appData || !appData.db) return [];
+            const db = appData.db;
+            const histSnap = await get(ref(db, 'historial_ventas'));
             let items = [];
             if (histSnap.exists()) {
                 const data = histSnap.val();
@@ -3736,7 +3782,6 @@
             ${!esViewer ? '<span class="filter-tag-premium"><i class="fas fa-trash" style="color:var(--danger);"></i> Puedes eliminar items del historial (devuelve stock)</span>' : ''}
         </div>`;
 
-        // Columnas dinámicas: si es viewer, sin columna de Acción
         const columnasAccion = esViewer ? '' : '<th>Acción</th>';
         const colspanTotal = esViewer ? 13 : 14;
 
@@ -3808,7 +3853,6 @@
             const ventaIndex = item.ventaIndex !== undefined ? item.ventaIndex : null;
             const firebaseKey = item.firebaseKey || '';
 
-            // Acción solo si NO es viewer
             let celdaAccion = '';
             if (!esViewer) {
                 celdaAccion = `<td>
@@ -3863,14 +3907,14 @@
     // ============================================================
     // 17. CONTADORES DE MÁQUINAS (PANEL)
     // ============================================================
-    async function cargarContadoresMaquina(sucursalConfig) {
+    async function cargarContadoresMaquinaPanel(sucursalConfig) {
         const key = sucursalConfig.nombre;
         if (estado.contadoresCache[key]) return estado.contadoresCache[key];
         try {
-            const app = initializeApp(sucursalConfig.config, sucursalConfig.id);
-            const db = getDatabase(app);
-            const dbRef = ref(db);
-            const contSnap = await get(child(dbRef, 'contadores_maquinas'));
+            const appData = window.appsSucursales[sucursalConfig.id];
+            if (!appData || !appData.db) return {};
+            const db = appData.db;
+            const contSnap = await get(ref(db, 'contadores_maquinas'));
             let contadores = {};
             if (contSnap.exists()) {
                 const data = contSnap.val();
@@ -3929,7 +3973,7 @@
     }
 
     window.aplicarFiltroContadores = async function() {
-        const btn = document.querySelector('.btn-premium.primary');
+        const btn = document.querySelector('#tab-contadores .btn-premium.primary');
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando...'; }
         const sucursal = document.getElementById('contadorSucursal').value;
         const fechaDesde = document.getElementById('contadorFechaDesde').value;
@@ -3942,7 +3986,7 @@
     };
 
     window.cargarCalendarioContadores = async function(event) {
-        const btn = event?.target?.closest?.('button') || document.querySelector('.btn-premium.gold');
+        const btn = event?.target?.closest?.('button') || document.querySelector('#tab-contadores .btn-premium.gold');
         if (btn) btn.disabled = true;
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
         const fechaDesde = document.getElementById('contadorFechaDesde').value;
@@ -3971,7 +4015,7 @@
         datosContadoresCache = {};
         for (const suc of sucursalesACargar) {
             try {
-                const contadores = await cargarContadoresMaquina(suc);
+                const contadores = await cargarContadoresMaquinaPanel(suc);
                 datosContadoresCache[suc.nombre] = contadores;
                 Object.values(contadores).forEach(maquina => {
                     Object.keys(maquina).forEach(fecha => {
@@ -4044,39 +4088,10 @@
         }
         html += '</div>';
         container.innerHTML = html;
-        const style = document.createElement('style');
-        style.id = 'calendario-contadores-style';
-        style.textContent = `
-            .calendar-day.has-data {
-                background: #FFD700 !important;
-                border-color: #FF8C00 !important;
-                color: #1a1a2e !important;
-                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
-                font-weight: 800 !important;
-                transform: scale(1.05);
-                transition: all 0.2s ease;
-                cursor: pointer;
-            }
-            .calendar-day.has-data:hover {
-                transform: scale(1.15);
-                box-shadow: 0 0 25px rgba(255, 215, 0, 0.9) !important;
-            }
-            .calendar-day.has-data::after {
-                content: '●';
-                font-size: 6px;
-                color: #FF6B00;
-                position: absolute;
-                bottom: 1px;
-                animation: pulse-dot 1.5s infinite;
-            }
-        `;
-        const oldStyle = document.getElementById('calendario-contadores-style');
-        if (oldStyle) oldStyle.remove();
-        document.head.appendChild(style);
     }
 
     window.cargarDatosFechaContadores = async function(event) {
-        const btn = event?.target?.closest?.('button') || document.querySelector('.btn-premium.info');
+        const btn = event?.target?.closest?.('button') || document.querySelector('#tab-contadores .btn-premium.info');
         if (btn) btn.disabled = true;
         const sucursalFiltro = document.getElementById('contadorSucursal').value;
         const fechaDesde = document.getElementById('contadorFechaDesde').value;
@@ -4098,7 +4113,7 @@
         const resultados = [];
         for (const suc of sucursalesACargar) {
             try {
-                const contadores = await cargarContadoresMaquina(suc);
+                const contadores = await cargarContadoresMaquinaPanel(suc);
                 const todasLasMaquinas = Object.keys(contadores);
                 if (todasLasMaquinas.length === 0) {
                     resultados.push({
@@ -4229,7 +4244,7 @@
     };
 
     window.calcularDiferenciaContadores = async function() {
-        const btn = document.querySelector('.btn-premium.success');
+        const btn = document.querySelector('#tab-contadores .btn-premium.success');
         if (btn) btn.disabled = true;
         const fechaInicio = document.getElementById('diferenciaFechaInicio').value;
         const fechaFin = document.getElementById('diferenciaFechaFin').value;
@@ -4253,7 +4268,7 @@
         const resultados = [];
         for (const suc of sucursalesACargar) {
             try {
-                const contadores = await cargarContadoresMaquina(suc);
+                const contadores = await cargarContadoresMaquinaPanel(suc);
                 for (const [maquina, fechas] of Object.entries(contadores)) {
                     let datosInicio = null;
                     let fechaInicioEncontrada = null;
@@ -4769,8 +4784,9 @@
 
         for (const suc of sucursalesACargar) {
             try {
-                const app = initializeApp(suc.config, suc.id);
-                const db = getDatabase(app);
+                const appData = window.appsSucursales[suc.id];
+                if (!appData || !appData.db) continue;
+                const db = appData.db;
 
                 const stockMaquinasSnap = await get(ref(db, 'stock_maquinas'));
                 const stockMaquinasData = stockMaquinasSnap.val() || {};
@@ -4786,16 +4802,13 @@
                 if (esFiltroFecha) {
                     const stockMaquinasSucursal = stockMaquinasData[suc.nombre] || {};
 
-                    let hayStockInicial = false;
-                    let hayStockFinal = false;
                     let fechasDisponibles = [];
-
                     Object.entries(stockMaquinasSucursal).forEach(([code, fechas]) => {
                         fechasDisponibles = fechasDisponibles.concat(Object.keys(fechas));
                     });
 
-                    hayStockInicial = fechasDisponibles.some(f => f === fechaDesde);
-                    hayStockFinal = fechasDisponibles.some(f => f === fechaHasta);
+                    const hayStockInicial = fechasDisponibles.some(f => f === fechaDesde);
+                    const hayStockFinal = fechasDisponibles.some(f => f === fechaHasta);
 
                     if (!hayStockInicial) {
                         container.innerHTML = `
