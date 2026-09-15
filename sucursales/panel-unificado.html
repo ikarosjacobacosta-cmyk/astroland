@@ -61,6 +61,182 @@
 
         .app-container { max-width: 1440px; margin: 0 auto; }
 
+        /* ========== PANTALLA DE LOGIN ========== */
+        #loginScreen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #0d1b4a 0%, #1a2d6e 50%, #c9a84c 100%);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #loginScreen .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        #loginScreen .login-logo {
+            width: 64px;
+            height: 64px;
+            background: var(--gold);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--primary-dark);
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
+        }
+
+        #loginScreen h1 {
+            margin: 0 0 8px;
+            color: var(--primary);
+            font-size: 1.6rem;
+            letter-spacing: -0.5px;
+        }
+
+        #loginScreen .subtitle {
+            color: var(--gold-dark);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        #loginScreen input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        #loginScreen input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+        }
+
+        #loginScreen .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+            touch-action: manipulation;
+        }
+
+        #loginScreen .login-btn:hover:not(:disabled) {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        #loginScreen .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #loginScreen .login-error {
+            display: none;
+            background: var(--danger-light);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--danger);
+            text-align: left;
+        }
+
+        #loginScreen .login-footer {
+            margin-top: 25px;
+            color: var(--gray-400);
+            font-size: 0.8rem;
+        }
+
+        /* ========== BOTÓN CERRAR SESIÓN ========== */
+        #logoutBtn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 9000;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            align-items: center;
+            gap: 8px;
+            touch-action: manipulation;
+        }
+
+        #logoutBtn:hover {
+            background: #b71c1c;
+            transform: translateY(-2px);
+        }
+
+        /* ========== BADGE DE USUARIO ========== */
+        #userBadge {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 130px;
+            background: rgba(255,255,255,0.95);
+            color: var(--primary);
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 9000;
+            box-shadow: var(--shadow-md);
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        #userBadge .user-role {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--gold-light);
+            color: var(--gold-dark);
+        }
+
+        #userBadge .user-role.admin {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ========== RESTO DEL CSS (igual que antes) ========== */
         .header-premium {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
             padding: 20px 32px;
@@ -1038,6 +1214,8 @@
             .aviso-lectura i { font-size: 2rem; }
             .aviso-lectura h3 { font-size: 1rem; }
             .aviso-lectura p { font-size: 0.85rem; }
+            #userBadge { top: auto; bottom: 80px; right: 20px; }
+            #logoutBtn { top: auto; bottom: 20px; right: 20px; }
         }
 
         @media (max-width: 480px) {
@@ -1053,10 +1231,60 @@
             .aviso-lectura { padding: 16px 12px; }
         }
     </style>
-</head>
-<body>
+</head><body>
 
-<div class="app-container">
+<!-- ========== PANTALLA DE LOGIN ========== -->
+<div id="loginScreen">
+    <div class="login-card">
+        <div class="login-logo">A</div>
+        <h1>ASTROLAND</h1>
+        <p class="subtitle">PANEL DE CONTROL</p>
+
+        <div id="loginError" class="login-error"></div>
+
+        <input
+            type="email"
+            id="loginEmail"
+            placeholder="Correo electrónico"
+            autocomplete="username"
+        />
+        <input
+            type="password"
+            id="loginPassword"
+            placeholder="Contraseña"
+            autocomplete="current-password"
+        />
+
+        <button
+            id="loginBtn"
+            class="login-btn"
+            onclick="window.doLogin()"
+        >
+            🔐 Iniciar Sesión
+        </button>
+
+        <p class="login-footer">
+            🔒 Acceso restringido · Solo personal autorizado
+        </p>
+    </div>
+</div>
+
+<!-- ========== BOTÓN CERRAR SESIÓN ========== -->
+<button id="logoutBtn" onclick="window.doLogout()">
+    <i class="fas fa-sign-out-alt"></i>
+    <span>Salir</span>
+</button>
+
+<!-- ========== BADGE DE USUARIO ========== -->
+<div id="userBadge">
+    <i class="fas fa-user-circle"></i>
+    <span id="userEmail">-</span>
+    <span id="userRoleBadge" class="user-role">-</span>
+</div>
+
+<!-- ========== CONTENIDO DEL PANEL ========== -->
+<div class="app-container" id="panelContent" style="display:none;">
+
     <header class="header-premium">
         <div class="header-left">
             <div class="header-logo">A</div>
@@ -1509,6 +1737,7 @@
     </section>
 </div>
 
+<!-- ========== MODALES (igual que antes) ========== -->
 <div id="purchaseModal" class="modal-compra">
     <div class="modal-content">
         <button class="close" onclick="closeModal()">&times;</button>
@@ -1623,11 +1852,15 @@
 <div class="toast-container" id="toastContainer"></div>
 <script type="module">
     // ============================================================
-    // 1. IMPORTACIONES Y CONFIGURACIÓN
+    // 0. IMPORTS
     // ============================================================
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getDatabase, ref, get, child, remove, update, set, push, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
+    // ============================================================
+    // 0.1 CONFIGURACIÓN DE LOS 4 PROYECTOS
+    // ============================================================
     const sucursalesCatalogo = [
         { nombre: "Villa Morra", id: "villa-morra", config: {
             apiKey: "AIzaSyBDnckvuEO1MdXr7JmCzYYtdT-PKefidZc",
@@ -1675,7 +1908,181 @@
     sucursalesCompletas.forEach(s => { sucursalToConfig[s.nombre] = s; });
 
     // ============================================================
-    // 2. ESTADO
+    // 0.2 VARIABLES GLOBALES DE AUTENTICACIÓN
+    // ============================================================
+    window.currentUser = null;      // { uid, email, isAdmin, isViewer }
+    window.currentAuth = null;      // Auth instance de Villa Morra
+
+    const authConfig = sucursalesCatalogo[0].config; // Villa Morra
+
+    // ============================================================
+    // 0.3 LOGIN / LOGOUT
+    // ============================================================
+
+    window.doLogin = async function() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const errorDiv = document.getElementById('loginError');
+        const btn = document.getElementById('loginBtn');
+
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+
+        if (!email || !password) {
+            errorDiv.textContent = '⚠️ Ingresa correo y contraseña';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Verificando...';
+
+        try {
+            // Inicializar app de Villa Morra (una sola vez)
+            if (!window.currentAuth) {
+                const appVillaMorra = initializeApp(authConfig, 'panel-auth-villamorra');
+                window.currentAuth = getAuth(appVillaMorra);
+            }
+
+            // Login
+            const cred = await signInWithEmailAndPassword(window.currentAuth, email, password);
+            const user = cred.user;
+
+            // Obtener claims
+            const tokenResult = await user.getIdTokenResult(true);
+            const claims = tokenResult.claims;
+
+            console.log('🔍 Claims del usuario:', claims);
+
+            // Verificar rol
+            const isAdmin = claims.admin === true;
+            const isViewer = claims.viewer === true;
+
+            if (!isAdmin && !isViewer) {
+                // No tiene rol → bloquear
+                await signOut(window.currentAuth);
+                errorDiv.innerHTML = '❌ <strong>Acceso denegado</strong><br>No tienes permisos para acceder al panel.';
+                errorDiv.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '🔐 Iniciar Sesión';
+                return;
+            }
+
+            // Guardar usuario
+            window.currentUser = {
+                uid: user.uid,
+                email: user.email,
+                isAdmin: isAdmin,
+                isViewer: isViewer
+            };
+
+            console.log('✅ Login exitoso:', window.currentUser);
+
+            // Mostrar panel
+            mostrarPanel();
+
+        } catch (error) {
+            console.error('Error de login:', error);
+            let mensaje = '❌ Correo o contraseña incorrectos';
+            if (error.code === 'auth/too-many-requests') {
+                mensaje = '❌ Demasiados intentos. Espera unos minutos.';
+            } else if (error.code === 'auth/network-request-failed') {
+                mensaje = '❌ Sin conexión a internet.';
+            } else if (error.code === 'auth/invalid-email') {
+                mensaje = '❌ Correo electrónico inválido';
+            }
+            errorDiv.textContent = mensaje;
+            errorDiv.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '🔐 Iniciar Sesión';
+        }
+    };
+
+    window.doLogout = async function() {
+        if (!confirm('¿Cerrar sesión?')) return;
+        try {
+            if (window.currentAuth) {
+                await signOut(window.currentAuth);
+            }
+        } catch (e) {
+            console.error('Error cerrando sesión:', e);
+        }
+        window.currentUser = null;
+        location.reload();
+    };
+
+    function mostrarPanel() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('panelContent').style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'flex';
+        document.getElementById('userBadge').style.display = 'flex';
+        document.getElementById('userEmail').textContent = window.currentUser.email;
+
+        // Badge del rol
+        const roleBadge = document.getElementById('userRoleBadge');
+        if (window.currentUser.isAdmin) {
+            roleBadge.textContent = 'ADMIN';
+            roleBadge.className = 'user-role admin';
+        } else {
+            roleBadge.textContent = 'SOLO LECTURA';
+            roleBadge.className = 'user-role';
+        }
+
+        // Si es viewer, ocultar todos los botones de eliminar
+        if (window.currentUser.isViewer) {
+            // Se aplica después de que se rendericen los datos
+            document.body.classList.add('viewer-mode');
+        }
+
+        // Iniciar el panel
+        iniciarPanel();
+    }
+
+    // ============================================================
+    // 0.4 PROTECCIÓN DE ELIMINACIÓN
+    // ============================================================
+    // Interceptar la función global de eliminar para verificar rol
+    function protegerEliminacion() {
+        // Ocultar botones de eliminar si es viewer
+        if (window.currentUser && window.currentUser.isViewer) {
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+    }
+
+    // Observar el DOM para ocultar botones de eliminar cuando aparezcan
+    const observer = new MutationObserver(function(mutations) {
+        if (window.currentUser && window.currentUser.isViewer) {
+            protegerEliminacion();
+        }
+    });
+
+    // ============================================================
+    // 0.5 ARRANQUE
+    // ============================================================
+    window.addEventListener('DOMContentLoaded', function() {
+        // Enter en los inputs dispara login
+        const emailInput = document.getElementById('loginEmail');
+        const passwordInput = document.getElementById('loginPassword');
+        if (emailInput && passwordInput) {
+            emailInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') passwordInput.focus();
+            });
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') window.doLogin();
+            });
+        }
+
+        // Observar cambios en el DOM
+        const panelContent = document.getElementById('panelContent');
+        if (panelContent) {
+            observer.observe(panelContent, { childList: true, subtree: true });
+        }
+    });
+
+    // ============================================================
+    // 1. ESTADO (igual que antes)
     // ============================================================
     const estado = {
         carritos: {},
@@ -1717,28 +2124,77 @@
     let datosContadoresCache = {};
 
     // ============================================================
-    // 3. NAVEGACIÓN POR TABS
+    // 2. FUNCIÓN INICIAR PANEL (reemplaza la llamada directa)
     // ============================================================
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    async function iniciarPanel() {
+        // ===== INICIALIZACIÓN (antes estaba al final) =====
+        cargarCarritos();
 
-            this.classList.add('active');
-            const target = document.getElementById(this.dataset.tab);
-            if (target) target.style.display = 'block';
+        const hoy = new Date();
+        const hace7Dias = new Date();
+        hace7Dias.setDate(hoy.getDate() - 7);
+        document.getElementById('filtroDiaDesde').value = hace7Dias.toISOString().split('T')[0];
+        document.getElementById('filtroDiaHasta').value = hoy.toISOString().split('T')[0];
 
-            if (this.dataset.tab === 'tab-catalogo') {
-                cargarCatalogoUnificado();
-            }
-            if (this.dataset.tab === 'tab-maquinas') {
-                cargarDatosMaquinas();
-            }
+        const hace30Dias = new Date();
+        hace30Dias.setDate(hoy.getDate() - 30);
+        document.getElementById('contadorFechaDesde').value = hace30Dias.toISOString().split('T')[0];
+        document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
+
+        document.getElementById('maquinasFiltroDesde').value = hoy.toISOString().split('T')[0];
+        document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
+
+        // Navegación por tabs
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+
+                this.classList.add('active');
+                const target = document.getElementById(this.dataset.tab);
+                if (target) target.style.display = 'block';
+
+                if (this.dataset.tab === 'tab-catalogo') {
+                    cargarCatalogoUnificado();
+                }
+                if (this.dataset.tab === 'tab-maquinas') {
+                    cargarDatosMaquinas();
+                }
+            });
         });
-    });
 
+        // Filtros del catálogo
+        document.getElementById('catalogoFiltros').addEventListener('click', function(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            document.querySelectorAll('#catalogoFiltros button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            estado.catalogoFiltro = btn.dataset.sucursal;
+            renderCatalogo(estado.catalogoProductos);
+        });
+
+        document.getElementById('catalogoSearch').addEventListener('input', function() {
+            estado.catalogoSearch = this.value;
+            renderCatalogo(estado.catalogoProductos);
+        });
+
+        // Suscripciones en tiempo real
+        for (const suc of sucursalesCompletas) {
+            try {
+                const app = initializeApp(suc.config, suc.id);
+                const db = getDatabase(app);
+                onValue(ref(db, 'carrito'), () => {
+                    cargarCarritos();
+                });
+            } catch (e) { /* Ignorar */ }
+        }
+
+        console.log('✅ Panel ASTROLAND Premium cargado correctamente');
+        console.log('✅ Usuario:', window.currentUser.email, '| Admin:', window.currentUser.isAdmin, '| Viewer:', window.currentUser.isViewer);
+        console.log('✅ Reversión de stock al eliminar historial: ACTIVADA');
+    }
     // ============================================================
-    // 4. TOAST Y MODALES
+    // 3. TOAST Y MODALES
     // ============================================================
     function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
@@ -1756,6 +2212,11 @@
     }
 
     function openConfirmModal(message, onConfirm) {
+        // Bloqueo de seguridad extra: si es viewer, no permitir
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para eliminar', 'error');
+            return;
+        }
         document.getElementById('confirmModalMessage').textContent = message;
         document.getElementById('confirmModal').classList.add('active');
         const btn = document.getElementById('confirmDeleteBtn');
@@ -1776,10 +2237,9 @@
     });
 
     // ============================================================
-    // 5. FUNCIONES DE ELIMINACIÓN CON REVERSIÓN DE STOCK
+    // 4. FUNCIONES DE ELIMINACIÓN CON REVERSIÓN DE STOCK
     // ============================================================
 
-    // --- Función auxiliar: revertir stock de máquina ---
     async function revertirStockMaquina(db, sucursal, code, maquina, cantidadDelta, fechaMovimiento) {
         if (!maquina || !maquina.startsWith('maq')) return;
         try {
@@ -1800,7 +2260,6 @@
         }
     }
 
-    // --- Función auxiliar: revertir stock de una venta ---
     async function revertirStockDeVenta(db, venta, sucursal) {
         if (!venta) return;
         const code = venta.code || '';
@@ -1810,7 +2269,6 @@
         const fichaConsumption = Math.abs(venta.fichaConsumption || 0);
         const esIndependiente = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
 
-        // Obtener la fecha original del movimiento en formato ISO
         let fechaMovimiento = null;
         const fechaFuente = venta.fechaEliminacion || venta.fecha || '';
         if (fechaFuente) {
@@ -1828,12 +2286,10 @@
         }
 
         try {
-            // CASO 1: CIERRES → no tocan stock
             if (CIERRE_CODES.includes(code) || venta.esCierre) {
                 return;
             }
 
-            // CASO 2: FICHAS GRATIS → devolver fichas a 000-00
             if (venta.esFichaGratis || code === '000-05' || code === '000-06') {
                 const fichasADevolver = fichaConsumption || (code === '000-06' ? 7 : 1);
                 await runTransaction(ref(db, 'stock/000-00'), (current) => {
@@ -1843,7 +2299,6 @@
                 return;
             }
 
-            // CASO 3: MOVIMIENTOS (agregar/quitar a stock o máquinas)
             if (venta.esMovimiento) {
                 const tipoMov = venta.tipoMovimiento;
                 const destino = venta.destinoMovimiento || 'stock';
@@ -1890,7 +2345,6 @@
                 return;
             }
 
-            // CASO 4: VENTA NORMAL
             if (fichaConsumption > 0 && !esIndependiente) {
                 await runTransaction(ref(db, 'stock/000-00'), (current) => {
                     if (current === null) current = STOCK_INICIAL;
@@ -1937,11 +2391,9 @@
                 return { success: false, error: 'Item no encontrado en el índice ' + indexVenta };
             }
 
-            // REVERTIR STOCK ANTES DE ELIMINAR
             const venta = ventas[indexVenta];
             await revertirStockDeVenta(db, venta, sucursal);
 
-            // ELIMINAR ITEM DEL HISTORIAL
             ventas.splice(indexVenta, 1);
             const totalDinero = ventas.reduce((s, v) => s + (v.money || 0), 0);
             const totalPuntos = ventas.reduce((s, v) => s + (v.points || 0), 0);
@@ -1968,7 +2420,6 @@
             const app = initializeApp(config.config, config.id);
             const db = getDatabase(app);
 
-            // REVERTIR STOCK DE TODAS LAS VENTAS ANTES DE ELIMINAR
             const snapshot = await get(ref(db, `historial_ventas/${firebaseKey}`));
             if (snapshot.exists()) {
                 const registro = snapshot.val();
@@ -1978,7 +2429,6 @@
                 }
             }
 
-            // ELIMINAR REGISTRO COMPLETO
             await remove(ref(db, `historial_ventas/${firebaseKey}`));
             return { success: true };
         } catch (error) {
@@ -1988,6 +2438,12 @@
     }
 
     window.eliminarItem = function(sucursal, firebaseKey, fuente, ventaIndex = null, nombre = '') {
+        // Bloqueo para viewers
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para eliminar', 'error');
+            return;
+        }
+
         if (estado.eliminando) {
             showToast('⏳ Ya hay una eliminación en proceso...', 'warning');
             return;
@@ -2039,7 +2495,7 @@
     };
 
     // ============================================================
-    // 6. FUNCIONES GLOBALES
+    // 5. FUNCIONES GLOBALES
     // ============================================================
     window.recargarDatos = function() {
         cargarCarritos();
@@ -2058,10 +2514,11 @@
     };
 
     // ============================================================
-    // 7. CARGAR CARRITOS
+    // 6. CARGAR CARRITOS
     // ============================================================
     async function cargarCarritos() {
         const tbody = document.getElementById('carritosBody');
+        if (!tbody) return;
         tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px;">
             <div class="loader-premium"><div class="spinner"></div><span>Cargando...</span></div>
         </td></tr>`;
@@ -2091,13 +2548,17 @@
             }
         }
         renderCarritos();
-        document.getElementById('totalItemsBadge').textContent = totalItems;
-        document.getElementById('tabCarritosBadge').textContent = totalItems;
-        document.getElementById('lastUpdate').textContent = `✅ ${new Date().toLocaleTimeString()}`;
+        const badge = document.getElementById('totalItemsBadge');
+        const tabBadge = document.getElementById('tabCarritosBadge');
+        const lastUpdate = document.getElementById('lastUpdate');
+        if (badge) badge.textContent = totalItems;
+        if (tabBadge) tabBadge.textContent = totalItems;
+        if (lastUpdate) lastUpdate.textContent = `✅ ${new Date().toLocaleTimeString()}`;
     }
 
     function renderCarritos() {
         const tbody = document.getElementById('carritosBody');
+        if (!tbody) return;
         const ordenSucursales = ["Villa Morra", "Los Laureles", "Lambaré", "Villa Elisa"];
         let html = '';
         ordenSucursales.forEach(sucursal => {
@@ -2204,7 +2665,7 @@
     }
 
     // ============================================================
-    // 8. FUNCIONES DE FECHA
+    // 7. FUNCIONES DE FECHA
     // ============================================================
     function obtenerDiaLaboral(item) {
         if (item.fechaEliminacion) return item.fechaEliminacion;
@@ -2224,10 +2685,11 @@
     }
 
     // ============================================================
-    // 9. CATÁLOGO UNIFICADO
+    // 8. CATÁLOGO UNIFICADO
     // ============================================================
     async function cargarCatalogoUnificado() {
         const container = document.getElementById('catalogoContainer');
+        if (!container) return;
         container.innerHTML = `
             <div class="loader-premium" style="grid-column: 1 / -1;">
                 <div class="spinner"></div>
@@ -2278,7 +2740,6 @@
 
                 if (catalogoData.productos && Array.isArray(catalogoData.productos)) {
                     listaProductos = catalogoData.productos;
-                    console.log(`📋 ${suc.nombre}: ${listaProductos.length} productos en catálogo`);
                 } 
                 else if (typeof catalogoData === 'object' && catalogoData !== null) {
                     for (const key in catalogoData) {
@@ -2292,7 +2753,6 @@
                 }
 
                 if (listaProductos.length === 0) {
-                    console.log(`⚠️ ${suc.nombre}: No se encontró catálogo, usando productos con stock > 0`);
                     for (const code in stockData) {
                         if (stockData[code] > 0) {
                             const info = getInfo(code);
@@ -2304,14 +2764,12 @@
                             });
                         }
                     }
-                    console.log(`📦 ${suc.nombre}: ${listaProductos.length} productos con stock > 0`);
                 } else {
                     listaProductos = listaProductos.filter(p => {
                         const code = p.code || p.codigo || '';
                         const stock = stockData[code] ?? 0;
                         return stock > 0;
                     });
-                    console.log(`✅ ${suc.nombre}: ${listaProductos.length} productos con stock > 0`);
                 }
 
                 for (const p of listaProductos) {
@@ -2362,6 +2820,7 @@
 
     function renderCatalogo(productos) {
         const container = document.getElementById('catalogoContainer');
+        if (!container) return;
         const filtro = estado.catalogoFiltro;
         const search = estado.catalogoSearch.toLowerCase();
 
@@ -2385,12 +2844,18 @@
             counts[p.sucursal] = (counts[p.sucursal] || 0) + 1;
         });
 
-        document.getElementById('countTodas').textContent = todasCount;
-        document.getElementById('countVilla Morra').textContent = counts['Villa Morra'] || 0;
-        document.getElementById('countLos Laureles').textContent = counts['Los Laureles'] || 0;
-        document.getElementById('countVilla Elisa').textContent = counts['Villa Elisa'] || 0;
-        document.getElementById('catalogoTotalCount').textContent = filtrados.length;
-        document.getElementById('tabCatalogoBadge').textContent = filtrados.length;
+        const elCountTodas = document.getElementById('countTodas');
+        if (elCountTodas) elCountTodas.textContent = todasCount;
+        const elCountVM = document.getElementById('countVilla Morra');
+        if (elCountVM) elCountVM.textContent = counts['Villa Morra'] || 0;
+        const elCountLL = document.getElementById('countLos Laureles');
+        if (elCountLL) elCountLL.textContent = counts['Los Laureles'] || 0;
+        const elCountVE = document.getElementById('countVilla Elisa');
+        if (elCountVE) elCountVE.textContent = counts['Villa Elisa'] || 0;
+        const elTotal = document.getElementById('catalogoTotalCount');
+        if (elTotal) elTotal.textContent = filtrados.length;
+        const elBadge = document.getElementById('tabCatalogoBadge');
+        if (elBadge) elBadge.textContent = filtrados.length;
 
         if (filtrados.length === 0) {
             container.innerHTML = `
@@ -2415,7 +2880,6 @@
         let html = '';
         filtrados.forEach((p, idx) => {
             const colorIndex = p.code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colores.length;
-            const isSpecial = CIERRE_CODES.includes(p.code) || p.code === '000-11';
 
             html += `
                 <div class="catalogo-item"
@@ -2456,9 +2920,15 @@
     }
 
     // ============================================================
-    // 10. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
+    // 9. MANEJO DEL CATÁLOGO - CLICK EN PRODUCTO
     // ============================================================
     window.handleCatalogoClick = function(element) {
+        // Bloqueo para viewers
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para modificar', 'error');
+            return;
+        }
+
         const code = element.dataset.code;
         const price = parseFloat(element.dataset.price);
         const points = parseInt(element.dataset.points);
@@ -2580,7 +3050,7 @@
     }
 
     // ============================================================
-    // 11. UTILIDADES DEL MODAL
+    // 10. UTILIDADES DEL MODAL
     // ============================================================
     function shouldShowQuantity(code) {
         return code === '005-13' || code === '000-00';
@@ -2622,9 +3092,8 @@
     window.calculateRemainingMoney = function() {
         updateModalTotalsBasedOnQuantity();
     };
-
     // ============================================================
-    // 12. MODAL DE COMPRA
+    // 11. MODAL DE COMPRA
     // ============================================================
     window.closeModal = function() {
         document.getElementById('purchaseModal').style.display = 'none';
@@ -2632,6 +3101,10 @@
     };
 
     window.addToCart = function() {
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para registrar ventas', 'error');
+            return;
+        }
         if (window.addToCartLock) return;
         if (!estado.currentProduct) return;
         window.addToCartLock = true;
@@ -2731,9 +3204,13 @@
     };
 
     // ============================================================
-    // 13. MOVIMIENTOS
+    // 12. MOVIMIENTOS
     // ============================================================
     window.agregarUnidades = async function() {
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para realizar movimientos', 'error');
+            return;
+        }
         if (window.agregarUnidadesLock) return;
         window.agregarUnidadesLock = true;
         if (!estado.currentMovimientosProduct) {
@@ -2818,6 +3295,10 @@
     };
 
     window.quitarUnidades = async function() {
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para realizar movimientos', 'error');
+            return;
+        }
         if (window.quitarUnidadesLock) return;
         window.quitarUnidadesLock = true;
         if (!estado.currentMovimientosProduct) {
@@ -2902,9 +3383,13 @@
     };
 
     // ============================================================
-    // 14. FICHAS GRATIS
+    // 13. FICHAS GRATIS
     // ============================================================
     async function procesarFichaGratis(code, fichasAConsumir) {
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para procesar fichas', 'error');
+            return;
+        }
         const catalogoItem = document.querySelector('.catalogo-item[data-code="' + code + '"]');
         if (!catalogoItem) { showToast('❌ Producto no encontrado', 'error'); return; }
         const sucursal = catalogoItem.dataset.sucursal;
@@ -2948,9 +3433,13 @@
     }
 
     // ============================================================
-    // 15. CIERRES
+    // 14. CIERRES
     // ============================================================
     function abrirModalCierre(tipo, descripcion) {
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para registrar cierres', 'error');
+            return;
+        }
         document.getElementById('cierreTitulo').innerHTML = `💰 Cierre de Caja - ${tipo}`;
         document.getElementById('cierreDescripcion').innerHTML = descripcion;
         document.getElementById('cierreMonto').value = '';
@@ -2968,6 +3457,10 @@
     };
 
     async function confirmarCierre(tipo) {
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso', 'error');
+            return;
+        }
         let monto = document.getElementById('cierreMonto').value;
         monto = monto.replace(/\./g, '');
         let montoNum = parseFloat(monto);
@@ -2999,9 +3492,13 @@
     }
 
     // ============================================================
-    // 16. CONTADORES DE MÁQUINAS (MODAL)
+    // 15. CONTADORES DE MÁQUINAS (MODAL)
     // ============================================================
     window.openContadoresModal = async function() {
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para acceder a contadores', 'error');
+            return;
+        }
         const catalogoItem = document.querySelector('.catalogo-item[data-code="000-11"]');
         const sucursal = catalogoItem ? catalogoItem.dataset.sucursal : 'Villa Morra';
         estado.currentSucursalContadores = sucursal;
@@ -3052,6 +3549,10 @@
     };
 
     window.guardarContadoresMaquina = async function() {
+        if (window.currentUser && window.currentUser.isViewer) {
+            showToast('❌ No tienes permiso para guardar contadores', 'error');
+            return;
+        }
         const maquina = document.getElementById('maquinaSelect').value;
         if (!maquina) { alert('Seleccione una máquina primero'); return; }
         const fecha = document.getElementById('fechaContador').value;
@@ -3077,26 +3578,8 @@
             showToast('❌ Error al guardar contadores', 'error');
         }
     };
-
     // ============================================================
-    // 17. FILTROS DEL CATÁLOGO
-    // ============================================================
-    document.getElementById('catalogoFiltros').addEventListener('click', function(e) {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        document.querySelectorAll('#catalogoFiltros button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        estado.catalogoFiltro = btn.dataset.sucursal;
-        renderCatalogo(estado.catalogoProductos);
-    });
-
-    document.getElementById('catalogoSearch').addEventListener('input', function() {
-        estado.catalogoSearch = this.value;
-        renderCatalogo(estado.catalogoProductos);
-    });
-
-    // ============================================================
-    // 18. FILTROS AVANZADOS
+    // 16. FILTROS AVANZADOS
     // ============================================================
     async function cargarHistorialPorSucursal(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -3234,6 +3717,8 @@
 
     function renderResultadosFiltrados(items) {
         const container = document.getElementById('resultadosFiltrados');
+        const esViewer = window.currentUser && window.currentUser.isViewer;
+
         if (items.length === 0) {
             container.innerHTML = `
                 <div class="filter-summary-premium">
@@ -3248,8 +3733,13 @@
         let html = `<div class="filter-summary-premium">
             <span><i class="fas fa-list"></i> <strong>${items.length}</strong> items</span>
             <span class="filter-tag-premium"><i class="fas fa-calendar"></i> ${new Set(items.map(i => i._diaLaboral)).size} días</span>
-            <span class="filter-tag-premium"><i class="fas fa-trash" style="color:var(--danger);"></i> Puedes eliminar items del historial (devuelve stock)</span>
+            ${!esViewer ? '<span class="filter-tag-premium"><i class="fas fa-trash" style="color:var(--danger);"></i> Puedes eliminar items del historial (devuelve stock)</span>' : ''}
         </div>`;
+
+        // Columnas dinámicas: si es viewer, sin columna de Acción
+        const columnasAccion = esViewer ? '' : '<th>Acción</th>';
+        const colspanTotal = esViewer ? 13 : 14;
+
         html += `<div class="table-responsive"><table class="table-premium">
             <thead><tr>
                 <th>#</th>
@@ -3265,7 +3755,7 @@
                 <th>📅 Fecha</th>
                 <th>⏰ Hora</th>
                 <th>Tipo</th>
-                <th>Acción</th>
+                ${columnasAccion}
             </tr></thead><tbody>`;
         let contador = 0, ultimoDia = '';
         items.forEach(item => {
@@ -3276,7 +3766,7 @@
             const diaLaboral = item._diaLaboral || '-';
             if (diaLaboral !== ultimoDia) {
                 html += `<tr class="dia-separator">
-                    <td colspan="14"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
+                    <td colspan="${colspanTotal}"><i class="fas fa-calendar-day"></i> Día Laboral: <strong>${diaLaboral}</strong></td>
                 </tr>`;
                 ultimoDia = diaLaboral;
             }
@@ -3317,6 +3807,21 @@
             const puedeEliminar = item.fuente === 'historial' || item.fuente === 'carrito';
             const ventaIndex = item.ventaIndex !== undefined ? item.ventaIndex : null;
             const firebaseKey = item.firebaseKey || '';
+
+            // Acción solo si NO es viewer
+            let celdaAccion = '';
+            if (!esViewer) {
+                celdaAccion = `<td>
+                    ${puedeEliminar ? `
+                        <button class="btn-delete"
+                                onclick="eliminarItem('${item.sucursal}', '${firebaseKey}', '${item.fuente}', ${ventaIndex}, '${nombreItem.replace(/'/g, "\\'")}')"
+                                title="Eliminar este item (devuelve stock)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : '<span style="color:var(--gray-400); font-size:0.7rem;">-</span>'}
+                </td>`;
+            }
+
             html += `<tr class="${clase}">
                 <td style="color:var(--gray-400); font-size:0.7rem;">${contador}</td>
                 <td style="font-weight:600; font-size:0.75rem; color:var(--primary);">${diaLaboral}</td>
@@ -3331,15 +3836,7 @@
                 <td>${item.fecha || '-'}</td>
                 <td style="font-family:monospace; font-size:0.75rem;">${horaStr}</td>
                 <td style="font-size:0.75rem;">${tipo}</td>
-                <td>
-                    ${puedeEliminar ? `
-                        <button class="btn-delete"
-                                onclick="eliminarItem('${item.sucursal}', '${firebaseKey}', '${item.fuente}', ${ventaIndex}, '${nombreItem.replace(/'/g, "\\'")}')"
-                                title="Eliminar este item (devuelve stock)">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    ` : '<span style="color:var(--gray-400); font-size:0.7rem;">-</span>'}
-                </td>
+                ${celdaAccion}
             </tr>`;
         });
         html += `</tbody></table></div>`;
@@ -3364,7 +3861,7 @@
     };
 
     // ============================================================
-    // 19. CONTADORES DE MÁQUINAS (PANEL)
+    // 17. CONTADORES DE MÁQUINAS (PANEL)
     // ============================================================
     async function cargarContadoresMaquina(sucursalConfig) {
         const key = sucursalConfig.nombre;
@@ -3860,8 +4357,9 @@
         </tr>`;
         tbody.innerHTML = html;
     }
-        // ============================================================
-    // 20. PDF - GENERACIÓN DE REPORTES
+
+    // ============================================================
+    // 18. PDF - GENERACIÓN DE REPORTES
     // ============================================================
     function debeMostrarLambare(fechaDesde) {
         if (!fechaDesde) return true;
@@ -4240,12 +4738,13 @@
     }
 
     // ============================================================
-    // 21. SECCIÓN MÁQUINAS
+    // 19. SECCIÓN MÁQUINAS
     // ============================================================
     let maquinasFiltroActual = { sucursal: 'todas', desde: '', hasta: '' };
 
     window.cargarDatosMaquinas = async function() {
         const container = document.getElementById('maquinasGridContainer');
+        if (!container) return;
         container.innerHTML = `
             <div class="loader-premium" style="grid-column: 1 / -1;">
                 <div class="spinner"></div>
@@ -4311,9 +4810,6 @@
                                     📌 Las chicas deben registrar el stock en máquinas usando la opción<br>
                                     <strong>"Registrar stock en máquinas"</strong> en la pestaña Movimientos de cada producto.
                                 </p>
-                                <p style="margin-top:4px; font-size:0.85rem;">
-                                    💡 Selecciona una fecha que tenga lectura de stock en máquinas.
-                                </p>
                                 <button class="btn-sugerencia" onclick="cargarDatosMaquinas()">
                                     🔄 Intentar de nuevo
                                 </button>
@@ -4331,13 +4827,6 @@
                                     <strong>Fecha seleccionada:</strong> ${fechaHasta}<br>
                                     <strong>Sucursal:</strong> ${suc.nombre}
                                 </p>
-                                <p style="margin-top:8px;">
-                                    📌 Las chicas deben registrar el stock en máquinas usando la opción<br>
-                                    <strong>"Registrar stock en máquinas"</strong> en la pestaña Movimientos de cada producto.
-                                </p>
-                                <p style="margin-top:4px; font-size:0.85rem;">
-                                    💡 Selecciona una fecha que tenga lectura de stock en máquinas.
-                                </p>
                                 <button class="btn-sugerencia" onclick="cargarDatosMaquinas()">
                                     🔄 Intentar de nuevo
                                 </button>
@@ -4351,49 +4840,19 @@
                         if (fechasOrdenadas.length === 0) return;
 
                         let stockInicial = 0;
-                        let fechaInicialEncontrada = null;
-                        for (let i = 0; i < fechasOrdenadas.length; i++) {
-                            const fecha = fechasOrdenadas[i];
-                            if (fecha === fechaDesde) {
-                                stockInicial = fechas[fecha].cantidad || 0;
-                                fechaInicialEncontrada = fecha;
-                                break;
-                            }
-                        }
-
                         let stockFinal = 0;
-                        let fechaFinalEncontrada = null;
+
                         for (let i = 0; i < fechasOrdenadas.length; i++) {
-                            const fecha = fechasOrdenadas[i];
-                            if (fecha === fechaHasta) {
-                                stockFinal = fechas[fecha].cantidad || 0;
-                                fechaFinalEncontrada = fecha;
+                            if (fechasOrdenadas[i] === fechaDesde) {
+                                stockInicial = fechas[fechasOrdenadas[i]].cantidad || 0;
                                 break;
                             }
                         }
 
-                        if (fechaInicialEncontrada === null) {
-                            for (let i = fechasOrdenadas.length - 1; i >= 0; i--) {
-                                const fecha = fechasOrdenadas[i];
-                                if (fecha <= fechaDesde) {
-                                    stockInicial = fechas[fecha].cantidad || 0;
-                                    fechaInicialEncontrada = fecha;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (fechaFinalEncontrada === null) {
-                            for (let i = 0; i < fechasOrdenadas.length; i++) {
-                                const fecha = fechasOrdenadas[i];
-                                if (fecha >= fechaHasta) {
-                                    stockFinal = fechas[fecha].cantidad || 0;
-                                    fechaFinalEncontrada = fecha;
-                                    break;
-                                }
-                            }
-                            if (fechaFinalEncontrada === null && fechasOrdenadas.length > 0) {
-                                stockFinal = fechas[fechasOrdenadas[fechasOrdenadas.length - 1]].cantidad || 0;
+                        for (let i = 0; i < fechasOrdenadas.length; i++) {
+                            if (fechasOrdenadas[i] === fechaHasta) {
+                                stockFinal = fechas[fechasOrdenadas[i]].cantidad || 0;
+                                break;
                             }
                         }
 
@@ -4478,17 +4937,6 @@
 
             } catch (error) {
                 console.error(`Error cargando máquinas de ${suc.nombre}:`, error);
-                container.innerHTML = `
-                    <div class="aviso-lectura" style="background:#f8d7da; border-color:#dc3545; color:#721c24;">
-                        <i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i>
-                        <h3>❌ Error al cargar datos</h3>
-                        <p>${error.message || 'Error desconocido al cargar los datos de máquinas.'}</p>
-                        <button class="btn-sugerencia" onclick="cargarDatosMaquinas()" style="background:#dc3545; color:white;">
-                            🔄 Reintentar
-                        </button>
-                    </div>
-                `;
-                return;
             }
         }
 
@@ -4505,6 +4953,7 @@
 
     function renderMaquinas(items, esFiltroFecha) {
         const container = document.getElementById('maquinasGridContainer');
+        if (!container) return;
 
         if (items.length === 0) {
             container.innerHTML = `
@@ -4531,11 +4980,9 @@
             const badgeTitle = esFiltroFecha ? 'Ganado por clientes' : 'Stock en máquinas';
             const badgeColor = esFiltroFecha ? 'background:var(--gold);' : 'background:var(--success);';
 
-            let iconoSucursal = '🏢';
-
             html += `
                 <div class="catalogo-item" style="position:relative;">
-                    <span class="sucursal-badge">${iconoSucursal} ${p.sucursal}</span>
+                    <span class="sucursal-badge">🏢 ${p.sucursal}</span>
                     <span class="stock-indicator" style="${badgeColor} color:white; font-size:0.8rem; padding:3px 10px;" title="${badgeTitle}">
                         ${badgeIcon} ${cantidad}
                     </span>
@@ -4629,38 +5076,6 @@
         return mapa[cat] || 0;
     }
 
-    // ============================================================
-    // 22. INICIALIZACIÓN
-    // ============================================================
-    cargarCarritos();
-
-    const hoy = new Date();
-    const hace7Dias = new Date();
-    hace7Dias.setDate(hoy.getDate() - 7);
-    document.getElementById('filtroDiaDesde').value = hace7Dias.toISOString().split('T')[0];
-    document.getElementById('filtroDiaHasta').value = hoy.toISOString().split('T')[0];
-
-    const hace30Dias = new Date();
-    hace30Dias.setDate(hoy.getDate() - 30);
-    document.getElementById('contadorFechaDesde').value = hace30Dias.toISOString().split('T')[0];
-    document.getElementById('contadorFechaHasta').value = hoy.toISOString().split('T')[0];
-
-    document.getElementById('maquinasFiltroDesde').value = hoy.toISOString().split('T')[0];
-    document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
-
-    console.log('✅ Panel ASTROLAND Premium cargado correctamente');
-    console.log('✅ Reversión de stock al eliminar historial: ACTIVADA');
-
-    // ===== SUSCRIPCIONES EN TIEMPO REAL =====
-    for (const suc of sucursalesCompletas) {
-        try {
-            const app = initializeApp(suc.config, suc.id);
-            const db = getDatabase(app);
-            onValue(ref(db, 'carrito'), () => {
-                cargarCarritos();
-            });
-        } catch (e) { /* Ignorar */ }
-    }
 </script>
 
 </body>
