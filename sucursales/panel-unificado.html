@@ -2761,108 +2761,74 @@
         const productos = [];
 
         for (const suc of sucursalesCatalogo) {
-            try {
-                const appData = window.appsSucursales[suc.id];
-                if (!appData || !appData.db) {
-                    console.warn(`⚠️ ${suc.nombre}: app no inicializada`);
-                    continue;
-                }
-                const db = appData.db;
-
-                const catalogoSnap = await get(ref(db, 'catalogo'));
-                const catalogoData = catalogoSnap.val() || {};
-
-                const stockSnap = await get(ref(db, 'stock'));
-                const stockData = stockSnap.val() || {};
-
-                const getInfo = (code) => {
-                    const precios = {
-                        '000-00': 5000, '000-01': 50000, '000-02': 100000,
-                        '000-03': 10000, '000-04': 10000,
-                        '000-05': 0, '000-06': 0,
-                        '000-07': 15000, '000-08': 15000,
-                        '000-09': 0, '000-10': 0, '000-11': 0,
-                        '420-00': 200000, '420-01': 2000, '420-02': 2000, '420-03': 60000,
-                        '100-38': 10000, '800-01': 250000
-                    };
-                    const puntosMap = {
-                        '005': 5, '020': 20, '035': 35, '050': 50, '075': 75,
-                        '100': 100, '150': 150, '180': 180, '200': 200, '220': 220,
-                        '250': 250, '350': 350, '420': 420, '500': 500, '600': 600,
-                        '800': 800, '000': 0
-                    };
-                    const cat = code.split('-')[0];
-                    const price = precios[code] || 0;
-                    const points = puntosMap[cat] || 0;
-                    return { price, points };
-                };
-
-                let listaProductos = [];
-
-                if (catalogoData.productos && Array.isArray(catalogoData.productos)) {
-                    listaProductos = catalogoData.productos;
-                } 
-                else if (typeof catalogoData === 'object' && catalogoData !== null) {
-                    for (const key in catalogoData) {
-                        const value = catalogoData[key];
-                        if (Array.isArray(value)) {
-                            listaProductos = listaProductos.concat(value);
-                        } else if (value && typeof value === 'object' && value.productos && Array.isArray(value.productos)) {
-                            listaProductos = listaProductos.concat(value.productos);
-                        }
-                    }
-                }
-
-                if (listaProductos.length === 0) {
-                    for (const code in stockData) {
-                        if (stockData[code] > 0) {
-                            const info = getInfo(code);
-                            listaProductos.push({
-                                code: code,
-                                price: info.price,
-                                points: info.points,
-                                stock: stockData[code]
-                            });
-                        }
-                    }
-                } else {
-                    listaProductos = listaProductos.filter(p => {
-                        const code = p.code || p.codigo || '';
-                        const stock = stockData[code] ?? 0;
-                        return stock > 0;
-                    });
-                }
-
-                for (const p of listaProductos) {
-                    const code = p.code || p.codigo || '';
-                    if (!code || !code.includes('-')) continue;
-
-                    const stockVal = p.stock !== undefined ? p.stock : (stockData[code] ?? 0);
-                    const price = p.price || p.precio || 0;
-                    const points = p.points || p.puntos || 0;
-                    const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
-                    const category = code.split('-')[0] || '000';
-
-                    if (stockVal > 0) {
-                        productos.push({
-                            code: code,
-                            price: price,
-                            points: points,
-                            sucursal: suc.nombre,
-                            stock: stockVal,
-                            fichaConsumption: fichaConsumption,
-                            category: category,
-                            nombre: code + (price > 0 ? ` - G.${price.toLocaleString('es-PY')}` : '')
-                        });
-                    }
-                }
-
-                estado.catalogoStock[suc.nombre] = stockData;
-
-            } catch (error) {
-                console.error(`❌ Error cargando catálogo de ${suc.nombre}:`, error);
-            }
+    try {
+        const appData = window.appsSucursales[suc.id];
+        if (!appData || !appData.db) {
+            console.warn(`⚠️ ${suc.nombre}: app no inicializada`);
+            continue;
         }
+        const db = appData.db;
+
+        // Leer SOLO stock (no existe nodo catalogo)
+        let stockData = {};
+        try {
+            const stockSnap = await get(ref(db, 'stock'));
+            stockData = stockSnap.val() || {};
+        } catch (e) {
+            console.warn(`⚠️ ${suc.nombre}: error leyendo stock:`, e.message);
+            continue;
+        }
+
+        const getInfo = (code) => {
+            const precios = {
+                '000-00': 5000, '000-01': 50000, '000-02': 100000,
+                '000-03': 10000, '000-04': 10000,
+                '000-05': 0, '000-06': 0,
+                '000-07': 15000, '000-08': 15000,
+                '000-09': 0, '000-10': 0, '000-11': 0,
+                '420-00': 200000, '420-01': 2000, '420-02': 2000, '420-03': 60000,
+                '100-38': 10000, '800-01': 250000
+            };
+            const puntosMap = {
+                '005': 5, '020': 20, '035': 35, '050': 50, '075': 75,
+                '100': 100, '150': 150, '180': 180, '200': 200, '220': 220,
+                '250': 250, '350': 350, '420': 420, '500': 500, '600': 600,
+                '800': 800, '000': 0
+            };
+            const cat = code.split('-')[0];
+            const price = precios[code] || 0;
+            const points = puntosMap[cat] || 0;
+            return { price, points };
+        };
+
+        // Construir lista de productos desde STOCK (datos directos de Firebase)
+        for (const code in stockData) {
+            const stockVal = stockData[code];
+            if (!code || !code.includes('-')) continue;
+            if (typeof stockVal !== 'number' || stockVal <= 0) continue;
+
+            const info = getInfo(code);
+            const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
+            const category = code.split('-')[0] || '000';
+
+            productos.push({
+                code: code,
+                price: info.price,
+                points: info.points,
+                sucursal: suc.nombre,
+                stock: stockVal,
+                fichaConsumption: fichaConsumption,
+                category: category,
+                nombre: code + (info.price > 0 ? ` - G.${info.price.toLocaleString('es-PY')}` : '')
+            });
+        }
+
+        estado.catalogoStock[suc.nombre] = stockData;
+
+    } catch (error) {
+        console.error(`❌ Error cargando catálogo de ${suc.nombre}:`, error);
+    }
+}
 
         const uniqueMap = new Map();
         productos.forEach(p => {
