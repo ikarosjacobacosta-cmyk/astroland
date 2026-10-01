@@ -1545,7 +1545,7 @@
 
         <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
           📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
-          🖥️ <strong>Máquinas:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
+          🖥️ <strong>Máquinas:</strong> Agregar ➕ repone | Quitar ➖ retira (el stock en máquinas se actualiza automáticamente)
         </p>
 
         <div class="registro-maquinas-box">
@@ -1565,7 +1565,7 @@
           </div>
           <div class="reg-helper">
             <i>ℹ️</i> Registra cuántas unidades de este producto hay en TODAS las máquinas en una fecha específica.
-            Se guarda en el historial de stock en máquinas.
+            <strong>Sobreescribe</strong> el valor del día (útil para el conteo final del cierre).
           </div>
         </div>
       </div>
@@ -1831,6 +1831,7 @@
     let modoEdicionFecha = null;
 
     const STOCK_INICIAL = 100;
+    const SUCURSAL_NOMBRE = 'Los Laureles';
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     const FICHA_CONSUMPTION = {
@@ -1861,6 +1862,59 @@
     let touchStartY = 0;
     let touchEndX = 0;
     let touchEndY = 0;
+
+    // ============================================================
+    // HELPERS DE STOCK EN MÁQUINAS
+    // ============================================================
+
+    // Devuelve la fecha de hoy en formato YYYY-MM-DD
+    function hoyISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    // Lee el último stock conocido de la máquina para ese code.
+    // Prioriza el snapshot de hoy si existe; si no, el último histórico.
+    // Si no hay nada, devuelve null (nunca registrado).
+    async function leerStockMaquinaBase(code) {
+      try {
+        const basePath = `stock_maquinas/${SUCURSAL_NOMBRE}/${code}`;
+        const snap = await get(ref(database, basePath));
+        if (!snap.exists()) return null;
+        const data = snap.val();
+        const fechas = Object.keys(data).sort();
+        if (fechas.length === 0) return null;
+
+        const hoy = hoyISO();
+        if (data[hoy]) {
+          return { cantidad: data[hoy].cantidad || 0, fecha: hoy, esHoy: true };
+        }
+        const ultima = fechas[fechas.length - 1];
+        return { cantidad: data[ultima]?.cantidad || 0, fecha: ultima, esHoy: false };
+      } catch (e) {
+        console.error('Error leyendo stock de máquina:', e);
+        return null;
+      }
+    }
+
+    // Escribe el stock en máquinas del día de hoy (sobreescribe).
+    async function setStockMaquinaDia(code, name, nuevaCantidad) {
+      try {
+        const hoy = hoyISO();
+        const valor = Math.max(0, parseInt(nuevaCantidad, 10) || 0);
+        await set(ref(database, `stock_maquinas/${SUCURSAL_NOMBRE}/${code}/${hoy}`), {
+          cantidad: valor,
+          code: code,
+          name: name || '',
+          fechaRegistro: new Date().toISOString(),
+          registradoPor: 'movimiento-auto'
+        });
+        console.log(`🖥️ stock_maquinas/${code}/${hoy} = ${valor}`);
+        return valor;
+      } catch (e) {
+        console.error('Error escribiendo stock de máquina:', e);
+        return null;
+      }
+    }
 
     // ========== LOGIN / LOGOUT ==========
 
@@ -2097,7 +2151,7 @@
         const movimientosProductInfo = document.getElementById('movimientosProductInfo');
         if (movimientosProductInfo) {
           movimientosProductInfo.innerHTML =
-            `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (Máquinas: resta) | ➖ Quitar: resta del stock (Máquinas: suma)</small>`;
+            `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar a Máquinas: repone y actualiza el stock del día | ➖ Quitar de Máquinas: retira y actualiza el stock del día</small>`;
         }
 
         const fechaInput = document.getElementById('fechaStockMaquinas');
@@ -3906,7 +3960,7 @@
 
       const code = currentMovimientosProduct.code;
       const name = currentMovimientosProduct.name;
-      const sucursal = 'Los Laureles';
+      const sucursal = SUCURSAL_NOMBRE;
 
       mostrarMensajeEnProceso('🔄 Guardando registro de máquinas...');
 
@@ -3988,6 +4042,7 @@
       }
 
       const code = currentMovimientosProduct.code;
+      const name = currentMovimientosProduct.name;
       const consumo = currentMovimientosProduct.fichaConsumption || 0;
       const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
 
@@ -4012,17 +4067,18 @@
               operacionExitosa = false;
               alert('❌ Error en la transacción de stock');
             } else {
-              mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${name}`;
             }
           }
         } else if (destino === 'maquinas') {
+          // 1) Descontar del stock central
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', -(consumo * cantidad), 0);
             if (!resultado.success) {
               operacionExitosa = false;
               alert(`No hay suficientes fichas en stock para Máquinas`);
             } else {
-              mensaje = `✅ Máquinas: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
+              mensaje = `✅ Máquinas: repuso ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
             }
           } else {
             const resultado = await modificarStockAtomico(code, -cantidad, 0);
@@ -4030,8 +4086,17 @@
               operacionExitosa = false;
               alert(`No hay suficiente stock para Máquinas`);
             } else {
-              mensaje = `✅ Máquinas: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Máquinas: repuso ${cantidad} unidad(es) - RESTADO del stock de ${name}`;
             }
+          }
+
+          // 2) Actualizar stock_maquinas del día
+          if (operacionExitosa) {
+            const base = await leerStockMaquinaBase(code);
+            const stockActualMaquina = base ? base.cantidad : 0;
+            const nuevoValorMaquina = stockActualMaquina + cantidad;
+            await setStockMaquinaDia(code, name, nuevoValorMaquina);
+            mensaje += `\n🖥️ Stock en máquinas actualizado: ${stockActualMaquina} → ${nuevoValorMaquina}`;
           }
         }
 
@@ -4042,7 +4107,7 @@
 
           await push(cartRef, {
             code,
-            name: currentMovimientosProduct.name,
+            name: name,
             points: 0,
             money: 0,
             unidades: cantidad,
@@ -4101,8 +4166,33 @@
       }
 
       const code = currentMovimientosProduct.code;
+      const name = currentMovimientosProduct.name;
       const consumo = currentMovimientosProduct.fichaConsumption || 0;
       const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+      // ✅ VALIDACIÓN PREVIA: si es retiro de máquina, chequear el snapshot
+      if (destino === 'maquinas') {
+        const base = await leerStockMaquinaBase(code);
+        if (base === null) {
+          alert(
+            `⚠️ No hay registro previo en máquinas para ${code}.\n\n` +
+            `Antes de retirar, registrá el stock que hay en la máquina usando ` +
+            `la opción "📊 Registrar stock en máquinas" en esta misma pestaña.`
+          );
+          window.quitarUnidadesLock = false;
+          return;
+        }
+        if (cantidad > base.cantidad) {
+          alert(
+            `❌ No se puede retirar más de lo registrado.\n\n` +
+            `📦 Último stock registrado (${base.fecha}): ${base.cantidad} unidad(es)\n` +
+            `➖ Intento de retiro: ${cantidad} unidad(es)\n\n` +
+            `Actualizá el stock en máquinas o retirá como máximo ${base.cantidad} unidad(es).`
+          );
+          window.quitarUnidadesLock = false;
+          return;
+        }
+      }
 
       mostrarMensajeEnProceso('🔄 Procesando movimiento');
 
@@ -4125,17 +4215,18 @@
               operacionExitosa = false;
               alert(`No hay suficiente stock`);
             } else {
-              mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${name}`;
             }
           }
         } else if (destino === 'maquinas') {
+          // 1) Sumar al stock central
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
             if (!resultado.success) {
               operacionExitosa = false;
               alert('❌ Error en la transacción');
             } else {
-              mensaje = `✅ Máquinas: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
+              mensaje = `✅ Máquinas: retiró ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
             }
           } else {
             const resultado = await modificarStockAtomico(code, cantidad, 0);
@@ -4143,8 +4234,17 @@
               operacionExitosa = false;
               alert('❌ Error en la transacción');
             } else {
-              mensaje = `✅ Máquinas: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Máquinas: retiró ${cantidad} unidad(es) - SUMADO al stock de ${name}`;
             }
+          }
+
+          // 2) Restar de stock_maquinas del día
+          if (operacionExitosa) {
+            const base = await leerStockMaquinaBase(code);
+            const stockActualMaquina = base ? base.cantidad : 0;
+            const nuevoValorMaquina = Math.max(0, stockActualMaquina - cantidad);
+            await setStockMaquinaDia(code, name, nuevoValorMaquina);
+            mensaje += `\n🖥️ Stock en máquinas actualizado: ${stockActualMaquina} → ${nuevoValorMaquina}`;
           }
         }
 
@@ -4155,7 +4255,7 @@
 
           await push(cartRef, {
             code,
-            name: currentMovimientosProduct.name,
+            name: name,
             points: 0,
             money: 0,
             unidades: cantidad,
