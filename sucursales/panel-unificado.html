@@ -1233,7 +1233,10 @@
             .aviso-lectura { padding: 16px 12px; }
         }
     </style>
-</head><body><!-- ========== PANTALLA DE LOGIN ========== -->
+</head>
+<body>
+
+<!-- ========== PANTALLA DE LOGIN ========== -->
 <div id="loginScreen">
     <div class="login-card">
         <div class="login-logo">A</div>
@@ -1242,30 +1245,14 @@
 
         <div id="loginError" class="login-error"></div>
 
-        <input
-            type="email"
-            id="loginEmail"
-            placeholder="Correo electrónico"
-            autocomplete="username"
-        />
-        <input
-            type="password"
-            id="loginPassword"
-            placeholder="Contraseña"
-            autocomplete="current-password"
-        />
+        <input type="email" id="loginEmail" placeholder="Correo electrónico" autocomplete="username" />
+        <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password" />
 
-        <button
-            id="loginBtn"
-            class="login-btn"
-            onclick="window.doLogin()"
-        >
+        <button id="loginBtn" class="login-btn" onclick="window.doLogin()">
             🔐 Iniciar Sesión
         </button>
 
-        <p class="login-footer">
-            🔒 Acceso restringido · Solo personal autorizado
-        </p>
+        <p class="login-footer">🔒 Acceso restringido · Solo personal autorizado</p>
     </div>
 </div>
 
@@ -1429,8 +1416,8 @@
                 <i class="fas fa-lightbulb"></i>
                 <div>
                     <strong>¿Cómo funciona?</strong> 
-                    • <strong>Sin filtro de fecha:</strong> Muestra el stock ACTUAL de cada producto en máquinas (registrado por las chicas)<br>
-                    • <strong>Con filtro de fecha:</strong> Calcula el consumo real: <strong>Stock Inicial + Reposiciones - Stock Final</strong><br>
+                    • <strong>Sin filtro de fecha:</strong> Muestra el stock ACTUAL de cada producto en máquinas (última foto registrada)<br>
+                    • <strong>Con filtro de fecha:</strong> Calcula el consumo real: <strong>Stock Inicial + Reposiciones − Retiros − Stock Final</strong><br>
                     • Solo se muestran productos con <strong>consumo > 0</strong>
                 </div>
             </div>
@@ -1849,7 +1836,9 @@
     </div>
 </div>
 
-<div class="toast-container" id="toastContainer"></div><script type="module">
+<div class="toast-container" id="toastContainer"></div>
+
+<script type="module">
     // ============================================================
     // 0. IMPORTS
     // ============================================================
@@ -1909,18 +1898,18 @@
     // ============================================================
     // 0.2 VARIABLES GLOBALES
     // ============================================================
-    window.currentUser = null;          // { uid, email, isAdmin, isViewer }
-    window.appsSucursales = {};         // { "villa-morra": { app, auth, db }, ... }
-    window.sucursalesConectadas = [];   // nombres de sucursales donde el login fue exitoso
-    window.sucursalesFallidas = [];     // nombres de sucursales donde falló
+    window.currentUser = null;
+    window.appsSucursales = {};
+    window.sucursalesConectadas = [];
+    window.sucursalesFallidas = [];
 
     // ============================================================
-    // 0.3 INICIALIZACIÓN DE APPS (una sola vez)
+    // 0.3 INICIALIZACIÓN DE APPS
     // ============================================================
     function inicializarAppsSucursales() {
         const appsExistentes = getApps();
         sucursalesCompletas.forEach(suc => {
-            if (window.appsSucursales[suc.id]) return; // ya inicializada
+            if (window.appsSucursales[suc.id]) return;
             const yaExiste = appsExistentes.find(a => a.name === suc.id);
             const app = yaExiste || initializeApp(suc.config, suc.id);
             const auth = getAuth(app);
@@ -1931,7 +1920,7 @@
     }
 
     // ============================================================
-    // 0.4 LOGIN CON PROPAGACIÓN A LAS 4 APPS
+    // 0.4 LOGIN
     // ============================================================
     window.doLogin = async function() {
         const email = document.getElementById('loginEmail').value.trim();
@@ -1952,15 +1941,10 @@
         btn.innerHTML = '⏳ Verificando...';
 
         try {
-            // 1. Inicializar todas las apps (una sola vez)
             inicializarAppsSucursales();
-
-            // 2. Login en Villa Morra (la principal, para leer los claims)
             const villaMorra = window.appsSucursales['villa-morra'];
             const cred = await signInWithEmailAndPassword(villaMorra.auth, email, password);
             const user = cred.user;
-
-            // 3. Obtener claims
             const tokenResult = await user.getIdTokenResult(true);
             const claims = tokenResult.claims;
             console.log('🔍 Claims del usuario:', claims);
@@ -1977,7 +1961,6 @@
                 return;
             }
 
-            // 4. Propagar sesión a las otras 3 apps
             btn.innerHTML = '⏳ Conectando sucursales...';
             window.sucursalesConectadas = ['Villa Morra'];
             window.sucursalesFallidas = [];
@@ -1995,7 +1978,6 @@
                 }
             }
 
-            // 5. Guardar usuario
             window.currentUser = {
                 uid: user.uid,
                 email: user.email,
@@ -2004,12 +1986,6 @@
             };
 
             console.log('✅ Login exitoso:', window.currentUser);
-            console.log(`📊 Sucursales conectadas: ${window.sucursalesConectadas.length}/${sucursalesCompletas.length}`);
-            if (window.sucursalesFallidas.length > 0) {
-                console.warn('⚠️ Sucursales fallidas:', window.sucursalesFallidas);
-            }
-
-            // 6. Mostrar panel
             mostrarPanel();
 
         } catch (error) {
@@ -2040,13 +2016,10 @@
                     const appData = window.appsSucursales[suc.id];
                     if (appData && appData.auth && appData.auth.currentUser) {
                         await signOut(appData.auth);
-                        console.log(`✅ Sesión cerrada en ${suc.nombre}`);
                     }
-                } catch (e) { /* Ignorar */ }
+                } catch (e) { }
             }
-        } catch (e) {
-            console.error('Error cerrando sesión:', e);
-        }
+        } catch (e) { }
         window.currentUser = null;
         window.appsSucursales = {};
         window.sucursalesConectadas = [];
@@ -2073,7 +2046,6 @@
             roleBadge.className = 'user-role';
         }
 
-        // Indicador de sucursales conectadas
         actualizarBadgeConexion();
 
         if (window.currentUser.isViewer) {
@@ -2181,11 +2153,16 @@
     let pendingDelete = null;
     let datosContadoresCache = {};
 
-    // Helper: obtener la appData de una sucursal por nombre
     function getAppDataByNombre(nombre) {
         const conf = sucursalToConfig[nombre];
         if (!conf) return null;
         return window.appsSucursales[conf.id] || null;
+    }
+
+    // Helper: ¿este destino es máquina?
+    function esDestinoMaquina(destino) {
+        if (!destino) return false;
+        return destino === 'maquinas' || destino.startsWith('maq');
     }
 
     // ============================================================
@@ -2208,7 +2185,6 @@
         document.getElementById('maquinasFiltroDesde').value = hoy.toISOString().split('T')[0];
         document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
 
-        // Navegación por tabs
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.addEventListener('click', function() {
                 document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -2227,7 +2203,6 @@
             });
         });
 
-        // Filtros del catálogo
         document.getElementById('catalogoFiltros').addEventListener('click', function(e) {
             const btn = e.target.closest('button');
             if (!btn) return;
@@ -2242,7 +2217,6 @@
             renderCatalogo(estado.catalogoProductos);
         });
 
-        // Suscripciones en tiempo real a las 4 apps
         for (const suc of sucursalesCompletas) {
             try {
                 const appData = window.appsSucursales[suc.id];
@@ -2251,12 +2225,12 @@
                         cargarCarritos();
                     });
                 }
-            } catch (e) { /* Ignorar */ }
+            } catch (e) { }
         }
 
         console.log('✅ Panel ASTROLAND Premium cargado correctamente');
         console.log('✅ Usuario:', window.currentUser.email, '| Admin:', window.currentUser.isAdmin, '| Viewer:', window.currentUser.isViewer);
-        console.log('✅ Reversión de stock al eliminar historial: ACTIVADA');
+        console.log('✅ Fórmula máquinas: Inicial + Reposiciones - Retiros - Final = Ganado por clientes');
     }
 
     // ============================================================
@@ -2305,15 +2279,19 @@
     // 4. FUNCIONES DE ELIMINACIÓN CON REVERSIÓN DE STOCK
     // ============================================================
     async function revertirStockMaquina(db, sucursal, code, maquina, cantidadDelta, fechaMovimiento) {
-        if (!maquina || !maquina.startsWith('maq')) return;
+        if (!esDestinoMaquina(maquina)) return;
         try {
-            const fecha = fechaMovimiento || new Date().toISOString().split('T')[0];
-            const path = `stock_maquinas/${sucursal}/${code}/${fecha}`;
-            const snap = await get(ref(db, path));
-            const actual = snap.exists() ? (snap.val().cantidad || 0) : 0;
+            const basePath = `stock_maquinas/${sucursal}/${code}`;
+            const snap = await get(ref(db, basePath));
+            const data = snap.exists() ? snap.val() : {};
+            const fechas = Object.keys(data).sort();
+            const fechaUsar = fechaMovimiento || (fechas.length > 0
+                ? fechas[fechas.length - 1]
+                : new Date().toISOString().split('T')[0]);
+            const actual = data[fechaUsar]?.cantidad || 0;
             let nueva = actual + cantidadDelta;
             if (nueva < 0) nueva = 0;
-            await set(ref(db, path), {
+            await set(ref(db, `${basePath}/${fechaUsar}`), {
                 cantidad: nueva,
                 maquina: maquina,
                 actualizado: new Date().toISOString()
@@ -2761,74 +2739,72 @@
         const productos = [];
 
         for (const suc of sucursalesCatalogo) {
-    try {
-        const appData = window.appsSucursales[suc.id];
-        if (!appData || !appData.db) {
-            console.warn(`⚠️ ${suc.nombre}: app no inicializada`);
-            continue;
+            try {
+                const appData = window.appsSucursales[suc.id];
+                if (!appData || !appData.db) {
+                    console.warn(`⚠️ ${suc.nombre}: app no inicializada`);
+                    continue;
+                }
+                const db = appData.db;
+
+                let stockData = {};
+                try {
+                    const stockSnap = await get(ref(db, 'stock'));
+                    stockData = stockSnap.val() || {};
+                } catch (e) {
+                    console.warn(`⚠️ ${suc.nombre}: error leyendo stock:`, e.message);
+                    continue;
+                }
+
+                const getInfo = (code) => {
+                    const precios = {
+                        '000-00': 5000, '000-01': 50000, '000-02': 100000,
+                        '000-03': 10000, '000-04': 10000,
+                        '000-05': 0, '000-06': 0,
+                        '000-07': 15000, '000-08': 15000,
+                        '000-09': 0, '000-10': 0, '000-11': 0,
+                        '420-00': 200000, '420-01': 2000, '420-02': 2000, '420-03': 60000,
+                        '100-38': 10000, '800-01': 250000
+                    };
+                    const puntosMap = {
+                        '005': 5, '020': 20, '035': 35, '050': 50, '075': 75,
+                        '100': 100, '150': 150, '180': 180, '200': 200, '220': 220,
+                        '250': 250, '350': 350, '420': 420, '500': 500, '600': 600,
+                        '800': 800, '000': 0
+                    };
+                    const cat = code.split('-')[0];
+                    const price = precios[code] || 0;
+                    const points = puntosMap[cat] || 0;
+                    return { price, points };
+                };
+
+                for (const code in stockData) {
+                    const stockVal = stockData[code];
+                    if (!code || !code.includes('-')) continue;
+                    if (typeof stockVal !== 'number' || stockVal <= 0) continue;
+
+                    const info = getInfo(code);
+                    const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
+                    const category = code.split('-')[0] || '000';
+
+                    productos.push({
+                        code: code,
+                        price: info.price,
+                        points: info.points,
+                        sucursal: suc.nombre,
+                        stock: stockVal,
+                        fichaConsumption: fichaConsumption,
+                        category: category,
+                        nombre: code + (info.price > 0 ? ` - G.${info.price.toLocaleString('es-PY')}` : '')
+                    });
+                }
+
+                estado.catalogoStock[suc.nombre] = stockData;
+
+            } catch (error) {
+                console.error(`❌ Error cargando catálogo de ${suc.nombre}:`, error);
+            }
         }
-        const db = appData.db;
-
-        // Leer SOLO stock (no existe nodo catalogo)
-        let stockData = {};
-        try {
-            const stockSnap = await get(ref(db, 'stock'));
-            stockData = stockSnap.val() || {};
-        } catch (e) {
-            console.warn(`⚠️ ${suc.nombre}: error leyendo stock:`, e.message);
-            continue;
-        }
-
-        const getInfo = (code) => {
-            const precios = {
-                '000-00': 5000, '000-01': 50000, '000-02': 100000,
-                '000-03': 10000, '000-04': 10000,
-                '000-05': 0, '000-06': 0,
-                '000-07': 15000, '000-08': 15000,
-                '000-09': 0, '000-10': 0, '000-11': 0,
-                '420-00': 200000, '420-01': 2000, '420-02': 2000, '420-03': 60000,
-                '100-38': 10000, '800-01': 250000
-            };
-            const puntosMap = {
-                '005': 5, '020': 20, '035': 35, '050': 50, '075': 75,
-                '100': 100, '150': 150, '180': 180, '200': 200, '220': 220,
-                '250': 250, '350': 350, '420': 420, '500': 500, '600': 600,
-                '800': 800, '000': 0
-            };
-            const cat = code.split('-')[0];
-            const price = precios[code] || 0;
-            const points = puntosMap[cat] || 0;
-            return { price, points };
-        };
-
-        // Construir lista de productos desde STOCK (datos directos de Firebase)
-        for (const code in stockData) {
-            const stockVal = stockData[code];
-            if (!code || !code.includes('-')) continue;
-            if (typeof stockVal !== 'number' || stockVal <= 0) continue;
-
-            const info = getInfo(code);
-            const fichaConsumption = FICHA_CONSUMPTION[code] || 0;
-            const category = code.split('-')[0] || '000';
-
-            productos.push({
-                code: code,
-                price: info.price,
-                points: info.points,
-                sucursal: suc.nombre,
-                stock: stockVal,
-                fichaConsumption: fichaConsumption,
-                category: category,
-                nombre: code + (info.price > 0 ? ` - G.${info.price.toLocaleString('es-PY')}` : '')
-            });
-        }
-
-        estado.catalogoStock[suc.nombre] = stockData;
-
-    } catch (error) {
-        console.error(`❌ Error cargando catálogo de ${suc.nombre}:`, error);
-    }
-}
 
         const uniqueMap = new Map();
         productos.forEach(p => {
@@ -3049,10 +3025,10 @@
             `;
             document.getElementById('unidadesInput').value = 1;
             const destinoSelect = document.getElementById('movimientoDestino');
-            destinoSelect.innerHTML = '<option value="stock">📦 Stock</option>';
-            for (let i = 1; i <= 20; i++) {
-                destinoSelect.innerHTML += `<option value="maq${i}">⚙️ Maq ${i}</option>`;
-            }
+            destinoSelect.innerHTML = `
+                <option value="stock">📦 Stock</option>
+                <option value="maquinas">🖥️ Máquinas</option>
+            `;
             document.getElementById('purchaseModal').style.display = 'block';
             blockBodyScroll();
         });
@@ -3301,7 +3277,7 @@
                     });
                     await cargarCatalogoUnificado();
                     closeModal();
-                    showToast(`✅ Máquina ${destino.toUpperCase()}: consumió ${cantidad} unidad(es) de ${sucursal}`, 'success');
+                    showToast(`✅ Repuesto ${cantidad} unidad(es) a ${destino.toUpperCase()} de ${sucursal}`, 'success');
                 } else { alert('❌ Error en la transacción de stock'); }
             }
         } catch (error) { console.error('Error:', error); alert('❌ Error al procesar el movimiento'); }
@@ -3387,12 +3363,13 @@
                     });
                     await cargarCatalogoUnificado();
                     closeModal();
-                    showToast(`✅ Máquina ${destino.toUpperCase()}: devolvió ${cantidad} unidad(es) a ${sucursal}`, 'success');
+                    showToast(`✅ Retirado ${cantidad} unidad(es) de ${destino.toUpperCase()} y devuelto al stock`, 'success');
                 } else { alert('❌ Error en la transacción de stock'); }
             }
         } catch (error) { console.error('Error:', error); alert('❌ Error al procesar el movimiento'); }
         finally { window.quitarUnidadesLock = false; }
     };
+
     // ============================================================
     // 13. FICHAS GRATIS
     // ============================================================
@@ -3475,7 +3452,6 @@
         monto = monto.replace(/\./g, '');
         let montoNum = parseFloat(monto);
         if (isNaN(montoNum)) montoNum = 0;
-        // Determinar sucursal: usar el estado actual o la primera del catálogo
         let sucursal = estado.currentSucursal;
         if (!sucursal) {
             const catalogoItem = document.querySelector('.catalogo-item[data-code="000-09"]') || document.querySelector('.catalogo-item[data-code="000-10"]');
@@ -3693,7 +3669,7 @@
                     case 'puntos': return (item.points || 0) > 0;
                     case 'movimiento': return item.esMovimiento === true;
                     case 'stock': return item.esMovimiento && item.destinoMovimiento === 'stock';
-                    case 'maquina': return item.esMovimiento && item.destinoMovimiento && item.destinoMovimiento.startsWith('maq');
+                    case 'maquina': return item.esMovimiento && esDestinoMaquina(item.destinoMovimiento);
                     case 'fichas_gratis': return item.esFichaGratis === true;
                     case 'cierres': return item.esCierre === true || item.code === '000-09' || item.code === '000-10';
                     default: return true;
@@ -4340,7 +4316,7 @@
     }
 
     // ============================================================
-    // 18. PDF - GENERACIÓN DE REPORTES
+    // 18. PDF
     // ============================================================
     function debeMostrarLambare(fechaDesde) {
         if (!fechaDesde) return true;
@@ -4836,25 +4812,27 @@
                         }
 
                         let reposiciones = 0;
+                        let retiros = 0;
 
+                        // --- Reposiciones y retiros del CARRITO ---
                         Object.entries(carrito).forEach(([key, item]) => {
                             if (item.esMovimiento && 
                                 item.code === code &&
-                                item.destinoMovimiento && 
-                                (item.destinoMovimiento.startsWith('maq') || item.destinoMovimiento === 'maquinas') &&
-                                item.tipoMovimiento === 'agregar') {
+                                esDestinoMaquina(item.destinoMovimiento)) {
                                 const fechaItem = item.fecha || '';
                                 if (!fechaItem) return;
                                 const partes = fechaItem.split('/');
                                 if (partes.length === 3) {
                                     const fechaItemISO = `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
                                     if (fechaItemISO >= fechaDesde && fechaItemISO <= fechaHasta) {
-                                        reposiciones += item.unidades || 1;
+                                        if (item.tipoMovimiento === 'agregar') reposiciones += item.unidades || 1;
+                                        if (item.tipoMovimiento === 'quitar')  retiros      += item.unidades || 1;
                                     }
                                 }
                             }
                         });
 
+                        // --- Reposiciones y retiros del HISTORIAL ---
                         const desde = new Date(fechaDesde);
                         const hasta = new Date(fechaHasta);
                         desde.setHours(0, 0, 0, 0);
@@ -4869,17 +4847,18 @@
                                     registro.ventas.forEach(venta => {
                                         if (venta.esMovimiento && 
                                             venta.code === code &&
-                                            venta.destinoMovimiento && 
-                                            (venta.destinoMovimiento.startsWith('maq') || venta.destinoMovimiento === 'maquinas') &&
-                                            venta.tipoMovimiento === 'agregar') {
-                                            reposiciones += venta.unidades || 1;
+                                            esDestinoMaquina(venta.destinoMovimiento)) {
+                                            if (venta.tipoMovimiento === 'agregar') reposiciones += venta.unidades || 1;
+                                            if (venta.tipoMovimiento === 'quitar')  retiros      += venta.unidades || 1;
                                         }
                                     });
                                 }
                             }
                         });
 
-                        const consumoReal = stockInicial + reposiciones - stockFinal;
+                        // FÓRMULA FINAL CORREGIDA:
+                        // Ganado por clientes = Inicial + Reposiciones - Retiros - Final
+                        const consumoReal = stockInicial + reposiciones - retiros - stockFinal;
 
                         if (consumoReal > 0) {
                             productosPorSucursal[code] = consumoReal;
@@ -5009,7 +4988,7 @@
 
         if (desde && hasta) {
             filtroActivo.style.display = 'block';
-            filtroTexto.innerHTML = `📅 ${desde} → ${hasta} · ${nombreSucursal} · <strong>Mostrando CONSUMO REAL (Stock Inicial + Reposiciones - Stock Final)</strong>`;
+            filtroTexto.innerHTML = `📅 ${desde} → ${hasta} · ${nombreSucursal} · <strong>Ganado = Inicial + Reposiciones − Retiros − Final</strong>`;
             leyenda.textContent = `🎯 Mostrando lo que los clientes ganaron en máquinas del ${desde} al ${hasta}`;
         } else {
             filtroActivo.style.display = 'block';
