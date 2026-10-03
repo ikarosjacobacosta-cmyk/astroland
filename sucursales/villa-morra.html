@@ -84,7 +84,33 @@
     }
   }
 
-  
+  /* ====== TOGGLE CATÁLOGO / MÁQUINAS ====== */
+  .vista-toggle {
+    display: flex;
+    gap: 6px;
+    margin: 12px 0;
+    padding: 6px;
+    background: #f0f2f5;
+    border-radius: 12px;
+  }
+  .vista-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+  }
+  .vista-btn.active {
+    background: #2196F3;
+    color: white;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+  }
 
   .categoria {
     margin-bottom: 30px;
@@ -1411,13 +1437,21 @@
     </div>
   </div>
 
-  
-
   <div class="container">
     <header>
       <h1>ASTROLAND - Villa Morra</h1>
       <p style="color: #4CAF50; font-size: 0.9rem;">✓ Sucursal Villa Morra</p>
     </header>
+
+    <!-- ====== TOGGLE CATÁLOGO / MÁQUINAS ====== -->
+    <div class="vista-toggle">
+      <button class="vista-btn active" data-vista="catalogo" onclick="cambiarVista('catalogo')">
+        📦 Catálogo
+      </button>
+      <button class="vista-btn" data-vista="maquinas" onclick="cambiarVista('maquinas')">
+        🖥️ Máquinas
+      </button>
+    </div>
   </div>
 
   <footer>
@@ -1516,7 +1550,7 @@
 
         <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">
           📌 <strong>Stock:</strong> Agregar ➕ suma / Quitar ➖ resta<br>
-          🖥️ <strong>Máquinas:</strong> Agregar ➕ resta del stock | Quitar ➖ suma al stock
+          🖥️ <strong>Máquinas:</strong> Agregar ➕ repone | Quitar ➖ retira (el stock en máquinas se actualiza automáticamente)
         </p>
 
         <div class="registro-maquinas-box">
@@ -1536,7 +1570,7 @@
           </div>
           <div class="reg-helper">
             <i>ℹ️</i> Registra cuántas unidades de este producto hay en TODAS las máquinas en una fecha específica.
-            Se guarda en el historial de stock en máquinas.
+            <strong>Sobreescribe</strong> el valor del día (útil para el conteo final del cierre).
           </div>
         </div>
       </div>
@@ -1802,6 +1836,7 @@
     let modoEdicionFecha = null;
 
     const STOCK_INICIAL = 100;
+    const SUCURSAL_NOMBRE = 'Villa Morra';
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     const FICHA_CONSUMPTION = {
@@ -1832,6 +1867,148 @@
     let touchStartY = 0;
     let touchEndX = 0;
     let touchEndY = 0;
+
+    // ============================================================
+    // ESTADO DE VISTA (CATÁLOGO / MÁQUINAS)
+    // ============================================================
+    window.vistaActual = 'catalogo'; // 'catalogo' | 'maquinas'
+    let codigosEnMaquinas = new Set();
+
+    // ============================================================
+    // HELPERS DE STOCK EN MÁQUINAS
+    // ============================================================
+
+    function hoyISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    async function leerStockMaquinaBase(code) {
+      try {
+        const basePath = `stock_maquinas/${SUCURSAL_NOMBRE}/${code}`;
+        const snap = await get(ref(database, basePath));
+        if (!snap.exists()) return null;
+        const data = snap.val();
+        const fechas = Object.keys(data).sort();
+        if (fechas.length === 0) return null;
+
+        const hoy = hoyISO();
+        if (data[hoy]) {
+          return { cantidad: data[hoy].cantidad || 0, fecha: hoy, esHoy: true };
+        }
+        const ultima = fechas[fechas.length - 1];
+        return { cantidad: data[ultima]?.cantidad || 0, fecha: ultima, esHoy: false };
+      } catch (e) {
+        console.error('Error leyendo stock de máquina:', e);
+        return null;
+      }
+    }
+
+    async function setStockMaquinaDia(code, name, nuevaCantidad) {
+      try {
+        const hoy = hoyISO();
+        const valor = Math.max(0, parseInt(nuevaCantidad, 10) || 0);
+        await set(ref(database, `stock_maquinas/${SUCURSAL_NOMBRE}/${code}/${hoy}`), {
+          cantidad: valor,
+          code: code,
+          name: name || '',
+          fechaRegistro: new Date().toISOString(),
+          registradoPor: 'movimiento-auto'
+        });
+        console.log(`🖥️ stock_maquinas/${code}/${hoy} = ${valor}`);
+        return valor;
+      } catch (e) {
+        console.error('Error escribiendo stock de máquina:', e);
+        return null;
+      }
+    }
+
+    // ============================================================
+    // VISTA MÁQUINAS: cargar códigos con snapshot > 0
+    // ============================================================
+    async function cargarCodigosEnMaquinas() {
+      try {
+        const snap = await get(ref(database, `stock_maquinas/${SUCURSAL_NOMBRE}`));
+        codigosEnMaquinas = new Set();
+        if (snap.exists()) {
+          const data = snap.val();
+          for (const [code, fechas] of Object.entries(data)) {
+            const fechasOrdenadas = Object.keys(fechas).sort();
+            if (fechasOrdenadas.length === 0) continue;
+            const ultima = fechasOrdenadas[fechasOrdenadas.length - 1];
+            const cantidad = fechas[ultima]?.cantidad || 0;
+            if (cantidad > 0) {
+              codigosEnMaquinas.add(code);
+            }
+          }
+        }
+        console.log(`🖥️ Códigos en máquinas (>0): ${codigosEnMaquinas.size}`);
+      } catch (e) {
+        console.error('Error leyendo códigos en máquinas:', e);
+      }
+    }
+
+    // Aplica el filtro según la vista activa (catalogo o maquinas)
+    function aplicarVistaFiltro() {
+      const esMaquinas = window.vistaActual === 'maquinas';
+      const searchValue = document.getElementById('busqueda')?.value || '';
+      const match = searchValue.match(/\d{3}/);
+      const prefijo = match ? match[0] : '';
+
+      document.querySelectorAll('.categoria').forEach(cat => {
+        const boton = cat.querySelector('.btn-toggle-categoria');
+        const estaMostrando = boton && boton.classList.contains('mostrando');
+        let any = false;
+
+        cat.querySelectorAll('.imagen-item').forEach(item => {
+          const code = item.getAttribute('data-code') || '';
+
+          // Filtro de búsqueda
+          if (prefijo && !code.startsWith(prefijo)) {
+            item.style.display = 'none';
+            return;
+          }
+
+          if (esMaquinas) {
+            // En vista Máquinas: solo los que están en stock_maquinas > 0
+            if (codigosEnMaquinas.has(code)) {
+              item.style.display = 'flex';
+              item.classList.remove('out-of-stock');
+              any = true;
+            } else {
+              item.style.display = 'none';
+            }
+          } else {
+            // En vista Catálogo: comportamiento original
+            const stockVal = getProductStock(code);
+            if (estaMostrando) {
+              item.style.display = 'flex';
+              any = true;
+              return;
+            }
+            if (stockVal <= 0 && !CIERRE_CODES.includes(code)) {
+              item.style.display = 'none';
+            } else {
+              item.style.display = 'flex';
+              any = true;
+            }
+          }
+        });
+
+        cat.style.display = any ? 'block' : 'none';
+      });
+    }
+
+    window.cambiarVista = async function(vista) {
+      window.vistaActual = vista;
+
+      document.querySelectorAll('.vista-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.vista-btn[data-vista="${vista}"]`).classList.add('active');
+
+      if (vista === 'maquinas') {
+        await cargarCodigosEnMaquinas();
+      }
+      aplicarVistaFiltro();
+    };
 
     // ========== LOGIN / LOGOUT ==========
 
@@ -2068,7 +2245,7 @@
         const movimientosProductInfo = document.getElementById('movimientosProductInfo');
         if (movimientosProductInfo) {
           movimientosProductInfo.innerHTML =
-            `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar: suma al stock (Máquinas: resta) | ➖ Quitar: resta del stock (Máquinas: suma)</small>`;
+            `<strong>${currentMovimientosProduct.name}</strong><br>📦 Stock actual: ${stockVal} unidades<br>${price > 0 ? `💰 Precio: G.${price.toLocaleString()}` : '🎴 Valor: 0 Gs.'}<br><small style="color:#666;">➕ Agregar a Máquinas: repone y actualiza el stock del día | ➖ Quitar de Máquinas: retira y actualiza el stock del día</small>`;
         }
 
         const fechaInput = document.getElementById('fechaStockMaquinas');
@@ -3506,16 +3683,31 @@
     }
 
     function filterProducts(q) {
+      // Aplica búsqueda + filtro de vista activa
+      const prefijo = q || '';
+      const esMaquinas = window.vistaActual === 'maquinas';
+
       document.querySelectorAll('.categoria').forEach(cat => {
         const boton = cat.querySelector('.btn-toggle-categoria');
         const estaMostrando = boton && boton.classList.contains('mostrando');
         let any = false;
+
         cat.querySelectorAll('.imagen-item').forEach(item => {
           const code = item.getAttribute('data-code') || '';
-          const coincide = (q === '' || code.startsWith(q));
+          const coincide = (prefijo === '' || code.startsWith(prefijo));
 
           if (!coincide) {
             item.style.display = 'none';
+            return;
+          }
+
+          if (esMaquinas) {
+            if (codigosEnMaquinas.has(code)) {
+              item.style.display = 'flex';
+              any = true;
+            } else {
+              item.style.display = 'none';
+            }
             return;
           }
 
@@ -3578,10 +3770,9 @@
       });
 
       updateCategoryStockCounters();
-      const searchValue = document.getElementById('busqueda')?.value || '';
-      const match = searchValue.match(/\d{3}/);
-      const prefijo = match ? match[0] : '';
-      filterProducts(prefijo);
+
+      // Aplicar filtro de vista activa
+      aplicarVistaFiltro();
 
       asignarEventosProductos();
     }
@@ -3873,7 +4064,7 @@
 
       const code = currentMovimientosProduct.code;
       const name = currentMovimientosProduct.name;
-      const sucursal = 'Villa Morra';
+      const sucursal = SUCURSAL_NOMBRE;
 
       mostrarMensajeEnProceso('🔄 Guardando registro de máquinas...');
 
@@ -3928,6 +4119,8 @@
         boton.classList.remove('mostrando');
         boton.innerHTML = '👁️ Mostrar';
       }
+      // Reaplicar filtro de vista activa
+      aplicarVistaFiltro();
     };
 
     window.agregarUnidades = async function() {
@@ -3955,6 +4148,7 @@
       }
 
       const code = currentMovimientosProduct.code;
+      const name = currentMovimientosProduct.name;
       const consumo = currentMovimientosProduct.fichaConsumption || 0;
       const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
 
@@ -3979,17 +4173,18 @@
               operacionExitosa = false;
               alert('❌ Error en la transacción de stock');
             } else {
-              mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Agregado +${cantidad} unidad(es) a STOCK de ${name}`;
             }
           }
         } else if (destino === 'maquinas') {
+          // 1) Descontar del stock central
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', -(consumo * cantidad), 0);
             if (!resultado.success) {
               operacionExitosa = false;
               alert(`No hay suficientes fichas en stock para Máquinas`);
             } else {
-              mensaje = `✅ Máquinas: consumió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
+              mensaje = `✅ Máquinas: repuso ${cantidad} unidad(es) (${consumo * cantidad} fichas) - RESTADO del stock`;
             }
           } else {
             const resultado = await modificarStockAtomico(code, -cantidad, 0);
@@ -3997,8 +4192,17 @@
               operacionExitosa = false;
               alert(`No hay suficiente stock para Máquinas`);
             } else {
-              mensaje = `✅ Máquinas: consumió ${cantidad} unidad(es) - RESTADO del stock de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Máquinas: repuso ${cantidad} unidad(es) - RESTADO del stock de ${name}`;
             }
+          }
+
+          // 2) Actualizar stock_maquinas del día
+          if (operacionExitosa) {
+            const base = await leerStockMaquinaBase(code);
+            const stockActualMaquina = base ? base.cantidad : 0;
+            const nuevoValorMaquina = stockActualMaquina + cantidad;
+            await setStockMaquinaDia(code, name, nuevoValorMaquina);
+            mensaje += `\n🖥️ Stock en máquinas actualizado: ${stockActualMaquina} → ${nuevoValorMaquina}`;
           }
         }
 
@@ -4009,7 +4213,7 @@
 
           await push(cartRef, {
             code,
-            name: currentMovimientosProduct.name,
+            name: name,
             points: 0,
             money: 0,
             unidades: cantidad,
@@ -4068,8 +4272,33 @@
       }
 
       const code = currentMovimientosProduct.code;
+      const name = currentMovimientosProduct.name;
       const consumo = currentMovimientosProduct.fichaConsumption || 0;
       const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
+
+      // ✅ VALIDACIÓN PREVIA: si es retiro de máquina, chequear el snapshot
+      if (destino === 'maquinas') {
+        const base = await leerStockMaquinaBase(code);
+        if (base === null) {
+          alert(
+            `⚠️ No hay registro previo en máquinas para ${code}.\n\n` +
+            `Antes de retirar, registrá el stock que hay en la máquina usando ` +
+            `la opción "📊 Registrar stock en máquinas" en esta misma pestaña.`
+          );
+          window.quitarUnidadesLock = false;
+          return;
+        }
+        if (cantidad > base.cantidad) {
+          alert(
+            `❌ No se puede retirar más de lo registrado.\n\n` +
+            `📦 Último stock registrado (${base.fecha}): ${base.cantidad} unidad(es)\n` +
+            `➖ Intento de retiro: ${cantidad} unidad(es)\n\n` +
+            `Actualizá el stock en máquinas o retirá como máximo ${base.cantidad} unidad(es).`
+          );
+          window.quitarUnidadesLock = false;
+          return;
+        }
+      }
 
       mostrarMensajeEnProceso('🔄 Procesando movimiento');
 
@@ -4092,17 +4321,18 @@
               operacionExitosa = false;
               alert(`No hay suficiente stock`);
             } else {
-              mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Quitado -${cantidad} unidad(es) del STOCK de ${name}`;
             }
           }
         } else if (destino === 'maquinas') {
+          // 1) Sumar al stock central
           if (consumo > 0 && !isIndependentCode) {
             const resultado = await modificarStockAtomico('000-00', consumo * cantidad, 0);
             if (!resultado.success) {
               operacionExitosa = false;
               alert('❌ Error en la transacción');
             } else {
-              mensaje = `✅ Máquinas: devolvió ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
+              mensaje = `✅ Máquinas: retiró ${cantidad} unidad(es) (${consumo * cantidad} fichas) - SUMADO al stock`;
             }
           } else {
             const resultado = await modificarStockAtomico(code, cantidad, 0);
@@ -4110,8 +4340,17 @@
               operacionExitosa = false;
               alert('❌ Error en la transacción');
             } else {
-              mensaje = `✅ Máquinas: devolvió ${cantidad} unidad(es) - SUMADO al stock de ${currentMovimientosProduct.name}`;
+              mensaje = `✅ Máquinas: retiró ${cantidad} unidad(es) - SUMADO al stock de ${name}`;
             }
+          }
+
+          // 2) Restar de stock_maquinas del día
+          if (operacionExitosa) {
+            const base = await leerStockMaquinaBase(code);
+            const stockActualMaquina = base ? base.cantidad : 0;
+            const nuevoValorMaquina = Math.max(0, stockActualMaquina - cantidad);
+            await setStockMaquinaDia(code, name, nuevoValorMaquina);
+            mensaje += `\n🖥️ Stock en máquinas actualizado: ${stockActualMaquina} → ${nuevoValorMaquina}`;
           }
         }
 
@@ -4122,7 +4361,7 @@
 
           await push(cartRef, {
             code,
-            name: currentMovimientosProduct.name,
+            name: name,
             points: 0,
             money: 0,
             unidades: cantidad,
@@ -4946,8 +5185,8 @@
       const container = document.querySelector('.container');
       if (!container) return;
       const header = container.querySelector('header');
-      container.innerHTML = '';
-      if (header) container.appendChild(header);
+      // Quitar sólo las secciones de categoría (mantener header y toggle)
+      container.querySelectorAll('.categoria').forEach(c => c.remove());
 
       const categorias = [
         { nombre: "000 puntos", categoria: "000", puntos: 0, productos: [
@@ -5126,13 +5365,24 @@
     window.addEventListener('online', () => mostrarMensajeTemporal('✅ Conexión restablecida'));
     window.addEventListener('offline', () => mostrarMensajeTemporal('❌ Sin conexión a internet', true));
 
-    Promise.all([loadInitialCart(), loadInitialStock(), loadContadores()]).then(() => {
+    Promise.all([loadInitialCart(), loadInitialStock(), loadContadores(), cargarCodigosEnMaquinas()]).then(() => {
       onValue(cartRef, snap => { const d = snap.val();
         cart = d ? Object.entries(d).map(([k, v]) => ({ ...v, firebaseKey: k })) : [];
         updateCartCount(); if (document.getElementById('cartModal').style.display === 'block') renderCart(); });
       onValue(stockRef, snap => { stock = snap.val() || {};
         updateAllStockIndicators(); });
       onValue(contadoresRef, snap => { contadoresMaquinas = snap.val() || {}; });
+
+      // Sincronizar vista Máquinas en vivo
+      onValue(ref(database, `stock_maquinas/${SUCURSAL_NOMBRE}`), async () => {
+        await cargarCodigosEnMaquinas();
+        if (window.vistaActual === 'maquinas') {
+          aplicarVistaFiltro();
+        }
+      });
+
+      // Aplicar filtro inicial
+      aplicarVistaFiltro();
 
       const stockSearch = document.getElementById('stockSearch');
       if (stockSearch) {
