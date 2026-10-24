@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes, maximum-scale=1" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>ASTROLAND - Los Laureles</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -275,7 +276,6 @@
 </style>
 </head><body>
 
-<!-- ========== PANTALLA DE LOGIN ========== -->
 <div id="loginScreen" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px;">
   <div style="background: white; border-radius: 20px; padding: 40px 30px; max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
     <h1 style="margin: 0 0 10px; color: #333; font-size: 1.8rem;">ASTROLAND</h1>
@@ -354,7 +354,6 @@
         <input type="number" id="productQuantity" min="1" step="1" value="1" onfocus="this.select()">
       </div>
 
-      <!-- SECCIÓN VALE (solo 000-01 y 000-02) -->
       <div id="valeSection" class="vale-container" style="display:none;">
         <h4>🎟️ Aplicar Vale / Tarjeta</h4>
         <div class="vale-row">
@@ -663,7 +662,7 @@
     let historialVentas = [];
     let preciosPersonalizados = {};
     let contadoresMaquinas = {};
-    let vales = {}; // { "001": {...}, "002": {...} }
+    let vales = {};
     let vaciarSeleccionados = [];
     let modoEdicionFecha = null;
 
@@ -671,18 +670,14 @@
     const SUCURSAL_NOMBRE = 'Los Laureles';
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-    // ============================================================
-    // CONFIGURACIÓN DE FICHAS Y CATEGORÍAS
-    // ============================================================
     const FICHA_CONSUMPTION = {
       '000-00': 1,
-      '000-01': 15,   // antes 16 → ahora 15
-      '000-02': 35,   // antes 36 → ahora 35
+      '000-01': 15,
+      '000-02': 35,
       '000-05': 1,
       '000-06': 7
     };
 
-    // Consumo promo con vale
     const FICHA_CONSUMPTION_VALE = {
       '000-01': 10,
       '000-02': 45
@@ -693,9 +688,6 @@
     const VALE_APPLICABLE_CODES = ['000-01', '000-02'];
     const VALE_MONTO = 50000;
 
-    // ============================================================
-    // COSTOS POR CATEGORÍA (USD)
-    // ============================================================
     const COSTOS_USD = {
       '005': 0.12,
       '025': 0.4,
@@ -733,12 +725,8 @@
     window.vistaActual = 'catalogo';
     let codigosEnMaquinas = new Set();
 
-    // Vale aplicado en el modal actual
-    let valeAplicadoActual = null; // { numero, fechaGeneracion, fechaVencimiento, ... } | null
+    let valeAplicadoActual = null;
 
-    // ============================================================
-    // HELPERS DE FECHAS
-    // ============================================================
     function hoyISO() { return new Date().toISOString().split('T')[0]; }
 
     function fechaISODe(fechaStr) {
@@ -760,17 +748,9 @@
       return `${d}/${m}/${y}`;
     }
 
-    // ============================================================
-    // HELPERS DE VENCIMIENTO DE VALE
-    // Regla: si se genera después de las 00:00hs, se cuenta como el día anterior.
-    // Es decir: si la hora actual es 00:00–00:59, se considera que "el día" es ayer.
-    // Si es 01:00–23:59, se considera el día actual.
-    // Simplificación: si la hora es < 1, se resta 1 día a la fecha de generación.
-    // ============================================================
     function calcularFechaGeneracionYVencimiento() {
       const ahora = new Date();
       let fechaBase = ahora.toISOString().split('T')[0];
-      // Si es después de medianoche pero antes de la 01:00, cuenta como el día anterior
       if (ahora.getHours() === 0) {
         const ayer = new Date(ahora);
         ayer.setDate(ayer.getDate() - 1);
@@ -780,9 +760,6 @@
       return { fechaGeneracion: fechaBase, fechaVencimiento };
     }
 
-    // ============================================================
-    // HELPERS DE STOCK EN MÁQUINAS
-    // ============================================================
     async function leerStockMaquinaBase(code) {
       try {
         const basePath = `stock_maquinas/${SUCURSAL_NOMBRE}/${code}`;
@@ -871,7 +848,6 @@
       aplicarVistaFiltro();
     };
 
-    // ========== LOGIN / LOGOUT ==========
     window.doLogin = async function() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -930,9 +906,6 @@
     }
     window.aplicarPermisosSegunRol = aplicarPermisosSegunRol;
 
-    // ============================================================
-    // VALES: CARGA Y HELPERS
-    // ============================================================
     async function cargarVales() {
       try {
         const snap = await get(ref(database, `vales/${SUCURSAL_NOMBRE}`));
@@ -961,7 +934,6 @@
           lista.push({ numero, ...vale });
         }
       }
-      // Ordenar por número ascendente (menor primero)
       lista.sort((a, b) => parseInt(a.numero, 10) - parseInt(b.numero, 10));
       return lista;
     }
@@ -979,22 +951,16 @@
       return String(n).padStart(3, '0');
     }
 
-    // Verifica si una tarjeta se puede canjear hoy
-    // Regla: pasó al menos 1 día calendario desde su fechaGeneracion
     function valeSePuedeCanjearHoy(vale) {
       if (!vale || !vale.fechaGeneracion) return false;
       const hoy = hoyISO();
       return hoy > vale.fechaGeneracion;
     }
 
-    // Verifica si una tarjeta fue impresa en el carrito actual (no se puede canjear el mismo día)
     function valeEstaEnCarritoActual(numero) {
       return cart.some(item => item.esValeImpreso && item.numeroVale === numero && !item.esValeCanjeado);
     }
 
-    // ============================================================
-    // VALES: VALIDACIÓN Y APLICACIÓN EN MODAL
-    // ============================================================
     window.onValeNumeroChange = function(valor) {
       const numero = String(valor || '').replace(/[^0-9]/g, '').padStart(3, '0');
       const statusDiv = document.getElementById('valeStatusDiv');
@@ -1053,7 +1019,6 @@
         return;
       }
 
-      // Válido
       statusDiv.style.display = 'block';
       statusDiv.className = 'vale-status ok';
       statusDiv.innerHTML = `✅ Vale N° ${numero} válido. Descuenta Gs. ${VALE_MONTO.toLocaleString()}.`;
@@ -1074,20 +1039,17 @@
       if (!currentProduct) return;
       const tieneVale = valeAplicadoActual && VALE_APPLICABLE_CODES.includes(currentProduct.code);
 
-      // Precio base
-      const qty = 1; // Los modales de 000-01 y 000-02 no tienen cantidad
+      const qty = 1;
       let totalPriceValue = currentProduct.price * qty;
 
-      // Si tiene vale, el precio se ajusta
       if (tieneVale) {
         if (currentProduct.code === '000-01') {
           totalPriceValue = 0;
         } else if (currentProduct.code === '000-02') {
-          totalPriceValue = VALE_MONTO; // 50.000
+          totalPriceValue = VALE_MONTO;
         }
       }
 
-      // Puntos
       const pointsValue = parseInt(document.getElementById('pointsInput').value) || 0;
       let moneyToPay = totalPriceValue;
       if (currentProduct.points > 0 && !tieneVale) {
@@ -1097,7 +1059,6 @@
         const maxPointsPossible = currentProduct.points * qty;
         if (pointsValue > maxPointsPossible) { document.getElementById('pointsInput').value = maxPointsPossible; actualizarTotalConVale(); return; }
       } else if (currentProduct.points > 0 && tieneVale) {
-        // Con vale, los puntos se calculan sobre el precio reducido
         const maxPointsPossible = currentProduct.points * qty;
         if (pointsValue > maxPointsPossible) { document.getElementById('pointsInput').value = maxPointsPossible; actualizarTotalConVale(); return; }
         const pointsUsed = Math.min(pointsValue, maxPointsPossible);
@@ -1122,11 +1083,7 @@
       actualizarBotonesSegunDinero();
     }
 
-    // ============================================================
-    // VALES: GENERACIÓN AL VENDER 000-02
-    // ============================================================
-    async function generarOReutilizarVale() {
-      // 1) Buscar disponibles (menor número primero)
+    async function generarOReutilizarVale(ventaKey) {
       const disponibles = getValesDisponibles();
       let numero;
       let reutilizado = false;
@@ -1141,7 +1098,6 @@
 
       const { fechaGeneracion, fechaVencimiento } = calcularFechaGeneracionYVencimiento();
 
-      // 2) Escribir en Firebase
       await set(ref(database, `vales/${SUCURSAL_NOMBRE}/${numero}`), {
         numero,
         monto: VALE_MONTO,
@@ -1150,11 +1106,11 @@
         fechaVencimiento,
         timestampGeneracion: Date.now(),
         reutilizado,
+        ventaKey: ventaKey || null,
         registradoPor: window.userRole.uid,
         registradoPorEmail: window.userRole.email
       });
 
-      // 3) Registrar item en carrito
       const ahora = new Date();
       const fechaStr = ahora.toLocaleDateString('es-PY');
       const horaStr = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -1176,6 +1132,7 @@
         reutilizado,
         fechaGeneracion,
         fechaVencimiento,
+        ventaKey: ventaKey || null,
         metodoPago: null,
         registradoPor: window.userRole.uid,
         registradoPorEmail: window.userRole.email
@@ -1183,7 +1140,6 @@
 
       await push(cartRef, itemVale);
 
-      // 4) Actualizar cache local
       vales[numero] = {
         numero,
         monto: VALE_MONTO,
@@ -1191,7 +1147,8 @@
         fechaGeneracion,
         fechaVencimiento,
         timestampGeneracion: Date.now(),
-        reutilizado
+        reutilizado,
+        ventaKey: ventaKey || null
       };
 
       return { numero, fechaVencimiento, reutilizado };
@@ -1202,7 +1159,6 @@
       const fechaStr = ahora.toISOString().split('T')[0];
       const horaStr = ahora.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
-      // Registrar canje
       await push(ref(database, `vales/${SUCURSAL_NOMBRE}/${numero}/canjes`), {
         fecha: fechaStr,
         hora: horaStr,
@@ -1213,7 +1169,6 @@
         registradoPorEmail: window.userRole.email
       });
 
-      // Actualizar estado: pasa a 'disponible' sin fecha de vencimiento
       await update(ref(database, `vales/${SUCURSAL_NOMBRE}/${numero}`), {
         estado: 'disponible',
         fechaGeneracion: null,
@@ -1231,9 +1186,6 @@
       }
     }
 
-    // ============================================================
-    // PRODUCTOS
-    // ============================================================
     function handleProductClick(e) {
       if (e) e.preventDefault();
       let target = e ? e.target : this;
@@ -1272,13 +1224,11 @@
           compraTab.click();
         }
 
-        // Cantidad: solo para 000-00
         const quantityRow = document.getElementById('quantityRow');
         if (code === '000-00') quantityRow.style.display = 'flex'; else quantityRow.style.display = 'none';
         const quantityInput = document.getElementById('productQuantity');
         if (quantityInput) quantityInput.value = 1;
 
-        // Sección vale: solo para 000-01 y 000-02
         const valeSection = document.getElementById('valeSection');
         if (VALE_APPLICABLE_CODES.includes(code)) {
           valeSection.style.display = 'block';
@@ -1359,7 +1309,6 @@
       });
     }
 
-    // ========== PRECIOS ==========
     function getProductPrice(code, precioBase) { return preciosPersonalizados[code] ?? precioBase; }
 
     async function loadPrecios() {
@@ -1499,7 +1448,6 @@
       } catch (error) { ocultarMensajeEnProceso(); alert('❌ Error al guardar el precio'); console.error(error); }
     };
 
-    // ========== TIPO DE CAMBIO ==========
     window.onTipoCambioChange = function(valor) {
       const n = parseFloat(valor);
       if (!isNaN(n) && n >= 0) {
@@ -1514,7 +1462,6 @@
       if (inp) inp.value = tipoCambio;
     }
 
-    // ========== CARRITO ==========
     function esVendidoOCanjeado(item) {
       if (!item) return false;
       if (item.esMovimiento || item.esCierre || item.esFichaGratis || item.esValeImpreso) return false;
@@ -1589,14 +1536,11 @@
       const costoTotalGs = tipoCambio > 0 ? costoTotalUSD * tipoCambio : 0;
       const margenBruto = totalGeneral - costoTotalGs;
 
-      // Vales generados / canjeados en el rango
       let valesGenerados = 0, valesCanjeados = 0;
       itemsFiltrados.forEach(item => {
         if (item.esValeImpreso) {
-          const fechaVale = item.fechaGeneracion || item.fecha;
           if (filtroCarrito.tipo === 'todos' || filtroCarrito.tipo === 'vales') valesGenerados++;
         }
-        // Canjeados: items de compra (000-01/000-02) con valeAplicado
         if (item.valeAplicado && (item.code === '000-01' || item.code === '000-02')) {
           valesCanjeados++;
         }
@@ -1856,7 +1800,6 @@
       const points = parseInt(document.getElementById('pointsInput').value) || 0;
       const puntosNecesarios = currentProduct.points * qty;
       if (valeAplicadoActual) {
-        // Canje con vale
         procesarVenta(currentProduct, qty, points, 0, 'canje-vale');
         return;
       }
@@ -1912,13 +1855,14 @@
       procesarVentaAtomica(stockKey, cantidadRestar, cartData).then(async resultado => {
         ocultarMensajeEnProceso();
         if (resultado.success) {
-          // Si había vale, consumirlo
           if (valeAplicadoActual) {
             await consumirVale(valeAplicadoActual.numero, resultado.carrito.firebaseKey, code);
           }
-          // Si es 000-02 sin vale, generar/reutilizar
           if (code === '000-02' && !valeAplicadoActual) {
-            const valeGenerado = await generarOReutilizarVale();
+            const valeGenerado = await generarOReutilizarVale(resultado.carrito.firebaseKey);
+            await update(ref(database, `carrito/${resultado.carrito.firebaseKey}`), {
+              numeroValeGenerado: valeGenerado.numero
+            });
             resetSearch(); closeModal();
             alert(`✅ PAGO MIXTO EXITOSO!\n\n📦 ${qty} x ${product.name}\n💰 Total producto: Gs. ${totalPrice.toLocaleString()}\n🎯 Puntos usados: ${points}\n💵 EFECTIVO: Gs. ${efectivoNum.toLocaleString()}\n💳 POS: Gs. ${posNum.toLocaleString()}\n\n🎟️ Se entregó la tarjeta N° ${valeGenerado.numero}.\n📅 Vence: ${fechaLegible(valeGenerado.fechaVencimiento)}`);
             return;
@@ -1940,7 +1884,6 @@
       const consumo = tieneVale ? consumoConVale : consumoNormal;
       const isIndependentCode = NON_FICHA_CODES.includes(code) || CIERRE_CODES.includes(code);
 
-      // Precio final
       let totalPrice = product.price * qty;
       if (tieneVale) {
         if (code === '000-01') totalPrice = 0;
@@ -1971,14 +1914,15 @@
       procesarVentaAtomica(stockKey, cantidadRestar, cartData).then(async resultado => {
         ocultarMensajeEnProceso();
         if (resultado.success) {
-          // Si había vale, consumirlo
           if (tieneVale) {
             await consumirVale(valeAplicadoActual.numero, resultado.carrito.firebaseKey, code);
           }
 
-          // Si es 000-02 sin vale, generar/reutilizar
           if (code === '000-02' && !tieneVale) {
-            const valeGenerado = await generarOReutilizarVale();
+            const valeGenerado = await generarOReutilizarVale(resultado.carrito.firebaseKey);
+            await update(ref(database, `carrito/${resultado.carrito.firebaseKey}`), {
+              numeroValeGenerado: valeGenerado.numero
+            });
             resetSearch(); closeModal();
             let mensaje = `✅ OPERACIÓN EXITOSA!\n\n📦 ${qty} x ${product.name}\n💰 Total: Gs. ${totalPrice.toLocaleString()}`;
             if (metodo === 'canje') mensaje += `\n🎯 CANJEADO por ${points} puntos`;
@@ -2050,7 +1994,9 @@
           valeAplicado: item.valeAplicado || null,
           montoValeAplicado: item.montoValeAplicado || null,
           fechaGeneracion: item.fechaGeneracion || null,
-          fechaVencimiento: item.fechaVencimiento || null
+          fechaVencimiento: item.fechaVencimiento || null,
+          numeroValeGenerado: item.numeroValeGenerado || null,
+          ventaKey: item.ventaKey || null
         }));
 
         const totalDinero = ventasAEliminar.reduce((s, v) => s + (v.money || 0), 0);
@@ -2108,7 +2054,6 @@
       } catch (e) { console.error("❌ Error al guardar en historial:", e); alert("❌ Error crítico al guardar en historial. Las ventas NO se eliminaron."); return false; }
     }
 
-    // ========== FUNCIONES DE VENTA ATÓMICA ==========
     async function modificarStockAtomico(stockKey, cantidad, minimo = 0) {
       const stockRefKey = ref(database, `stock/${stockKey}`);
       try {
@@ -2147,7 +2092,6 @@
       } catch (error) { ocultarMensajeEnProceso(); console.error('Error en procesarVentaAtomica:', error); return { success: false, error: 'Error inesperado en el proceso de venta' }; }
     }
 
-    // ========== UTILITARIAS ==========
     function mostrarMensajeTemporal(texto, esError = false) {
       const div = document.createElement('div');
       div.className = 'overlay-mensaje';
@@ -2242,14 +2186,148 @@
       renderCart();
     };
 
+    // ============================================================
+    // ELIMINAR ITEM DEL CARRITO — CON SOPORTE COMPLETO DE VALES
+    // Caso 1: esValeImpreso → borra el vale de vales/ y libera el número.
+    // Caso 2A: Venta de 000-02 SIN vale → devuelve 35 fichas, borra el
+    //          esValeImpreso generado, borra el vale de vales/, borra la venta.
+    // Caso 2B: Venta de 000-02 CON vale → devuelve 45 fichas, devuelve el
+    //          vale usado a 'en_circulacion', borra la venta.
+    // Caso 3: Movimientos de stock/máquinas → igual que antes.
+    // Caso 4: Ventas normales (000-01, otros) con valeAplicado → devuelve stock
+    //         y el vale vuelve a 'en_circulacion'.
+    // ============================================================
     window.showDeletePrompt = function(firebaseKey) {
       if (!window.userRole.isAdmin) { alert('❌ Solo el administrador puede eliminar items del carrito'); return; }
       if (!confirm('¿Eliminar este item del carrito?')) return;
       const item = cart.find(i => i.firebaseKey === firebaseKey);
       if (!item) { alert('Item no encontrado'); return; }
+
       const consumo = item.fichaConsumption || 0;
       const unidades = item.unidades || 1;
       const isIndependentCode = NON_FICHA_CODES.includes(item.code) || CIERRE_CODES.includes(item.code);
+
+      // === CASO 1: Item de VALE IMPRESO (borrado directo) ===
+      if (item.esValeImpreso && item.numeroVale) {
+        const numero = item.numeroVale;
+        (async () => {
+          try {
+            await remove(ref(database, `vales/${SUCURSAL_NOMBRE}/${numero}`));
+            delete vales[numero];
+            await remove(ref(database, `carrito/${firebaseKey}`));
+            cart = cart.filter(i => i.firebaseKey !== firebaseKey);
+            updateCartCount();
+            if (document.getElementById('cartModal').style.display === 'block') renderCart();
+            alert(`✅ Vale N° ${numero} eliminado.\n\n👉 La próxima venta de 000-02 volverá a imprimir el N° ${numero}.`);
+          } catch (e) {
+            console.error('Error eliminando vale:', e);
+            alert('❌ Error al eliminar el vale. Revisá la consola.');
+          }
+        })();
+        return;
+      }
+
+      // === CASO 2: Venta de 000-02 ===
+      if (item.code === '000-02' && !item.esMovimiento && !item.esCierre && !item.esFichaGratis) {
+        const tieneValeAplicado = !!item.valeAplicado;
+
+        // === 2B: Venta de 000-02 CON vale ===
+        if (tieneValeAplicado) {
+          const confirmMsg = `🗑️ ELIMINAR VENTA DE 000-02 (con vale)\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Devolver el vale N° ${item.valeAplicado} a "en circulación" (como si el cliente lo tuviera de nuevo)\n• Borrar la venta del carrito\n\n¿Continuar?`;
+          if (!confirm(confirmMsg)) return;
+
+          (async () => {
+            try {
+              if (consumo > 0 && !isIndependentCode) {
+                await modificarStockAtomico('000-00', consumo * unidades, 0);
+              } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+                await modificarStockAtomico(item.code, unidades, 0);
+              }
+
+              await update(ref(database, `vales/${SUCURSAL_NOMBRE}/${item.valeAplicado}`), {
+                estado: 'en_circulacion'
+              });
+              if (vales[item.valeAplicado]) {
+                vales[item.valeAplicado].estado = 'en_circulacion';
+              }
+
+              await remove(ref(database, `carrito/${firebaseKey}`));
+              cart = cart.filter(i => i.firebaseKey !== firebaseKey);
+
+              updateCartCount();
+              if (document.getElementById('cartModal').style.display === 'block') renderCart();
+
+              alert(`✅ Venta eliminada.\n\n• ${consumo * unidades} ficha(s) devueltas al stock\n• Vale N° ${item.valeAplicado} devuelto a "en circulación"`);
+            } catch (e) {
+              console.error('Error eliminando venta 000-02 con vale:', e);
+              alert('❌ Error al eliminar la venta. Revisá la consola.');
+            }
+          })();
+          return;
+        }
+
+        // === 2A: Venta de 000-02 SIN vale (generó un vale) ===
+        let itemVale = null;
+        if (item.numeroValeGenerado) {
+          itemVale = cart.find(i => i.esValeImpreso && i.numeroVale === item.numeroValeGenerado);
+        }
+        if (!itemVale) {
+          itemVale = cart.find(i => i.esValeImpreso && i.ventaKey === item.firebaseKey);
+        }
+        if (!itemVale && item.timestampCompleto) {
+          const candidatos = cart.filter(i => i.esValeImpreso);
+          let mejor = null, mejorDiff = Infinity;
+          for (const v of candidatos) {
+            const diff = Math.abs((v.timestampCompleto || 0) - item.timestampCompleto);
+            if (diff < mejorDiff) { mejorDiff = diff; mejor = v; }
+          }
+          if (mejor && mejorDiff < 10000) itemVale = mejor;
+        }
+
+        const numeroVale = itemVale ? itemVale.numeroVale : (item.numeroValeGenerado || null);
+
+        const confirmMsg = numeroVale
+          ? `🗑️ ELIMINAR VENTA DE 000-02\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Borrar la venta del carrito\n• Borrar el vale N° ${numeroVale} (como si nunca se hubiera impreso)\n\n👉 La próxima venta de 000-02 volverá a imprimir el N° ${numeroVale}.\n\n¿Continuar?`
+          : `🗑️ ELIMINAR VENTA DE 000-02\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Borrar la venta del carrito\n\n(No se encontró un vale asociado a esta venta)\n\n¿Continuar?`;
+
+        if (!confirm(confirmMsg)) return;
+
+        (async () => {
+          try {
+            if (consumo > 0 && !isIndependentCode) {
+              await modificarStockAtomico('000-00', consumo * unidades, 0);
+            } else if (item.code && !CIERRE_CODES.includes(item.code)) {
+              await modificarStockAtomico(item.code, unidades, 0);
+            }
+
+            if (itemVale) {
+              await remove(ref(database, `carrito/${itemVale.firebaseKey}`));
+              cart = cart.filter(i => i.firebaseKey !== itemVale.firebaseKey);
+            }
+
+            if (numeroVale) {
+              await remove(ref(database, `vales/${SUCURSAL_NOMBRE}/${numeroVale}`));
+              delete vales[numeroVale];
+            }
+
+            await remove(ref(database, `carrito/${firebaseKey}`));
+            cart = cart.filter(i => i.firebaseKey !== firebaseKey);
+
+            updateCartCount();
+            if (document.getElementById('cartModal').style.display === 'block') renderCart();
+
+            let msg = `✅ Venta eliminada.\n\n• ${consumo * unidades} ficha(s) devueltas al stock`;
+            if (numeroVale) msg += `\n• Vale N° ${numeroVale} borrado (se volverá a imprimir)`;
+            alert(msg);
+          } catch (e) {
+            console.error('Error eliminando venta 000-02:', e);
+            alert('❌ Error al eliminar la venta. Revisá la consola.');
+          }
+        })();
+        return;
+      }
+
+      // === CASO 3: Movimientos de stock/máquinas ===
       if (item.esMovimiento) {
         if (item.tipoMovimiento === 'agregar') {
           if (consumo > 0 && !isIndependentCode) set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) - Math.abs(consumo));
@@ -2258,11 +2336,29 @@
           if (consumo > 0 && !isIndependentCode) set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) + Math.abs(consumo));
           else if (item.code && !CIERRE_CODES.includes(item.code)) set(ref(database, `stock/${item.code}`), (stock[item.code] ?? STOCK_INICIAL) + unidades);
         }
-      } else if (!item.esGanadoMaquina && !item.esCierre && !item.esFichaGratis && !item.esValeImpreso) {
+      }
+      // === CASO 4: Ventas normales / canjes / mixtos (000-01 u otros) ===
+      else if (!item.esGanadoMaquina && !item.esCierre && !item.esFichaGratis && !item.esValeImpreso) {
         if (consumo > 0 && !isIndependentCode) set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) + Math.abs(consumo));
         else if (item.code && !CIERRE_CODES.includes(item.code)) set(ref(database, `stock/${item.code}`), (stock[item.code] ?? STOCK_INICIAL) + unidades);
+
+        if (item.valeAplicado) {
+          update(ref(database, `vales/${SUCURSAL_NOMBRE}/${item.valeAplicado}`), {
+            estado: 'en_circulacion'
+          }).then(() => {
+            if (vales[item.valeAplicado]) {
+              vales[item.valeAplicado].estado = 'en_circulacion';
+            }
+          }).catch(e => console.error('Error devolviendo vale a circulación:', e));
+        }
       }
-      remove(ref(database, `carrito/${firebaseKey}`)).then(() => alert('✅ Eliminado'));
+
+      remove(ref(database, `carrito/${firebaseKey}`)).then(() => {
+        cart = cart.filter(i => i.firebaseKey !== firebaseKey);
+        updateCartCount();
+        if (document.getElementById('cartModal').style.display === 'block') renderCart();
+        alert('✅ Eliminado');
+      });
     };
 
     let timeoutBusqueda = null;
@@ -2523,9 +2619,6 @@
       } catch (error) { ocultarMensajeEnProceso(); alert('❌ Error al guardar contadores'); }
     };
 
-    // ============================================================
-    // REGISTRO DE SNAPSHOT MANUAL + CÁLCULO DE "GANADO EN MÁQUINA"
-    // ============================================================
     window.registrarStockMaquinas = async function() {
       if (!isOnline()) { mostrarMensajeTemporal('❌ Sin internet - No se puede registrar', true); return; }
       if (!currentMovimientosProduct) { alert('❌ Primero selecciona un producto'); return; }
@@ -3000,7 +3093,6 @@
             let eliminados = 0;
             for (const item of itemsSeleccionados) { try { await remove(ref(database, `carrito/${item.firebaseKey}`)); eliminados++; } catch (e) { console.error('Error eliminando item:', e); } }
             closeFechaModal();
-            // Reasignar fechas de vales impresos en este lote
             const fechaVenc = sumarDiasISO(fechaInput, 7);
             for (const item of itemsSeleccionados) {
               if (item.esValeImpreso && item.numeroVale) {
@@ -3030,7 +3122,6 @@
           localStorage.setItem('BACKUP_ULTIMO', JSON.stringify(backupLocal));
           const guardadoExitoso = await guardarEnHistorial(cart, fechaInput);
           if (guardadoExitoso) {
-            // Reasignar fechas de vales impresos en el carrito
             const fechaVenc = sumarDiasISO(fechaInput, 7);
             const valesEnCarrito = cart.filter(i => i.esValeImpreso && i.numeroVale);
             for (const item of valesEnCarrito) {
@@ -3109,7 +3200,8 @@
             esValeImpreso: venta.esValeImpreso || false, numeroVale: venta.numeroVale || null,
             montoVale: venta.montoVale || null, reutilizado: venta.reutilizado || false,
             valeAplicado: venta.valeAplicado || null, montoValeAplicado: venta.montoValeAplicado || null,
-            fechaGeneracion: venta.fechaGeneracion || null, fechaVencimiento: venta.fechaVencimiento || null
+            fechaGeneracion: venta.fechaGeneracion || null, fechaVencimiento: venta.fechaVencimiento || null,
+            numeroValeGenerado: venta.numeroValeGenerado || null, ventaKey: venta.ventaKey || null
           };
           try { await push(cartRef, itemRestaurado); restaurados++; dineroTotalRestaurado += (venta.money || 0); puntosTotalesRestaurados += (venta.points || 0); }
           catch (e) { console.error('Error restaurando:', venta); errores++; }
@@ -3192,9 +3284,6 @@
       document.getElementById('fechaModal').style.display = 'block';
     };
 
-    // ============================================================
-    // MODAL DE VALES (admin)
-    // ============================================================
     window.abrirModalVales = async function() {
       if (!window.userRole.isAdmin) { alert('❌ Solo el administrador puede ver los vales'); return; }
       await cargarVales();
@@ -3245,9 +3334,6 @@
       tabla.innerHTML = html;
     }
 
-    // ============================================================
-    // IMAGEN PRODUCTO
-    // ============================================================
     function mostrarImagenProducto(code) {
       const modal = document.createElement('div');
       modal.style.position = 'fixed'; modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
@@ -3397,7 +3483,6 @@
       });
     });
 
-    // ========== INICIALIZACIÓN ==========
     await loadPrecios();
     await cargarVales();
 
