@@ -1039,7 +1039,12 @@
       if (!currentProduct) return;
       const tieneVale = valeAplicadoActual && VALE_APPLICABLE_CODES.includes(currentProduct.code);
 
-      const qty = 1;
+      // FIX: respetar la cantidad SOLO cuando el input de cantidad está visible
+      const quantityRow = document.getElementById('quantityRow');
+      const qty = (quantityRow && quantityRow.style.display !== 'none')
+        ? (parseInt(document.getElementById('productQuantity')?.value) || 1)
+        : 1;
+
       let totalPriceValue = currentProduct.price * qty;
 
       if (tieneVale) {
