@@ -1039,7 +1039,12 @@
       if (!currentProduct) return;
       const tieneVale = valeAplicadoActual && VALE_APPLICABLE_CODES.includes(currentProduct.code);
 
-      const qty = 1;
+      // FIX: respetar la cantidad SOLO cuando el input de cantidad está visible
+      const quantityRow = document.getElementById('quantityRow');
+      const qty = (quantityRow && quantityRow.style.display !== 'none')
+        ? (parseInt(document.getElementById('productQuantity')?.value) || 1)
+        : 1;
+
       let totalPriceValue = currentProduct.price * qty;
 
       if (tieneVale) {
@@ -2186,17 +2191,6 @@
       renderCart();
     };
 
-    // ============================================================
-    // ELIMINAR ITEM DEL CARRITO — CON SOPORTE COMPLETO DE VALES
-    // Caso 1: esValeImpreso → borra el vale de vales/ y libera el número.
-    // Caso 2A: Venta de 000-02 SIN vale → devuelve 35 fichas, borra el
-    //          esValeImpreso generado, borra el vale de vales/, borra la venta.
-    // Caso 2B: Venta de 000-02 CON vale → devuelve 45 fichas, devuelve el
-    //          vale usado a 'en_circulacion', borra la venta.
-    // Caso 3: Movimientos de stock/máquinas → igual que antes.
-    // Caso 4: Ventas normales (000-01, otros) con valeAplicado → devuelve stock
-    //         y el vale vuelve a 'en_circulacion'.
-    // ============================================================
     window.showDeletePrompt = function(firebaseKey) {
       if (!window.userRole.isAdmin) { alert('❌ Solo el administrador puede eliminar items del carrito'); return; }
       if (!confirm('¿Eliminar este item del carrito?')) return;
@@ -2207,7 +2201,6 @@
       const unidades = item.unidades || 1;
       const isIndependentCode = NON_FICHA_CODES.includes(item.code) || CIERRE_CODES.includes(item.code);
 
-      // === CASO 1: Item de VALE IMPRESO (borrado directo) ===
       if (item.esValeImpreso && item.numeroVale) {
         const numero = item.numeroVale;
         (async () => {
@@ -2219,23 +2212,17 @@
             updateCartCount();
             if (document.getElementById('cartModal').style.display === 'block') renderCart();
             alert(`✅ Vale N° ${numero} eliminado.\n\n👉 La próxima venta de 000-02 volverá a imprimir el N° ${numero}.`);
-          } catch (e) {
-            console.error('Error eliminando vale:', e);
-            alert('❌ Error al eliminar el vale. Revisá la consola.');
-          }
+          } catch (e) { console.error('Error eliminando vale:', e); alert('❌ Error al eliminar el vale. Revisá la consola.'); }
         })();
         return;
       }
 
-      // === CASO 2: Venta de 000-02 ===
       if (item.code === '000-02' && !item.esMovimiento && !item.esCierre && !item.esFichaGratis) {
         const tieneValeAplicado = !!item.valeAplicado;
 
-        // === 2B: Venta de 000-02 CON vale ===
         if (tieneValeAplicado) {
           const confirmMsg = `🗑️ ELIMINAR VENTA DE 000-02 (con vale)\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Devolver el vale N° ${item.valeAplicado} a "en circulación" (como si el cliente lo tuviera de nuevo)\n• Borrar la venta del carrito\n\n¿Continuar?`;
           if (!confirm(confirmMsg)) return;
-
           (async () => {
             try {
               if (consumo > 0 && !isIndependentCode) {
@@ -2243,30 +2230,18 @@
               } else if (item.code && !CIERRE_CODES.includes(item.code)) {
                 await modificarStockAtomico(item.code, unidades, 0);
               }
-
-              await update(ref(database, `vales/${SUCURSAL_NOMBRE}/${item.valeAplicado}`), {
-                estado: 'en_circulacion'
-              });
-              if (vales[item.valeAplicado]) {
-                vales[item.valeAplicado].estado = 'en_circulacion';
-              }
-
+              await update(ref(database, `vales/${SUCURSAL_NOMBRE}/${item.valeAplicado}`), { estado: 'en_circulacion' });
+              if (vales[item.valeAplicado]) vales[item.valeAplicado].estado = 'en_circulacion';
               await remove(ref(database, `carrito/${firebaseKey}`));
               cart = cart.filter(i => i.firebaseKey !== firebaseKey);
-
               updateCartCount();
               if (document.getElementById('cartModal').style.display === 'block') renderCart();
-
               alert(`✅ Venta eliminada.\n\n• ${consumo * unidades} ficha(s) devueltas al stock\n• Vale N° ${item.valeAplicado} devuelto a "en circulación"`);
-            } catch (e) {
-              console.error('Error eliminando venta 000-02 con vale:', e);
-              alert('❌ Error al eliminar la venta. Revisá la consola.');
-            }
+            } catch (e) { console.error('Error eliminando venta 000-02 con vale:', e); alert('❌ Error al eliminar la venta. Revisá la consola.'); }
           })();
           return;
         }
 
-        // === 2A: Venta de 000-02 SIN vale (generó un vale) ===
         let itemVale = null;
         if (item.numeroValeGenerado) {
           itemVale = cart.find(i => i.esValeImpreso && i.numeroVale === item.numeroValeGenerado);
@@ -2285,11 +2260,9 @@
         }
 
         const numeroVale = itemVale ? itemVale.numeroVale : (item.numeroValeGenerado || null);
-
         const confirmMsg = numeroVale
           ? `🗑️ ELIMINAR VENTA DE 000-02\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Borrar la venta del carrito\n• Borrar el vale N° ${numeroVale} (como si nunca se hubiera impreso)\n\n👉 La próxima venta de 000-02 volverá a imprimir el N° ${numeroVale}.\n\n¿Continuar?`
           : `🗑️ ELIMINAR VENTA DE 000-02\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Borrar la venta del carrito\n\n(No se encontró un vale asociado a esta venta)\n\n¿Continuar?`;
-
         if (!confirm(confirmMsg)) return;
 
         (async () => {
@@ -2299,35 +2272,26 @@
             } else if (item.code && !CIERRE_CODES.includes(item.code)) {
               await modificarStockAtomico(item.code, unidades, 0);
             }
-
             if (itemVale) {
               await remove(ref(database, `carrito/${itemVale.firebaseKey}`));
               cart = cart.filter(i => i.firebaseKey !== itemVale.firebaseKey);
             }
-
             if (numeroVale) {
               await remove(ref(database, `vales/${SUCURSAL_NOMBRE}/${numeroVale}`));
               delete vales[numeroVale];
             }
-
             await remove(ref(database, `carrito/${firebaseKey}`));
             cart = cart.filter(i => i.firebaseKey !== firebaseKey);
-
             updateCartCount();
             if (document.getElementById('cartModal').style.display === 'block') renderCart();
-
             let msg = `✅ Venta eliminada.\n\n• ${consumo * unidades} ficha(s) devueltas al stock`;
             if (numeroVale) msg += `\n• Vale N° ${numeroVale} borrado (se volverá a imprimir)`;
             alert(msg);
-          } catch (e) {
-            console.error('Error eliminando venta 000-02:', e);
-            alert('❌ Error al eliminar la venta. Revisá la consola.');
-          }
+          } catch (e) { console.error('Error eliminando venta 000-02:', e); alert('❌ Error al eliminar la venta. Revisá la consola.'); }
         })();
         return;
       }
 
-      // === CASO 3: Movimientos de stock/máquinas ===
       if (item.esMovimiento) {
         if (item.tipoMovimiento === 'agregar') {
           if (consumo > 0 && !isIndependentCode) set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) - Math.abs(consumo));
@@ -2336,20 +2300,14 @@
           if (consumo > 0 && !isIndependentCode) set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) + Math.abs(consumo));
           else if (item.code && !CIERRE_CODES.includes(item.code)) set(ref(database, `stock/${item.code}`), (stock[item.code] ?? STOCK_INICIAL) + unidades);
         }
-      }
-      // === CASO 4: Ventas normales / canjes / mixtos (000-01 u otros) ===
-      else if (!item.esGanadoMaquina && !item.esCierre && !item.esFichaGratis && !item.esValeImpreso) {
+      } else if (!item.esGanadoMaquina && !item.esCierre && !item.esFichaGratis && !item.esValeImpreso) {
         if (consumo > 0 && !isIndependentCode) set(ref(database, `stock/000-00`), (stock['000-00'] ?? STOCK_INICIAL) + Math.abs(consumo));
         else if (item.code && !CIERRE_CODES.includes(item.code)) set(ref(database, `stock/${item.code}`), (stock[item.code] ?? STOCK_INICIAL) + unidades);
 
         if (item.valeAplicado) {
-          update(ref(database, `vales/${SUCURSAL_NOMBRE}/${item.valeAplicado}`), {
-            estado: 'en_circulacion'
-          }).then(() => {
-            if (vales[item.valeAplicado]) {
-              vales[item.valeAplicado].estado = 'en_circulacion';
-            }
-          }).catch(e => console.error('Error devolviendo vale a circulación:', e));
+          update(ref(database, `vales/${SUCURSAL_NOMBRE}/${item.valeAplicado}`), { estado: 'en_circulacion' })
+            .then(() => { if (vales[item.valeAplicado]) vales[item.valeAplicado].estado = 'en_circulacion'; })
+            .catch(e => console.error('Error devolviendo vale a circulación:', e));
         }
       }
 
