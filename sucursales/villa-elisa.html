@@ -26,10 +26,6 @@
     .floating-search-container { padding: 10px 0; }
   }
 
-  .btn-home { position: fixed; top: 80px; right: 20px; background: #4CAF50; color: white; border: none; border-radius: 50px; padding: 10px 18px; font-size: 14px; font-weight: bold; cursor: pointer; z-index: 1500; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 6px; transition: all 0.3s ease; touch-action: manipulation; }
-  .btn-home:hover { background: #45a049; transform: scale(1.05); }
-  @media (max-width:600px) { .btn-home { top: 70px; right: 10px; padding: 8px 14px; font-size: 12px; } }
-
   .vista-toggle { display: flex; gap: 6px; margin: 12px 0; padding: 6px; background: #f0f2f5; border-radius: 12px; max-width: 1200px; margin-left: auto; margin-right: auto; }
   .vista-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; background: transparent; font-weight: bold; font-size: 0.95rem; cursor: pointer; color: #666; transition: all 0.2s ease; touch-action: manipulation; }
   .vista-btn.active { background: #2196F3; color: white; box-shadow: 0 2px 8px rgba(33,150,243,0.3); }
@@ -270,7 +266,7 @@
   .vales-modal table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; overflow-x: auto; display: block; white-space: nowrap; }
   .vales-modal th, .vales-modal td { border: 1px solid #ddd; padding: 8px; text-align: center; }
   .vales-modal th { background: #006064; color: white; }
-  .vale-estado-disponible { color: #2E7D32; font-weight: bold; }
+  .vale-estado-canjeado { color: #2E7D32; font-weight: bold; }
   .vale-estado-en_circulacion { color: #F57C00; font-weight: bold; }
   .vale-estado-vencida { color: #C62828; font-weight: bold; }
 </style>
@@ -355,14 +351,12 @@
       </div>
 
       <div class="payment-options" id="paymentOptionsBlock">
-        <!-- Bloque PUNTOS (productos con puntos, incluye 000-00) -->
         <div class="payment-option" id="pointsPaymentOption">
           <label>🎯 Pagar con Puntos</label>
           <input type="number" id="pointsInput" min="0" step="1" placeholder="Ingresa puntos" oninput="calculateRemainingMoney()" onblur="calculateRemainingMoney()" inputmode="numeric">
           <div class="auto-calc">💰 Total del producto: G.<span id="totalPrice">0</span><span id="valeDiscountText" style="color:#00838F;"></span></div>
         </div>
 
-        <!-- Bloque VALE (000-01 y 000-02) — misma apariencia que puntos -->
         <div class="payment-option" id="valePaymentOption" style="display:none;">
           <label>🎟️ Aplicar Vale / Tarjeta</label>
           <input type="text" id="valeNumeroInput" placeholder="N° de tarjeta (Ej: 001)" maxlength="6" inputmode="numeric" oninput="onValeNumeroChange(this.value)" style="text-align:center; font-weight:bold; font-size:16px;">
@@ -374,7 +368,6 @@
           <button type="button" onclick="limpiarValeAplicado()" style="background:#f44336; color:white; border:none; border-radius:8px; padding:10px 14px; font-weight:bold; cursor:pointer; margin-top:10px; width:100%; touch-action:manipulation;">✕ Quitar vale</button>
         </div>
 
-        <!-- Completar con dinero -->
         <div class="payment-option">
           <label>💵 Completar con Dinero (G.)</label>
           <input type="number" id="moneyInput" min="0" step="1000" value="0" readonly style="background-color:#f5f5f5;">
@@ -681,14 +674,11 @@
       '000-06': 7
     };
 
-    // Requerimiento 2: 000-02 con vale descuenta 35 fichas
-    // Requerimiento adicional: 000-01 con vale descuenta 10 fichas
     const FICHA_CONSUMPTION_VALE = {
       '000-01': 10,
       '000-02': 35
     };
 
-    // Requerimiento 1: 13 puntos = 1 ficha en 000-00
     const PUNTOS_POR_FICHA_000_00 = 13;
 
     const NON_FICHA_CODES = ['000-07', '000-08', '000-09'];
@@ -697,21 +687,9 @@
     const VALE_MONTO = 50000;
 
     const COSTOS_USD = {
-      '005': 0.12,
-      '025': 0.4,
-      '035': 0.6,
-      '055': 1.0,
-      '085': 1.5,
-      '110': 2.0,
-      '165': 3.0,
-      '220': 4.0,
-      '275': 5.0,
-      '325': 6.0,
-      '490': 9.0,
-      '545': 10.0,
-      '650': 12.0,
-      '815': 15.0,
-      '1085': 20.0
+      '005': 0.12, '025': 0.4, '035': 0.6, '055': 1.0, '085': 1.5, '110': 2.0,
+      '165': 3.0, '220': 4.0, '275': 5.0, '325': 6.0, '490': 9.0, '545': 10.0,
+      '650': 12.0, '815': 15.0, '1085': 20.0
     };
 
     function getCostoUnitarioUSD(code) {
@@ -936,24 +914,13 @@
       return hoy > vale.fechaVencimiento;
     }
 
-    function getValesDisponibles() {
-      const lista = [];
-      for (const [numero, vale] of Object.entries(vales)) {
-        if (vale.estado === 'disponible') {
-          lista.push({ numero, ...vale });
-        }
-      }
-      lista.sort((a, b) => parseInt(a.numero, 10) - parseInt(b.numero, 10));
-      return lista;
-    }
-
-    function getMaxNumeroVale() {
-      let max = 0;
-      for (const numero of Object.keys(vales)) {
-        const n = parseInt(numero, 10);
-        if (!isNaN(n) && n > max) max = n;
-      }
-      return max;
+    // Próximo número de vale: MENOR ENTERO POSITIVO QUE NO EXISTA.
+    // Solo se reutiliza un número si el admin borra ese vale explícitamente.
+    function getSiguienteNumeroVale() {
+      const existentes = new Set(Object.keys(vales).map(n => parseInt(n, 10)));
+      let n = 1;
+      while (existentes.has(n)) n++;
+      return n;
     }
 
     function formatearNumeroVale(n) {
@@ -966,11 +933,7 @@
       return hoy > vale.fechaGeneracion;
     }
 
-    function valeEstaEnCarritoActual(numero) {
-      return cart.some(item => item.esValeImpreso && item.numeroVale === numero && !item.esValeCanjeado);
-    }
-
-    // Requerimiento 4: mensajes de error exactos
+    // Mensajes definitivos de vales
     window.onValeNumeroChange = function(valor) {
       const numero = String(valor || '').replace(/[^0-9]/g, '').padStart(3, '0');
       const statusDiv = document.getElementById('valeStatusDiv');
@@ -985,7 +948,6 @@
 
       const vale = getValePorNumero(numero);
 
-      // c) No impreso todavía
       if (!vale) {
         statusDiv.style.display = 'block';
         statusDiv.className = 'vale-status error';
@@ -995,17 +957,15 @@
         return;
       }
 
-      // En circulación con cliente
-      if (vale.estado === 'en_circulacion') {
+      if (vale.estado === 'canjeado') {
         statusDiv.style.display = 'block';
         statusDiv.className = 'vale-status error';
-        statusDiv.innerHTML = `⚠️ El vale N° ${numero} está en circulación (con un cliente). No se puede canjear hasta que sea devuelto.`;
+        statusDiv.innerHTML = `❌ Vale ya canjeado`;
         valeAplicadoActual = null;
         actualizarTotalConVale();
         return;
       }
 
-      // b) Vencido
       if (vale.estado === 'vencida' || esValeVencido(vale)) {
         statusDiv.style.display = 'block';
         statusDiv.className = 'vale-status error';
@@ -1015,7 +975,6 @@
         return;
       }
 
-      // a) Generado hoy → válido a partir de mañana
       if (!valeSePuedeCanjearHoy(vale)) {
         statusDiv.style.display = 'block';
         statusDiv.className = 'vale-status error';
@@ -1025,17 +984,6 @@
         return;
       }
 
-      // Impreso en el carrito actual
-      if (valeEstaEnCarritoActual(numero)) {
-        statusDiv.style.display = 'block';
-        statusDiv.className = 'vale-status error';
-        statusDiv.innerHTML = `⏳ El vale N° ${numero} fue impreso en el carrito actual. No se puede canjear hasta que se vacíe el carrito.`;
-        valeAplicadoActual = null;
-        actualizarTotalConVale();
-        return;
-      }
-
-      // OK
       statusDiv.style.display = 'block';
       statusDiv.className = 'vale-status ok';
       statusDiv.innerHTML = `✅ Vale N° ${numero} válido. Descuenta Gs. ${VALE_MONTO.toLocaleString()}.`;
@@ -1074,7 +1022,6 @@
       const pointsInputEl = document.getElementById('pointsInput');
       const pointsValue = pointsInputEl ? (parseInt(pointsInputEl.value) || 0) : 0;
 
-      // === CASO ESPECIAL 000-00: canje por puntos (13 pts = 1 ficha) ===
       if (currentProduct.code === '000-00' && pointsValue > 0) {
         const fichasCanjeables = Math.floor(pointsValue / PUNTOS_POR_FICHA_000_00);
         const qtyFichas = qty;
@@ -1145,17 +1092,7 @@
     }
 
     async function generarOReutilizarVale(ventaKey) {
-      const disponibles = getValesDisponibles();
-      let numero;
-      let reutilizado = false;
-
-      if (disponibles.length > 0) {
-        numero = disponibles[0].numero;
-        reutilizado = true;
-      } else {
-        const max = getMaxNumeroVale();
-        numero = formatearNumeroVale(max + 1);
-      }
+      const numero = formatearNumeroVale(getSiguienteNumeroVale());
 
       const { fechaGeneracion, fechaVencimiento } = calcularFechaGeneracionYVencimiento();
 
@@ -1166,7 +1103,6 @@
         fechaGeneracion,
         fechaVencimiento,
         timestampGeneracion: Date.now(),
-        reutilizado,
         ventaKey: ventaKey || null,
         registradoPor: window.userRole.uid,
         registradoPorEmail: window.userRole.email
@@ -1190,7 +1126,6 @@
         esValeImpreso: true,
         numeroVale: numero,
         montoVale: VALE_MONTO,
-        reutilizado,
         fechaGeneracion,
         fechaVencimiento,
         ventaKey: ventaKey || null,
@@ -1208,11 +1143,10 @@
         fechaGeneracion,
         fechaVencimiento,
         timestampGeneracion: Date.now(),
-        reutilizado,
         ventaKey: ventaKey || null
       };
 
-      return { numero, fechaVencimiento, reutilizado };
+      return { numero, fechaVencimiento };
     }
 
     async function consumirVale(numero, itemCarritoKey, productoCode) {
@@ -1231,21 +1165,143 @@
       });
 
       await update(ref(database, `vales/${SUCURSAL_NOMBRE}/${numero}`), {
-        estado: 'disponible',
-        fechaGeneracion: null,
-        fechaVencimiento: null,
+        estado: 'canjeado',
+        fechaCanje: fechaStr,
+        horaCanje: horaStr,
         ultimoCanjeFecha: fechaStr,
         ultimoCanjeHora: horaStr
       });
 
       if (vales[numero]) {
-        vales[numero].estado = 'disponible';
-        vales[numero].fechaGeneracion = null;
-        vales[numero].fechaVencimiento = null;
+        vales[numero].estado = 'canjeado';
+        vales[numero].fechaCanje = fechaStr;
+        vales[numero].horaCanje = horaStr;
         vales[numero].ultimoCanjeFecha = fechaStr;
         vales[numero].ultimoCanjeHora = horaStr;
       }
     }
+
+    window.cambiarNumeroVale = async function(numeroActual) {
+      if (!window.userRole.isAdmin) { alert('❌ Solo el administrador puede cambiar números de vale'); return; }
+
+      const valeActual = vales[numeroActual];
+      if (!valeActual) { alert('❌ Vale no encontrado'); return; }
+
+      const nuevoInput = prompt(
+        `✏️ CAMBIAR NÚMERO DE VALE\n\n` +
+        `N° actual: ${numeroActual}\n` +
+        `Estado actual: ${valeActual.estado}\n` +
+        `Monto: Gs. ${(valeActual.monto || 0).toLocaleString()}\n\n` +
+        `👉 Ingresá el NUEVO número (3 dígitos, ej: 007):\n\n` +
+        `ℹ️ Si el número nuevo ya existe, se intercambiarán los estados entre ambos.`,
+        numeroActual
+      );
+      if (nuevoInput === null) return;
+
+      const nuevoNumero = String(nuevoInput).replace(/[^0-9]/g, '').padStart(3, '0');
+
+      if (!/^\d{3}$/.test(nuevoNumero)) {
+        alert('❌ El número debe tener exactamente 3 dígitos (001 al 999)');
+        return;
+      }
+      if (nuevoNumero === numeroActual) {
+        alert('ℹ️ El número nuevo es igual al actual. No hay cambios.');
+        return;
+      }
+
+      const valeNuevo = vales[nuevoNumero] || null;
+
+      const confirmar = confirm(
+        `✏️ CONFIRMAR CAMBIO DE NÚMERO\n\n` +
+        `De: N° ${numeroActual}  →  A: N° ${nuevoNumero}\n\n` +
+        `📌 Estado que se va a mover: ${valeActual.estado}\n\n` +
+        (valeNuevo
+          ? `• El N° ${nuevoNumero} ya existía (estado: ${valeNuevo.estado}). Se intercambiarán entre ambos.\n`
+          : `• El N° ${nuevoNumero} no existía. Se creará con los datos del ${numeroActual}.\n`) +
+        `• El historial de canjes previos NO se modifica.\n\n` +
+        `¿Continuar?`
+      );
+      if (!confirmar) return;
+
+      mostrarMensajeEnProceso('🔄 Cambiando número de vale...');
+
+      try {
+        if (!valeNuevo) {
+          const payloadActual = { ...valeActual, numero: nuevoNumero };
+          delete payloadActual.canjes;
+          await set(ref(database, `vales/${SUCURSAL_NOMBRE}/${nuevoNumero}`), payloadActual);
+          if (valeActual.canjes) {
+            await set(ref(database, `vales/${SUCURSAL_NOMBRE}/${nuevoNumero}/canjes`), valeActual.canjes);
+          }
+          await remove(ref(database, `vales/${SUCURSAL_NOMBRE}/${numeroActual}`));
+        } else {
+          const payloadViejo = { ...valeActual, numero: nuevoNumero };
+          const payloadNuevo = { ...valeNuevo, numero: numeroActual };
+          const canjesViejo = valeActual.canjes || null;
+          const canjesNuevo = valeNuevo.canjes || null;
+
+          delete payloadViejo.canjes;
+          delete payloadNuevo.canjes;
+
+          await set(ref(database, `vales/${SUCURSAL_NOMBRE}/${nuevoNumero}`), payloadViejo);
+          await set(ref(database, `vales/${SUCURSAL_NOMBRE}/${numeroActual}`), payloadNuevo);
+
+          if (canjesNuevo) await set(ref(database, `vales/${SUCURSAL_NOMBRE}/${nuevoNumero}/canjes`), canjesNuevo);
+          else await remove(ref(database, `vales/${SUCURSAL_NOMBRE}/${nuevoNumero}/canjes`));
+
+          if (canjesViejo) await set(ref(database, `vales/${SUCURSAL_NOMBRE}/${numeroActual}/canjes`), canjesViejo);
+          else await remove(ref(database, `vales/${SUCURSAL_NOMBRE}/${numeroActual}/canjes`));
+        }
+
+        const cartSnap = await get(cartRef);
+        const cartData = cartSnap.val() || {};
+        for (const [k, item] of Object.entries(cartData)) {
+          if (item.esValeImpreso && item.numeroVale === numeroActual) {
+            await update(ref(database, `carrito/${k}`), { numeroVale: nuevoNumero });
+          }
+        }
+
+        await cargarVales();
+        renderValesModal();
+        ocultarMensajeEnProceso();
+        alert(`✅ CAMBIO EXITOSO\n\nN° ${numeroActual}  →  N° ${nuevoNumero}`);
+      } catch (e) {
+        ocultarMensajeEnProceso();
+        console.error('Error cambiando número de vale:', e);
+        alert('❌ Error al cambiar el número del vale. Revisá la consola.');
+      }
+    };
+
+    window.borrarVale = async function(numero) {
+      if (!window.userRole.isAdmin) { alert('❌ Solo el administrador puede borrar vales'); return; }
+
+      const vale = vales[numero];
+      if (!vale) { alert('❌ Vale no encontrado'); return; }
+
+      const confirmar = confirm(
+        `🗑️ BORRAR VALE N° ${numero}\n\n` +
+        `📌 Estado: ${vale.estado}\n` +
+        `💰 Monto: Gs. ${(vale.monto || 0).toLocaleString()}\n` +
+        (vale.canjes ? `🔁 Canjes registrados: ${Object.keys(vale.canjes).length}\n` : '') +
+        `\n⚠️ Esta acción elimina el vale del sistema.\n` +
+        `El número ${numero} quedará LIBERADO y será reutilizado por el próximo vale que se genere.\n\n` +
+        `¿Continuar?`
+      );
+      if (!confirmar) return;
+
+      mostrarMensajeEnProceso('🔄 Borrando vale...');
+      try {
+        await remove(ref(database, `vales/${SUCURSAL_NOMBRE}/${numero}`));
+        delete vales[numero];
+        renderValesModal();
+        ocultarMensajeEnProceso();
+        alert(`✅ Vale N° ${numero} eliminado. El número ${numero} quedó libre.`);
+      } catch (e) {
+        ocultarMensajeEnProceso();
+        console.error('Error borrando vale:', e);
+        alert('❌ Error al borrar el vale. Revisá la consola.');
+      }
+    };
 
     function handleProductClick(e) {
       if (e) e.preventDefault();
@@ -1291,7 +1347,6 @@
         const quantityInput = document.getElementById('productQuantity');
         if (quantityInput) quantityInput.value = 1;
 
-        // Requerimiento 3: mostrar bloque VALE o PUNTOS según producto
         const esValeApplicable = VALE_APPLICABLE_CODES.includes(code);
         const pointsPaymentOption = document.getElementById('pointsPaymentOption');
         const valePaymentOption = document.getElementById('valePaymentOption');
@@ -1696,7 +1751,7 @@
           } else if (item.esGanadoMaquina) {
             movimientoTexto = '🎰 Ganado'; puntosTexto = '-'; dineroTexto = 'Gs. 0'; fichasTexto = '-';
           } else if (item.esValeImpreso) {
-            movimientoTexto = item.reutilizado ? '🎟️ Reutilizado' : '🎟️ Impreso'; puntosTexto = '-'; dineroTexto = 'Gs. 0'; fichasTexto = '-';
+            movimientoTexto = '🎟️ Impreso'; puntosTexto = '-'; dineroTexto = 'Gs. 0'; fichasTexto = '-';
           } else if (item.esCanje && item.code === '000-00') {
             movimientoTexto = '🎯 Canje'; puntosTexto = (item.points || 0).toLocaleString(); dineroTexto = 'Gs. 0'; fichasTexto = `${item.fichaConsumption || 0}`;
           } else {
@@ -1774,7 +1829,7 @@
           const costoUnit = getCostoUnitarioUSD(i.code);
           return [
             i.name, (i.points || 0), (i.money || 0), metodoPago,
-            i.esMovimiento ? (i.tipoMovimiento === 'agregar' ? `+${i.unidades}` : `-${i.unidades}`) : (i.esFichaGratis ? '🎁 Gratis' : (i.esCierre ? '💰 Cierre' : (i.esGanadoMaquina ? '🎰 Ganado' : (i.esValeImpreso ? '🎟️ Vale' : '-'))),
+            i.esMovimiento ? (i.tipoMovimiento === 'agregar' ? `+${i.unidades}` : `-${i.unidades}`) : (i.esFichaGratis ? '🎁 Gratis' : (i.esCierre ? '💰 Cierre' : (i.esGanadoMaquina ? '🎰 Ganado' : (i.esValeImpreso ? '🎟️ Vale' : '-')))),
             Math.abs(i.fichaConsumption) || 0,
             i.esFichaGratis ? Math.abs(i.fichaConsumption) || 0 : 0,
             !i.esFichaGratis ? Math.abs(i.fichaConsumption) || 0 : 0,
@@ -2097,7 +2152,7 @@
             let mensaje = `✅ OPERACIÓN EXITOSA!\n\n📦 ${qty} x ${product.name}\n💰 Total: Gs. ${totalPrice.toLocaleString()}`;
             if (metodo === 'canje') mensaje += `\n🎯 CANJEADO por ${points} puntos`;
             else if (metodo !== 'canje-vale') { const metodoTexto = metodo === 'efectivo' ? 'EFECTIVO' : 'POS'; mensaje += `\n🎯 Puntos usados: ${points}\n💳 ${metodoTexto}: Gs. ${money.toLocaleString()}`; }
-            mensaje += `\n\n🎟️ Se entregó la tarjeta N° ${valeGenerado.numero}.\n📅 Vence: ${fechaLegible(valeGenerado.fechaVencimiento)}${valeGenerado.reutilizado ? ' (reutilizada)' : ' (nueva)'}`;
+            mensaje += `\n\n🎟️ Se entregó la tarjeta N° ${valeGenerado.numero}.\n📅 Vence: ${fechaLegible(valeGenerado.fechaVencimiento)}`;
             alert(mensaje);
             return;
           }
@@ -2152,21 +2207,14 @@
           metodoPago: item.metodoPago || null, esCanje: item.esCanje || false, esMixto: item.esMixto || false,
           efectivo: item.efectivo || null, pos: item.pos || null,
           esGanadoMaquina: item.esGanadoMaquina || false,
-          snapshotAyer: item.snapshotAyer ?? null,
-          agregados: item.agregados ?? null,
-          quitados: item.quitados ?? null,
-          snapshotHoy: item.snapshotHoy ?? null,
+          snapshotAyer: item.snapshotAyer ?? null, agregados: item.agregados ?? null,
+          quitados: item.quitados ?? null, snapshotHoy: item.snapshotHoy ?? null,
           fechaCierre: item.fechaCierre || null,
           esValeImpreso: item.esValeImpreso || false,
-          numeroVale: item.numeroVale || null,
-          montoVale: item.montoVale || null,
-          reutilizado: item.reutilizado || false,
-          valeAplicado: item.valeAplicado || null,
-          montoValeAplicado: item.montoValeAplicado || null,
-          fechaGeneracion: item.fechaGeneracion || null,
-          fechaVencimiento: item.fechaVencimiento || null,
-          numeroValeGenerado: item.numeroValeGenerado || null,
-          ventaKey: item.ventaKey || null,
+          numeroVale: item.numeroVale || null, montoVale: item.montoVale || null,
+          valeAplicado: item.valeAplicado || null, montoValeAplicado: item.montoValeAplicado || null,
+          fechaGeneracion: item.fechaGeneracion || null, fechaVencimiento: item.fechaVencimiento || null,
+          numeroValeGenerado: item.numeroValeGenerado || null, ventaKey: item.ventaKey || null,
           puntosDevueltos: item.puntosDevueltos || 0
         }));
 
@@ -2377,7 +2425,7 @@
             cart = cart.filter(i => i.firebaseKey !== firebaseKey);
             updateCartCount();
             if (document.getElementById('cartModal').style.display === 'block') renderCart();
-            alert(`✅ Vale N° ${numero} eliminado.\n\n👉 La próxima venta de 000-02 volverá a imprimir el N° ${numero}.`);
+            alert(`✅ Vale N° ${numero} eliminado.\n\n👉 El número ${numero} quedó LIBERADO y será reutilizado por el próximo vale.`);
           } catch (e) { console.error('Error eliminando vale:', e); alert('❌ Error al eliminar el vale. Revisá la consola.'); }
         })();
         return;
@@ -2427,7 +2475,7 @@
 
         const numeroVale = itemVale ? itemVale.numeroVale : (item.numeroValeGenerado || null);
         const confirmMsg = numeroVale
-          ? `🗑️ ELIMINAR VENTA DE 000-02\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Borrar la venta del carrito\n• Borrar el vale N° ${numeroVale} (como si nunca se hubiera impreso)\n\n👉 La próxima venta de 000-02 volverá a imprimir el N° ${numeroVale}.\n\n¿Continuar?`
+          ? `🗑️ ELIMINAR VENTA DE 000-02\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Borrar la venta del carrito\n• Borrar el vale N° ${numeroVale} (como si nunca se hubiera impreso)\n\n👉 El número ${numeroVale} quedará LIBERADO.\n\n¿Continuar?`
           : `🗑️ ELIMINAR VENTA DE 000-02\n\nEsta acción va a:\n• Devolver ${consumo * unidades} ficha(s) al stock\n• Borrar la venta del carrito\n\n(No se encontró un vale asociado a esta venta)\n\n¿Continuar?`;
         if (!confirm(confirmMsg)) return;
 
@@ -2451,7 +2499,7 @@
             updateCartCount();
             if (document.getElementById('cartModal').style.display === 'block') renderCart();
             let msg = `✅ Venta eliminada.\n\n• ${consumo * unidades} ficha(s) devueltas al stock`;
-            if (numeroVale) msg += `\n• Vale N° ${numeroVale} borrado (se volverá a imprimir)`;
+            if (numeroVale) msg += `\n• Vale N° ${numeroVale} borrado (número liberado)`;
             alert(msg);
           } catch (e) { console.error('Error eliminando venta 000-02:', e); alert('❌ Error al eliminar la venta. Revisá la consola.'); }
         })();
@@ -3322,7 +3370,7 @@
             snapshotAyer: venta.snapshotAyer ?? null, agregados: venta.agregados ?? null,
             quitados: venta.quitados ?? null, snapshotHoy: venta.snapshotHoy ?? null,
             esValeImpreso: venta.esValeImpreso || false, numeroVale: venta.numeroVale || null,
-            montoVale: venta.montoVale || null, reutilizado: venta.reutilizado || false,
+            montoVale: venta.montoVale || null,
             valeAplicado: venta.valeAplicado || null, montoValeAplicado: venta.montoValeAplicado || null,
             fechaGeneracion: venta.fechaGeneracion || null, fechaVencimiento: venta.fechaVencimiento || null,
             numeroValeGenerado: venta.numeroValeGenerado || null, ventaKey: venta.ventaKey || null,
@@ -3423,25 +3471,26 @@
       const resumen = document.getElementById('valesResumen');
       const tabla = document.getElementById('valesTablaContainer');
 
-      let disponibles = 0, enCirculacion = 0, vencidas = 0, totalCanjes = 0;
+      let enCirculacion = 0, canjeados = 0, vencidas = 0, totalCanjes = 0;
       for (const v of Object.values(vales)) {
-        if (v.estado === 'disponible') disponibles++;
-        else if (v.estado === 'en_circulacion') enCirculacion++;
+        if (v.estado === 'en_circulacion') enCirculacion++;
+        else if (v.estado === 'canjeado') canjeados++;
         else if (v.estado === 'vencida') vencidas++;
         if (v.canjes) totalCanjes += Object.keys(v.canjes).length;
       }
 
       resumen.innerHTML = `
         <strong>📊 Resumen:</strong><br>
-        🟢 Disponibles: ${disponibles} | 🟠 En circulación: ${enCirculacion} | 🔴 Vencidas: ${vencidas} | 🔁 Total canjes: ${totalCanjes}
+        🟠 En circulación (con cliente): ${enCirculacion} | 🟢 Canjeados: ${canjeados} | 🔴 Vencidos: ${vencidas} | 🔁 Total canjes: ${totalCanjes}<br>
+        <small style="color:#666;">ℹ️ Cada número se usa una sola vez. Solo el admin puede borrar o cambiar un número. Al borrar, ese número queda libre y se reutiliza.</small>
       `;
 
-      let html = `<table><thead><tr><th>N°</th><th>Monto</th><th>Estado</th><th>Fecha Gen.</th><th>Fecha Venc.</th><th>Canjes</th></tr></thead><tbody>`;
+      let html = `<table><thead><tr><th>N°</th><th>Monto</th><th>Estado</th><th>Fecha Gen.</th><th>Fecha Venc.</th><th>Canjes</th><th>Acciones</th></tr></thead><tbody>`;
       const numerosOrdenados = Object.keys(vales).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
       numerosOrdenados.forEach(numero => {
         const v = vales[numero];
         let estadoClass = '';
-        if (v.estado === 'disponible') estadoClass = 'vale-estado-disponible';
+        if (v.estado === 'canjeado') estadoClass = 'vale-estado-canjeado';
         else if (v.estado === 'en_circulacion') estadoClass = 'vale-estado-en_circulacion';
         else if (v.estado === 'vencida') estadoClass = 'vale-estado-vencida';
         const numCanjes = v.canjes ? Object.keys(v.canjes).length : 0;
@@ -3452,6 +3501,10 @@
           <td>${fechaLegible(v.fechaGeneracion)}</td>
           <td>${fechaLegible(v.fechaVencimiento)}</td>
           <td>${numCanjes}</td>
+          <td style="white-space:nowrap;">
+            <button onclick="cambiarNumeroVale('${numero}')" style="background:#FF9800; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem; touch-action:manipulation; margin-right:4px;">✏️ Cambiar N°</button>
+            <button onclick="borrarVale('${numero}')" style="background:#f44336; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem; touch-action:manipulation;">🗑️ Borrar</button>
+          </td>
         </tr>`;
       });
       html += `</tbody></table>`;
