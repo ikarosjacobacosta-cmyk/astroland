@@ -250,12 +250,6 @@
   .tc-row input:focus { outline: none; border-color: #E65100; box-shadow: 0 0 0 3px rgba(230,81,0,0.15); }
   .tc-row .tc-hint { font-size: 0.75rem; color: #666; }
 
-  .vale-container { margin: 15px 0; padding: 15px; background: linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 100%); border-radius: 12px; border: 2px solid #00BCD4; }
-  .vale-container h4 { margin: 0 0 10px; color: #006064; font-size: 1rem; }
-  .vale-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .vale-row label { font-weight: bold; color: #006064; font-size: 0.9rem; }
-  .vale-row input { width: 130px; padding: 10px 12px; font-size: 16px; border: 2px solid #00BCD4; border-radius: 8px; text-align: center; font-weight: bold; -webkit-appearance: none; appearance: none; }
-  .vale-row input:focus { outline: none; border-color: #00838F; box-shadow: 0 0 0 3px rgba(0,131,143,0.15); }
   .vale-status { margin-top: 10px; padding: 10px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; text-align: center; }
   .vale-status.ok { background: #C8E6C9; color: #2E7D32; }
   .vale-status.error { background: #FFCDD2; color: #C62828; }
@@ -933,7 +927,7 @@
       return hoy > vale.fechaGeneracion;
     }
 
-    // Mensajes definitivos de vales
+    // Mensajes definitivos de vales (4 casos)
     window.onValeNumeroChange = function(valor) {
       const numero = String(valor || '').replace(/[^0-9]/g, '').padStart(3, '0');
       const statusDiv = document.getElementById('valeStatusDiv');
@@ -1022,31 +1016,29 @@
       const pointsInputEl = document.getElementById('pointsInput');
       const pointsValue = pointsInputEl ? (parseInt(pointsInputEl.value) || 0) : 0;
 
+      // === CASO 000-00: canje por puntos (13 pts = 1 ficha) ===
+      // Las fichas a entregar son las que alcanzan los puntos ingresados,
+      // SIN limitar por la cantidad del input "Cantidad".
       if (currentProduct.code === '000-00' && pointsValue > 0) {
         const fichasCanjeables = Math.floor(pointsValue / PUNTOS_POR_FICHA_000_00);
-        const qtyFichas = qty;
-        const totalNormal = currentProduct.price * qtyFichas;
+        const puntosUsados = fichasCanjeables * PUNTOS_POR_FICHA_000_00;
+        const puntosADevolver = pointsValue - puntosUsados;
 
-        const fichasEfectivamenteCanjeadas = Math.min(fichasCanjeables, qtyFichas);
-        const puntosEfectivamenteUsados = fichasEfectivamenteCanjeadas * PUNTOS_POR_FICHA_000_00;
-        const puntosADevolver = pointsValue - puntosEfectivamenteUsados;
-
-        const fichasAPagarConDinero = Math.max(0, qtyFichas - fichasEfectivamenteCanjeadas);
-        const moneyToPay000 = fichasAPagarConDinero * currentProduct.price;
+        const totalNormal = currentProduct.price * fichasCanjeables;
 
         const tp1 = document.getElementById('totalPrice');
         const tp2 = document.getElementById('totalPriceVale');
         if (tp1) tp1.textContent = totalNormal.toLocaleString();
         if (tp2) tp2.textContent = totalNormal.toLocaleString();
-        document.getElementById('moneyInput').value = Math.floor(moneyToPay000);
+        document.getElementById('moneyInput').value = 0;
 
         window._canje00000 = {
           fichasCanjeables,
-          fichasEfectivamenteCanjeadas,
-          puntosUsados: puntosEfectivamenteUsados,
+          fichasEfectivamenteCanjeadas: fichasCanjeables,
+          puntosUsados,
           puntosADevolver,
           totalNormal,
-          moneyToPay000
+          moneyToPay000: 0
         };
 
         actualizarBotonesCanje00000();
