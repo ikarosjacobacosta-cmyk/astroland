@@ -1697,27 +1697,54 @@
         </div>
     </section>
 
-    <section id="tab-pdf" class="tab-content" style="display:none;">
+        <section id="tab-pdf" class="tab-content" style="display:none;">
         <div class="card-premium">
             <div class="card-header">
                 <h2><span class="icon">📄</span> Generar Reporte PDF</h2>
-                <span class="badge-count">Basado en filtros</span>
+                <span class="badge-count">Agrupado por período</span>
             </div>
 
-            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
-                <button class="btn-premium success" onclick="generarPDFconFiltros()">
-                    <i class="fas fa-file-pdf"></i> PDF con Filtros
-                </button>
-                <span style="font-size:0.8rem; color:var(--gray-400); display:flex; align-items:center;">
-                    <i class="fas fa-info-circle" style="margin-right:6px;"></i>
-                    Se genera con los filtros aplicados
-                </span>
+            <div class="filter-grid-premium" style="background:var(--gray-50); padding:16px; border-radius:var(--radius-md); border:1px solid var(--gray-200); margin-bottom:16px;">
+                <div class="filter-group">
+                    <label><i class="fas fa-store"></i> Sucursal</label>
+                    <select id="pdfSucursal">
+                        <option value="todas">📊 Todas las sucursales</option>
+                        <option value="Villa Morra">🏢 Villa Morra</option>
+                        <option value="Los Laureles">🏢 Los Laureles</option>
+                        <option value="Lambaré">🏢 Lambaré</option>
+                        <option value="Villa Elisa">🏢 Villa Elisa</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Desde</label>
+                    <input type="date" id="pdfFechaDesde">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Hasta</label>
+                    <input type="date" id="pdfFechaHasta">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-layer-group"></i> Agrupar por</label>
+                    <select id="pdfAgrupacion">
+                        <option value="dia">📅 Por Día</option>
+                        <option value="mes">📆 Por Mes</option>
+                        <option value="anio">🗓️ Por Año</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-premium primary" onclick="previsualizarPDFAgrupado()">
+                        <i class="fas fa-eye"></i> Previsualizar
+                    </button>
+                    <button class="btn-premium success" onclick="generarPDFAgrupado()">
+                        <i class="fas fa-file-pdf"></i> Generar PDF
+                    </button>
+                </div>
             </div>
 
             <div class="preview-pdf" id="previewPDF">
                 <p style="text-align:center; color:var(--gray-400);">
                     <i class="fas fa-file-pdf" style="margin-right:8px;"></i>
-                    Aplica filtros para ver la vista previa
+                    Selecciona los filtros y presiona "Previsualizar"
                 </p>
             </div>
         </div>
@@ -2184,7 +2211,8 @@
 
         document.getElementById('maquinasFiltroDesde').value = hoy.toISOString().split('T')[0];
         document.getElementById('maquinasFiltroHasta').value = hoy.toISOString().split('T')[0];
-
+document.getElementById('pdfFechaDesde').value = hace30Dias.toISOString().split('T')[0];
+document.getElementById('pdfFechaHasta').value = hoy.toISOString().split('T')[0];
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.addEventListener('click', function() {
                 document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -5032,7 +5060,256 @@
         };
         const cat = code.split('-')[0];
         return mapa[cat] || 0;
+    }    // ============================================================
+    // 20. REPORTES PDF AGRUPADOS (DÍA / MES / AÑO)
+    // ============================================================
+    function normalizarFechaPDF(fechaStr) {
+        if (!fechaStr) return null;
+        if (fechaStr.includes('/')) {
+            const p = fechaStr.split('/');
+            if (p.length === 3) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+        }
+        if (fechaStr.includes('-')) return fechaStr.split('T')[0];
+        return null;
     }
+
+    function claveAgrupacionPDF(fechaISO, modo) {
+        if (!fechaISO) return 'Sin fecha';
+        const [y, m] = fechaISO.split('-');
+        if (modo === 'dia')  return fechaISO;
+        if (modo === 'mes')  return `${y}-${m}`;
+        if (modo === 'anio') return y;
+        return fechaISO;
+    }
+
+    async function recopilarRegistrosPDF(sucursalFiltro, desde, hasta) {
+        const registros = [];
+        for (const suc of sucursalesCompletas) {
+            if (sucursalFiltro !== 'todas' && suc.nombre !== sucursalFiltro) continue;
+            const appData = window.appsSucursales[suc.id];
+            if (!appData || !appData.db) continue;
+            // Placeholder para que la sucursal exista aunque no tenga registros
+            registros.push({ sucursal: suc.nombre, fecha: null, money: 0, points: 0, fichas: 0, items: 0 });
+            try {
+                const snapC = await get(ref(appData.db, 'carrito'));
+                if (snapC.exists()) {
+                    snapC.forEach(child => {
+                        const v = child.val();
+                        registros.push({
+                            sucursal: suc.nombre,
+                            fecha: normalizarFechaPDF(v.fechaEliminacion || v.fecha) || new Date().toISOString().split('T')[0],
+                            money: v.money || 0,
+                            points: v.points || 0,
+                            fichas: Math.abs(v.fichaConsumption || 0),
+                            items: 1
+                        });
+                    });
+                }
+            } catch (e) { console.warn('PDF carrito', suc.nombre, e); }
+            try {
+                const snapH = await get(ref(appData.db, 'historial_ventas'));
+                if (snapH.exists()) {
+                    snapH.forEach(reg => {
+                        const r = reg.val();
+                        const fechaBase = normalizarFechaPDF(r.fechaEliminacion || r.fecha) || new Date().toISOString().split('T')[0];
+                        const ventas = r.ventas || [];
+                        ventas.forEach(v => {
+                            registros.push({
+                                sucursal: suc.nombre,
+                                fecha: fechaBase,
+                                money: v.money || 0,
+                                points: v.points || 0,
+                                fichas: Math.abs(v.fichaConsumption || 0),
+                                items: 1
+                            });
+                        });
+                    });
+                }
+            } catch (e) { console.warn('PDF historial', suc.nombre, e); }
+        }
+        return registros.filter(r => {
+            if (!r.fecha) return true; // los placeholders pasan
+            if (desde && r.fecha < desde) return false;
+            if (hasta && r.fecha > hasta) return false;
+            return true;
+        });
+    }
+
+        function generarPeriodosDelRango(desde, hasta, modo) {
+        if (!desde || !hasta) return [];
+        const lista = [];
+        if (modo === 'dia') {
+            let cur = new Date(desde + 'T00:00:00');
+            const fin = new Date(hasta + 'T00:00:00');
+            while (cur <= fin) {
+                const y = cur.getFullYear();
+                const m = String(cur.getMonth() + 1).padStart(2, '0');
+                const d = String(cur.getDate()).padStart(2, '0');
+                lista.push(`${y}-${m}-${d}`);
+                cur.setDate(cur.getDate() + 1);
+            }
+        } else if (modo === 'mes') {
+            let [y, m] = desde.split('-').map(Number);
+            const [yFin, mFin] = hasta.split('-').map(Number);
+            while (y < yFin || (y === yFin && m <= mFin)) {
+                lista.push(`${y}-${String(m).padStart(2, '0')}`);
+                m++;
+                if (m > 12) { m = 1; y++; }
+            }
+        } else if (modo === 'anio') {
+            const yIni = parseInt(desde.split('-')[0]);
+            const yFin = parseInt(hasta.split('-')[0]);
+            for (let y = yIni; y <= yFin; y++) lista.push(String(y));
+        }
+        return lista;
+    }
+
+    function agruparRegistrosPDF(registros, modo, desde, hasta) {
+        const out = {};
+        registros.forEach(r => {
+            if (!r.fecha) return;
+            const clave = claveAgrupacionPDF(r.fecha, modo);
+            if (!out[r.sucursal]) out[r.sucursal] = {};
+            if (!out[r.sucursal][clave]) out[r.sucursal][clave] = { money: 0, points: 0, fichas: 0, items: 0 };
+            out[r.sucursal][clave].money  += r.money;
+            out[r.sucursal][clave].points += r.points;
+            out[r.sucursal][clave].fichas += r.fichas;
+            out[r.sucursal][clave].items  += r.items;
+        });
+        const periodos = generarPeriodosDelRango(desde, hasta, modo);
+        Object.keys(out).forEach(suc => {
+            periodos.forEach(p => {
+                if (!out[suc][p]) out[suc][p] = { money: 0, points: 0, fichas: 0, items: 0 };
+            });
+        });
+        return out;
+    }
+
+    window.previsualizarPDFAgrupado = async function() {
+        const sucursal = document.getElementById('pdfSucursal').value;
+        const desde = document.getElementById('pdfFechaDesde').value;
+        const hasta = document.getElementById('pdfFechaHasta').value;
+        const modo = document.getElementById('pdfAgrupacion').value;
+        const cont = document.getElementById('previewPDF');
+        cont.innerHTML = `<div class="loader-premium"><div class="spinner"></div><span>Cargando vista previa...</span></div>`;
+        try {
+            const regs = await recopilarRegistrosPDF(sucursal, desde, hasta);
+            if (regs.length === 0) {
+                cont.innerHTML = `<p style="text-align:center; color:var(--gray-400);">Sin datos en el rango seleccionado</p>`;
+                return;
+            }
+            const agrupado = agruparRegistrosPDF(regs, modo, desde, hasta);
+            let html = '<table><thead><tr><th>Sucursal</th><th>Período</th><th>Items</th><th>Dinero (Gs)</th><th>Puntos</th><th>Fichas</th></tr></thead><tbody>';
+            Object.keys(agrupado).sort().forEach(suc => {
+                Object.keys(agrupado[suc]).sort().forEach(per => {
+                    const d = agrupado[suc][per];
+                    html += `<tr>
+                        <td>${suc}</td>
+                        <td>${per}</td>
+                        <td>${d.items}</td>
+                        <td>Gs. ${d.money.toLocaleString('es-PY')}</td>
+                        <td>${d.points}</td>
+                        <td>${d.fichas}</td>
+                    </tr>`;
+                });
+            });
+            html += '</tbody></table>';
+            cont.innerHTML = html;
+        } catch (e) {
+            console.error(e);
+            cont.innerHTML = `<p style="text-align:center; color:var(--danger);">Error: ${e.message}</p>`;
+        }
+    };
+
+    window.generarPDFAgrupado = async function() {
+        const sucursal = document.getElementById('pdfSucursal').value;
+        const desde = document.getElementById('pdfFechaDesde').value;
+        const hasta = document.getElementById('pdfFechaHasta').value;
+        const modo = document.getElementById('pdfAgrupacion').value;
+        const etiquetaModo = { dia: 'Diario', mes: 'Mensual', anio: 'Anual' }[modo];
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+        doc.setFontSize(16);
+        doc.setTextColor(13, 27, 74);
+        doc.text('ASTROLAND — Reporte ' + etiquetaModo, 14, 16);
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        const subtitulo = `Sucursal: ${sucursal === 'todas' ? 'Todas' : sucursal}  |  Rango: ${desde || '—'} a ${hasta || '—'}  |  Generado: ${new Date().toLocaleString('es-PY')}`;
+        doc.text(subtitulo, 14, 22);
+
+        try {
+            const regs = await recopilarRegistrosPDF(sucursal, desde, hasta);
+            if (regs.length === 0) {
+                doc.setFontSize(11);
+                doc.setTextColor(150);
+                doc.text('Sin datos en el rango seleccionado.', 14, 32);
+                doc.save(`ASTROLAND_${etiquetaModo}_sin_datos.pdf`);
+                showToast('⚠️ Sin datos para generar PDF', 'warning');
+                return;
+            }
+            const agrupado = agruparRegistrosPDF(regs, modo, desde, hasta);
+            const rows = [];
+            const totalesGlobal = { items: 0, money: 0, points: 0, fichas: 0 };
+
+            Object.keys(agrupado).sort().forEach(suc => {
+                let subItems = 0, subMoney = 0, subPoints = 0, subFichas = 0;
+                Object.keys(agrupado[suc]).sort().forEach(per => {
+                    const d = agrupado[suc][per];
+                    rows.push([suc, per, d.items, d.money.toLocaleString('es-PY'), d.points, d.fichas]);
+                    subItems += d.items; subMoney += d.money;
+                    subPoints += d.points; subFichas += d.fichas;
+                });
+                rows.push([
+                    { content: `SUBTOTAL ${suc}`, styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
+                    { content: '', styles: { fillColor: [240, 230, 176] } },
+                    { content: subItems, styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
+                    { content: subMoney.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
+                    { content: subPoints, styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
+                    { content: subFichas, styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } }
+                ]);
+                totalesGlobal.items += subItems;
+                totalesGlobal.money += subMoney;
+                totalesGlobal.points += subPoints;
+                totalesGlobal.fichas += subFichas;
+            });
+
+            rows.push([
+                { content: 'TOTAL GENERAL', styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
+                { content: '', styles: { fillColor: [13, 27, 74] } },
+                { content: totalesGlobal.items, styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
+                { content: totalesGlobal.money.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
+                { content: totalesGlobal.points, styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
+                { content: totalesGlobal.fichas, styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } }
+            ]);
+
+            doc.autoTable({
+                startY: 28,
+                head: [['Sucursal', 'Período', 'Items', 'Dinero (Gs)', 'Puntos', 'Fichas']],
+                body: rows,
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [13, 27, 74], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [248, 249, 250] },
+                columnStyles: {
+                    0: { cellWidth: 40 },
+                    1: { cellWidth: 30 },
+                    2: { halign: 'right' },
+                    3: { halign: 'right' },
+                    4: { halign: 'right' },
+                    5: { halign: 'right' }
+                },
+                margin: { top: 28, left: 14, right: 14 }
+            });
+
+            const nombreArchivo = `ASTROLAND_${etiquetaModo}_${sucursal === 'todas' ? 'Todas' : sucursal.replace(/\s/g,'_')}_${desde || 'inicio'}_${hasta || 'fin'}.pdf`;
+            doc.save(nombreArchivo);
+            showToast(`✅ PDF ${etiquetaModo} generado correctamente`, 'success');
+        } catch (e) {
+            console.error(e);
+            showToast('❌ Error generando PDF: ' + e.message, 'error');
+        }
+    };
 
 </script>
 
