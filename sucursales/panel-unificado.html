@@ -5082,27 +5082,33 @@ document.getElementById('pdfFechaHasta').value = hoy.toISOString().split('T')[0]
         return fechaISO;
     }
 
-    async function recopilarRegistrosPDF(sucursalFiltro, desde, hasta) {
+        async function recopilarRegistrosPDF(sucursalFiltro, desde, hasta) {
         const registros = [];
         for (const suc of sucursalesCompletas) {
             if (sucursalFiltro !== 'todas' && suc.nombre !== sucursalFiltro) continue;
             const appData = window.appsSucursales[suc.id];
             if (!appData || !appData.db) continue;
-            // Placeholder para que la sucursal exista aunque no tenga registros
-            registros.push({ sucursal: suc.nombre, fecha: null, money: 0, points: 0, fichas: 0, items: 0 });
+            registros.push({ sucursal: suc.nombre, fecha: null, efectivo: 0, bancard: 0, items: 0, points: 0, fichas: 0 });
+            const clasificar = (v, fechaBase) => {
+                const code = v.code || '';
+                const money = v.money || 0;
+                const points = v.points || 0;
+                const fichas = Math.abs(v.fichaConsumption || 0);
+                if (code === '000-09') {
+                    registros.push({ sucursal: suc.nombre, fecha: fechaBase, efectivo: money, bancard: 0, items: 0, points: 0, fichas: 0 });
+                } else if (code === '000-10') {
+                    registros.push({ sucursal: suc.nombre, fecha: fechaBase, efectivo: 0, bancard: money, items: 0, points: 0, fichas: 0 });
+                } else {
+                    registros.push({ sucursal: suc.nombre, fecha: fechaBase, efectivo: 0, bancard: 0, items: 1, points: points, fichas: fichas });
+                }
+            };
             try {
                 const snapC = await get(ref(appData.db, 'carrito'));
                 if (snapC.exists()) {
                     snapC.forEach(child => {
                         const v = child.val();
-                        registros.push({
-                            sucursal: suc.nombre,
-                            fecha: normalizarFechaPDF(v.fechaEliminacion || v.fecha) || new Date().toISOString().split('T')[0],
-                            money: v.money || 0,
-                            points: v.points || 0,
-                            fichas: Math.abs(v.fichaConsumption || 0),
-                            items: 1
-                        });
+                        const fechaBase = normalizarFechaPDF(v.fechaEliminacion || v.fecha) || new Date().toISOString().split('T')[0];
+                        clasificar(v, fechaBase);
                     });
                 }
             } catch (e) { console.warn('PDF carrito', suc.nombre, e); }
@@ -5112,23 +5118,13 @@ document.getElementById('pdfFechaHasta').value = hoy.toISOString().split('T')[0]
                     snapH.forEach(reg => {
                         const r = reg.val();
                         const fechaBase = normalizarFechaPDF(r.fechaEliminacion || r.fecha) || new Date().toISOString().split('T')[0];
-                        const ventas = r.ventas || [];
-                        ventas.forEach(v => {
-                            registros.push({
-                                sucursal: suc.nombre,
-                                fecha: fechaBase,
-                                money: v.money || 0,
-                                points: v.points || 0,
-                                fichas: Math.abs(v.fichaConsumption || 0),
-                                items: 1
-                            });
-                        });
+                        (r.ventas || []).forEach(v => clasificar(v, fechaBase));
                     });
                 }
             } catch (e) { console.warn('PDF historial', suc.nombre, e); }
         }
         return registros.filter(r => {
-            if (!r.fecha) return true; // los placeholders pasan
+            if (!r.fecha) return true;
             if (desde && r.fecha < desde) return false;
             if (hasta && r.fecha > hasta) return false;
             return true;
@@ -5164,28 +5160,29 @@ document.getElementById('pdfFechaHasta').value = hoy.toISOString().split('T')[0]
         return lista;
     }
 
-    function agruparRegistrosPDF(registros, modo, desde, hasta) {
+        function agruparRegistrosPDF(registros, modo, desde, hasta) {
         const out = {};
         registros.forEach(r => {
             if (!r.fecha) return;
             const clave = claveAgrupacionPDF(r.fecha, modo);
             if (!out[r.sucursal]) out[r.sucursal] = {};
-            if (!out[r.sucursal][clave]) out[r.sucursal][clave] = { money: 0, points: 0, fichas: 0, items: 0 };
-            out[r.sucursal][clave].money  += r.money;
-            out[r.sucursal][clave].points += r.points;
-            out[r.sucursal][clave].fichas += r.fichas;
-            out[r.sucursal][clave].items  += r.items;
+            if (!out[r.sucursal][clave]) out[r.sucursal][clave] = { efectivo: 0, bancard: 0, items: 0, points: 0, fichas: 0 };
+            out[r.sucursal][clave].efectivo += r.efectivo || 0;
+            out[r.sucursal][clave].bancard  += r.bancard  || 0;
+            out[r.sucursal][clave].items    += r.items    || 0;
+            out[r.sucursal][clave].points   += r.points   || 0;
+            out[r.sucursal][clave].fichas   += r.fichas   || 0;
         });
         const periodos = generarPeriodosDelRango(desde, hasta, modo);
         Object.keys(out).forEach(suc => {
             periodos.forEach(p => {
-                if (!out[suc][p]) out[suc][p] = { money: 0, points: 0, fichas: 0, items: 0 };
+                if (!out[suc][p]) out[suc][p] = { efectivo: 0, bancard: 0, items: 0, points: 0, fichas: 0 };
             });
         });
         return out;
     }
 
-    window.previsualizarPDFAgrupado = async function() {
+        window.previsualizarPDFAgrupado = async function() {
         const sucursal = document.getElementById('pdfSucursal').value;
         const desde = document.getElementById('pdfFechaDesde').value;
         const hasta = document.getElementById('pdfFechaHasta').value;
@@ -5194,22 +5191,21 @@ document.getElementById('pdfFechaHasta').value = hoy.toISOString().split('T')[0]
         cont.innerHTML = `<div class="loader-premium"><div class="spinner"></div><span>Cargando vista previa...</span></div>`;
         try {
             const regs = await recopilarRegistrosPDF(sucursal, desde, hasta);
-            if (regs.length === 0) {
-                cont.innerHTML = `<p style="text-align:center; color:var(--gray-400);">Sin datos en el rango seleccionado</p>`;
-                return;
-            }
             const agrupado = agruparRegistrosPDF(regs, modo, desde, hasta);
-            let html = '<table><thead><tr><th>Sucursal</th><th>Período</th><th>Items</th><th>Dinero (Gs)</th><th>Puntos</th><th>Fichas</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>Sucursal</th><th>Período</th><th>Items</th><th>Efectivo</th><th>Bancard</th><th>Total</th><th>Puntos</th><th>Fichas</th></tr></thead><tbody>';
             Object.keys(agrupado).sort().forEach(suc => {
                 Object.keys(agrupado[suc]).sort().forEach(per => {
                     const d = agrupado[suc][per];
+                    const total = d.efectivo + d.bancard;
                     html += `<tr>
                         <td>${suc}</td>
                         <td>${per}</td>
                         <td>${d.items}</td>
-                        <td>Gs. ${d.money.toLocaleString('es-PY')}</td>
-                        <td>${d.points}</td>
-                        <td>${d.fichas}</td>
+                        <td>Gs. ${d.efectivo.toLocaleString('es-PY')}</td>
+                        <td>Gs. ${d.bancard.toLocaleString('es-PY')}</td>
+                        <td><strong>Gs. ${total.toLocaleString('es-PY')}</strong></td>
+                        <td>${d.points.toLocaleString('es-PY')}</td>
+                        <td>${d.fichas.toLocaleString('es-PY')}</td>
                     </tr>`;
                 });
             });
@@ -5221,7 +5217,7 @@ document.getElementById('pdfFechaHasta').value = hoy.toISOString().split('T')[0]
         }
     };
 
-    window.generarPDFAgrupado = async function() {
+        window.generarPDFAgrupado = async function() {
         const sucursal = document.getElementById('pdfSucursal').value;
         const desde = document.getElementById('pdfFechaDesde').value;
         const hasta = document.getElementById('pdfFechaHasta').value;
@@ -5241,65 +5237,77 @@ document.getElementById('pdfFechaHasta').value = hoy.toISOString().split('T')[0]
 
         try {
             const regs = await recopilarRegistrosPDF(sucursal, desde, hasta);
-            if (regs.length === 0) {
-                doc.setFontSize(11);
-                doc.setTextColor(150);
-                doc.text('Sin datos en el rango seleccionado.', 14, 32);
-                doc.save(`ASTROLAND_${etiquetaModo}_sin_datos.pdf`);
-                showToast('⚠️ Sin datos para generar PDF', 'warning');
-                return;
-            }
             const agrupado = agruparRegistrosPDF(regs, modo, desde, hasta);
             const rows = [];
-            const totalesGlobal = { items: 0, money: 0, points: 0, fichas: 0 };
+            const totalesGlobal = { efectivo: 0, bancard: 0, items: 0, points: 0, fichas: 0 };
 
             Object.keys(agrupado).sort().forEach(suc => {
-                let subItems = 0, subMoney = 0, subPoints = 0, subFichas = 0;
+                let subEfectivo = 0, subBancard = 0, subItems = 0, subPoints = 0, subFichas = 0;
                 Object.keys(agrupado[suc]).sort().forEach(per => {
                     const d = agrupado[suc][per];
-                    rows.push([suc, per, d.items, d.money.toLocaleString('es-PY'), d.points, d.fichas]);
-                    subItems += d.items; subMoney += d.money;
-                    subPoints += d.points; subFichas += d.fichas;
+                    const total = d.efectivo + d.bancard;
+                    rows.push([
+                        suc, per, d.items,
+                        d.efectivo.toLocaleString('es-PY'),
+                        d.bancard.toLocaleString('es-PY'),
+                        total.toLocaleString('es-PY'),
+                        d.points.toLocaleString('es-PY'),
+                        d.fichas.toLocaleString('es-PY')
+                    ]);
+                    subEfectivo += d.efectivo;
+                    subBancard += d.bancard;
+                    subItems += d.items;
+                    subPoints += d.points;
+                    subFichas += d.fichas;
                 });
+                const subTotal = subEfectivo + subBancard;
                 rows.push([
                     { content: `SUBTOTAL ${suc}`, styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
                     { content: '', styles: { fillColor: [240, 230, 176] } },
                     { content: subItems, styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
-                    { content: subMoney.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
-                    { content: subPoints, styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
-                    { content: subFichas, styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } }
+                    { content: subEfectivo.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
+                    { content: subBancard.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
+                    { content: subTotal.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
+                    { content: subPoints.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } },
+                    { content: subFichas.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [240, 230, 176] } }
                 ]);
+                totalesGlobal.efectivo += subEfectivo;
+                totalesGlobal.bancard += subBancard;
                 totalesGlobal.items += subItems;
-                totalesGlobal.money += subMoney;
                 totalesGlobal.points += subPoints;
                 totalesGlobal.fichas += subFichas;
             });
 
+            const totTotal = totalesGlobal.efectivo + totalesGlobal.bancard;
             rows.push([
                 { content: 'TOTAL GENERAL', styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
                 { content: '', styles: { fillColor: [13, 27, 74] } },
                 { content: totalesGlobal.items, styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
-                { content: totalesGlobal.money.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
-                { content: totalesGlobal.points, styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
-                { content: totalesGlobal.fichas, styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } }
+                { content: totalesGlobal.efectivo.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
+                { content: totalesGlobal.bancard.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
+                { content: totTotal.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
+                { content: totalesGlobal.points.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } },
+                { content: totalesGlobal.fichas.toLocaleString('es-PY'), styles: { fontStyle: 'bold', fillColor: [13, 27, 74], textColor: [255,255,255] } }
             ]);
 
             doc.autoTable({
                 startY: 28,
-                head: [['Sucursal', 'Período', 'Items', 'Dinero (Gs)', 'Puntos', 'Fichas']],
+                head: [['Sucursal', 'Período', 'Items', 'Efectivo', 'Bancard', 'Total', 'Puntos', 'Fichas']],
                 body: rows,
                 styles: { fontSize: 8, cellPadding: 2 },
                 headStyles: { fillColor: [13, 27, 74], textColor: [255, 255, 255], fontStyle: 'bold' },
                 alternateRowStyles: { fillColor: [248, 249, 250] },
                 columnStyles: {
-                    0: { cellWidth: 40 },
-                    1: { cellWidth: 30 },
+                    0: { cellWidth: 32 },
+                    1: { cellWidth: 22 },
                     2: { halign: 'right' },
                     3: { halign: 'right' },
                     4: { halign: 'right' },
-                    5: { halign: 'right' }
+                    5: { halign: 'right' },
+                    6: { halign: 'right' },
+                    7: { halign: 'right' }
                 },
-                margin: { top: 28, left: 14, right: 14 }
+                margin: { top: 28, left: 10, right: 10 }
             });
 
             const nombreArchivo = `ASTROLAND_${etiquetaModo}_${sucursal === 'todas' ? 'Todas' : sucursal.replace(/\s/g,'_')}_${desde || 'inicio'}_${hasta || 'fin'}.pdf`;
